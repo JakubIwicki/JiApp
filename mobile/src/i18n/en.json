@@ -1,0 +1,33 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Try again"
+  },
+  "auth": {
+    "login": "Log In",
+    "register": "Sign Up",
+    "username": "Username",
+    "password": "Password",
+    "email": "Email",
+    "displayName": "Display Name",
+    "rememberMe": "Remember Me",
+    "goToRegister": "Don't have an account? Sign Up",
+    "goToLogin": "Already have an account? Log In",
+    "invalidCredentials": "Invalid username or password",
+    "loginSuccess": "Logged in successfully",
+    "registerSuccess": "Registration successful. You can now log in.",
+    "registerFailed": "Registration failed",
+    "usernameRequired": "Username is required",
+    "passwordRequired": "Password is required",
+    "emailRequired": "Email is required",
+    "displayNameRequired": "Display name is required",
+    "usernameTooShort": "Username must be at least 3 characters",
+    "passwordTooShort": "Password must be at least 4 characters"
+  },
+  "nav": {
+    "search": "Search",
+    "history": "History",
+    "settings": "Settings"
+  }
+}

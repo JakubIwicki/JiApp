@@ -1,0 +1,33 @@
+{
+  "common": {
+    "loading": "Ładowanie...",
+    "error": "Wystąpił błąd",
+    "retry": "Spróbuj ponownie"
+  },
+  "auth": {
+    "login": "Zaloguj się",
+    "register": "Zarejestruj się",
+    "username": "Nazwa użytkownika",
+    "password": "Hasło",
+    "email": "Email",
+    "displayName": "Nazwa wyświetlana",
+    "rememberMe": "Zapamiętaj mnie",
+    "goToRegister": "Nie masz konta? Zarejestruj się",
+    "goToLogin": "Masz już konto? Zaloguj się",
+    "invalidCredentials": "Nieprawidłowa nazwa użytkownika lub hasło",
+    "loginSuccess": "Zalogowano pomyślnie",
+    "registerSuccess": "Rejestracja zakończona pomyślnie. Możesz się teraz zalogować.",
+    "registerFailed": "Rejestracja nie powiodła się",
+    "usernameRequired": "Nazwa użytkownika jest wymagana",
+    "passwordRequired": "Hasło jest wymagane",
+    "emailRequired": "Email jest wymagany",
+    "displayNameRequired": "Nazwa wyświetlana jest wymagana",
+    "usernameTooShort": "Nazwa użytkownika musi mieć co najmniej 3 znaki",
+    "passwordTooShort": "Hasło musi mieć co najmniej 4 znaki"
+  },
+  "nav": {
+    "search": "Szukaj",
+    "history": "Historia",
+    "settings": "Ustawienia"
+  }
+}

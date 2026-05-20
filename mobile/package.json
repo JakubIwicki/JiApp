@@ -10,10 +10,21 @@
     "test": "jest"
   },
   "dependencies": {
-    "react": "19.2.3",
-    "react-native": "0.85.3",
+    "@react-native-async-storage/async-storage": "^3.0.3",
     "@react-native/new-app-screen": "0.85.3",
-    "react-native-safe-area-context": "^5.5.2"
+    "@react-navigation/native": "^7.2.4",
+    "@react-navigation/stack": "^7.9.2",
+    "axios": "^1.16.1",
+    "i18next": "^26.2.0",
+    "react": "19.2.3",
+    "react-i18next": "^17.0.8",
+    "react-native": "0.85.3",
+    "react-native-encrypted-storage": "^4.0.3",
+    "react-native-gesture-handler": "^2.31.2",
+    "react-native-localize": "^3.7.0",
+    "react-native-safe-area-context": "^5.8.0",
+    "react-native-screens": "^4.25.1",
+    "react-native-vector-icons": "^10.3.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
