@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/JiApp.Api/JiApp.Api.csproj" />
+    <Project Path="src/JiApp.Common/JiApp.Common.csproj" />
+    <Project Path="src/JiApp.Infrastructure/JiApp.Infrastructure.csproj" />
+    <Project Path="src/JiApp.YtApi/JiApp.YtApi.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/JiApp.Tests/JiApp.Tests.csproj" />
+  </Folder>
+</Solution>
