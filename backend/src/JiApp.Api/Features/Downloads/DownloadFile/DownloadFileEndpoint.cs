@@ -1,0 +1,27 @@
+using JiApp.Api.Configuration;
+using JiApp.Common.Abstractions;
+
+namespace JiApp.Api.Features.Downloads.DownloadFile;
+
+public static class DownloadFileEndpoint
+{
+    public static IEndpointRouteBuilder MapDownloadFile(this IEndpointRouteBuilder endpoints)
+    {
+        endpoints.MapGet("/api/downloads/mp3/file/{id}", (string id, DownloadFileHandler handler) =>
+        {
+            var result = handler.Handle(id);
+            if (result.IsSuccess)
+                return Results.File(result.Value!, "audio/mpeg");
+
+            return Results.Json(new ApiErrorResponse(Error: result.Error!), statusCode: StatusCodes.Status404NotFound);
+        })
+        .WithTags("Downloads")
+        .WithSummary("Download the MP3 file by temporary ID")
+        .Produces(StatusCodes.Status200OK, contentType: "audio/mpeg")
+        .ProducesProblem(StatusCodes.Status404NotFound)
+        .RequireRateLimiting(RateLimitPolicyNames.DownloadFile)
+        .AllowAnonymous();
+
+        return endpoints;
+    }
+}

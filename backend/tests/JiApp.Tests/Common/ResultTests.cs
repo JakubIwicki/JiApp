@@ -20,7 +20,7 @@ public class ResultTests
         var result = JiApp.Common.Abstractions.Result<int>.Failure("something went wrong");
 
         result.IsSuccess.Should().BeFalse();
-        result.Value.Should().Be(default(int));
+        result.Value.Should().Be(0);
         result.Error.Should().Be("something went wrong");
     }
 

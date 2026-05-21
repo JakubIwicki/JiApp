@@ -1,42 +1,44 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Text.Json.Serialization;
 using FluentAssertions;
+using JiApp.Common.Abstractions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace JiApp.Tests.Middleware;
 
-public class GlobalExceptionMiddlewareTests
+public class GlobalExceptionMiddlewareTests : IClassFixture<WebApplicationFactory<Program>>
 {
-    [Fact]
-    public async Task UnhandledException_Returns500WithStructuredError_WhenNotDevelopment()
-    {
-        var factory = new WebApplicationFactory<Program>()
-            .WithWebHostBuilder(builder =>
-            {
-                builder.UseEnvironment("Production");
-            });
-        var client = factory.CreateClient();
+    private readonly WebApplicationFactory<Program> _factory;
 
-        // In Production, the /api/throw endpoint doesn't exist (dev-only)
-        // So hitting a non-existent endpoint with bad behavior should still work
+    public GlobalExceptionMiddlewareTests(WebApplicationFactory<Program> factory)
+    {
+        _factory = factory;
+    }
+
+    [Fact]
+    public async Task NonExistentEndpoint_Returns404_InProduction()
+    {
+        var productionFactory = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment("Production");
+        });
+        var client = productionFactory.CreateClient();
+
         var response = await client.GetAsync("/api/nonexistent");
 
-        // App is running in Production mode — non-existent routes return 404, not 500
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task UnhandledException_Returns500WithStructuredError_WhenInDevelopment()
     {
-        var factory = new WebApplicationFactory<Program>();
-        var client = factory.CreateClient();
+        var client = _factory.CreateClient();
 
         var response = await client.GetAsync("/api/throw");
 
         response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
-        var body = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+        var body = await response.Content.ReadFromJsonAsync<ApiErrorResponse>();
         body.Should().NotBeNull();
         body!.Error.Should().Be("test error");
     }
@@ -44,8 +46,7 @@ public class GlobalExceptionMiddlewareTests
     [Fact]
     public async Task HealthEndpoint_Works_WithMiddlewareInPlace()
     {
-        var factory = new WebApplicationFactory<Program>();
-        var client = factory.CreateClient();
+        var client = _factory.CreateClient();
 
         var response = await client.GetAsync("/api/health");
 
@@ -54,6 +55,5 @@ public class GlobalExceptionMiddlewareTests
         body!.Status.Should().Be("healthy");
     }
 
-    private sealed record ErrorResponse([property: JsonPropertyName("error")] string Error);
     private sealed record HealthDto(string Status, DateTime Timestamp);
 }

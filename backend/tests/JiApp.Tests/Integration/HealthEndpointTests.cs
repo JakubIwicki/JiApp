@@ -5,19 +5,12 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace JiApp.Tests.Integration;
 
-public class HealthEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+public class HealthEndpointTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
 {
-    private readonly WebApplicationFactory<Program> _factory;
-
-    public HealthEndpointTests(WebApplicationFactory<Program> factory)
-    {
-        _factory = factory;
-    }
-
     [Fact]
     public async Task GetHealth_Returns200WithStatusAndTimestamp()
     {
-        var client = _factory.CreateClient();
+        var client = factory.CreateClient();
 
         var response = await client.GetAsync("/api/health");
 

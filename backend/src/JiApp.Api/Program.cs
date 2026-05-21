@@ -1,37 +1,13 @@
-using System.Reflection;
-using FluentValidation;
-using JiApp.Api.Middleware;
+using JiApp.Api;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+var startup = new Startup(builder.Configuration);
 
-builder.Services.AddScoped<GlobalExceptionMiddleware>();
-builder.Services.AddScoped<RequestLoggingMiddleware>();
+startup.ConfigureServices(builder.Services);
 
 var app = builder.Build();
 
-app.UseMiddleware<GlobalExceptionMiddleware>();
-app.UseMiddleware<RequestLoggingMiddleware>();
-
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-app.MapGet("/api/health", () =>
-{
-    return Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow });
-});
-
-if (app.Environment.IsDevelopment())
-{
-    app.MapGet("/api/throw", (HttpContext _) => throw new InvalidOperationException("test error"));
-}
+Startup.Configure(app);
 
 app.Run();
-
-public partial class Program { }

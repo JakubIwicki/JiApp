@@ -1,4 +1,5 @@
 using System.Text.Json;
+using JiApp.Common.Abstractions;
 
 namespace JiApp.Api.Middleware;
 
@@ -19,23 +20,18 @@ public class GlobalExceptionMiddleware : IMiddleware
         {
             await next(context);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Unhandled exception occurred");
 
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
             context.Response.ContentType = "application/json";
 
-            var response = new Dictionary<string, string?>
-            {
-                ["error"] = _env.IsDevelopment() ? ex.Message : "An unexpected error occurred"
-            };
-            if (_env.IsDevelopment())
-            {
-                response["details"] = ex.StackTrace;
-            }
+            var response = _env.IsDevelopment()
+                ? new ApiErrorResponse(Error: ex.Message, Details: ex.StackTrace)
+                : new ApiErrorResponse(Error: "An unexpected error occurred");
 
-            await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+            await context.Response.WriteAsync(JsonSerializer.Serialize(response, ApiErrorResponse.JsonOptions));
         }
     }
 }

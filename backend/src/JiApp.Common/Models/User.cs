@@ -1,3 +1,4 @@
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
 using Microsoft.AspNetCore.Identity;
 
 namespace JiApp.Common.Models;
