@@ -40,6 +40,15 @@ When multiple devices appear in `adb devices`, use `-s <device_id>` with every c
 
 ## Deployment Steps
 
+### Step 0: Check Certificate Status
+
+Ask the user:
+
+> Is the JiApp dev CA certificate already installed on the device? (Settings → Security & privacy → More security settings → Encryption & credentials → Trusted credentials → User tab → look for "JiApp Dev CA")
+
+- **If yes** → skip to Step 4 (Build Release APK).
+- **If no or unsure** → proceed through Steps 1–3 below.
+
 ### Step 1: Extract Dev Cert
 
 Read the cert password from `backend/src/JiApp.Api/appsettings.Development.json` (path: `Kestrel.Endpoints.Https.Certificate.Password`), then:
