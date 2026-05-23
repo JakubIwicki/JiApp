@@ -18,6 +18,8 @@ using JiApp.Api.Features.Search.SearchVideos;
 using JiApp.Api.Middleware;
 using JiApp.Api.Services;
 using Serilog;
+using Asp.Versioning;
+using Asp.Versioning.Builder;
 using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Infrastructure.Persistence;
@@ -43,6 +45,7 @@ public class Startup(Settings settings)
     public void ConfigureServices(IServiceCollection services)
     {
         ConfigureApiDocumentationAndValidation(services);
+        ConfigureApiVersioning(services);
         ConfigureErrorHandling(services);
         ConfigureDatabase(services);
         ConfigureIdentityAndSecurity(services);
@@ -65,6 +68,16 @@ public class Startup(Settings settings)
                 Version = SwaggerConstants.Document.Version,
             });
             options.DocumentFilter<SwaggerTagDescriptionsFilter>();
+        });
+    }
+
+    private static void ConfigureApiVersioning(IServiceCollection services)
+    {
+        services.AddApiVersioning(options =>
+        {
+            options.DefaultApiVersion = new ApiVersion(1);
+            options.AssumeDefaultVersionWhenUnspecified = true;
+            options.ApiVersionReader = new UrlSegmentApiVersionReader();
         });
     }
 
@@ -180,6 +193,8 @@ public class Startup(Settings settings)
                 await context.HttpContext.Response.WriteAsync(
                     JsonSerializer.Serialize(body, ApiErrorResponse.JsonOptions), cancellationToken);
             };
+
+            return;
 
             void AddPolicy(string name, Settings.RateLimitPolicyOptions policy)
             {
@@ -312,25 +327,35 @@ public class Startup(Settings settings)
         app.UseAuthentication();
         app.UseAuthorization();
 
-        app.MapRegister();
-        app.MapLogin();
-        app.MapMe();
-        app.MapSearchVideos();
-        app.MapSearchHistory();
-        app.MapGetDownloadLink();
-        app.MapDownloadFile();
-        app.MapDownloadHistory();
-        app.MapGetHistory();
+        var apiVersionSet = app.NewApiVersionSet()
+            .HasApiVersion(new ApiVersion(1))
+            .Build();
 
-        app.MapGet("/api/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }))
+        var v1 = app.MapGroup("/api/v{version:apiVersion}")
+            .WithApiVersionSet(apiVersionSet)
+            .HasApiVersion(1);
+
+        v1.MapRegister();
+        v1.MapLogin();
+        v1.MapMe();
+        v1.MapSearchVideos();
+        v1.MapSearchHistory();
+        v1.MapGetDownloadLink();
+        v1.MapDownloadFile();
+        v1.MapDownloadHistory();
+        v1.MapGetHistory();
+
+        v1.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }))
             .WithTags(SwaggerConstants.Tags.System)
             .WithSummary("Health check")
             .Produces(StatusCodes.Status200OK)
-            .RequireRateLimiting(RateLimitPolicyNames.Health);
+            .RequireRateLimiting(RateLimitPolicyNames.Health)
+            .HasApiVersion(1);
 
         if (app.Environment.IsDevelopment())
         {
-            app.MapGet("/api/throw", _ => throw new InvalidOperationException("test error"));
+            v1.MapGet("/throw", _ => throw new InvalidOperationException("test error"))
+                .HasApiVersion(1);
         }
     }
 }

@@ -19,13 +19,10 @@ public class GlobalExceptionMiddlewareTests(ConfigOnlyWebApplicationFactory fact
     [Fact]
     public async Task NonExistentEndpoint_Returns404_InProduction()
     {
-        var productionFactory = _factory.WithWebHostBuilder(builder =>
-        {
-            builder.UseEnvironment("Production");
-        });
+        var productionFactory = _factory.WithWebHostBuilder(builder => { builder.UseEnvironment("Production"); });
         var client = productionFactory.CreateClient();
 
-        var response = await client.GetAsync("/api/nonexistent");
+        var response = await client.GetAsync("/api/v1/nonexistent");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -35,12 +32,12 @@ public class GlobalExceptionMiddlewareTests(ConfigOnlyWebApplicationFactory fact
     {
         var client = _factory.CreateClient();
 
-        var response = await client.GetAsync("/api/throw");
+        var response = await client.GetAsync("/api/v1/throw");
 
         response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
         var body = await response.Content.ReadFromJsonAsync<ApiErrorResponse>();
         body.Should().NotBeNull();
-        body!.Error.Should().Be("test error");
+        body.Error.Should().Be("test error");
     }
 
     [Fact]
@@ -48,7 +45,7 @@ public class GlobalExceptionMiddlewareTests(ConfigOnlyWebApplicationFactory fact
     {
         var client = _factory.CreateClient();
 
-        var response = await client.GetAsync("/api/health");
+        var response = await client.GetAsync("/api/v1/health");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<HealthDto>();

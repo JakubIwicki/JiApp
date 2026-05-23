@@ -29,7 +29,8 @@ public sealed class RateLimitingEndpointTests : IDisposable
         // No managed or native resources to release
     }
 
-    private static async Task<(HttpClient Client, string Username)> CreateAuthenticatedClientAsync(WebApplicationFactory<Program> factory)
+    private static async Task<(HttpClient Client, string Username)> CreateAuthenticatedClientAsync(
+        WebApplicationFactory<Program> factory)
     {
         var client = factory.CreateClient();
         var username = $"ratelimituser_{Guid.NewGuid():N}";
@@ -40,22 +41,22 @@ public sealed class RateLimitingEndpointTests : IDisposable
             password = "Pass1234",
             displayName = "Rate Limit User"
         };
-        var registerResponse = await client.PostAsJsonAsync("/api/auth/register", registerPayload);
+        var registerResponse = await client.PostAsJsonAsync("/api/v1/auth/register", registerPayload);
         registerResponse.EnsureSuccessStatusCode();
 
         var loginPayload = new { username, password = "Pass1234" };
-        var loginResponse = await client.PostAsJsonAsync("/api/auth/login", loginPayload);
+        var loginResponse = await client.PostAsJsonAsync("/api/v1/auth/login", loginPayload);
         loginResponse.EnsureSuccessStatusCode();
         var loginBody = await loginResponse.Content.ReadFromJsonAsync<LoginSuccessResponse>();
         loginBody.Should().NotBeNull();
 
         var authenticatedClient = factory.CreateClient();
         authenticatedClient.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginBody!.token);
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginBody.Token);
         return (authenticatedClient, username);
     }
 
-    private sealed record LoginSuccessResponse(long id, string? displayName, string token);
+    private sealed record LoginSuccessResponse(long Id, string? DisplayName, string Token);
 
     private static WebApplicationFactory<Program> CreateFactoryWithLowLimit(string policySection, int permitLimit)
     {
@@ -100,7 +101,7 @@ public sealed class RateLimitingEndpointTests : IDisposable
 
         for (var i = 0; i < 5; i++)
         {
-            var response = await client.GetAsync("/api/health");
+            var response = await client.GetAsync("/api/v1/health");
             response.StatusCode.Should().Be(HttpStatusCode.OK, $"request {i + 1} should succeed");
         }
     }
@@ -111,15 +112,15 @@ public sealed class RateLimitingEndpointTests : IDisposable
         var factory = CreateFactoryWithLowLimit("Health", 2);
         var client = factory.CreateClient();
 
-        await client.GetAsync("/api/health");
-        await client.GetAsync("/api/health");
+        await client.GetAsync("/api/v1/health");
+        await client.GetAsync("/api/v1/health");
 
-        var response = await client.GetAsync("/api/health");
+        var response = await client.GetAsync("/api/v1/health");
 
         response.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
         var body = await response.Content.ReadFromJsonAsync<ApiErrorResponse>();
         body.Should().NotBeNull();
-        body!.Error.Should().Be("Too many requests. Please try again later.");
+        body.Error.Should().Be("Too many requests. Please try again later.");
         body.RetryAfterSeconds.Should().NotBeNull();
     }
 
@@ -135,8 +136,9 @@ public sealed class RateLimitingEndpointTests : IDisposable
 
         for (int i = 0; i < 3; i++)
         {
-            var response = await client.PostAsJsonAsync("/api/auth/login", payload);
-            response.StatusCode.Should().Be(HttpStatusCode.Unauthorized, $"request {i + 1} was under limit and should return 401 for bad credentials");
+            var response = await client.PostAsJsonAsync("/api/v1/auth/login", payload);
+            response.StatusCode.Should().Be(HttpStatusCode.Unauthorized,
+                $"request {i + 1} was under limit and should return 401 for bad credentials");
         }
     }
 
@@ -148,9 +150,9 @@ public sealed class RateLimitingEndpointTests : IDisposable
 
         var payload = new { username = "doesnotexist", password = "wrong" };
 
-        await client.PostAsJsonAsync("/api/auth/login", payload);
+        await client.PostAsJsonAsync("/api/v1/auth/login", payload);
 
-        var response = await client.PostAsJsonAsync("/api/auth/login", payload);
+        var response = await client.PostAsJsonAsync("/api/v1/auth/login", payload);
         response.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
     }
 
@@ -171,7 +173,7 @@ public sealed class RateLimitingEndpointTests : IDisposable
             displayName = "Rate Limit User"
         };
 
-        var response = await client.PostAsJsonAsync("/api/auth/register", payload);
+        var response = await client.PostAsJsonAsync("/api/v1/auth/register", payload);
         response.StatusCode.Should().Be(HttpStatusCode.Created);
     }
 
@@ -190,9 +192,9 @@ public sealed class RateLimitingEndpointTests : IDisposable
             displayName = "Rate Limit User 2"
         };
 
-        await client.PostAsJsonAsync("/api/auth/register", payload);
+        await client.PostAsJsonAsync("/api/v1/auth/register", payload);
 
-        var response = await client.PostAsJsonAsync("/api/auth/register", payload);
+        var response = await client.PostAsJsonAsync("/api/v1/auth/register", payload);
         response.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
     }
 
@@ -206,8 +208,9 @@ public sealed class RateLimitingEndpointTests : IDisposable
 
         for (int i = 0; i < 3; i++)
         {
-            var response = await client.GetAsync($"/api/downloads/mp3/file/nonexistent_{i}");
-            response.StatusCode.Should().Be(HttpStatusCode.NotFound, $"request {i + 1} was under limit and should return 404 for non-existent file");
+            var response = await client.GetAsync($"/api/v1/downloads/mp3/file/nonexistent_{i}");
+            response.StatusCode.Should().Be(HttpStatusCode.NotFound,
+                $"request {i + 1} was under limit and should return 404 for non-existent file");
         }
     }
 
@@ -217,10 +220,9 @@ public sealed class RateLimitingEndpointTests : IDisposable
         var factory = CreateFactoryWithLowLimit("DownloadFile", 1);
         var (client, _) = await CreateAuthenticatedClientAsync(factory);
 
-        await client.GetAsync("/api/downloads/mp3/file/any");
+        await client.GetAsync("/api/v1/downloads/mp3/file/any");
 
-        var response = await client.GetAsync("/api/downloads/mp3/file/any");
+        var response = await client.GetAsync("/api/v1/downloads/mp3/file/any");
         response.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
     }
-
 }

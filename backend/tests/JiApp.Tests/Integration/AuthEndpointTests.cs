@@ -24,7 +24,7 @@ public class AuthEndpointTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task GetHealth_Returns200()
     {
-        var response = await _client.GetAsync("/api/health");
+        var response = await _client.GetAsync("/api/v1/health");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
@@ -40,7 +40,7 @@ public class AuthEndpointTests : IClassFixture<CustomWebApplicationFactory>
             displayName = "Test User"
         };
 
-        var response = await _client.PostAsJsonAsync("/api/auth/register", payload);
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/register", payload);
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
     }
@@ -58,7 +58,7 @@ public class AuthEndpointTests : IClassFixture<CustomWebApplicationFactory>
         };
 
         // First registration should succeed
-        var firstResponse = await _client.PostAsJsonAsync("/api/auth/register", payload);
+        var firstResponse = await _client.PostAsJsonAsync("/api/v1/auth/register", payload);
         firstResponse.StatusCode.Should().Be(HttpStatusCode.Created);
 
         // Second registration with same username should fail with 400
@@ -69,12 +69,12 @@ public class AuthEndpointTests : IClassFixture<CustomWebApplicationFactory>
             password = "Pass1234",
             displayName = "Other User"
         };
-        var secondResponse = await _client.PostAsJsonAsync("/api/auth/register", duplicatePayload);
+        var secondResponse = await _client.PostAsJsonAsync("/api/v1/auth/register", duplicatePayload);
         secondResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
         var body = await secondResponse.Content.ReadFromJsonAsync<RegisterErrorResponse>();
         body.Should().NotBeNull();
-        body!.error.Should().Contain("Username");
+        body.error.Should().Contain("Username");
     }
 
     [Fact]
@@ -88,7 +88,7 @@ public class AuthEndpointTests : IClassFixture<CustomWebApplicationFactory>
             displayName = ""
         };
 
-        var response = await _client.PostAsJsonAsync("/api/auth/register", payload);
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/register", payload);
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
         using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
@@ -107,7 +107,7 @@ public class AuthEndpointTests : IClassFixture<CustomWebApplicationFactory>
             displayName = "Test Short Password"
         };
 
-        var response = await _client.PostAsJsonAsync("/api/auth/register", payload);
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/register", payload);
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
@@ -122,7 +122,7 @@ public class AuthEndpointTests : IClassFixture<CustomWebApplicationFactory>
             displayName = "Test No Uppercase"
         };
 
-        var response = await _client.PostAsJsonAsync("/api/auth/register", payload);
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/register", payload);
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
@@ -137,7 +137,7 @@ public class AuthEndpointTests : IClassFixture<CustomWebApplicationFactory>
             displayName = "Test No Digit"
         };
 
-        var response = await _client.PostAsJsonAsync("/api/auth/register", payload);
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/register", payload);
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
@@ -146,12 +146,12 @@ public class AuthEndpointTests : IClassFixture<CustomWebApplicationFactory>
     {
         var (authenticatedClient, _) = await CreateAuthenticatedClientAsync();
 
-        var response = await authenticatedClient.GetAsync("/api/downloads/mp3/file/invalid-id");
+        var response = await authenticatedClient.GetAsync("/api/v1/downloads/mp3/file/invalid-id");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         var body = await response.Content.ReadFromJsonAsync<ApiErrorResponse>();
         body.Should().NotBeNull();
-        body!.Error.Should().Be("File expired or not found");
+        body.Error.Should().Be("File expired or not found");
     }
 
     [Fact]
@@ -166,19 +166,19 @@ public class AuthEndpointTests : IClassFixture<CustomWebApplicationFactory>
             password = "Pass1234",
             displayName = "Login User"
         };
-        var registerResponse = await _client.PostAsJsonAsync("/api/auth/register", registerPayload);
+        var registerResponse = await _client.PostAsJsonAsync("/api/v1/auth/register", registerPayload);
         registerResponse.StatusCode.Should().Be(HttpStatusCode.Created);
 
         // Login with correct credentials
         var loginPayload = new { username, password = "Pass1234" };
-        var loginResponse = await _client.PostAsJsonAsync("/api/auth/login", loginPayload);
+        var loginResponse = await _client.PostAsJsonAsync("/api/v1/auth/login", loginPayload);
         loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var body = await loginResponse.Content.ReadFromJsonAsync<LoginSuccessResponse>();
         body.Should().NotBeNull();
-        body!.id.Should().BeGreaterThan(0);
-        body.displayName.Should().Be("Login User");
-        body.token.Should().NotBeNullOrEmpty();
+        body.Id.Should().BeGreaterThan(0);
+        body.DisplayName.Should().Be("Login User");
+        body.Token.Should().NotBeNullOrEmpty();
     }
 
     [Fact]
@@ -186,12 +186,12 @@ public class AuthEndpointTests : IClassFixture<CustomWebApplicationFactory>
     {
         var loginPayload = new { username = "nonexistent", password = "wrongpassword" };
 
-        var response = await _client.PostAsJsonAsync("/api/auth/login", loginPayload);
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/login", loginPayload);
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
 
         var body = await response.Content.ReadFromJsonAsync<ApiErrorResponse>();
         body.Should().NotBeNull();
-        body!.Error.Should().Be("Invalid credentials");
+        body.Error.Should().Be("Invalid credentials");
     }
 
     [Fact]
@@ -200,24 +200,24 @@ public class AuthEndpointTests : IClassFixture<CustomWebApplicationFactory>
         // Register + Login to get a valid token
         var (authenticatedClient, _) = await CreateAuthenticatedClientAsync();
 
-        var response = await authenticatedClient.GetAsync("/api/auth/me");
+        var response = await authenticatedClient.GetAsync("/api/v1/auth/me");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var body = await response.Content.ReadFromJsonAsync<MeResponseBody>();
         body.Should().NotBeNull();
-        body!.id.Should().BeGreaterThan(0);
-        body.displayName.Should().NotBeNullOrEmpty();
+        body.Id.Should().BeGreaterThan(0);
+        body.DisplayName.Should().NotBeNullOrEmpty();
     }
 
     [Fact]
     public async Task Me_WithoutToken_ReturnsUnauthorized()
     {
-        var response = await _client.GetAsync("/api/auth/me");
+        var response = await _client.GetAsync("/api/v1/auth/me");
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
 
         var body = await response.Content.ReadFromJsonAsync<ApiErrorResponse>();
         body.Should().NotBeNull();
-        body!.Error.Should().Be("Unauthorized");
+        body.Error.Should().Be("Unauthorized");
     }
 
     [Fact]
@@ -226,26 +226,26 @@ public class AuthEndpointTests : IClassFixture<CustomWebApplicationFactory>
         // Login to get a valid token
         var (authenticatedClient, _) = await CreateAuthenticatedClientAsync();
 
-        // GET /api/search/history (RequireAuthorization)
-        var response = await authenticatedClient.GetAsync("/api/search/history");
+        // GET /api/v1/search/history (RequireAuthorization)
+        var response = await authenticatedClient.GetAsync("/api/v1/search/history");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     [Fact]
     public async Task ProtectedEndpoint_WithoutToken_ReturnsUnauthorized()
     {
-        var response = await _client.GetAsync("/api/search/history");
+        var response = await _client.GetAsync("/api/v1/search/history");
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
 
         var body = await response.Content.ReadFromJsonAsync<ApiErrorResponse>();
         body.Should().NotBeNull();
-        body!.Error.Should().Be("Unauthorized");
+        body.Error.Should().Be("Unauthorized");
     }
 
     [Fact]
     public async Task DownloadFile_WithoutToken_ReturnsUnauthorized()
     {
-        var response = await _client.GetAsync("/api/downloads/mp3/file/any-id");
+        var response = await _client.GetAsync("/api/v1/downloads/mp3/file/any-id");
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
@@ -263,28 +263,26 @@ public class AuthEndpointTests : IClassFixture<CustomWebApplicationFactory>
             password = "Pass1234",
             displayName = "Auth User"
         };
-        var registerResponse = await _client.PostAsJsonAsync("/api/auth/register", registerPayload);
+        var registerResponse = await _client.PostAsJsonAsync("/api/v1/auth/register", registerPayload);
         registerResponse.StatusCode.Should().Be(HttpStatusCode.Created);
 
         var loginPayload = new { username, password = "Pass1234" };
-        var loginResponse = await _client.PostAsJsonAsync("/api/auth/login", loginPayload);
+        var loginResponse = await _client.PostAsJsonAsync("/api/v1/auth/login", loginPayload);
         loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var loginBody = await loginResponse.Content.ReadFromJsonAsync<LoginSuccessResponse>();
         loginBody.Should().NotBeNull();
 
         var authenticatedClient = _factory.CreateClient();
         authenticatedClient.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginBody!.token);
-        return (authenticatedClient, loginBody.token);
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginBody.Token);
+        return (authenticatedClient, loginBody.Token);
     }
 
     // Response DTOs used for deserializing JSON responses
 
-    private sealed record LoginSuccessResponse(long id, string? displayName, string token);
+    private sealed record LoginSuccessResponse(long Id, string? DisplayName, string Token);
 
-    private sealed record MeResponseBody(long id, string? displayName);
+    private sealed record MeResponseBody(long Id, string? DisplayName);
 
     private sealed record RegisterErrorResponse(string error);
-
-    private sealed record ValidationErrorResponse(string[] errors);
 }

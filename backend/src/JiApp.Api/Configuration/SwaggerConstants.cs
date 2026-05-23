@@ -22,7 +22,7 @@ public static class SwaggerConstants
 
     public static class Document
     {
-        public const string Title = "JiApp API";
+        public const string Title = "JiApp API v1";
         public const string Version = "v1";
     }
 }

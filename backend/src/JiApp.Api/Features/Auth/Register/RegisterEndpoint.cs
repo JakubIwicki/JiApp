@@ -13,30 +13,32 @@ public static class RegisterEndpoint
 {
     public static IEndpointRouteBuilder MapRegister(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapPost("/api/auth/register", async (
-            RegisterRequest request,
-            IValidator<RegisterRequest> validator,
-            RegisterHandler handler) =>
-        {
-            var validationResult = await validator.ValidateAsync(request);
-            if (!validationResult.IsValid)
+        endpoints.MapPost("/auth/register", async (
+                RegisterRequest request,
+                IValidator<RegisterRequest> validator,
+                RegisterHandler handler) =>
             {
-                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToArray();
-                return Results.ValidationProblem(new Dictionary<string, string[]> { ["errors"] = errors });
-            }
+                var validationResult = await validator.ValidateAsync(request);
+                if (!validationResult.IsValid)
+                {
+                    var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToArray();
+                    return Results.ValidationProblem(new Dictionary<string, string[]> { ["errors"] = errors });
+                }
 
-            var result = await handler.HandleAsync(request);
-            if (result.IsSuccess)
-                return Results.Created("/api/auth/me", result.Value);
+                var result = await handler.HandleAsync(request);
+                if (result.IsSuccess)
+                    return Results.Created("/api/v1/auth/me", result.Value);
 
-            return Results.Json(new ApiErrorResponse(Error: result.Error!), statusCode: StatusCodes.Status400BadRequest);
-        })
-        .WithTags(SwaggerConstants.Tags.Auth)
-        .WithSummary("Register a new user account")
-        .Produces<RegisterResponse>(StatusCodes.Status201Created)
-        .ProducesValidationProblem(StatusCodes.Status400BadRequest)
-        .RequireRateLimiting(RateLimitPolicyNames.Register)
-        .AllowAnonymous();
+                return Results.Json(new ApiErrorResponse(Error: result.Error!),
+                    statusCode: StatusCodes.Status400BadRequest);
+            })
+            .WithTags(SwaggerConstants.Tags.Auth)
+            .WithSummary("Register a new user account")
+            .Produces<RegisterResponse>(StatusCodes.Status201Created)
+            .ProducesValidationProblem()
+            .RequireRateLimiting(RateLimitPolicyNames.Register)
+            .AllowAnonymous()
+            .HasApiVersion(1);
 
         return endpoints;
     }
