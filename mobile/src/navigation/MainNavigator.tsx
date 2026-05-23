@@ -1,17 +1,17 @@
 import React from 'react';
-import { Text, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TabIcon from '../components/TabIcon';
 import SearchScreen from '../screens/SearchScreen';
 import DownloadScreen from '../screens/DownloadScreen';
+import DownloadsScreen from '../screens/DownloadsScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import {
   colors,
   tabBar,
-  commonStyles,
 } from '../styles/theme';
 import type {
   MainTabParamList,
@@ -56,17 +56,9 @@ const SettingsStackScreen: React.FC = () => (
   </SettingsStack.Navigator>
 );
 
-const DownloadsTabPlaceholder: React.FC = () => {
-  const { t } = useTranslation();
-  return (
-    <View style={[commonStyles.screenContainer, commonStyles.centerContent]}>
-      <Text style={commonStyles.emptyText}>{t('history.noDownloads')}</Text>
-    </View>
-  );
-};
-
 const MainNavigator: React.FC = () => {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
 
   return (
     <Tab.Navigator
@@ -77,7 +69,8 @@ const MainNavigator: React.FC = () => {
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.separator,
-          height: tabBar.height,
+          height: tabBar.height + insets.bottom,
+          paddingBottom: insets.bottom,
         },
         tabBarLabelStyle: {
           fontSize: tabBar.labelSize,
@@ -98,7 +91,7 @@ const MainNavigator: React.FC = () => {
       />
       <Tab.Screen
         name="DownloadsTab"
-        component={DownloadsTabPlaceholder}
+        component={DownloadsScreen}
         options={{
           tabBarLabel: t('nav.downloads'),
           tabBarIcon: ({ color, size }) => (

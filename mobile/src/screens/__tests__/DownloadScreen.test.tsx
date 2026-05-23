@@ -111,13 +111,13 @@ describe('DownloadScreen', () => {
     expect(mockNavigate).toHaveBeenCalledWith('Search');
   });
 
-  it('navigates to History on "view history" press', () => {
+  it('navigates to DownloadsTab on "view history" press', () => {
     mockLocalFilePath = '/storage/emulated/0/Download/TestVideo.mp3';
 
     const { getByText } = render(<DownloadScreen />);
     fireEvent.press(getByText('download.viewHistory'));
 
-    expect(mockNavigate).toHaveBeenCalledWith('History');
+    expect(mockNavigate).toHaveBeenCalledWith('DownloadsTab');
   });
 
   it('shows error message on download failure', () => {

@@ -34,7 +34,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
   return (
     <KeyboardAvoidingView
       style={commonStyles.screenContainer}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
         contentContainerStyle={commonStyles.authScrollContent}

@@ -3,7 +3,7 @@ import {
   requestDownloadLink,
   downloadFile,
 } from '../services/downloadService';
-import { getErrorMessage } from '../utils/errorUtils';
+import { getDownloadErrorMessage } from '../utils/errorUtils';
 import type { VideoItem } from '../types/api';
 
 interface UseDownloadResult {
@@ -55,7 +55,7 @@ const useDownload = (): UseDownloadResult => {
       if (err instanceof Error && err.name === 'AbortError') {
         return;
       }
-      setError(getErrorMessage(err, 'Download failed'));
+      setError(getDownloadErrorMessage(err));
     } finally {
       setIsDownloading(false);
     }

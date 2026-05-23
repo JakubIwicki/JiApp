@@ -111,8 +111,12 @@ describe('useDownload', () => {
     );
   });
 
-  it('download() sets error on API failure (requestDownloadLink fails)', async () => {
-    const apiError = new Error('API failure');
+  it('download() sets error on API failure showing 502 yt-dlp error message', async () => {
+    const apiError = {
+      isAxiosError: true,
+      response: { status: 502, data: { error: 'Failed to download video: Video unavailable' } },
+      _serverError: 'Failed to download video: Video unavailable',
+    };
     mockRequestDownloadLink.mockRejectedValue(apiError);
 
     const video = createVideoItem('1');
@@ -130,12 +134,40 @@ describe('useDownload', () => {
     });
 
     expect(result.current.isDownloading).toBe(false);
-    expect(result.current.error).toBe('API failure');
+    expect(result.current.error).toBe('YouTube download failed: Failed to download video: Video unavailable');
     expect(result.current.localFilePath).toBeNull();
     expect(mockDownloadFile).not.toHaveBeenCalled();
   });
 
-  it('download() sets error on file download failure (downloadFile fails)', async () => {
+  it('download() sets error on API failure showing 500 generic server message', async () => {
+    const apiError = {
+      isAxiosError: true,
+      response: { status: 500, data: { error: 'Something broke' } },
+      _serverError: 'Something broke',
+    };
+    mockRequestDownloadLink.mockRejectedValue(apiError);
+
+    const video = createVideoItem('1');
+    const { result } = renderHook(() => useDownload());
+
+    let promise: Promise<void>;
+    act(() => {
+      promise = result.current.download(video);
+    });
+
+    expect(result.current.isDownloading).toBe(true);
+
+    await act(async () => {
+      await promise;
+    });
+
+    expect(result.current.isDownloading).toBe(false);
+    expect(result.current.error).toBe('Server error — please try again later');
+    expect(result.current.localFilePath).toBeNull();
+    expect(mockDownloadFile).not.toHaveBeenCalled();
+  });
+
+  it('download() sets error on file download failure (downloadFile fails) with fallback', async () => {
     const mockDownloadUrl = 'https://example.com/download/abc123';
     mockRequestDownloadLink.mockResolvedValue({
       downloadUrl: mockDownloadUrl,
@@ -158,7 +190,7 @@ describe('useDownload', () => {
     });
 
     expect(result.current.isDownloading).toBe(false);
-    expect(result.current.error).toBe('File download failed');
+    expect(result.current.error).toBe('Download failed');
     expect(result.current.localFilePath).toBeNull();
     expect(mockRequestDownloadLink).toHaveBeenCalled();
     expect(mockDownloadFile).toHaveBeenCalled();

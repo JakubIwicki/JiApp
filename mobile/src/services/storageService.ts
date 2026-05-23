@@ -11,6 +11,7 @@ const LANGUAGE_KEY = 'app_language';
 interface SavedCredentials {
   username: string;
   password: string;
+  validUntil: string; // ISO 8601 — after this date, credentials are discarded
 }
 
 // --- Token ---
@@ -84,7 +85,16 @@ export const saveCredentials = async (
 export const getCredentials = async (): Promise<SavedCredentials | null> => {
   const json = await EncryptedStorage.getItem(CREDENTIALS_KEY);
   if (!json) return null;
-  return JSON.parse(json) as SavedCredentials;
+
+  const credentials = JSON.parse(json) as SavedCredentials;
+
+  // Discard expired credentials so the user must re-login manually
+  if (new Date(credentials.validUntil) < new Date()) {
+    await EncryptedStorage.removeItem(CREDENTIALS_KEY);
+    return null;
+  }
+
+  return credentials;
 };
 
 export const clearCredentials = async (): Promise<void> => {

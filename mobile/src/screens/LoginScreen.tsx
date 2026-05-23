@@ -70,9 +70,13 @@ const LoginScreen: React.FC = () => {
       await login(username.trim(), password.trim());
 
       if (rememberMe) {
+        const validUntil = new Date(
+          Date.now() + 30 * 24 * 60 * 60 * 1000,
+        ).toISOString();
         await storageService.saveCredentials({
           username: username.trim(),
           password: password.trim(),
+          validUntil,
         });
       } else {
         await storageService.clearCredentials();

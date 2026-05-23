@@ -10,7 +10,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RouteProp } from '@react-navigation/native';
-import type { MainStackParamList } from '../navigation/types';
+import type { MainStackParamList, MainTabParamList } from '../navigation/types';
 import Button from '../components/Button';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
@@ -20,7 +20,7 @@ import useDownload from '../hooks/useDownload';
 import useScreenTitle from '../hooks/useScreenTitle';
 import { colors, commonStyles, spacing, typography, borderRadius } from '../styles/theme';
 
-type DownloadNavigationProp = StackNavigationProp<MainStackParamList, 'Download'>;
+type DownloadNavigationProp = StackNavigationProp<MainStackParamList & MainTabParamList, 'Download'>;
 type DownloadRouteProp = RouteProp<MainStackParamList, 'Download'>;
 
 const DownloadScreen: React.FC = () => {
@@ -48,7 +48,7 @@ const DownloadScreen: React.FC = () => {
   }, [navigation]);
 
   const handleViewHistory = useCallback(() => {
-    navigation.navigate('History');
+    navigation.navigate('DownloadsTab');
   }, [navigation]);
 
   const renderContent = () => {

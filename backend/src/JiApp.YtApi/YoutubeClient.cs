@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Google.Apis.YouTube.v3;
 using YoutubeDLSharp;
@@ -31,10 +32,10 @@ public sealed class YoutubeClient(
             .Where(item => item.Id.Kind == "youtube#video")
             .Select(item => new YoutubeVideo(
                 item.Id.VideoId,
-                item.Snippet.Title,
-                item.Snippet.Description,
+                WebUtility.HtmlDecode(item.Snippet.Title),
+                WebUtility.HtmlDecode(item.Snippet.Description),
                 item.Snippet.Thumbnails.Default__.Url,
-                item.Snippet.ChannelTitle))
+                WebUtility.HtmlDecode(item.Snippet.ChannelTitle)))
             .ToList();
 
         return results.AsReadOnly();
@@ -52,7 +53,14 @@ public sealed class YoutubeClient(
             OutputFileTemplate = Path.Combine(outputPath, $"{Guid.NewGuid():N}.%(ext)s")
         };
 
-        var result = await youtubeDl.RunAudioDownload(videoUrl, AudioConversionFormat.Mp3);
+        var options = new OptionSet
+        {
+            NoPlaylist = true,
+            ExtractAudio = true,
+            AudioFormat = AudioConversionFormat.Mp3,
+            ExtractorArgs = "youtube:player_client=android_vr"
+        };
+        var result = await youtubeDl.RunWithOptions(videoUrl, options, ct: CancellationToken.None);
 
         return result.Success
             ? new YoutubeClientResponse(result.Data, true, [])

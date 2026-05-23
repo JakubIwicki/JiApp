@@ -15,6 +15,7 @@ Every action you take must leverage the `using-superpowers` skill. This defines 
 Before touching a single file, you must understand the "Blast Radius."
 * **Query Intent:** Use `/graphify` to map relationships. Ask: *"Who calls this?"*, *"Where is this state persisted?"*, *"Show me the flow from UI to Database."*
 * **Avoid Grep-Blindness:** Do not search for strings; search for **dependencies**. Use the graph to find the "Truth" of the codebase.
+* **Exploring codebase:** When exploring the codebase for files related to the problem please use `graphify`.
 
 ---
 

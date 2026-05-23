@@ -70,4 +70,41 @@ describe('apiClient 401 response interceptor', () => {
     expect(storageService.clearUsername).not.toHaveBeenCalled();
     expect(storageService.clearCredentials).not.toHaveBeenCalled();
   });
+
+  it('attaches _serverError from response body for 5xx errors', async () => {
+    const error502 = {
+      isAxiosError: true,
+      response: { status: 502, data: { error: 'Failed to download video: Video unavailable' } },
+    };
+
+    await expect(errorHandler(error502)).rejects.toMatchObject({
+      _serverError: 'Failed to download video: Video unavailable',
+    });
+
+    expect(storageService.clearToken).not.toHaveBeenCalled();
+  });
+
+  it('does not attach _serverError when error response has no data.error', async () => {
+    const error500 = {
+      isAxiosError: true,
+      response: { status: 500, data: { details: 'No error property' } },
+    };
+
+    const result = await expect(errorHandler(error500)).rejects.not.toMatchObject({
+      _serverError: expect.any(String),
+    });
+
+    expect(storageService.clearToken).not.toHaveBeenCalled();
+  });
+
+  it('does not attach _serverError on 401 errors', async () => {
+    const error401 = {
+      isAxiosError: true,
+      response: { status: 401, data: { error: 'Unauthorized' } },
+    };
+
+    await expect(errorHandler(error401)).rejects.not.toMatchObject({
+      _serverError: expect.any(String),
+    });
+  });
 });
