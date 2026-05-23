@@ -4,31 +4,13 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using JiApp.Api.Features.Downloads.DownloadHistory;
 using JiApp.Common.Models;
-using JiApp.Infrastructure.Repositories;
-using JiApp.Tests.Mocks;
-using Microsoft.Extensions.Logging;
-using Moq;
+using JiApp.Tests.Fixtures;
 using Xunit;
 
 namespace JiApp.Tests.Features.Downloads;
 
 public class DownloadHistoryHandlerTests
 {
-    private readonly Mock<IDownloadHistoryRepository> _downloadHistoryRepoMock;
-    private readonly DownloadHistoryHandler _handler;
-
-    public DownloadHistoryHandlerTests()
-    {
-        _downloadHistoryRepoMock = DownloadHistoryRepositoryMock.GetSuccessful();
-        var currentUserMock = CurrentUserServiceMock.GetSuccessful();
-        var loggerMock = LoggerMock.GetSuccessful<DownloadHistoryHandler>();
-
-        _handler = new DownloadHistoryHandler(
-            _downloadHistoryRepoMock.Object,
-            currentUserMock.Object,
-            loggerMock.Object);
-    }
-
     [Fact]
     public async Task HandleAsync_WithHistory_ReturnsUserDownloadHistory()
     {
@@ -54,12 +36,13 @@ public class DownloadHistoryHandlerTests
             }
         }.AsReadOnly();
 
-        _downloadHistoryRepoMock.Setup(x => x.GetByUserIdAsync(1L, 10, 0))
-            .ReturnsAsync(history);
+        var ctx = new DownloadHistoryHandlerFixture()
+            .WithGetByUserIdAsync(1L, 10, history, 0)
+            .Build();
 
         var request = new DownloadHistoryRequest(null);
 
-        var result = await _handler.HandleAsync(request);
+        var result = await ctx.Handler.HandleAsync(request);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
@@ -92,12 +75,13 @@ public class DownloadHistoryHandlerTests
             }
         }.AsReadOnly();
 
-        _downloadHistoryRepoMock.Setup(x => x.GetByUserIdAsync(1L, 5, 0))
-            .ReturnsAsync(history);
+        var ctx = new DownloadHistoryHandlerFixture()
+            .WithGetByUserIdAsync(1L, 5, history, 0)
+            .Build();
 
         var request = new DownloadHistoryRequest(5);
 
-        var result = await _handler.HandleAsync(request);
+        var result = await ctx.Handler.HandleAsync(request);
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Items.Should().HaveCount(1);
@@ -108,12 +92,13 @@ public class DownloadHistoryHandlerTests
     {
         var emptyHistory = new List<YoutubeDownloadHistory>().AsReadOnly();
 
-        _downloadHistoryRepoMock.Setup(x => x.GetByUserIdAsync(1L, 10, 0))
-            .ReturnsAsync(emptyHistory);
+        var ctx = new DownloadHistoryHandlerFixture()
+            .WithGetByUserIdAsync(1L, 10, emptyHistory, 0)
+            .Build();
 
         var request = new DownloadHistoryRequest(null);
 
-        var result = await _handler.HandleAsync(request);
+        var result = await ctx.Handler.HandleAsync(request);
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Items.Should().BeEmpty();
