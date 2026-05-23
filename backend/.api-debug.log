@@ -1466,3 +1466,267 @@ LIMIT @p2 OFFSET @p
 [22:06:48 DBG] [Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets] Connection id "0HNLP0DO9I0EV" sending FIN because: "The Socket transport's send loop completed gracefully."
 [22:06:48 DBG] [Microsoft.AspNetCore.Server.Kestrel.Http2] The connection queue processing loop for 0HNLP0DO9I0EV completed.
 [22:06:48 DBG] [Microsoft.AspNetCore.Server.Kestrel.Connections] Connection id "0HNLP0DO9I0EV" stopped.
+[22:28:59 DBG] [Microsoft.AspNetCore.Server.Kestrel.Connections] Connection id "0HNLP0DO9I0F0" accepted.
+[22:28:59 DBG] [Microsoft.AspNetCore.Server.Kestrel.Connections] Connection id "0HNLP0DO9I0F0" started.
+[22:28:59 DBG] [Microsoft.AspNetCore.Server.Kestrel.Https.Internal.HttpsConnectionMiddleware] Connection 0HNLP0DO9I0F0 established using the following protocol: Tls13
+[22:28:59 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request starting HTTP/2 GET https://192.168.100.105:5003/api/v1/health - null null
+[22:28:59 INF] [JiApp.Api] --> GET /api/v1/health
+[22:28:59 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] 1 candidate(s) found for the request path '/api/v1/health'
+[22:28:59 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] Endpoint 'HTTP: GET /api/v{version:apiVersion}/health' with route pattern '/api/v{version:apiVersion}/health' is valid for the request path '/api/v1/health'
+[22:28:59 DBG] [Microsoft.AspNetCore.Routing.EndpointRoutingMiddleware] Request matched endpoint 'HTTP: GET /api/v{version:apiVersion}/health'
+[22:28:59 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] AuthenticationScheme: Bearer was not authenticated.
+[22:28:59 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executing endpoint 'HTTP: GET /api/v{version:apiVersion}/health'
+[22:28:59 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Setting HTTP status code 200.
+[22:28:59 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Writing value of type '<>f__AnonymousType0`2' as Json.
+[22:28:59 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executed endpoint 'HTTP: GET /api/v{version:apiVersion}/health'
+[22:28:59 INF] [JiApp.Api] <-- GET /api/v1/health responded 200 in 100ms
+[22:28:59 INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/v1/health responded 200 in 100.9980 ms
+[22:28:59 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request finished HTTP/2 GET https://192.168.100.105:5003/api/v1/health - 200 null application/json; charset=utf-8 101.5332ms
+[22:28:59 DBG] [Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets] Connection id "0HNLP0DO9I0F0" received FIN.
+[22:28:59 DBG] [Microsoft.AspNetCore.Server.Kestrel.Http2] Connection id "0HNLP0DO9I0F0" is closed. The last processed stream ID was 1.
+[22:28:59 DBG] [Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets] Connection id "0HNLP0DO9I0F0" sending FIN because: "The Socket transport's send loop completed gracefully."
+[22:28:59 DBG] [Microsoft.AspNetCore.Server.Kestrel.Http2] The connection queue processing loop for 0HNLP0DO9I0F0 completed.
+[22:28:59 DBG] [Microsoft.AspNetCore.Server.Kestrel.Connections] Connection id "0HNLP0DO9I0F0" stopped.
+[22:31:39 DBG] [Microsoft.AspNetCore.Server.Kestrel.Connections] Connection id "0HNLP0DO9I0F1" accepted.
+[22:31:39 DBG] [Microsoft.AspNetCore.Server.Kestrel.Connections] Connection id "0HNLP0DO9I0F1" started.
+[22:31:39 DBG] [Microsoft.AspNetCore.Server.Kestrel.Https.Internal.HttpsConnectionMiddleware] Connection 0HNLP0DO9I0F1 established using the following protocol: Tls13
+[22:31:39 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request starting HTTP/2 GET https://192.168.100.105:5003/api/v1/auth/me - null null
+[22:31:39 INF] [JiApp.Api] --> GET /api/v1/auth/me
+[22:31:39 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] 1 candidate(s) found for the request path '/api/v1/auth/me'
+[22:31:39 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] Endpoint 'HTTP: GET /api/v{version:apiVersion}/auth/me' with route pattern '/api/v{version:apiVersion}/auth/me' is valid for the request path '/api/v1/auth/me'
+[22:31:39 DBG] [Microsoft.AspNetCore.Routing.EndpointRoutingMiddleware] Request matched endpoint 'HTTP: GET /api/v{version:apiVersion}/auth/me'
+[22:31:39 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] Successfully validated the token.
+[22:31:39 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] AuthenticationScheme: Bearer was successfully authenticated.
+[22:31:39 DBG] [Microsoft.AspNetCore.Authorization.DefaultAuthorizationService] Authorization was successful.
+[22:31:39 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executing endpoint 'HTTP: GET /api/v{version:apiVersion}/auth/me'
+[22:31:39 INF] [JiApp.Api.Features.Auth.Me.MeHandler] Fetching current user
+[22:31:39 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] Entity Framework Core 10.0.8 initialized 'JiAppDbContext' using provider 'Microsoft.EntityFrameworkCore.Sqlite:10.0.8' with options: None
+[22:31:39 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Creating DbConnection.
+[22:31:39 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Created DbConnection. (0ms).
+[22:31:39 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opening connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:31:39 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opened connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:31:39 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Creating DbCommand for 'ExecuteReader'.
+[22:31:39 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Created DbCommand for 'ExecuteReader' (0ms).
+[22:31:39 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Initialized DbCommand for 'ExecuteReader' (0ms).
+[22:31:39 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Executing DbCommand [Parameters=[@p='?' (DbType = Int64)], CommandType='Text', CommandTimeout='30']
+SELECT "a"."Id", "a"."AccessFailedCount", "a"."ConcurrencyStamp", "a"."DisplayName", "a"."Email", "a"."EmailConfirmed", "a"."LockoutEnabled", "a"."LockoutEnd", "a"."NormalizedEmail", "a"."NormalizedUserName", "a"."PasswordHash", "a"."PhoneNumber", "a"."PhoneNumberConfirmed", "a"."SecurityStamp", "a"."TwoFactorEnabled", "a"."UserName"
+FROM "AspNetUsers" AS "a"
+WHERE "a"."Id" = @p
+LIMIT 1
+[22:31:39 INF] [Microsoft.EntityFrameworkCore.Database.Command] Executed DbCommand (1ms) [Parameters=[@p='?' (DbType = Int64)], CommandType='Text', CommandTimeout='30']
+SELECT "a"."Id", "a"."AccessFailedCount", "a"."ConcurrencyStamp", "a"."DisplayName", "a"."Email", "a"."EmailConfirmed", "a"."LockoutEnabled", "a"."LockoutEnd", "a"."NormalizedEmail", "a"."NormalizedUserName", "a"."PasswordHash", "a"."PhoneNumber", "a"."PhoneNumberConfirmed", "a"."SecurityStamp", "a"."TwoFactorEnabled", "a"."UserName"
+FROM "AspNetUsers" AS "a"
+WHERE "a"."Id" = @p
+LIMIT 1
+[22:31:39 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] Context 'JiAppDbContext' started tracking 'User' entity. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[22:31:39 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Closing data reader to 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:31:39 DBG] [Microsoft.EntityFrameworkCore.Database.Command] A data reader for 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' is being disposed after spending 1ms reading results.
+[22:31:39 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:31:39 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[22:31:39 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Setting HTTP status code 200.
+[22:31:39 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Writing value of type 'MeResponse' as Json.
+[22:31:39 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executed endpoint 'HTTP: GET /api/v{version:apiVersion}/auth/me'
+[22:31:39 INF] [JiApp.Api] <-- GET /api/v1/auth/me responded 200 in 9ms
+[22:31:39 INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/v1/auth/me responded 200 in 9.3710 ms
+[22:31:39 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] 'JiAppDbContext' disposed.
+[22:31:39 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:31:39 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[22:31:39 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request finished HTTP/2 GET https://192.168.100.105:5003/api/v1/auth/me - 200 null application/json; charset=utf-8 9.9069ms
+[22:31:40 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request starting HTTP/2 GET https://192.168.100.105:5003/api/v1/search/history?limit=10 - null null
+[22:31:40 INF] [JiApp.Api] --> GET /api/v1/search/history?limit=10
+[22:31:40 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] 1 candidate(s) found for the request path '/api/v1/search/history'
+[22:31:40 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] Endpoint 'HTTP: GET /api/v{version:apiVersion}/search/history' with route pattern '/api/v{version:apiVersion}/search/history' is valid for the request path '/api/v1/search/history'
+[22:31:40 DBG] [Microsoft.AspNetCore.Routing.EndpointRoutingMiddleware] Request matched endpoint 'HTTP: GET /api/v{version:apiVersion}/search/history'
+[22:31:40 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] Successfully validated the token.
+[22:31:40 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] AuthenticationScheme: Bearer was successfully authenticated.
+[22:31:40 DBG] [Microsoft.AspNetCore.Authorization.DefaultAuthorizationService] Authorization was successful.
+[22:31:40 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executing endpoint 'HTTP: GET /api/v{version:apiVersion}/search/history'
+[22:31:40 INF] [JiApp.Api.Features.Search.SearchHistory.SearchHistoryHandler] Fetching search history (limit: 10)
+[22:31:40 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] Entity Framework Core 10.0.8 initialized 'JiAppDbContext' using provider 'Microsoft.EntityFrameworkCore.Sqlite:10.0.8' with options: None
+[22:31:40 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Creating DbConnection.
+[22:31:40 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Created DbConnection. (0ms).
+[22:31:40 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opening connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:31:40 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opened connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:31:40 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Creating DbCommand for 'ExecuteReader'.
+[22:31:40 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Created DbCommand for 'ExecuteReader' (0ms).
+[22:31:40 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Initialized DbCommand for 'ExecuteReader' (0ms).
+[22:31:40 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Executing DbCommand [Parameters=[@userId='?' (DbType = Int64), @p2='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+SELECT "y"."Id", "y"."SearchText", "y"."SearchedAt", "y"."UserId"
+FROM "YoutubeSearchHistory" AS "y"
+WHERE "y"."UserId" = @userId
+ORDER BY "y"."SearchedAt" DESC
+LIMIT @p2 OFFSET @p
+[22:31:40 INF] [Microsoft.EntityFrameworkCore.Database.Command] Executed DbCommand (0ms) [Parameters=[@userId='?' (DbType = Int64), @p2='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+SELECT "y"."Id", "y"."SearchText", "y"."SearchedAt", "y"."UserId"
+FROM "YoutubeSearchHistory" AS "y"
+WHERE "y"."UserId" = @userId
+ORDER BY "y"."SearchedAt" DESC
+LIMIT @p2 OFFSET @p
+[22:31:40 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Closing data reader to 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:31:40 DBG] [Microsoft.EntityFrameworkCore.Database.Command] A data reader for 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' is being disposed after spending 0ms reading results.
+[22:31:40 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:31:40 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[22:31:40 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Setting HTTP status code 200.
+[22:31:40 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Writing value of type 'SearchHistoryResponse' as Json.
+[22:31:40 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executed endpoint 'HTTP: GET /api/v{version:apiVersion}/search/history'
+[22:31:40 INF] [JiApp.Api] <-- GET /api/v1/search/history responded 200 in 3ms
+[22:31:40 INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/v1/search/history responded 200 in 3.3950 ms
+[22:31:40 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] 'JiAppDbContext' disposed.
+[22:31:40 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:31:40 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[22:31:40 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request finished HTTP/2 GET https://192.168.100.105:5003/api/v1/search/history?limit=10 - 200 null application/json; charset=utf-8 3.6527ms
+[22:31:41 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request starting HTTP/2 GET https://192.168.100.105:5003/api/v1/downloads/history - null null
+[22:31:41 INF] [JiApp.Api] --> GET /api/v1/downloads/history
+[22:31:41 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] 1 candidate(s) found for the request path '/api/v1/downloads/history'
+[22:31:41 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] Endpoint 'HTTP: GET /api/v{version:apiVersion}/downloads/history' with route pattern '/api/v{version:apiVersion}/downloads/history' is valid for the request path '/api/v1/downloads/history'
+[22:31:41 DBG] [Microsoft.AspNetCore.Routing.EndpointRoutingMiddleware] Request matched endpoint 'HTTP: GET /api/v{version:apiVersion}/downloads/history'
+[22:31:41 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] Successfully validated the token.
+[22:31:41 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] AuthenticationScheme: Bearer was successfully authenticated.
+[22:31:41 DBG] [Microsoft.AspNetCore.Authorization.DefaultAuthorizationService] Authorization was successful.
+[22:31:41 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executing endpoint 'HTTP: GET /api/v{version:apiVersion}/downloads/history'
+[22:31:41 INF] [JiApp.Api.Features.Downloads.DownloadHistory.DownloadHistoryHandler] Fetching download history (limit: 10)
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] Entity Framework Core 10.0.8 initialized 'JiAppDbContext' using provider 'Microsoft.EntityFrameworkCore.Sqlite:10.0.8' with options: None
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Creating DbConnection.
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Created DbConnection. (0ms).
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opening connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opened connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Creating DbCommand for 'ExecuteReader'.
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Created DbCommand for 'ExecuteReader' (0ms).
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Initialized DbCommand for 'ExecuteReader' (0ms).
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Executing DbCommand [Parameters=[@userId='?' (DbType = Int64), @p2='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+SELECT "y"."Id", "y"."DownloadedAt", "y"."ImageUrl", "y"."UserId", "y"."VideoDescription", "y"."VideoId", "y"."VideoTitle", "y"."VideoUrl"
+FROM "YoutubeDownloadHistory" AS "y"
+WHERE "y"."UserId" = @userId
+ORDER BY "y"."DownloadedAt" DESC
+LIMIT @p2 OFFSET @p
+[22:31:41 INF] [Microsoft.EntityFrameworkCore.Database.Command] Executed DbCommand (0ms) [Parameters=[@userId='?' (DbType = Int64), @p2='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+SELECT "y"."Id", "y"."DownloadedAt", "y"."ImageUrl", "y"."UserId", "y"."VideoDescription", "y"."VideoId", "y"."VideoTitle", "y"."VideoUrl"
+FROM "YoutubeDownloadHistory" AS "y"
+WHERE "y"."UserId" = @userId
+ORDER BY "y"."DownloadedAt" DESC
+LIMIT @p2 OFFSET @p
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Closing data reader to 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] A data reader for 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' is being disposed after spending 0ms reading results.
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[22:31:41 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Setting HTTP status code 200.
+[22:31:41 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Writing value of type 'DownloadHistoryResponse' as Json.
+[22:31:41 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executed endpoint 'HTTP: GET /api/v{version:apiVersion}/downloads/history'
+[22:31:41 INF] [JiApp.Api] <-- GET /api/v1/downloads/history responded 200 in 10ms
+[22:31:41 INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/v1/downloads/history responded 200 in 10.7292 ms
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] 'JiAppDbContext' disposed.
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[22:31:41 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request finished HTTP/2 GET https://192.168.100.105:5003/api/v1/downloads/history - 200 null application/json; charset=utf-8 11.156ms
+[22:31:41 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request starting HTTP/2 GET https://192.168.100.105:5003/api/v1/history?limit=50 - null null
+[22:31:41 INF] [JiApp.Api] --> GET /api/v1/history?limit=50
+[22:31:41 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] 1 candidate(s) found for the request path '/api/v1/history'
+[22:31:41 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] Endpoint 'HTTP: GET /api/v{version:apiVersion}/history' with route pattern '/api/v{version:apiVersion}/history' is valid for the request path '/api/v1/history'
+[22:31:41 DBG] [Microsoft.AspNetCore.Routing.EndpointRoutingMiddleware] Request matched endpoint 'HTTP: GET /api/v{version:apiVersion}/history'
+[22:31:41 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] Successfully validated the token.
+[22:31:41 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] AuthenticationScheme: Bearer was successfully authenticated.
+[22:31:41 DBG] [Microsoft.AspNetCore.Authorization.DefaultAuthorizationService] Authorization was successful.
+[22:31:41 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executing endpoint 'HTTP: GET /api/v{version:apiVersion}/history'
+[22:31:41 INF] [JiApp.Api.Features.History.GetHistory.GetHistoryHandler] Fetching combined history (limit: 50)
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] Entity Framework Core 10.0.8 initialized 'JiAppDbContext' using provider 'Microsoft.EntityFrameworkCore.Sqlite:10.0.8' with options: None
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Creating DbConnection.
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Created DbConnection. (0ms).
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opening connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opened connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Creating DbCommand for 'ExecuteReader'.
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Created DbCommand for 'ExecuteReader' (0ms).
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Initialized DbCommand for 'ExecuteReader' (0ms).
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Executing DbCommand [Parameters=[@userId='?' (DbType = Int64), @p2='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+SELECT "y"."Id", "y"."SearchText", "y"."SearchedAt", "y"."UserId"
+FROM "YoutubeSearchHistory" AS "y"
+WHERE "y"."UserId" = @userId
+ORDER BY "y"."SearchedAt" DESC
+LIMIT @p2 OFFSET @p
+[22:31:41 INF] [Microsoft.EntityFrameworkCore.Database.Command] Executed DbCommand (0ms) [Parameters=[@userId='?' (DbType = Int64), @p2='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+SELECT "y"."Id", "y"."SearchText", "y"."SearchedAt", "y"."UserId"
+FROM "YoutubeSearchHistory" AS "y"
+WHERE "y"."UserId" = @userId
+ORDER BY "y"."SearchedAt" DESC
+LIMIT @p2 OFFSET @p
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Closing data reader to 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] A data reader for 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' is being disposed after spending 0ms reading results.
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opening connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opened connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Creating DbCommand for 'ExecuteReader'.
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Created DbCommand for 'ExecuteReader' (0ms).
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Initialized DbCommand for 'ExecuteReader' (0ms).
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Executing DbCommand [Parameters=[@userId='?' (DbType = Int64), @p2='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+SELECT "y"."Id", "y"."DownloadedAt", "y"."ImageUrl", "y"."UserId", "y"."VideoDescription", "y"."VideoId", "y"."VideoTitle", "y"."VideoUrl"
+FROM "YoutubeDownloadHistory" AS "y"
+WHERE "y"."UserId" = @userId
+ORDER BY "y"."DownloadedAt" DESC
+LIMIT @p2 OFFSET @p
+[22:31:41 INF] [Microsoft.EntityFrameworkCore.Database.Command] Executed DbCommand (0ms) [Parameters=[@userId='?' (DbType = Int64), @p2='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+SELECT "y"."Id", "y"."DownloadedAt", "y"."ImageUrl", "y"."UserId", "y"."VideoDescription", "y"."VideoId", "y"."VideoTitle", "y"."VideoUrl"
+FROM "YoutubeDownloadHistory" AS "y"
+WHERE "y"."UserId" = @userId
+ORDER BY "y"."DownloadedAt" DESC
+LIMIT @p2 OFFSET @p
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Closing data reader to 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] A data reader for 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' is being disposed after spending 0ms reading results.
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[22:31:41 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Setting HTTP status code 200.
+[22:31:41 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Writing value of type 'GetHistoryResponse' as Json.
+[22:31:41 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executed endpoint 'HTTP: GET /api/v{version:apiVersion}/history'
+[22:31:41 INF] [JiApp.Api] <-- GET /api/v1/history responded 200 in 5ms
+[22:31:41 INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/v1/history responded 200 in 5.5636 ms
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] 'JiAppDbContext' disposed.
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:31:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[22:31:41 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request finished HTTP/2 GET https://192.168.100.105:5003/api/v1/history?limit=50 - 200 null application/json; charset=utf-8 5.998ms
+[22:31:44 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request starting HTTP/2 GET https://192.168.100.105:5003/api/v1/downloads/history - null null
+[22:31:44 INF] [JiApp.Api] --> GET /api/v1/downloads/history
+[22:31:44 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] 1 candidate(s) found for the request path '/api/v1/downloads/history'
+[22:31:44 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] Endpoint 'HTTP: GET /api/v{version:apiVersion}/downloads/history' with route pattern '/api/v{version:apiVersion}/downloads/history' is valid for the request path '/api/v1/downloads/history'
+[22:31:44 DBG] [Microsoft.AspNetCore.Routing.EndpointRoutingMiddleware] Request matched endpoint 'HTTP: GET /api/v{version:apiVersion}/downloads/history'
+[22:31:44 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] Successfully validated the token.
+[22:31:44 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] AuthenticationScheme: Bearer was successfully authenticated.
+[22:31:44 DBG] [Microsoft.AspNetCore.Authorization.DefaultAuthorizationService] Authorization was successful.
+[22:31:44 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executing endpoint 'HTTP: GET /api/v{version:apiVersion}/downloads/history'
+[22:31:44 INF] [JiApp.Api.Features.Downloads.DownloadHistory.DownloadHistoryHandler] Fetching download history (limit: 10)
+[22:31:44 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] Entity Framework Core 10.0.8 initialized 'JiAppDbContext' using provider 'Microsoft.EntityFrameworkCore.Sqlite:10.0.8' with options: None
+[22:31:44 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Creating DbConnection.
+[22:31:44 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Created DbConnection. (0ms).
+[22:31:44 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opening connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:31:44 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opened connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:31:44 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Creating DbCommand for 'ExecuteReader'.
+[22:31:44 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Created DbCommand for 'ExecuteReader' (0ms).
+[22:31:44 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Initialized DbCommand for 'ExecuteReader' (0ms).
+[22:31:44 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Executing DbCommand [Parameters=[@userId='?' (DbType = Int64), @p2='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+SELECT "y"."Id", "y"."DownloadedAt", "y"."ImageUrl", "y"."UserId", "y"."VideoDescription", "y"."VideoId", "y"."VideoTitle", "y"."VideoUrl"
+FROM "YoutubeDownloadHistory" AS "y"
+WHERE "y"."UserId" = @userId
+ORDER BY "y"."DownloadedAt" DESC
+LIMIT @p2 OFFSET @p
+[22:31:44 INF] [Microsoft.EntityFrameworkCore.Database.Command] Executed DbCommand (0ms) [Parameters=[@userId='?' (DbType = Int64), @p2='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+SELECT "y"."Id", "y"."DownloadedAt", "y"."ImageUrl", "y"."UserId", "y"."VideoDescription", "y"."VideoId", "y"."VideoTitle", "y"."VideoUrl"
+FROM "YoutubeDownloadHistory" AS "y"
+WHERE "y"."UserId" = @userId
+ORDER BY "y"."DownloadedAt" DESC
+LIMIT @p2 OFFSET @p
+[22:31:44 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Closing data reader to 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:31:44 DBG] [Microsoft.EntityFrameworkCore.Database.Command] A data reader for 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' is being disposed after spending 0ms reading results.
+[22:31:44 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:31:44 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[22:31:44 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Setting HTTP status code 200.
+[22:31:44 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Writing value of type 'DownloadHistoryResponse' as Json.
+[22:31:44 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executed endpoint 'HTTP: GET /api/v{version:apiVersion}/downloads/history'
+[22:31:44 INF] [JiApp.Api] <-- GET /api/v1/downloads/history responded 200 in 5ms
+[22:31:44 INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/v1/downloads/history responded 200 in 5.9567 ms
+[22:31:44 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] 'JiAppDbContext' disposed.
+[22:31:44 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:31:44 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[22:31:44 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request finished HTTP/2 GET https://192.168.100.105:5003/api/v1/downloads/history - 200 null application/json; charset=utf-8 6.3416ms
+[22:31:51 DBG] [Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets] Connection id "0HNLP0DO9I0F1" received FIN.
+[22:31:51 DBG] [Microsoft.AspNetCore.Server.Kestrel.Http2] Connection id "0HNLP0DO9I0F1" is closed. The last processed stream ID was 11.
+[22:31:51 DBG] [Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets] Connection id "0HNLP0DO9I0F1" sending FIN because: "The Socket transport's send loop completed gracefully."
+[22:31:51 DBG] [Microsoft.AspNetCore.Server.Kestrel.Http2] The connection queue processing loop for 0HNLP0DO9I0F1 completed.
+[22:31:51 DBG] [Microsoft.AspNetCore.Server.Kestrel.Connections] Connection id "0HNLP0DO9I0F1" stopped.
