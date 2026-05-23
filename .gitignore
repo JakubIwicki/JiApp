@@ -64,3 +64,6 @@ backend/src/JiApp.Api/Infrastructure/dev-cert.pfx
 graphify-out/
 docs/
 .superpowers/
+
+# Media
+*.mp3
