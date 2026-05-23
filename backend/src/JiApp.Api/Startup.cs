@@ -232,6 +232,7 @@ public class Startup(Settings settings)
                 settings.Jwt!.ExpireMinutes!.Value));
         services.AddSingleton<ITempFileStore, TempFileStore>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddMemoryCache();
 
         services.AddScoped<IValidator<RegisterRequest>, RegisterValidator>();
         services.AddScoped<IValidator<LoginRequest>, LoginValidator>();
