@@ -1,4 +1,5 @@
 using FluentAssertions;
+using JiApp.Common.Abstractions;
 using Xunit;
 
 namespace JiApp.Tests.Common;
@@ -43,5 +44,25 @@ public class ResultTests
         result.IsSuccess.Should().BeFalse();
         result.Value.Should().BeNull();
         result.Error.Should().Be("fail message");
+    }
+
+    [Fact]
+    public void Failure_DefaultErrorCategoryIsNull()
+    {
+        var result = Result<int>.Failure("something went wrong");
+
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be("something went wrong");
+        result.ErrorCategory.Should().BeNull();
+    }
+
+    [Fact]
+    public void Failure_WithErrorCategory_SetsCategory()
+    {
+        var result = Result<int>.Failure("yt-dlp error", "YoutubeDl");
+
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be("yt-dlp error");
+        result.ErrorCategory.Should().Be("YoutubeDl");
     }
 }

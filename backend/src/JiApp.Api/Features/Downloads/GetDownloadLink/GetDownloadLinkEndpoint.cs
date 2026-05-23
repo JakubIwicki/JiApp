@@ -36,14 +36,19 @@ public static class GetDownloadLinkEndpoint
                     return Results.Ok(response);
                 }
 
+                var statusCode = result.ErrorCategory == GetDownloadLinkHandler.YoutubeDlErrorCategory
+                    ? StatusCodes.Status502BadGateway
+                    : StatusCodes.Status500InternalServerError;
+
                 return Results.Json(
-                    new ApiErrorResponse(Error: result.Error!), statusCode: StatusCodes.Status500InternalServerError);
+                    new ApiErrorResponse(Error: result.Error!), statusCode: statusCode);
             })
             .WithTags(SwaggerConstants.Tags.Downloads)
             .WithSummary("Request an MP3 download link for a YouTube video")
             .Produces<DownloadResponse>()
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status500InternalServerError)
+            .ProducesProblem(StatusCodes.Status502BadGateway)
             .RequireAuthorization()
             .RequireRateLimiting(RateLimitPolicyNames.GetDownloadLink)
             .HasApiVersion(1);

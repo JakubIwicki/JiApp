@@ -1,0 +1,1468 @@
+Using launch settings from /home/jakub/JiApp/backend/src/JiApp.Api/Properties/launchSettings.json...
+Building...
+[21:39:29 DBG] [Microsoft.Extensions.Hosting.Internal.Host] Hosting starting
+[21:39:29 INF] [Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager] User profile is available. Using '/home/jakub/.aspnet/DataProtection-Keys' as key repository; keys will not be encrypted at rest.
+[21:39:29 DBG] [Microsoft.AspNetCore.DataProtection.Repositories.FileSystemXmlRepository] Reading data from file '/home/jakub/.aspnet/DataProtection-Keys/key-b4198158-053a-41d4-a8b4-84a1c75657f0.xml'.
+[21:39:29 DBG] [Microsoft.AspNetCore.DataProtection.Repositories.FileSystemXmlRepository] Reading data from file '/home/jakub/.aspnet/DataProtection-Keys/key-49976c28-5995-40f2-8345-6c23a9d12556.xml'.
+[21:39:29 DBG] [Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager] Found key {b4198158-053a-41d4-a8b4-84a1c75657f0}.
+[21:39:29 DBG] [Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager] Found key {49976c28-5995-40f2-8345-6c23a9d12556}.
+[21:39:29 DBG] [Microsoft.AspNetCore.DataProtection.KeyManagement.DefaultKeyResolver] Considering key {49976c28-5995-40f2-8345-6c23a9d12556} with expiration date 2026-08-18 16:26:31Z as default key.
+[21:39:29 DBG] [Microsoft.AspNetCore.DataProtection.TypeForwardingActivator] Forwarded activator type request from Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ConfigurationModel.AuthenticatedEncryptorDescriptorDeserializer, Microsoft.AspNetCore.DataProtection, Version=10.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60 to Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ConfigurationModel.AuthenticatedEncryptorDescriptorDeserializer, Microsoft.AspNetCore.DataProtection, Culture=neutral, PublicKeyToken=adb9793829ddae60
+[21:39:29 DBG] [Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ManagedAuthenticatedEncryptorFactory] Using managed symmetric algorithm 'System.Security.Cryptography.Aes'.
+[21:39:29 DBG] [Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ManagedAuthenticatedEncryptorFactory] Using managed keyed hash algorithm 'System.Security.Cryptography.HMACSHA256'.
+[21:39:29 DBG] [Microsoft.AspNetCore.DataProtection.KeyManagement.KeyRingProvider] Using key {49976c28-5995-40f2-8345-6c23a9d12556} as the default key.
+[21:39:29 DBG] [Microsoft.AspNetCore.DataProtection.Internal.DataProtectionHostedService] Key ring with default key {49976c28-5995-40f2-8345-6c23a9d12556} was loaded during application startup.
+[21:39:29 DBG] [Microsoft.AspNetCore.HostFiltering.HostFilteringMiddleware] Middleware configuration started with options: {AllowedHosts = *, AllowEmptyHosts = True, IncludeFailureMessage = True}
+[21:39:29 DBG] [Microsoft.AspNetCore.HostFiltering.HostFilteringMiddleware] Wildcard detected, all requests with hosts will be allowed.
+[21:39:30 DBG] [Microsoft.AspNetCore.Server.Kestrel.Core.Internal.CertificatePathWatcher] Created directory watcher for '/home/jakub/JiApp/backend/src/JiApp.Api/Infrastructure'.
+[21:39:30 DBG] [Microsoft.AspNetCore.Server.Kestrel.Core.Internal.CertificatePathWatcher] Created file watcher for '/home/jakub/JiApp/backend/src/JiApp.Api/Infrastructure/dev-cert.pfx'.
+[21:39:30 WRN] [Microsoft.AspNetCore.Server.Kestrel] Overriding address(es) 'http://localhost:5001'. Binding to endpoints defined via IConfiguration and/or UseKestrel() instead.
+[21:39:30 INF] [Microsoft.Hosting.Lifetime] Now listening on: http://[::]:5001
+[21:39:30 INF] [Microsoft.Hosting.Lifetime] Now listening on: https://[::]:5003
+[21:39:30 DBG] [Microsoft.AspNetCore.Hosting.Diagnostics] Loaded hosting startup assembly JiApp.Api
+[21:39:30 INF] [Microsoft.Hosting.Lifetime] Application started. Press Ctrl+C to shut down.
+[21:39:30 INF] [Microsoft.Hosting.Lifetime] Hosting environment: Development
+[21:39:30 INF] [Microsoft.Hosting.Lifetime] Content root path: /home/jakub/JiApp/backend/src/JiApp.Api
+[21:39:30 DBG] [Microsoft.Extensions.Hosting.Internal.Host] Hosting started
+[21:42:35 DBG] [Microsoft.AspNetCore.Server.Kestrel.Connections] Connection id "0HNLP0DO9I0EQ" accepted.
+[21:42:35 DBG] [Microsoft.AspNetCore.Server.Kestrel.Connections] Connection id "0HNLP0DO9I0EQ" started.
+[21:42:35 DBG] [Microsoft.AspNetCore.Server.Kestrel.Https.Internal.HttpsConnectionMiddleware] Connection 0HNLP0DO9I0EQ established using the following protocol: Tls13
+[21:42:35 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request starting HTTP/2 GET https://192.168.100.105:5003/api/v1/auth/me - null null
+[21:42:35 INF] [JiApp.Api] --> GET /api/v1/auth/me
+[21:42:36 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] 1 candidate(s) found for the request path '/api/v1/auth/me'
+[21:42:36 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] Endpoint 'HTTP: GET /api/v{version:apiVersion}/auth/me' with route pattern '/api/v{version:apiVersion}/auth/me' is valid for the request path '/api/v1/auth/me'
+[21:42:36 DBG] [Microsoft.AspNetCore.Routing.EndpointRoutingMiddleware] Request matched endpoint 'HTTP: GET /api/v{version:apiVersion}/auth/me'
+[21:42:36 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] Successfully validated the token.
+[21:42:36 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] AuthenticationScheme: Bearer was successfully authenticated.
+[21:42:36 DBG] [Microsoft.AspNetCore.Authorization.DefaultAuthorizationService] Authorization was successful.
+[21:42:36 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executing endpoint 'HTTP: GET /api/v{version:apiVersion}/auth/me'
+[21:42:36 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] An 'IServiceProvider' was created for internal use by Entity Framework.
+[21:42:36 INF] [JiApp.Api.Features.Auth.Me.MeHandler] Fetching current user
+[21:42:36 DBG] [Microsoft.EntityFrameworkCore.Model] The index {'UserId'} was not created on entity type 'IdentityUserRole<long>' as the properties are already covered by the index {'UserId', 'RoleId'}.
+[21:42:36 DBG] [Microsoft.EntityFrameworkCore.Model] The index {'UserId'} was not created on entity type 'IdentityUserToken<long>' as the properties are already covered by the index {'UserId', 'LoginProvider', 'Name'}.
+[21:42:36 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] Entity Framework Core 10.0.8 initialized 'JiAppDbContext' using provider 'Microsoft.EntityFrameworkCore.Sqlite:10.0.8' with options: None
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Query] Compiling query expression: 
+'DbSet<User>()
+    .FirstOrDefault(e => EF.Property<long>(e, "Id") == @p)'
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Query] Generated query execution expression: 
+'queryContext => ShapedQueryCompilingExpressionVisitor.SingleOrDefaultAsync<User>(
+    asyncEnumerable: SingleQueryingEnumerable.Create<User>(
+        relationalQueryContext: (RelationalQueryContext)queryContext, 
+        relationalCommandResolver: parameters => [LIFTABLE Constant: RelationalCommandCache.QueryExpression(
+            Projection Mapping:
+                EmptyProjectionMember -> Dictionary<IPropertyBase, int> { [Property: User.Id (long) Required PK AfterSave:Throw ValueGenerated.OnAdd, 0], [Property: User.AccessFailedCount (int) Required, 1], [Property: User.ConcurrencyStamp (string) Concurrency, 2], [Property: User.DisplayName (string) MaxLength(50), 3], [Property: User.Email (string) MaxLength(256), 4], [Property: User.EmailConfirmed (bool) Required, 5], [Property: User.LockoutEnabled (bool) Required, 6], [Property: User.LockoutEnd (DateTimeOffset?), 7], [Property: User.NormalizedEmail (string) Index MaxLength(256), 8], [Property: User.NormalizedUserName (string) Index MaxLength(256), 9], [Property: User.PasswordHash (string), 10], [Property: User.PhoneNumber (string), 11], [Property: User.PhoneNumberConfirmed (bool) Required, 12], [Property: User.SecurityStamp (string), 13], [Property: User.TwoFactorEnabled (bool) Required, 14], [Property: User.UserName (string) MaxLength(256), 15] }
+            SELECT TOP(1) a.Id, a.AccessFailedCount, a.ConcurrencyStamp, a.DisplayName, a.Email, a.EmailConfirmed, a.LockoutEnabled, a.LockoutEnd, a.NormalizedEmail, a.NormalizedUserName, a.PasswordHash, a.PhoneNumber, a.PhoneNumberConfirmed, a.SecurityStamp, a.TwoFactorEnabled, a.UserName
+            FROM AspNetUsers AS a
+            WHERE a.Id == @p) | Resolver: c => new RelationalCommandCache(
+            c.Dependencies.MemoryCache, 
+            c.RelationalDependencies.QuerySqlGeneratorFactory, 
+            c.RelationalDependencies.RelationalParameterBasedSqlProcessorFactory, 
+            Projection Mapping:
+                EmptyProjectionMember -> Dictionary<IPropertyBase, int> { [Property: User.Id (long) Required PK AfterSave:Throw ValueGenerated.OnAdd, 0], [Property: User.AccessFailedCount (int) Required, 1], [Property: User.ConcurrencyStamp (string) Concurrency, 2], [Property: User.DisplayName (string) MaxLength(50), 3], [Property: User.Email (string) MaxLength(256), 4], [Property: User.EmailConfirmed (bool) Required, 5], [Property: User.LockoutEnabled (bool) Required, 6], [Property: User.LockoutEnd (DateTimeOffset?), 7], [Property: User.NormalizedEmail (string) Index MaxLength(256), 8], [Property: User.NormalizedUserName (string) Index MaxLength(256), 9], [Property: User.PasswordHash (string), 10], [Property: User.PhoneNumber (string), 11], [Property: User.PhoneNumberConfirmed (bool) Required, 12], [Property: User.SecurityStamp (string), 13], [Property: User.TwoFactorEnabled (bool) Required, 14], [Property: User.UserName (string) MaxLength(256), 15] }
+            SELECT TOP(1) a.Id, a.AccessFailedCount, a.ConcurrencyStamp, a.DisplayName, a.Email, a.EmailConfirmed, a.LockoutEnabled, a.LockoutEnd, a.NormalizedEmail, a.NormalizedUserName, a.PasswordHash, a.PhoneNumber, a.PhoneNumberConfirmed, a.SecurityStamp, a.TwoFactorEnabled, a.UserName
+            FROM AspNetUsers AS a
+            WHERE a.Id == @p, 
+            False, 
+            MultipleParameters
+        )].GetRelationalCommandTemplate(parameters), 
+        readerColumns: null, 
+        shaper: (queryContext, dataReader, resultContext, resultCoordinator) => 
+        {
+            User entity;
+            entity = 
+            {
+                MaterializationContext materializationContext1;
+                IEntityType entityType1;
+                User instance1;
+                InternalEntityEntry entry1;
+                bool hasNullKey1;
+                materializationContext1 = new MaterializationContext(
+                    [LIFTABLE Constant: ValueBuffer | Resolver: _ => (object)ValueBuffer.Empty], 
+                    queryContext.Context
+                );
+                instance1 = default(User);
+                entry1 = queryContext.TryGetEntry(
+                    key: [LIFTABLE Constant: Key: User.Id PK | Resolver: c => c.Dependencies.Model.FindEntityType("JiApp.Common.Models.User").FindPrimaryKey()], 
+                    keyValues: new object[]{ (object)dataReader.GetInt64(0) }, 
+                    throwOnNullKey: True, 
+                    hasNullKey: hasNullKey1);
+                !(hasNullKey1) ? entry1 != default(InternalEntityEntry) ? 
+                {
+                    entityType1 = entry1.EntityType;
+                    return instance1 = (User)entry1.Entity;
+                } : 
+                {
+                    ISnapshot shadowSnapshot1;
+                    shadowSnapshot1 = [LIFTABLE Constant: Snapshot | Resolver: _ => Snapshot.Empty];
+                    entityType1 = [LIFTABLE Constant: EntityType: User | Resolver: namelessParameter{0} => namelessParameter{0}.Dependencies.Model.FindEntityType("JiApp.Common.Models.User")];
+                    instance1 = switch (entityType1)
+                    {
+                        case [LIFTABLE Constant: EntityType: User | Resolver: namelessParameter{1} => namelessParameter{1}.Dependencies.Model.FindEntityType("JiApp.Common.Models.User")]: 
+                            {
+                                return 
+                                {
+                                    User instance;
+                                    instance = new User();
+                                    instance.<Id>k__BackingField = dataReader.GetInt64(0);
+                                    instance.<AccessFailedCount>k__BackingField = dataReader.GetInt32(1);
+                                    instance.<ConcurrencyStamp>k__BackingField = dataReader.IsDBNull(2) ? default(string) : dataReader.GetString(2);
+                                    instance.<DisplayName>k__BackingField = dataReader.IsDBNull(3) ? default(string) : dataReader.GetString(3);
+                                    instance.<Email>k__BackingField = dataReader.IsDBNull(4) ? default(string) : dataReader.GetString(4);
+                                    instance.<EmailConfirmed>k__BackingField = dataReader.GetBoolean(5);
+                                    instance.<LockoutEnabled>k__BackingField = dataReader.GetBoolean(6);
+                                    instance.<LockoutEnd>k__BackingField = dataReader.IsDBNull(7) ? default(DateTimeOffset?) : (DateTimeOffset?)dataReader.GetFieldValue<DateTimeOffset>(7);
+                                    instance.<NormalizedEmail>k__BackingField = dataReader.IsDBNull(8) ? default(string) : dataReader.GetString(8);
+                                    instance.<NormalizedUserName>k__BackingField = dataReader.IsDBNull(9) ? default(string) : dataReader.GetString(9);
+                                    instance.<PasswordHash>k__BackingField = dataReader.IsDBNull(10) ? default(string) : dataReader.GetString(10);
+                                    instance.<PhoneNumber>k__BackingField = dataReader.IsDBNull(11) ? default(string) : dataReader.GetString(11);
+                                    instance.<PhoneNumberConfirmed>k__BackingField = dataReader.GetBoolean(12);
+                                    instance.<SecurityStamp>k__BackingField = dataReader.IsDBNull(13) ? default(string) : dataReader.GetString(13);
+                                    instance.<TwoFactorEnabled>k__BackingField = dataReader.GetBoolean(14);
+                                    instance.<UserName>k__BackingField = dataReader.IsDBNull(15) ? default(string) : dataReader.GetString(15);
+                                    (instance is IInjectableService) ? ((IInjectableService)instance).Injected(
+                                        context: materializationContext1.Context, 
+                                        entity: instance, 
+                                        queryTrackingBehavior: TrackAll, 
+                                        structuralType: [LIFTABLE Constant: EntityType: User | Resolver: namelessParameter{2} => namelessParameter{2}.Dependencies.Model.FindEntityType("JiApp.Common.Models.User")]) : default(void);
+                                    return instance;
+                                }}
+                        default: 
+                            default(User)
+                    }
+                    ;
+                    entry1 = entityType1 == default(IEntityType) ? default(InternalEntityEntry) : queryContext.StartTracking(
+                        entityType: entityType1, 
+                        entity: instance1, 
+                        snapshot: shadowSnapshot1);
+                    return instance1;
+                } : default(void);
+                return instance1;
+            };
+            return entity;
+        }, 
+        contextType: JiApp.Infrastructure.Persistence.JiAppDbContext, 
+        standAloneStateManager: False, 
+        detailedErrorsEnabled: False, 
+        threadSafetyChecksEnabled: True), 
+    cancellationToken: queryContext.CancellationToken)'
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Creating DbConnection.
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Created DbConnection. (15ms).
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opening connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opened connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Creating DbCommand for 'ExecuteReader'.
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Created DbCommand for 'ExecuteReader' (2ms).
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Initialized DbCommand for 'ExecuteReader' (8ms).
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Executing DbCommand [Parameters=[@p='?' (DbType = Int64)], CommandType='Text', CommandTimeout='30']
+SELECT "a"."Id", "a"."AccessFailedCount", "a"."ConcurrencyStamp", "a"."DisplayName", "a"."Email", "a"."EmailConfirmed", "a"."LockoutEnabled", "a"."LockoutEnd", "a"."NormalizedEmail", "a"."NormalizedUserName", "a"."PasswordHash", "a"."PhoneNumber", "a"."PhoneNumberConfirmed", "a"."SecurityStamp", "a"."TwoFactorEnabled", "a"."UserName"
+FROM "AspNetUsers" AS "a"
+WHERE "a"."Id" = @p
+LIMIT 1
+[21:42:37 INF] [Microsoft.EntityFrameworkCore.Database.Command] Executed DbCommand (16ms) [Parameters=[@p='?' (DbType = Int64)], CommandType='Text', CommandTimeout='30']
+SELECT "a"."Id", "a"."AccessFailedCount", "a"."ConcurrencyStamp", "a"."DisplayName", "a"."Email", "a"."EmailConfirmed", "a"."LockoutEnabled", "a"."LockoutEnd", "a"."NormalizedEmail", "a"."NormalizedUserName", "a"."PasswordHash", "a"."PhoneNumber", "a"."PhoneNumberConfirmed", "a"."SecurityStamp", "a"."TwoFactorEnabled", "a"."UserName"
+FROM "AspNetUsers" AS "a"
+WHERE "a"."Id" = @p
+LIMIT 1
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] Context 'JiAppDbContext' started tracking 'User' entity. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Closing data reader to 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Database.Command] A data reader for 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' is being disposed after spending 81ms reading results.
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (3ms).
+[21:42:37 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Setting HTTP status code 200.
+[21:42:37 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Writing value of type 'MeResponse' as Json.
+[21:42:37 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executed endpoint 'HTTP: GET /api/v{version:apiVersion}/auth/me'
+[21:42:37 INF] [JiApp.Api] <-- GET /api/v1/auth/me responded 200 in 1621ms
+[21:42:37 INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/v1/auth/me responded 200 in 1651.6586 ms
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] 'JiAppDbContext' disposed.
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:42:37 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request finished HTTP/2 GET https://192.168.100.105:5003/api/v1/auth/me - 200 null application/json; charset=utf-8 1668.8233ms
+[21:42:37 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request starting HTTP/2 GET https://192.168.100.105:5003/api/v1/search/history?limit=10 - null null
+[21:42:37 INF] [JiApp.Api] --> GET /api/v1/search/history?limit=10
+[21:42:37 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] 1 candidate(s) found for the request path '/api/v1/search/history'
+[21:42:37 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] Endpoint 'HTTP: GET /api/v{version:apiVersion}/search/history' with route pattern '/api/v{version:apiVersion}/search/history' is valid for the request path '/api/v1/search/history'
+[21:42:37 DBG] [Microsoft.AspNetCore.Routing.EndpointRoutingMiddleware] Request matched endpoint 'HTTP: GET /api/v{version:apiVersion}/search/history'
+[21:42:37 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] Successfully validated the token.
+[21:42:37 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] AuthenticationScheme: Bearer was successfully authenticated.
+[21:42:37 DBG] [Microsoft.AspNetCore.Authorization.DefaultAuthorizationService] Authorization was successful.
+[21:42:37 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executing endpoint 'HTTP: GET /api/v{version:apiVersion}/search/history'
+[21:42:37 INF] [JiApp.Api.Features.Search.SearchHistory.SearchHistoryHandler] Fetching search history (limit: 10)
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] Entity Framework Core 10.0.8 initialized 'JiAppDbContext' using provider 'Microsoft.EntityFrameworkCore.Sqlite:10.0.8' with options: None
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Query] Compiling query expression: 
+'DbSet<YoutubeSearchHistory>()
+    .AsNoTracking()
+    .Where(h => h.UserId == @userId)
+    .OrderByDescending(h => h.SearchedAt)
+    .Skip(@p)
+    .Take(@p2)'
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Query] Generated query execution expression: 
+'queryContext => SingleQueryingEnumerable.Create<YoutubeSearchHistory>(
+    relationalQueryContext: (RelationalQueryContext)queryContext, 
+    relationalCommandResolver: parameters => [LIFTABLE Constant: RelationalCommandCache.QueryExpression(
+        Projection Mapping:
+            EmptyProjectionMember -> Dictionary<IPropertyBase, int> { [Property: YoutubeSearchHistory.Id (long) Required PK AfterSave:Throw ValueGenerated.OnAdd, 0], [Property: YoutubeSearchHistory.SearchText (string) MaxLength(100), 1], [Property: YoutubeSearchHistory.SearchedAt (DateTime?), 2], [Property: YoutubeSearchHistory.UserId (long) Required FK Index, 3] }
+        SELECT y.Id, y.SearchText, y.SearchedAt, y.UserId
+        FROM YoutubeSearchHistory AS y
+        WHERE y.UserId == @userId
+        ORDER BY y.SearchedAt DESC
+        OFFSET @p ROWS FETCH NEXT @p2 ROWS ONLY) | Resolver: c => new RelationalCommandCache(
+        c.Dependencies.MemoryCache, 
+        c.RelationalDependencies.QuerySqlGeneratorFactory, 
+        c.RelationalDependencies.RelationalParameterBasedSqlProcessorFactory, 
+        Projection Mapping:
+            EmptyProjectionMember -> Dictionary<IPropertyBase, int> { [Property: YoutubeSearchHistory.Id (long) Required PK AfterSave:Throw ValueGenerated.OnAdd, 0], [Property: YoutubeSearchHistory.SearchText (string) MaxLength(100), 1], [Property: YoutubeSearchHistory.SearchedAt (DateTime?), 2], [Property: YoutubeSearchHistory.UserId (long) Required FK Index, 3] }
+        SELECT y.Id, y.SearchText, y.SearchedAt, y.UserId
+        FROM YoutubeSearchHistory AS y
+        WHERE y.UserId == @userId
+        ORDER BY y.SearchedAt DESC
+        OFFSET @p ROWS FETCH NEXT @p2 ROWS ONLY, 
+        False, 
+        MultipleParameters
+    )].GetRelationalCommandTemplate(parameters), 
+    readerColumns: null, 
+    shaper: (queryContext, dataReader, resultContext, resultCoordinator) => 
+    {
+        YoutubeSearchHistory entity;
+        entity = 
+        {
+            MaterializationContext materializationContext1;
+            IEntityType entityType1;
+            YoutubeSearchHistory instance1;
+            materializationContext1 = new MaterializationContext(
+                [LIFTABLE Constant: ValueBuffer | Resolver: _ => (object)ValueBuffer.Empty], 
+                queryContext.Context
+            );
+            instance1 = default(YoutubeSearchHistory);
+            (object)dataReader.GetInt64(0) != null ? 
+            {
+                ISnapshot shadowSnapshot1;
+                shadowSnapshot1 = [LIFTABLE Constant: Snapshot | Resolver: _ => Snapshot.Empty];
+                entityType1 = [LIFTABLE Constant: EntityType: YoutubeSearchHistory | Resolver: namelessParameter{0} => namelessParameter{0}.Dependencies.Model.FindEntityType("JiApp.Common.Models.YoutubeSearchHistory")];
+                instance1 = switch (entityType1)
+                {
+                    case [LIFTABLE Constant: EntityType: YoutubeSearchHistory | Resolver: namelessParameter{1} => namelessParameter{1}.Dependencies.Model.FindEntityType("JiApp.Common.Models.YoutubeSearchHistory")]: 
+                        {
+                            return 
+                            {
+                                YoutubeSearchHistory instance;
+                                instance = new YoutubeSearchHistory();
+                                instance.<Id>k__BackingField = dataReader.GetInt64(0);
+                                instance.<SearchText>k__BackingField = dataReader.IsDBNull(1) ? default(string) : dataReader.GetString(1);
+                                instance.<SearchedAt>k__BackingField = dataReader.IsDBNull(2) ? default(DateTime?) : (DateTime?)dataReader.GetDateTime(2);
+                                instance.<UserId>k__BackingField = dataReader.GetInt64(3);
+                                (instance is IInjectableService) ? ((IInjectableService)instance).Injected(
+                                    context: materializationContext1.Context, 
+                                    entity: instance, 
+                                    queryTrackingBehavior: NoTracking, 
+                                    structuralType: [LIFTABLE Constant: EntityType: YoutubeSearchHistory | Resolver: namelessParameter{2} => namelessParameter{2}.Dependencies.Model.FindEntityType("JiApp.Common.Models.YoutubeSearchHistory")]) : default(void);
+                                return instance;
+                            }}
+                    default: 
+                        default(YoutubeSearchHistory)
+                }
+                ;
+                return instance1;
+            } : 
+            {
+                object[] keyValues1;
+                keyValues1 = new object[]{ (object)dataReader.GetInt64(0) };
+                return ShapedQueryCompilingExpressionVisitor.CreateNullKeyValueInNoTrackingQuery(
+                    entityType: [LIFTABLE Constant: EntityType: YoutubeSearchHistory | Resolver: namelessParameter{3} => namelessParameter{3}.Dependencies.Model.FindEntityType("JiApp.Common.Models.YoutubeSearchHistory")], 
+                    properties: [LIFTABLE Constant: List<RuntimeProperty> { Property: YoutubeSearchHistory.Id (long) Required PK AfterSave:Throw ValueGenerated.OnAdd } | Resolver: c => c.Dependencies.Model.FindEntityType("JiApp.Common.Models.YoutubeSearchHistory").FindPrimaryKey().Properties], 
+                    keyValues: keyValues1);
+            };
+            return instance1;
+        };
+        return entity;
+    }, 
+    contextType: JiApp.Infrastructure.Persistence.JiAppDbContext, 
+    standAloneStateManager: False, 
+    detailedErrorsEnabled: False, 
+    threadSafetyChecksEnabled: True)'
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Creating DbConnection.
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Created DbConnection. (0ms).
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opening connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opened connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Creating DbCommand for 'ExecuteReader'.
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Created DbCommand for 'ExecuteReader' (0ms).
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Initialized DbCommand for 'ExecuteReader' (0ms).
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Executing DbCommand [Parameters=[@userId='?' (DbType = Int64), @p2='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+SELECT "y"."Id", "y"."SearchText", "y"."SearchedAt", "y"."UserId"
+FROM "YoutubeSearchHistory" AS "y"
+WHERE "y"."UserId" = @userId
+ORDER BY "y"."SearchedAt" DESC
+LIMIT @p2 OFFSET @p
+[21:42:37 INF] [Microsoft.EntityFrameworkCore.Database.Command] Executed DbCommand (0ms) [Parameters=[@userId='?' (DbType = Int64), @p2='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+SELECT "y"."Id", "y"."SearchText", "y"."SearchedAt", "y"."UserId"
+FROM "YoutubeSearchHistory" AS "y"
+WHERE "y"."UserId" = @userId
+ORDER BY "y"."SearchedAt" DESC
+LIMIT @p2 OFFSET @p
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Closing data reader to 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Database.Command] A data reader for 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' is being disposed after spending 1ms reading results.
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:42:37 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Setting HTTP status code 200.
+[21:42:37 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Writing value of type 'SearchHistoryResponse' as Json.
+[21:42:37 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executed endpoint 'HTTP: GET /api/v{version:apiVersion}/search/history'
+[21:42:37 INF] [JiApp.Api] <-- GET /api/v1/search/history responded 200 in 132ms
+[21:42:37 INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/v1/search/history responded 200 in 133.7312 ms
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] 'JiAppDbContext' disposed.
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:42:37 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:42:37 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request finished HTTP/2 GET https://192.168.100.105:5003/api/v1/search/history?limit=10 - 200 null application/json; charset=utf-8 135.2409ms
+[21:42:39 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request starting HTTP/2 POST https://192.168.100.105:5003/api/v1/search - application/json 25
+[21:42:39 INF] [JiApp.Api] --> POST /api/v1/search
+[21:42:39 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] 1 candidate(s) found for the request path '/api/v1/search'
+[21:42:39 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] Endpoint 'HTTP: POST /api/v{version:apiVersion}/search' with route pattern '/api/v{version:apiVersion}/search' is valid for the request path '/api/v1/search'
+[21:42:39 DBG] [Microsoft.AspNetCore.Routing.EndpointRoutingMiddleware] Request matched endpoint 'HTTP: POST /api/v{version:apiVersion}/search'
+[21:42:39 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] Successfully validated the token.
+[21:42:39 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] AuthenticationScheme: Bearer was successfully authenticated.
+[21:42:39 DBG] [Microsoft.AspNetCore.Authorization.DefaultAuthorizationService] Authorization was successful.
+[21:42:39 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executing endpoint 'HTTP: POST /api/v{version:apiVersion}/search'
+[21:42:39 DBG] [Microsoft.AspNetCore.Server.Kestrel] Connection id "0HNLP0DO9I0EQ", Request id "0HNLP0DO9I0EQ:00000007": started reading request body.
+[21:42:39 DBG] [Microsoft.AspNetCore.Server.Kestrel] Connection id "0HNLP0DO9I0EQ", Request id "0HNLP0DO9I0EQ:00000007": done reading request body.
+[21:42:40 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] Entity Framework Core 10.0.8 initialized 'JiAppDbContext' using provider 'Microsoft.EntityFrameworkCore.Sqlite:10.0.8' with options: None
+[21:42:40 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] 'JiAppDbContext' generated a temporary value for the property 'YoutubeSearchHistory.Id'. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[21:42:40 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] Context 'JiAppDbContext' started tracking 'YoutubeSearchHistory' entity. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[21:42:40 DBG] [Microsoft.EntityFrameworkCore.Update] SaveChanges starting for 'JiAppDbContext'.
+[21:42:40 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] DetectChanges starting for 'JiAppDbContext'.
+[21:42:40 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] DetectChanges completed for 'JiAppDbContext'.
+[21:42:40 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Creating DbConnection.
+[21:42:40 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Created DbConnection. (0ms).
+[21:42:40 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opening connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:42:40 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opened connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:42:40 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Creating DbCommand for 'ExecuteReader'.
+[21:42:40 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Created DbCommand for 'ExecuteReader' (0ms).
+[21:42:40 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Initialized DbCommand for 'ExecuteReader' (0ms).
+[21:42:40 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Executing DbCommand [Parameters=[@p0='?' (Size = 13), @p1='?' (DbType = DateTime), @p2='?' (DbType = Int64)], CommandType='Text', CommandTimeout='30']
+INSERT INTO "YoutubeSearchHistory" ("SearchText", "SearchedAt", "UserId")
+VALUES (@p0, @p1, @p2)
+RETURNING "Id";
+[21:42:40 INF] [Microsoft.EntityFrameworkCore.Database.Command] Executed DbCommand (1ms) [Parameters=[@p0='?' (Size = 13), @p1='?' (DbType = DateTime), @p2='?' (DbType = Int64)], CommandType='Text', CommandTimeout='30']
+INSERT INTO "YoutubeSearchHistory" ("SearchText", "SearchedAt", "UserId")
+VALUES (@p0, @p1, @p2)
+RETURNING "Id";
+[21:42:40 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] The foreign key property 'YoutubeSearchHistory.Id' was detected as changed. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see property values.
+[21:42:40 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Closing data reader to 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:42:40 DBG] [Microsoft.EntityFrameworkCore.Database.Command] A data reader for 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' is being disposed after spending 28ms reading results.
+[21:42:40 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:42:40 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:42:40 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] An entity of type 'YoutubeSearchHistory' tracked by 'JiAppDbContext' changed state from 'Added' to 'Unchanged'. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[21:42:40 DBG] [Microsoft.EntityFrameworkCore.Update] SaveChanges completed for 'JiAppDbContext' with 1 entities written to the database.
+[21:42:40 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Setting HTTP status code 200.
+[21:42:40 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Writing value of type 'SearchVideosResponse' as Json.
+[21:42:40 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executed endpoint 'HTTP: POST /api/v{version:apiVersion}/search'
+[21:42:40 INF] [JiApp.Api] <-- POST /api/v1/search responded 200 in 1263ms
+[21:42:40 INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP POST /api/v1/search responded 200 in 1265.2474 ms
+[21:42:40 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] 'JiAppDbContext' disposed.
+[21:42:40 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:42:40 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:42:40 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request finished HTTP/2 POST https://192.168.100.105:5003/api/v1/search - 200 null application/json; charset=utf-8 1268.4679ms
+[21:42:42 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request starting HTTP/2 POST https://192.168.100.105:5003/api/v1/downloads/mp3 - application/json 316
+[21:42:42 INF] [JiApp.Api] --> POST /api/v1/downloads/mp3
+[21:42:42 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] 1 candidate(s) found for the request path '/api/v1/downloads/mp3'
+[21:42:42 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] Endpoint 'HTTP: POST /api/v{version:apiVersion}/downloads/mp3' with route pattern '/api/v{version:apiVersion}/downloads/mp3' is valid for the request path '/api/v1/downloads/mp3'
+[21:42:42 DBG] [Microsoft.AspNetCore.Routing.EndpointRoutingMiddleware] Request matched endpoint 'HTTP: POST /api/v{version:apiVersion}/downloads/mp3'
+[21:42:42 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] Successfully validated the token.
+[21:42:42 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] AuthenticationScheme: Bearer was successfully authenticated.
+[21:42:42 DBG] [Microsoft.AspNetCore.Authorization.DefaultAuthorizationService] Authorization was successful.
+[21:42:42 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executing endpoint 'HTTP: POST /api/v{version:apiVersion}/downloads/mp3'
+[21:42:42 DBG] [Microsoft.AspNetCore.Server.Kestrel] Connection id "0HNLP0DO9I0EQ", Request id "0HNLP0DO9I0EQ:00000009": started reading request body.
+[21:42:42 DBG] [Microsoft.AspNetCore.Server.Kestrel] Connection id "0HNLP0DO9I0EQ", Request id "0HNLP0DO9I0EQ:00000009": done reading request body.
+[21:42:49 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] Entity Framework Core 10.0.8 initialized 'JiAppDbContext' using provider 'Microsoft.EntityFrameworkCore.Sqlite:10.0.8' with options: None
+[21:42:50 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] 'JiAppDbContext' generated a temporary value for the property 'YoutubeDownloadHistory.Id'. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[21:42:50 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] Context 'JiAppDbContext' started tracking 'YoutubeDownloadHistory' entity. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[21:42:50 DBG] [Microsoft.EntityFrameworkCore.Update] SaveChanges starting for 'JiAppDbContext'.
+[21:42:50 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] DetectChanges starting for 'JiAppDbContext'.
+[21:42:50 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] DetectChanges completed for 'JiAppDbContext'.
+[21:42:50 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Creating DbConnection.
+[21:42:50 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Created DbConnection. (0ms).
+[21:42:50 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opening connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:42:50 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opened connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:42:50 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Creating DbCommand for 'ExecuteReader'.
+[21:42:50 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Created DbCommand for 'ExecuteReader' (0ms).
+[21:42:50 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Initialized DbCommand for 'ExecuteReader' (0ms).
+[21:42:50 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Executing DbCommand [Parameters=[@p0='?' (DbType = DateTime), @p1='?' (Size = 46), @p2='?' (DbType = Int64), @p3='?' (Size = 118), @p4='?' (Size = 11), @p5='?' (Size = 26), @p6='?' (Size = 43)], CommandType='Text', CommandTimeout='30']
+INSERT INTO "YoutubeDownloadHistory" ("DownloadedAt", "ImageUrl", "UserId", "VideoDescription", "VideoId", "VideoTitle", "VideoUrl")
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6)
+RETURNING "Id";
+[21:42:50 INF] [Microsoft.EntityFrameworkCore.Database.Command] Executed DbCommand (1ms) [Parameters=[@p0='?' (DbType = DateTime), @p1='?' (Size = 46), @p2='?' (DbType = Int64), @p3='?' (Size = 118), @p4='?' (Size = 11), @p5='?' (Size = 26), @p6='?' (Size = 43)], CommandType='Text', CommandTimeout='30']
+INSERT INTO "YoutubeDownloadHistory" ("DownloadedAt", "ImageUrl", "UserId", "VideoDescription", "VideoId", "VideoTitle", "VideoUrl")
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6)
+RETURNING "Id";
+[21:42:50 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] The foreign key property 'YoutubeDownloadHistory.Id' was detected as changed. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see property values.
+[21:42:50 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Closing data reader to 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:42:50 DBG] [Microsoft.EntityFrameworkCore.Database.Command] A data reader for 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' is being disposed after spending 12ms reading results.
+[21:42:50 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:42:50 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:42:50 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] An entity of type 'YoutubeDownloadHistory' tracked by 'JiAppDbContext' changed state from 'Added' to 'Unchanged'. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[21:42:50 DBG] [Microsoft.EntityFrameworkCore.Update] SaveChanges completed for 'JiAppDbContext' with 1 entities written to the database.
+[21:42:50 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Setting HTTP status code 200.
+[21:42:50 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Writing value of type 'DownloadResponse' as Json.
+[21:42:50 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executed endpoint 'HTTP: POST /api/v{version:apiVersion}/downloads/mp3'
+[21:42:50 INF] [JiApp.Api] <-- POST /api/v1/downloads/mp3 responded 200 in 7251ms
+[21:42:50 INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP POST /api/v1/downloads/mp3 responded 200 in 7251.4013 ms
+[21:42:50 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] 'JiAppDbContext' disposed.
+[21:42:50 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:42:50 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:42:50 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request finished HTTP/2 POST https://192.168.100.105:5003/api/v1/downloads/mp3 - 200 null application/json; charset=utf-8 7251.8437ms
+[21:42:50 DBG] [Microsoft.AspNetCore.Server.Kestrel.Connections] Connection id "0HNLP0DO9I0ER" accepted.
+[21:42:50 DBG] [Microsoft.AspNetCore.Server.Kestrel.Connections] Connection id "0HNLP0DO9I0ER" started.
+[21:42:50 DBG] [Microsoft.AspNetCore.Server.Kestrel.Https.Internal.HttpsConnectionMiddleware] Connection 0HNLP0DO9I0ER established using the following protocol: Tls13
+[21:42:50 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request starting HTTP/2 GET https://192.168.100.105:5003/api/v1/downloads/mp3/file/5f5c734abb4e47659cab9e92c95a9623 - null null
+[21:42:50 INF] [JiApp.Api] --> GET /api/v1/downloads/mp3/file/5f5c734abb4e47659cab9e92c95a9623
+[21:42:50 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] 1 candidate(s) found for the request path '/api/v1/downloads/mp3/file/5f5c734abb4e47659cab9e92c95a9623'
+[21:42:50 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] Endpoint 'HTTP: GET /api/v{version:apiVersion}/downloads/mp3/file/{id}' with route pattern '/api/v{version:apiVersion}/downloads/mp3/file/{id}' is valid for the request path '/api/v1/downloads/mp3/file/5f5c734abb4e47659cab9e92c95a9623'
+[21:42:50 DBG] [Microsoft.AspNetCore.Routing.EndpointRoutingMiddleware] Request matched endpoint 'HTTP: GET /api/v{version:apiVersion}/downloads/mp3/file/{id}'
+[21:42:50 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] Successfully validated the token.
+[21:42:50 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] AuthenticationScheme: Bearer was successfully authenticated.
+[21:42:50 DBG] [Microsoft.AspNetCore.Authorization.DefaultAuthorizationService] Authorization was successful.
+[21:42:50 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executing endpoint 'HTTP: GET /api/v{version:apiVersion}/downloads/mp3/file/{id}'
+[21:42:50 INF] [JiApp.Api.Features.Downloads.DownloadFile.DownloadFileHandler] Download requested for file 5f5c734abb4e47659cab9e92c95a9623
+[21:42:50 WRN] [JiApp.Api.Features.Downloads.DownloadFile.DownloadFileHandler] File 5f5c734abb4e47659cab9e92c95a9623 expired or not found for user 11
+[21:42:50 INF] [Microsoft.AspNetCore.Http.Result.JsonResult] Setting HTTP status code 404.
+[21:42:50 INF] [Microsoft.AspNetCore.Http.Result.JsonResult] Writing value of type 'ApiErrorResponse' as Json.
+[21:42:50 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executed endpoint 'HTTP: GET /api/v{version:apiVersion}/downloads/mp3/file/{id}'
+[21:42:50 INF] [JiApp.Api] <-- GET /api/v1/downloads/mp3/file/5f5c734abb4e47659cab9e92c95a9623 responded 404 in 10ms
+[21:42:50 INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/v1/downloads/mp3/file/5f5c734abb4e47659cab9e92c95a9623 responded 404 in 10.6245 ms
+[21:42:50 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request finished HTTP/2 GET https://192.168.100.105:5003/api/v1/downloads/mp3/file/5f5c734abb4e47659cab9e92c95a9623 - 404 null application/json; charset=utf-8 10.9895ms
+[21:43:02 DBG] [Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets] Connection id "0HNLP0DO9I0ER" reset.
+[21:43:02 DBG] [Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets] Connection id "0HNLP0DO9I0EQ" reset.
+[21:43:02 DBG] [Microsoft.AspNetCore.Server.Kestrel.Http2] Connection id "0HNLP0DO9I0ER" is closed. The last processed stream ID was 3.
+[21:43:02 DBG] [Microsoft.AspNetCore.Server.Kestrel.Http2] Connection id "0HNLP0DO9I0EQ" is closed. The last processed stream ID was 9.
+[21:43:02 DBG] [Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets] Connection id "0HNLP0DO9I0ER" sending FIN because: "The Socket transport's send loop completed gracefully."
+[21:43:02 DBG] [Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets] Connection id "0HNLP0DO9I0EQ" sending FIN because: "The Socket transport's send loop completed gracefully."
+[21:43:02 DBG] [Microsoft.AspNetCore.Server.Kestrel.Http2] The connection queue processing loop for 0HNLP0DO9I0EQ completed.
+[21:43:02 DBG] [Microsoft.AspNetCore.Server.Kestrel.Http2] The connection queue processing loop for 0HNLP0DO9I0ER completed.
+[21:43:02 DBG] [Microsoft.AspNetCore.Server.Kestrel.Connections] Connection id "0HNLP0DO9I0EQ" stopped.
+[21:43:02 DBG] [Microsoft.AspNetCore.Server.Kestrel.Connections] Connection id "0HNLP0DO9I0ER" stopped.
+[21:43:55 DBG] [Microsoft.AspNetCore.Server.Kestrel.Connections] Connection id "0HNLP0DO9I0ES" accepted.
+[21:43:55 DBG] [Microsoft.AspNetCore.Server.Kestrel.Connections] Connection id "0HNLP0DO9I0ES" started.
+[21:43:55 DBG] [Microsoft.AspNetCore.Server.Kestrel.Https.Internal.HttpsConnectionMiddleware] Connection 0HNLP0DO9I0ES established using the following protocol: Tls13
+[21:43:55 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request starting HTTP/2 GET https://192.168.100.105:5003/api/v1/search/history?limit=10 - null null
+[21:43:55 INF] [JiApp.Api] --> GET /api/v1/search/history?limit=10
+[21:43:55 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] 1 candidate(s) found for the request path '/api/v1/search/history'
+[21:43:55 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] Endpoint 'HTTP: GET /api/v{version:apiVersion}/search/history' with route pattern '/api/v{version:apiVersion}/search/history' is valid for the request path '/api/v1/search/history'
+[21:43:55 DBG] [Microsoft.AspNetCore.Routing.EndpointRoutingMiddleware] Request matched endpoint 'HTTP: GET /api/v{version:apiVersion}/search/history'
+[21:43:55 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] Successfully validated the token.
+[21:43:55 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] AuthenticationScheme: Bearer was successfully authenticated.
+[21:43:55 DBG] [Microsoft.AspNetCore.Authorization.DefaultAuthorizationService] Authorization was successful.
+[21:43:55 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executing endpoint 'HTTP: GET /api/v{version:apiVersion}/search/history'
+[21:43:55 INF] [JiApp.Api.Features.Search.SearchHistory.SearchHistoryHandler] Fetching search history (limit: 10)
+[21:43:55 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] Entity Framework Core 10.0.8 initialized 'JiAppDbContext' using provider 'Microsoft.EntityFrameworkCore.Sqlite:10.0.8' with options: None
+[21:43:55 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Creating DbConnection.
+[21:43:55 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Created DbConnection. (0ms).
+[21:43:55 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opening connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:43:55 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opened connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:43:55 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Creating DbCommand for 'ExecuteReader'.
+[21:43:55 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Created DbCommand for 'ExecuteReader' (0ms).
+[21:43:55 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Initialized DbCommand for 'ExecuteReader' (0ms).
+[21:43:55 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Executing DbCommand [Parameters=[@userId='?' (DbType = Int64), @p2='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+SELECT "y"."Id", "y"."SearchText", "y"."SearchedAt", "y"."UserId"
+FROM "YoutubeSearchHistory" AS "y"
+WHERE "y"."UserId" = @userId
+ORDER BY "y"."SearchedAt" DESC
+LIMIT @p2 OFFSET @p
+[21:43:55 INF] [Microsoft.EntityFrameworkCore.Database.Command] Executed DbCommand (0ms) [Parameters=[@userId='?' (DbType = Int64), @p2='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+SELECT "y"."Id", "y"."SearchText", "y"."SearchedAt", "y"."UserId"
+FROM "YoutubeSearchHistory" AS "y"
+WHERE "y"."UserId" = @userId
+ORDER BY "y"."SearchedAt" DESC
+LIMIT @p2 OFFSET @p
+[21:43:55 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Closing data reader to 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:43:55 DBG] [Microsoft.EntityFrameworkCore.Database.Command] A data reader for 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' is being disposed after spending 0ms reading results.
+[21:43:55 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:43:55 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:43:55 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Setting HTTP status code 200.
+[21:43:55 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Writing value of type 'SearchHistoryResponse' as Json.
+[21:43:55 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executed endpoint 'HTTP: GET /api/v{version:apiVersion}/search/history'
+[21:43:55 INF] [JiApp.Api] <-- GET /api/v1/search/history responded 200 in 8ms
+[21:43:55 INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/v1/search/history responded 200 in 9.1660 ms
+[21:43:55 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] 'JiAppDbContext' disposed.
+[21:43:55 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:43:55 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:43:55 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request finished HTTP/2 GET https://192.168.100.105:5003/api/v1/search/history?limit=10 - 200 null application/json; charset=utf-8 9.6664ms
+[21:43:57 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request starting HTTP/2 GET https://192.168.100.105:5003/api/v1/history?limit=50 - null null
+[21:43:57 INF] [JiApp.Api] --> GET /api/v1/history?limit=50
+[21:43:57 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] 1 candidate(s) found for the request path '/api/v1/history'
+[21:43:57 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] Endpoint 'HTTP: GET /api/v{version:apiVersion}/history' with route pattern '/api/v{version:apiVersion}/history' is valid for the request path '/api/v1/history'
+[21:43:57 DBG] [Microsoft.AspNetCore.Routing.EndpointRoutingMiddleware] Request matched endpoint 'HTTP: GET /api/v{version:apiVersion}/history'
+[21:43:57 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] Successfully validated the token.
+[21:43:57 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] AuthenticationScheme: Bearer was successfully authenticated.
+[21:43:57 DBG] [Microsoft.AspNetCore.Authorization.DefaultAuthorizationService] Authorization was successful.
+[21:43:57 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executing endpoint 'HTTP: GET /api/v{version:apiVersion}/history'
+[21:43:57 INF] [JiApp.Api.Features.History.GetHistory.GetHistoryHandler] Fetching combined history (limit: 50)
+[21:43:57 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] Entity Framework Core 10.0.8 initialized 'JiAppDbContext' using provider 'Microsoft.EntityFrameworkCore.Sqlite:10.0.8' with options: None
+[21:43:57 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Creating DbConnection.
+[21:43:57 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Created DbConnection. (0ms).
+[21:43:57 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opening connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:43:57 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opened connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:43:57 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Creating DbCommand for 'ExecuteReader'.
+[21:43:57 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Created DbCommand for 'ExecuteReader' (0ms).
+[21:43:57 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Initialized DbCommand for 'ExecuteReader' (0ms).
+[21:43:57 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Executing DbCommand [Parameters=[@userId='?' (DbType = Int64), @p2='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+SELECT "y"."Id", "y"."SearchText", "y"."SearchedAt", "y"."UserId"
+FROM "YoutubeSearchHistory" AS "y"
+WHERE "y"."UserId" = @userId
+ORDER BY "y"."SearchedAt" DESC
+LIMIT @p2 OFFSET @p
+[21:43:57 INF] [Microsoft.EntityFrameworkCore.Database.Command] Executed DbCommand (0ms) [Parameters=[@userId='?' (DbType = Int64), @p2='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+SELECT "y"."Id", "y"."SearchText", "y"."SearchedAt", "y"."UserId"
+FROM "YoutubeSearchHistory" AS "y"
+WHERE "y"."UserId" = @userId
+ORDER BY "y"."SearchedAt" DESC
+LIMIT @p2 OFFSET @p
+[21:43:57 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Closing data reader to 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:43:57 DBG] [Microsoft.EntityFrameworkCore.Database.Command] A data reader for 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' is being disposed after spending 0ms reading results.
+[21:43:57 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:43:57 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:43:57 DBG] [Microsoft.EntityFrameworkCore.Query] Compiling query expression: 
+'DbSet<YoutubeDownloadHistory>()
+    .AsNoTracking()
+    .Where(h => h.UserId == @userId)
+    .OrderByDescending(h => h.DownloadedAt)
+    .Skip(@p)
+    .Take(@p2)'
+[21:43:57 DBG] [Microsoft.EntityFrameworkCore.Query] Generated query execution expression: 
+'queryContext => SingleQueryingEnumerable.Create<YoutubeDownloadHistory>(
+    relationalQueryContext: (RelationalQueryContext)queryContext, 
+    relationalCommandResolver: parameters => [LIFTABLE Constant: RelationalCommandCache.QueryExpression(
+        Projection Mapping:
+            EmptyProjectionMember -> Dictionary<IPropertyBase, int> { [Property: YoutubeDownloadHistory.Id (long) Required PK AfterSave:Throw ValueGenerated.OnAdd, 0], [Property: YoutubeDownloadHistory.DownloadedAt (DateTime) Required, 1], [Property: YoutubeDownloadHistory.ImageUrl (string) MaxLength(300), 2], [Property: YoutubeDownloadHistory.UserId (long) Required FK Index, 3], [Property: YoutubeDownloadHistory.VideoDescription (string) MaxLength(1000), 4], [Property: YoutubeDownloadHistory.VideoId (string) MaxLength(150), 5], [Property: YoutubeDownloadHistory.VideoTitle (string) MaxLength(300), 6], [Property: YoutubeDownloadHistory.VideoUrl (string) MaxLength(300), 7] }
+        SELECT y.Id, y.DownloadedAt, y.ImageUrl, y.UserId, y.VideoDescription, y.VideoId, y.VideoTitle, y.VideoUrl
+        FROM YoutubeDownloadHistory AS y
+        WHERE y.UserId == @userId
+        ORDER BY y.DownloadedAt DESC
+        OFFSET @p ROWS FETCH NEXT @p2 ROWS ONLY) | Resolver: c => new RelationalCommandCache(
+        c.Dependencies.MemoryCache, 
+        c.RelationalDependencies.QuerySqlGeneratorFactory, 
+        c.RelationalDependencies.RelationalParameterBasedSqlProcessorFactory, 
+        Projection Mapping:
+            EmptyProjectionMember -> Dictionary<IPropertyBase, int> { [Property: YoutubeDownloadHistory.Id (long) Required PK AfterSave:Throw ValueGenerated.OnAdd, 0], [Property: YoutubeDownloadHistory.DownloadedAt (DateTime) Required, 1], [Property: YoutubeDownloadHistory.ImageUrl (string) MaxLength(300), 2], [Property: YoutubeDownloadHistory.UserId (long) Required FK Index, 3], [Property: YoutubeDownloadHistory.VideoDescription (string) MaxLength(1000), 4], [Property: YoutubeDownloadHistory.VideoId (string) MaxLength(150), 5], [Property: YoutubeDownloadHistory.VideoTitle (string) MaxLength(300), 6], [Property: YoutubeDownloadHistory.VideoUrl (string) MaxLength(300), 7] }
+        SELECT y.Id, y.DownloadedAt, y.ImageUrl, y.UserId, y.VideoDescription, y.VideoId, y.VideoTitle, y.VideoUrl
+        FROM YoutubeDownloadHistory AS y
+        WHERE y.UserId == @userId
+        ORDER BY y.DownloadedAt DESC
+        OFFSET @p ROWS FETCH NEXT @p2 ROWS ONLY, 
+        False, 
+        MultipleParameters
+    )].GetRelationalCommandTemplate(parameters), 
+    readerColumns: null, 
+    shaper: (queryContext, dataReader, resultContext, resultCoordinator) => 
+    {
+        YoutubeDownloadHistory entity;
+        entity = 
+        {
+            MaterializationContext materializationContext1;
+            IEntityType entityType1;
+            YoutubeDownloadHistory instance1;
+            materializationContext1 = new MaterializationContext(
+                [LIFTABLE Constant: ValueBuffer | Resolver: _ => (object)ValueBuffer.Empty], 
+                queryContext.Context
+            );
+            instance1 = default(YoutubeDownloadHistory);
+            (object)dataReader.GetInt64(0) != null ? 
+            {
+                ISnapshot shadowSnapshot1;
+                shadowSnapshot1 = [LIFTABLE Constant: Snapshot | Resolver: _ => Snapshot.Empty];
+                entityType1 = [LIFTABLE Constant: EntityType: YoutubeDownloadHistory | Resolver: namelessParameter{0} => namelessParameter{0}.Dependencies.Model.FindEntityType("JiApp.Common.Models.YoutubeDownloadHistory")];
+                instance1 = switch (entityType1)
+                {
+                    case [LIFTABLE Constant: EntityType: YoutubeDownloadHistory | Resolver: namelessParameter{1} => namelessParameter{1}.Dependencies.Model.FindEntityType("JiApp.Common.Models.YoutubeDownloadHistory")]: 
+                        {
+                            return 
+                            {
+                                YoutubeDownloadHistory instance;
+                                instance = new YoutubeDownloadHistory();
+                                instance.<Id>k__BackingField = dataReader.GetInt64(0);
+                                instance.<DownloadedAt>k__BackingField = dataReader.GetDateTime(1);
+                                instance.<ImageUrl>k__BackingField = dataReader.IsDBNull(2) ? default(string) : dataReader.GetString(2);
+                                instance.<UserId>k__BackingField = dataReader.GetInt64(3);
+                                instance.<VideoDescription>k__BackingField = dataReader.IsDBNull(4) ? default(string) : dataReader.GetString(4);
+                                instance.<VideoId>k__BackingField = dataReader.IsDBNull(5) ? default(string) : dataReader.GetString(5);
+                                instance.<VideoTitle>k__BackingField = dataReader.IsDBNull(6) ? default(string) : dataReader.GetString(6);
+                                instance.<VideoUrl>k__BackingField = dataReader.IsDBNull(7) ? default(string) : dataReader.GetString(7);
+                                (instance is IInjectableService) ? ((IInjectableService)instance).Injected(
+                                    context: materializationContext1.Context, 
+                                    entity: instance, 
+                                    queryTrackingBehavior: NoTracking, 
+                                    structuralType: [LIFTABLE Constant: EntityType: YoutubeDownloadHistory | Resolver: namelessParameter{2} => namelessParameter{2}.Dependencies.Model.FindEntityType("JiApp.Common.Models.YoutubeDownloadHistory")]) : default(void);
+                                return instance;
+                            }}
+                    default: 
+                        default(YoutubeDownloadHistory)
+                }
+                ;
+                return instance1;
+            } : 
+            {
+                object[] keyValues1;
+                keyValues1 = new object[]{ (object)dataReader.GetInt64(0) };
+                return ShapedQueryCompilingExpressionVisitor.CreateNullKeyValueInNoTrackingQuery(
+                    entityType: [LIFTABLE Constant: EntityType: YoutubeDownloadHistory | Resolver: namelessParameter{3} => namelessParameter{3}.Dependencies.Model.FindEntityType("JiApp.Common.Models.YoutubeDownloadHistory")], 
+                    properties: [LIFTABLE Constant: List<RuntimeProperty> { Property: YoutubeDownloadHistory.Id (long) Required PK AfterSave:Throw ValueGenerated.OnAdd } | Resolver: c => c.Dependencies.Model.FindEntityType("JiApp.Common.Models.YoutubeDownloadHistory").FindPrimaryKey().Properties], 
+                    keyValues: keyValues1);
+            };
+            return instance1;
+        };
+        return entity;
+    }, 
+    contextType: JiApp.Infrastructure.Persistence.JiAppDbContext, 
+    standAloneStateManager: False, 
+    detailedErrorsEnabled: False, 
+    threadSafetyChecksEnabled: True)'
+[21:43:57 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opening connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:43:57 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opened connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:43:57 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Creating DbCommand for 'ExecuteReader'.
+[21:43:57 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Created DbCommand for 'ExecuteReader' (0ms).
+[21:43:57 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Initialized DbCommand for 'ExecuteReader' (0ms).
+[21:43:57 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Executing DbCommand [Parameters=[@userId='?' (DbType = Int64), @p2='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+SELECT "y"."Id", "y"."DownloadedAt", "y"."ImageUrl", "y"."UserId", "y"."VideoDescription", "y"."VideoId", "y"."VideoTitle", "y"."VideoUrl"
+FROM "YoutubeDownloadHistory" AS "y"
+WHERE "y"."UserId" = @userId
+ORDER BY "y"."DownloadedAt" DESC
+LIMIT @p2 OFFSET @p
+[21:43:57 INF] [Microsoft.EntityFrameworkCore.Database.Command] Executed DbCommand (0ms) [Parameters=[@userId='?' (DbType = Int64), @p2='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+SELECT "y"."Id", "y"."DownloadedAt", "y"."ImageUrl", "y"."UserId", "y"."VideoDescription", "y"."VideoId", "y"."VideoTitle", "y"."VideoUrl"
+FROM "YoutubeDownloadHistory" AS "y"
+WHERE "y"."UserId" = @userId
+ORDER BY "y"."DownloadedAt" DESC
+LIMIT @p2 OFFSET @p
+[21:43:57 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Closing data reader to 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:43:57 DBG] [Microsoft.EntityFrameworkCore.Database.Command] A data reader for 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' is being disposed after spending 0ms reading results.
+[21:43:57 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:43:57 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:43:57 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Setting HTTP status code 200.
+[21:43:57 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Writing value of type 'GetHistoryResponse' as Json.
+[21:43:57 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executed endpoint 'HTTP: GET /api/v{version:apiVersion}/history'
+[21:43:57 INF] [JiApp.Api] <-- GET /api/v1/history responded 200 in 32ms
+[21:43:57 INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/v1/history responded 200 in 32.9928 ms
+[21:43:57 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] 'JiAppDbContext' disposed.
+[21:43:57 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:43:57 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:43:57 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request finished HTTP/2 GET https://192.168.100.105:5003/api/v1/history?limit=50 - 200 null application/json; charset=utf-8 33.5192ms
+[21:44:23 DBG] [Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets] Connection id "0HNLP0DO9I0ES" received FIN.
+[21:44:23 DBG] [Microsoft.AspNetCore.Server.Kestrel.Http2] Connection id "0HNLP0DO9I0ES" is closed. The last processed stream ID was 5.
+[21:44:23 DBG] [Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets] Connection id "0HNLP0DO9I0ES" sending FIN because: "The Socket transport's send loop completed gracefully."
+[21:44:23 DBG] [Microsoft.AspNetCore.Server.Kestrel.Http2] The connection queue processing loop for 0HNLP0DO9I0ES completed.
+[21:44:23 DBG] [Microsoft.AspNetCore.Server.Kestrel.Connections] Connection id "0HNLP0DO9I0ES" stopped.
+[21:46:08 DBG] [Microsoft.AspNetCore.Server.Kestrel.Connections] Connection id "0HNLP0DO9I0ET" accepted.
+[21:46:08 DBG] [Microsoft.AspNetCore.Server.Kestrel.Connections] Connection id "0HNLP0DO9I0ET" started.
+[21:46:08 DBG] [Microsoft.AspNetCore.Server.Kestrel.Https.Internal.HttpsConnectionMiddleware] Connection 0HNLP0DO9I0ET established using the following protocol: Tls13
+[21:46:08 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request starting HTTP/2 GET https://192.168.100.105:5003/api/v1/auth/me - null null
+[21:46:08 INF] [JiApp.Api] --> GET /api/v1/auth/me
+[21:46:08 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] 1 candidate(s) found for the request path '/api/v1/auth/me'
+[21:46:08 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] Endpoint 'HTTP: GET /api/v{version:apiVersion}/auth/me' with route pattern '/api/v{version:apiVersion}/auth/me' is valid for the request path '/api/v1/auth/me'
+[21:46:08 DBG] [Microsoft.AspNetCore.Routing.EndpointRoutingMiddleware] Request matched endpoint 'HTTP: GET /api/v{version:apiVersion}/auth/me'
+[21:46:08 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] Successfully validated the token.
+[21:46:08 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] AuthenticationScheme: Bearer was successfully authenticated.
+[21:46:08 DBG] [Microsoft.AspNetCore.Authorization.DefaultAuthorizationService] Authorization was successful.
+[21:46:08 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executing endpoint 'HTTP: GET /api/v{version:apiVersion}/auth/me'
+[21:46:08 INF] [JiApp.Api.Features.Auth.Me.MeHandler] Fetching current user
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] Entity Framework Core 10.0.8 initialized 'JiAppDbContext' using provider 'Microsoft.EntityFrameworkCore.Sqlite:10.0.8' with options: None
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Creating DbConnection.
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Created DbConnection. (0ms).
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opening connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opened connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Creating DbCommand for 'ExecuteReader'.
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Created DbCommand for 'ExecuteReader' (0ms).
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Initialized DbCommand for 'ExecuteReader' (0ms).
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Executing DbCommand [Parameters=[@p='?' (DbType = Int64)], CommandType='Text', CommandTimeout='30']
+SELECT "a"."Id", "a"."AccessFailedCount", "a"."ConcurrencyStamp", "a"."DisplayName", "a"."Email", "a"."EmailConfirmed", "a"."LockoutEnabled", "a"."LockoutEnd", "a"."NormalizedEmail", "a"."NormalizedUserName", "a"."PasswordHash", "a"."PhoneNumber", "a"."PhoneNumberConfirmed", "a"."SecurityStamp", "a"."TwoFactorEnabled", "a"."UserName"
+FROM "AspNetUsers" AS "a"
+WHERE "a"."Id" = @p
+LIMIT 1
+[21:46:08 INF] [Microsoft.EntityFrameworkCore.Database.Command] Executed DbCommand (0ms) [Parameters=[@p='?' (DbType = Int64)], CommandType='Text', CommandTimeout='30']
+SELECT "a"."Id", "a"."AccessFailedCount", "a"."ConcurrencyStamp", "a"."DisplayName", "a"."Email", "a"."EmailConfirmed", "a"."LockoutEnabled", "a"."LockoutEnd", "a"."NormalizedEmail", "a"."NormalizedUserName", "a"."PasswordHash", "a"."PhoneNumber", "a"."PhoneNumberConfirmed", "a"."SecurityStamp", "a"."TwoFactorEnabled", "a"."UserName"
+FROM "AspNetUsers" AS "a"
+WHERE "a"."Id" = @p
+LIMIT 1
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] Context 'JiAppDbContext' started tracking 'User' entity. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Closing data reader to 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Database.Command] A data reader for 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' is being disposed after spending 0ms reading results.
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:46:08 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Setting HTTP status code 200.
+[21:46:08 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Writing value of type 'MeResponse' as Json.
+[21:46:08 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executed endpoint 'HTTP: GET /api/v{version:apiVersion}/auth/me'
+[21:46:08 INF] [JiApp.Api] <-- GET /api/v1/auth/me responded 200 in 16ms
+[21:46:08 INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/v1/auth/me responded 200 in 17.0684 ms
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] 'JiAppDbContext' disposed.
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:46:08 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request finished HTTP/2 GET https://192.168.100.105:5003/api/v1/auth/me - 200 null application/json; charset=utf-8 17.6733ms
+[21:46:08 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request starting HTTP/2 GET https://192.168.100.105:5003/api/v1/search/history?limit=10 - null null
+[21:46:08 INF] [JiApp.Api] --> GET /api/v1/search/history?limit=10
+[21:46:08 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] 1 candidate(s) found for the request path '/api/v1/search/history'
+[21:46:08 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] Endpoint 'HTTP: GET /api/v{version:apiVersion}/search/history' with route pattern '/api/v{version:apiVersion}/search/history' is valid for the request path '/api/v1/search/history'
+[21:46:08 DBG] [Microsoft.AspNetCore.Routing.EndpointRoutingMiddleware] Request matched endpoint 'HTTP: GET /api/v{version:apiVersion}/search/history'
+[21:46:08 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] Successfully validated the token.
+[21:46:08 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] AuthenticationScheme: Bearer was successfully authenticated.
+[21:46:08 DBG] [Microsoft.AspNetCore.Authorization.DefaultAuthorizationService] Authorization was successful.
+[21:46:08 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executing endpoint 'HTTP: GET /api/v{version:apiVersion}/search/history'
+[21:46:08 INF] [JiApp.Api.Features.Search.SearchHistory.SearchHistoryHandler] Fetching search history (limit: 10)
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] Entity Framework Core 10.0.8 initialized 'JiAppDbContext' using provider 'Microsoft.EntityFrameworkCore.Sqlite:10.0.8' with options: None
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Creating DbConnection.
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Created DbConnection. (0ms).
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opening connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opened connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Creating DbCommand for 'ExecuteReader'.
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Created DbCommand for 'ExecuteReader' (0ms).
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Initialized DbCommand for 'ExecuteReader' (0ms).
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Executing DbCommand [Parameters=[@userId='?' (DbType = Int64), @p2='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+SELECT "y"."Id", "y"."SearchText", "y"."SearchedAt", "y"."UserId"
+FROM "YoutubeSearchHistory" AS "y"
+WHERE "y"."UserId" = @userId
+ORDER BY "y"."SearchedAt" DESC
+LIMIT @p2 OFFSET @p
+[21:46:08 INF] [Microsoft.EntityFrameworkCore.Database.Command] Executed DbCommand (0ms) [Parameters=[@userId='?' (DbType = Int64), @p2='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+SELECT "y"."Id", "y"."SearchText", "y"."SearchedAt", "y"."UserId"
+FROM "YoutubeSearchHistory" AS "y"
+WHERE "y"."UserId" = @userId
+ORDER BY "y"."SearchedAt" DESC
+LIMIT @p2 OFFSET @p
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Closing data reader to 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Database.Command] A data reader for 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' is being disposed after spending 0ms reading results.
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:46:08 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Setting HTTP status code 200.
+[21:46:08 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Writing value of type 'SearchHistoryResponse' as Json.
+[21:46:08 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executed endpoint 'HTTP: GET /api/v{version:apiVersion}/search/history'
+[21:46:08 INF] [JiApp.Api] <-- GET /api/v1/search/history responded 200 in 13ms
+[21:46:08 INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/v1/search/history responded 200 in 13.8247 ms
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] 'JiAppDbContext' disposed.
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:08 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:46:08 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request finished HTTP/2 GET https://192.168.100.105:5003/api/v1/search/history?limit=10 - 200 null application/json; charset=utf-8 14.9002ms
+[21:46:25 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request starting HTTP/2 POST https://192.168.100.105:5003/api/v1/search - application/json 20
+[21:46:25 INF] [JiApp.Api] --> POST /api/v1/search
+[21:46:25 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] 1 candidate(s) found for the request path '/api/v1/search'
+[21:46:25 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] Endpoint 'HTTP: POST /api/v{version:apiVersion}/search' with route pattern '/api/v{version:apiVersion}/search' is valid for the request path '/api/v1/search'
+[21:46:25 DBG] [Microsoft.AspNetCore.Routing.EndpointRoutingMiddleware] Request matched endpoint 'HTTP: POST /api/v{version:apiVersion}/search'
+[21:46:25 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] Successfully validated the token.
+[21:46:25 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] AuthenticationScheme: Bearer was successfully authenticated.
+[21:46:25 DBG] [Microsoft.AspNetCore.Authorization.DefaultAuthorizationService] Authorization was successful.
+[21:46:25 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executing endpoint 'HTTP: POST /api/v{version:apiVersion}/search'
+[21:46:25 DBG] [Microsoft.AspNetCore.Server.Kestrel] Connection id "0HNLP0DO9I0ET", Request id "0HNLP0DO9I0ET:00000007": started reading request body.
+[21:46:25 DBG] [Microsoft.AspNetCore.Server.Kestrel] Connection id "0HNLP0DO9I0ET", Request id "0HNLP0DO9I0ET:00000007": done reading request body.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] Entity Framework Core 10.0.8 initialized 'JiAppDbContext' using provider 'Microsoft.EntityFrameworkCore.Sqlite:10.0.8' with options: None
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] 'JiAppDbContext' generated a temporary value for the property 'YoutubeSearchHistory.Id'. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] Context 'JiAppDbContext' started tracking 'YoutubeSearchHistory' entity. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Update] SaveChanges starting for 'JiAppDbContext'.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] DetectChanges starting for 'JiAppDbContext'.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] DetectChanges completed for 'JiAppDbContext'.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Creating DbConnection.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Created DbConnection. (0ms).
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opening connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opened connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Creating DbCommand for 'ExecuteReader'.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Created DbCommand for 'ExecuteReader' (0ms).
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Initialized DbCommand for 'ExecuteReader' (0ms).
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Executing DbCommand [Parameters=[@p0='?' (Size = 8), @p1='?' (DbType = DateTime), @p2='?' (DbType = Int64)], CommandType='Text', CommandTimeout='30']
+INSERT INTO "YoutubeSearchHistory" ("SearchText", "SearchedAt", "UserId")
+VALUES (@p0, @p1, @p2)
+RETURNING "Id";
+[21:46:26 INF] [Microsoft.EntityFrameworkCore.Database.Command] Executed DbCommand (0ms) [Parameters=[@p0='?' (Size = 8), @p1='?' (DbType = DateTime), @p2='?' (DbType = Int64)], CommandType='Text', CommandTimeout='30']
+INSERT INTO "YoutubeSearchHistory" ("SearchText", "SearchedAt", "UserId")
+VALUES (@p0, @p1, @p2)
+RETURNING "Id";
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] The foreign key property 'YoutubeSearchHistory.Id' was detected as changed. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see property values.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Closing data reader to 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Database.Command] A data reader for 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' is being disposed after spending 9ms reading results.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] An entity of type 'YoutubeSearchHistory' tracked by 'JiAppDbContext' changed state from 'Added' to 'Unchanged'. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Update] SaveChanges completed for 'JiAppDbContext' with 1 entities written to the database.
+[21:46:26 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Setting HTTP status code 200.
+[21:46:26 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Writing value of type 'SearchVideosResponse' as Json.
+[21:46:26 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executed endpoint 'HTTP: POST /api/v{version:apiVersion}/search'
+[21:46:26 INF] [JiApp.Api] <-- POST /api/v1/search responded 200 in 864ms
+[21:46:26 INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP POST /api/v1/search responded 200 in 864.9343 ms
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] 'JiAppDbContext' disposed.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (16ms).
+[21:46:26 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request finished HTTP/2 POST https://192.168.100.105:5003/api/v1/search - 200 null application/json; charset=utf-8 882.256ms
+[21:46:26 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request starting HTTP/2 POST https://192.168.100.105:5003/api/v1/search - application/json 20
+[21:46:26 INF] [JiApp.Api] --> POST /api/v1/search
+[21:46:26 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] 1 candidate(s) found for the request path '/api/v1/search'
+[21:46:26 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] Endpoint 'HTTP: POST /api/v{version:apiVersion}/search' with route pattern '/api/v{version:apiVersion}/search' is valid for the request path '/api/v1/search'
+[21:46:26 DBG] [Microsoft.AspNetCore.Routing.EndpointRoutingMiddleware] Request matched endpoint 'HTTP: POST /api/v{version:apiVersion}/search'
+[21:46:26 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] Successfully validated the token.
+[21:46:26 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] AuthenticationScheme: Bearer was successfully authenticated.
+[21:46:26 DBG] [Microsoft.AspNetCore.Authorization.DefaultAuthorizationService] Authorization was successful.
+[21:46:26 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executing endpoint 'HTTP: POST /api/v{version:apiVersion}/search'
+[21:46:26 DBG] [Microsoft.AspNetCore.Server.Kestrel] Connection id "0HNLP0DO9I0ET", Request id "0HNLP0DO9I0ET:00000009": started reading request body.
+[21:46:26 DBG] [Microsoft.AspNetCore.Server.Kestrel] Connection id "0HNLP0DO9I0ET", Request id "0HNLP0DO9I0ET:00000009": done reading request body.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] Entity Framework Core 10.0.8 initialized 'JiAppDbContext' using provider 'Microsoft.EntityFrameworkCore.Sqlite:10.0.8' with options: None
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] 'JiAppDbContext' generated a temporary value for the property 'YoutubeSearchHistory.Id'. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] Context 'JiAppDbContext' started tracking 'YoutubeSearchHistory' entity. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Update] SaveChanges starting for 'JiAppDbContext'.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] DetectChanges starting for 'JiAppDbContext'.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] DetectChanges completed for 'JiAppDbContext'.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Creating DbConnection.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Created DbConnection. (0ms).
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opening connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opened connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Creating DbCommand for 'ExecuteReader'.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Created DbCommand for 'ExecuteReader' (0ms).
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Initialized DbCommand for 'ExecuteReader' (0ms).
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Executing DbCommand [Parameters=[@p0='?' (Size = 8), @p1='?' (DbType = DateTime), @p2='?' (DbType = Int64)], CommandType='Text', CommandTimeout='30']
+INSERT INTO "YoutubeSearchHistory" ("SearchText", "SearchedAt", "UserId")
+VALUES (@p0, @p1, @p2)
+RETURNING "Id";
+[21:46:26 INF] [Microsoft.EntityFrameworkCore.Database.Command] Executed DbCommand (0ms) [Parameters=[@p0='?' (Size = 8), @p1='?' (DbType = DateTime), @p2='?' (DbType = Int64)], CommandType='Text', CommandTimeout='30']
+INSERT INTO "YoutubeSearchHistory" ("SearchText", "SearchedAt", "UserId")
+VALUES (@p0, @p1, @p2)
+RETURNING "Id";
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] The foreign key property 'YoutubeSearchHistory.Id' was detected as changed. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see property values.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Closing data reader to 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Database.Command] A data reader for 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' is being disposed after spending 19ms reading results.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] An entity of type 'YoutubeSearchHistory' tracked by 'JiAppDbContext' changed state from 'Added' to 'Unchanged'. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Update] SaveChanges completed for 'JiAppDbContext' with 1 entities written to the database.
+[21:46:26 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Setting HTTP status code 200.
+[21:46:26 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Writing value of type 'SearchVideosResponse' as Json.
+[21:46:26 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executed endpoint 'HTTP: POST /api/v{version:apiVersion}/search'
+[21:46:26 INF] [JiApp.Api] <-- POST /api/v1/search responded 200 in 30ms
+[21:46:26 INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP POST /api/v1/search responded 200 in 30.8289 ms
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] 'JiAppDbContext' disposed.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:26 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:46:26 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request finished HTTP/2 POST https://192.168.100.105:5003/api/v1/search - 200 null application/json; charset=utf-8 31.122ms
+[21:46:29 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request starting HTTP/2 POST https://192.168.100.105:5003/api/v1/search - application/json 32
+[21:46:29 INF] [JiApp.Api] --> POST /api/v1/search
+[21:46:29 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] 1 candidate(s) found for the request path '/api/v1/search'
+[21:46:29 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] Endpoint 'HTTP: POST /api/v{version:apiVersion}/search' with route pattern '/api/v{version:apiVersion}/search' is valid for the request path '/api/v1/search'
+[21:46:29 DBG] [Microsoft.AspNetCore.Routing.EndpointRoutingMiddleware] Request matched endpoint 'HTTP: POST /api/v{version:apiVersion}/search'
+[21:46:29 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] Successfully validated the token.
+[21:46:29 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] AuthenticationScheme: Bearer was successfully authenticated.
+[21:46:29 DBG] [Microsoft.AspNetCore.Authorization.DefaultAuthorizationService] Authorization was successful.
+[21:46:29 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executing endpoint 'HTTP: POST /api/v{version:apiVersion}/search'
+[21:46:29 DBG] [Microsoft.AspNetCore.Server.Kestrel] Connection id "0HNLP0DO9I0ET", Request id "0HNLP0DO9I0ET:0000000B": started reading request body.
+[21:46:29 DBG] [Microsoft.AspNetCore.Server.Kestrel] Connection id "0HNLP0DO9I0ET", Request id "0HNLP0DO9I0ET:0000000B": done reading request body.
+[21:46:30 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] Entity Framework Core 10.0.8 initialized 'JiAppDbContext' using provider 'Microsoft.EntityFrameworkCore.Sqlite:10.0.8' with options: None
+[21:46:30 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] 'JiAppDbContext' generated a temporary value for the property 'YoutubeSearchHistory.Id'. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[21:46:30 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] Context 'JiAppDbContext' started tracking 'YoutubeSearchHistory' entity. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[21:46:30 DBG] [Microsoft.EntityFrameworkCore.Update] SaveChanges starting for 'JiAppDbContext'.
+[21:46:30 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] DetectChanges starting for 'JiAppDbContext'.
+[21:46:30 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] DetectChanges completed for 'JiAppDbContext'.
+[21:46:30 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Creating DbConnection.
+[21:46:30 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Created DbConnection. (0ms).
+[21:46:30 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opening connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:30 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opened connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:30 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Creating DbCommand for 'ExecuteReader'.
+[21:46:30 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Created DbCommand for 'ExecuteReader' (0ms).
+[21:46:30 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Initialized DbCommand for 'ExecuteReader' (0ms).
+[21:46:30 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Executing DbCommand [Parameters=[@p0='?' (Size = 20), @p1='?' (DbType = DateTime), @p2='?' (DbType = Int64)], CommandType='Text', CommandTimeout='30']
+INSERT INTO "YoutubeSearchHistory" ("SearchText", "SearchedAt", "UserId")
+VALUES (@p0, @p1, @p2)
+RETURNING "Id";
+[21:46:30 INF] [Microsoft.EntityFrameworkCore.Database.Command] Executed DbCommand (1ms) [Parameters=[@p0='?' (Size = 20), @p1='?' (DbType = DateTime), @p2='?' (DbType = Int64)], CommandType='Text', CommandTimeout='30']
+INSERT INTO "YoutubeSearchHistory" ("SearchText", "SearchedAt", "UserId")
+VALUES (@p0, @p1, @p2)
+RETURNING "Id";
+[21:46:30 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] The foreign key property 'YoutubeSearchHistory.Id' was detected as changed. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see property values.
+[21:46:30 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Closing data reader to 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:30 DBG] [Microsoft.EntityFrameworkCore.Database.Command] A data reader for 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' is being disposed after spending 7ms reading results.
+[21:46:30 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:30 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:46:30 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] An entity of type 'YoutubeSearchHistory' tracked by 'JiAppDbContext' changed state from 'Added' to 'Unchanged'. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[21:46:30 DBG] [Microsoft.EntityFrameworkCore.Update] SaveChanges completed for 'JiAppDbContext' with 1 entities written to the database.
+[21:46:30 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Setting HTTP status code 200.
+[21:46:30 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Writing value of type 'SearchVideosResponse' as Json.
+[21:46:30 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executed endpoint 'HTTP: POST /api/v{version:apiVersion}/search'
+[21:46:30 INF] [JiApp.Api] <-- POST /api/v1/search responded 200 in 756ms
+[21:46:30 INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP POST /api/v1/search responded 200 in 756.9500 ms
+[21:46:30 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] 'JiAppDbContext' disposed.
+[21:46:30 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:30 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:46:30 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request finished HTTP/2 POST https://192.168.100.105:5003/api/v1/search - 200 null application/json; charset=utf-8 757.2985ms
+[21:46:30 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request starting HTTP/2 POST https://192.168.100.105:5003/api/v1/search - application/json 35
+[21:46:30 INF] [JiApp.Api] --> POST /api/v1/search
+[21:46:30 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] 1 candidate(s) found for the request path '/api/v1/search'
+[21:46:30 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] Endpoint 'HTTP: POST /api/v{version:apiVersion}/search' with route pattern '/api/v{version:apiVersion}/search' is valid for the request path '/api/v1/search'
+[21:46:30 DBG] [Microsoft.AspNetCore.Routing.EndpointRoutingMiddleware] Request matched endpoint 'HTTP: POST /api/v{version:apiVersion}/search'
+[21:46:30 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] Successfully validated the token.
+[21:46:30 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] AuthenticationScheme: Bearer was successfully authenticated.
+[21:46:30 DBG] [Microsoft.AspNetCore.Authorization.DefaultAuthorizationService] Authorization was successful.
+[21:46:30 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executing endpoint 'HTTP: POST /api/v{version:apiVersion}/search'
+[21:46:30 DBG] [Microsoft.AspNetCore.Server.Kestrel] Connection id "0HNLP0DO9I0ET", Request id "0HNLP0DO9I0ET:0000000D": started reading request body.
+[21:46:30 DBG] [Microsoft.AspNetCore.Server.Kestrel] Connection id "0HNLP0DO9I0ET", Request id "0HNLP0DO9I0ET:0000000D": done reading request body.
+[21:46:31 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request starting HTTP/2 POST https://192.168.100.105:5003/api/v1/search - application/json 36
+[21:46:31 INF] [JiApp.Api] --> POST /api/v1/search
+[21:46:31 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] 1 candidate(s) found for the request path '/api/v1/search'
+[21:46:31 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] Endpoint 'HTTP: POST /api/v{version:apiVersion}/search' with route pattern '/api/v{version:apiVersion}/search' is valid for the request path '/api/v1/search'
+[21:46:31 DBG] [Microsoft.AspNetCore.Routing.EndpointRoutingMiddleware] Request matched endpoint 'HTTP: POST /api/v{version:apiVersion}/search'
+[21:46:31 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] Successfully validated the token.
+[21:46:31 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] AuthenticationScheme: Bearer was successfully authenticated.
+[21:46:31 DBG] [Microsoft.AspNetCore.Authorization.DefaultAuthorizationService] Authorization was successful.
+[21:46:31 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executing endpoint 'HTTP: POST /api/v{version:apiVersion}/search'
+[21:46:31 DBG] [Microsoft.AspNetCore.Server.Kestrel] Connection id "0HNLP0DO9I0ET", Request id "0HNLP0DO9I0ET:0000000F": started reading request body.
+[21:46:31 DBG] [Microsoft.AspNetCore.Server.Kestrel] Connection id "0HNLP0DO9I0ET", Request id "0HNLP0DO9I0ET:0000000F": done reading request body.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] Entity Framework Core 10.0.8 initialized 'JiAppDbContext' using provider 'Microsoft.EntityFrameworkCore.Sqlite:10.0.8' with options: None
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] 'JiAppDbContext' generated a temporary value for the property 'YoutubeSearchHistory.Id'. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] Context 'JiAppDbContext' started tracking 'YoutubeSearchHistory' entity. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Update] SaveChanges starting for 'JiAppDbContext'.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] DetectChanges starting for 'JiAppDbContext'.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] DetectChanges completed for 'JiAppDbContext'.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Creating DbConnection.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Created DbConnection. (0ms).
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opening connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opened connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Creating DbCommand for 'ExecuteReader'.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Created DbCommand for 'ExecuteReader' (0ms).
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Initialized DbCommand for 'ExecuteReader' (0ms).
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Executing DbCommand [Parameters=[@p0='?' (Size = 23), @p1='?' (DbType = DateTime), @p2='?' (DbType = Int64)], CommandType='Text', CommandTimeout='30']
+INSERT INTO "YoutubeSearchHistory" ("SearchText", "SearchedAt", "UserId")
+VALUES (@p0, @p1, @p2)
+RETURNING "Id";
+[21:46:31 INF] [Microsoft.EntityFrameworkCore.Database.Command] Executed DbCommand (0ms) [Parameters=[@p0='?' (Size = 23), @p1='?' (DbType = DateTime), @p2='?' (DbType = Int64)], CommandType='Text', CommandTimeout='30']
+INSERT INTO "YoutubeSearchHistory" ("SearchText", "SearchedAt", "UserId")
+VALUES (@p0, @p1, @p2)
+RETURNING "Id";
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] The foreign key property 'YoutubeSearchHistory.Id' was detected as changed. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see property values.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Closing data reader to 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Database.Command] A data reader for 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' is being disposed after spending 3ms reading results.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] An entity of type 'YoutubeSearchHistory' tracked by 'JiAppDbContext' changed state from 'Added' to 'Unchanged'. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Update] SaveChanges completed for 'JiAppDbContext' with 1 entities written to the database.
+[21:46:31 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Setting HTTP status code 200.
+[21:46:31 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Writing value of type 'SearchVideosResponse' as Json.
+[21:46:31 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executed endpoint 'HTTP: POST /api/v{version:apiVersion}/search'
+[21:46:31 INF] [JiApp.Api] <-- POST /api/v1/search responded 200 in 614ms
+[21:46:31 INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP POST /api/v1/search responded 200 in 614.3195 ms
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] 'JiAppDbContext' disposed.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:46:31 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request finished HTTP/2 POST https://192.168.100.105:5003/api/v1/search - 499 null application/json; charset=utf-8 614.7588ms
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] Entity Framework Core 10.0.8 initialized 'JiAppDbContext' using provider 'Microsoft.EntityFrameworkCore.Sqlite:10.0.8' with options: None
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] 'JiAppDbContext' generated a temporary value for the property 'YoutubeSearchHistory.Id'. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] Context 'JiAppDbContext' started tracking 'YoutubeSearchHistory' entity. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Update] SaveChanges starting for 'JiAppDbContext'.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] DetectChanges starting for 'JiAppDbContext'.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] DetectChanges completed for 'JiAppDbContext'.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Creating DbConnection.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Created DbConnection. (0ms).
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opening connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opened connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Creating DbCommand for 'ExecuteReader'.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Created DbCommand for 'ExecuteReader' (0ms).
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Initialized DbCommand for 'ExecuteReader' (0ms).
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Executing DbCommand [Parameters=[@p0='?' (Size = 24), @p1='?' (DbType = DateTime), @p2='?' (DbType = Int64)], CommandType='Text', CommandTimeout='30']
+INSERT INTO "YoutubeSearchHistory" ("SearchText", "SearchedAt", "UserId")
+VALUES (@p0, @p1, @p2)
+RETURNING "Id";
+[21:46:31 INF] [Microsoft.EntityFrameworkCore.Database.Command] Executed DbCommand (0ms) [Parameters=[@p0='?' (Size = 24), @p1='?' (DbType = DateTime), @p2='?' (DbType = Int64)], CommandType='Text', CommandTimeout='30']
+INSERT INTO "YoutubeSearchHistory" ("SearchText", "SearchedAt", "UserId")
+VALUES (@p0, @p1, @p2)
+RETURNING "Id";
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] The foreign key property 'YoutubeSearchHistory.Id' was detected as changed. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see property values.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Closing data reader to 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Database.Command] A data reader for 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' is being disposed after spending 12ms reading results.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] An entity of type 'YoutubeSearchHistory' tracked by 'JiAppDbContext' changed state from 'Added' to 'Unchanged'. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Update] SaveChanges completed for 'JiAppDbContext' with 1 entities written to the database.
+[21:46:31 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Setting HTTP status code 200.
+[21:46:31 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Writing value of type 'SearchVideosResponse' as Json.
+[21:46:31 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executed endpoint 'HTTP: POST /api/v{version:apiVersion}/search'
+[21:46:31 INF] [JiApp.Api] <-- POST /api/v1/search responded 200 in 655ms
+[21:46:31 INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP POST /api/v1/search responded 200 in 655.8066 ms
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] 'JiAppDbContext' disposed.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:31 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:46:31 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request finished HTTP/2 POST https://192.168.100.105:5003/api/v1/search - 200 null application/json; charset=utf-8 656.109ms
+[21:46:32 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request starting HTTP/2 POST https://192.168.100.105:5003/api/v1/search - application/json 41
+[21:46:32 INF] [JiApp.Api] --> POST /api/v1/search
+[21:46:32 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] 1 candidate(s) found for the request path '/api/v1/search'
+[21:46:32 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] Endpoint 'HTTP: POST /api/v{version:apiVersion}/search' with route pattern '/api/v{version:apiVersion}/search' is valid for the request path '/api/v1/search'
+[21:46:32 DBG] [Microsoft.AspNetCore.Routing.EndpointRoutingMiddleware] Request matched endpoint 'HTTP: POST /api/v{version:apiVersion}/search'
+[21:46:32 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] Successfully validated the token.
+[21:46:32 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] AuthenticationScheme: Bearer was successfully authenticated.
+[21:46:32 DBG] [Microsoft.AspNetCore.Authorization.DefaultAuthorizationService] Authorization was successful.
+[21:46:32 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executing endpoint 'HTTP: POST /api/v{version:apiVersion}/search'
+[21:46:32 DBG] [Microsoft.AspNetCore.Server.Kestrel] Connection id "0HNLP0DO9I0ET", Request id "0HNLP0DO9I0ET:00000011": started reading request body.
+[21:46:32 DBG] [Microsoft.AspNetCore.Server.Kestrel] Connection id "0HNLP0DO9I0ET", Request id "0HNLP0DO9I0ET:00000011": done reading request body.
+[21:46:33 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] Entity Framework Core 10.0.8 initialized 'JiAppDbContext' using provider 'Microsoft.EntityFrameworkCore.Sqlite:10.0.8' with options: None
+[21:46:33 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] 'JiAppDbContext' generated a temporary value for the property 'YoutubeSearchHistory.Id'. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[21:46:33 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] Context 'JiAppDbContext' started tracking 'YoutubeSearchHistory' entity. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[21:46:33 DBG] [Microsoft.EntityFrameworkCore.Update] SaveChanges starting for 'JiAppDbContext'.
+[21:46:33 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] DetectChanges starting for 'JiAppDbContext'.
+[21:46:33 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] DetectChanges completed for 'JiAppDbContext'.
+[21:46:33 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Creating DbConnection.
+[21:46:33 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Created DbConnection. (0ms).
+[21:46:33 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opening connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:33 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opened connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:33 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Creating DbCommand for 'ExecuteReader'.
+[21:46:33 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Created DbCommand for 'ExecuteReader' (0ms).
+[21:46:33 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Initialized DbCommand for 'ExecuteReader' (0ms).
+[21:46:33 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Executing DbCommand [Parameters=[@p0='?' (Size = 29), @p1='?' (DbType = DateTime), @p2='?' (DbType = Int64)], CommandType='Text', CommandTimeout='30']
+INSERT INTO "YoutubeSearchHistory" ("SearchText", "SearchedAt", "UserId")
+VALUES (@p0, @p1, @p2)
+RETURNING "Id";
+[21:46:33 INF] [Microsoft.EntityFrameworkCore.Database.Command] Executed DbCommand (0ms) [Parameters=[@p0='?' (Size = 29), @p1='?' (DbType = DateTime), @p2='?' (DbType = Int64)], CommandType='Text', CommandTimeout='30']
+INSERT INTO "YoutubeSearchHistory" ("SearchText", "SearchedAt", "UserId")
+VALUES (@p0, @p1, @p2)
+RETURNING "Id";
+[21:46:33 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] The foreign key property 'YoutubeSearchHistory.Id' was detected as changed. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see property values.
+[21:46:33 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Closing data reader to 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:33 DBG] [Microsoft.EntityFrameworkCore.Database.Command] A data reader for 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' is being disposed after spending 14ms reading results.
+[21:46:33 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:33 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:46:33 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] An entity of type 'YoutubeSearchHistory' tracked by 'JiAppDbContext' changed state from 'Added' to 'Unchanged'. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[21:46:33 DBG] [Microsoft.EntityFrameworkCore.Update] SaveChanges completed for 'JiAppDbContext' with 1 entities written to the database.
+[21:46:33 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Setting HTTP status code 200.
+[21:46:33 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Writing value of type 'SearchVideosResponse' as Json.
+[21:46:33 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executed endpoint 'HTTP: POST /api/v{version:apiVersion}/search'
+[21:46:33 INF] [JiApp.Api] <-- POST /api/v1/search responded 200 in 581ms
+[21:46:33 INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP POST /api/v1/search responded 200 in 581.5659 ms
+[21:46:33 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] 'JiAppDbContext' disposed.
+[21:46:33 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:33 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:46:33 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request finished HTTP/2 POST https://192.168.100.105:5003/api/v1/search - 200 null application/json; charset=utf-8 581.8984ms
+[21:46:40 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request starting HTTP/2 POST https://192.168.100.105:5003/api/v1/downloads/mp3 - application/json 326
+[21:46:40 INF] [JiApp.Api] --> POST /api/v1/downloads/mp3
+[21:46:40 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] 1 candidate(s) found for the request path '/api/v1/downloads/mp3'
+[21:46:40 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] Endpoint 'HTTP: POST /api/v{version:apiVersion}/downloads/mp3' with route pattern '/api/v{version:apiVersion}/downloads/mp3' is valid for the request path '/api/v1/downloads/mp3'
+[21:46:40 DBG] [Microsoft.AspNetCore.Routing.EndpointRoutingMiddleware] Request matched endpoint 'HTTP: POST /api/v{version:apiVersion}/downloads/mp3'
+[21:46:40 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] Successfully validated the token.
+[21:46:40 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] AuthenticationScheme: Bearer was successfully authenticated.
+[21:46:40 DBG] [Microsoft.AspNetCore.Authorization.DefaultAuthorizationService] Authorization was successful.
+[21:46:40 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executing endpoint 'HTTP: POST /api/v{version:apiVersion}/downloads/mp3'
+[21:46:40 DBG] [Microsoft.AspNetCore.Server.Kestrel] Connection id "0HNLP0DO9I0ET", Request id "0HNLP0DO9I0ET:00000013": started reading request body.
+[21:46:40 DBG] [Microsoft.AspNetCore.Server.Kestrel] Connection id "0HNLP0DO9I0ET", Request id "0HNLP0DO9I0ET:00000013": done reading request body.
+[21:46:48 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] Entity Framework Core 10.0.8 initialized 'JiAppDbContext' using provider 'Microsoft.EntityFrameworkCore.Sqlite:10.0.8' with options: None
+[21:46:48 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] 'JiAppDbContext' generated a temporary value for the property 'YoutubeDownloadHistory.Id'. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[21:46:48 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] Context 'JiAppDbContext' started tracking 'YoutubeDownloadHistory' entity. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[21:46:48 DBG] [Microsoft.EntityFrameworkCore.Update] SaveChanges starting for 'JiAppDbContext'.
+[21:46:48 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] DetectChanges starting for 'JiAppDbContext'.
+[21:46:48 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] DetectChanges completed for 'JiAppDbContext'.
+[21:46:48 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Creating DbConnection.
+[21:46:48 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Created DbConnection. (0ms).
+[21:46:48 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opening connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:48 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opened connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:48 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Creating DbCommand for 'ExecuteReader'.
+[21:46:48 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Created DbCommand for 'ExecuteReader' (0ms).
+[21:46:48 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Initialized DbCommand for 'ExecuteReader' (0ms).
+[21:46:48 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Executing DbCommand [Parameters=[@p0='?' (DbType = DateTime), @p1='?' (Size = 46), @p2='?' (DbType = Int64), @p3='?' (Size = 106), @p4='?' (Size = 11), @p5='?' (Size = 46), @p6='?' (Size = 43)], CommandType='Text', CommandTimeout='30']
+INSERT INTO "YoutubeDownloadHistory" ("DownloadedAt", "ImageUrl", "UserId", "VideoDescription", "VideoId", "VideoTitle", "VideoUrl")
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6)
+RETURNING "Id";
+[21:46:48 INF] [Microsoft.EntityFrameworkCore.Database.Command] Executed DbCommand (0ms) [Parameters=[@p0='?' (DbType = DateTime), @p1='?' (Size = 46), @p2='?' (DbType = Int64), @p3='?' (Size = 106), @p4='?' (Size = 11), @p5='?' (Size = 46), @p6='?' (Size = 43)], CommandType='Text', CommandTimeout='30']
+INSERT INTO "YoutubeDownloadHistory" ("DownloadedAt", "ImageUrl", "UserId", "VideoDescription", "VideoId", "VideoTitle", "VideoUrl")
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6)
+RETURNING "Id";
+[21:46:48 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] The foreign key property 'YoutubeDownloadHistory.Id' was detected as changed. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see property values.
+[21:46:48 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Closing data reader to 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:48 DBG] [Microsoft.EntityFrameworkCore.Database.Command] A data reader for 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' is being disposed after spending 5ms reading results.
+[21:46:48 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:48 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:46:48 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] An entity of type 'YoutubeDownloadHistory' tracked by 'JiAppDbContext' changed state from 'Added' to 'Unchanged'. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[21:46:48 DBG] [Microsoft.EntityFrameworkCore.Update] SaveChanges completed for 'JiAppDbContext' with 1 entities written to the database.
+[21:46:48 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Setting HTTP status code 200.
+[21:46:48 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Writing value of type 'DownloadResponse' as Json.
+[21:46:48 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executed endpoint 'HTTP: POST /api/v{version:apiVersion}/downloads/mp3'
+[21:46:48 INF] [JiApp.Api] <-- POST /api/v1/downloads/mp3 responded 200 in 7708ms
+[21:46:48 INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP POST /api/v1/downloads/mp3 responded 200 in 7708.9253 ms
+[21:46:48 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] 'JiAppDbContext' disposed.
+[21:46:48 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:48 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:46:48 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request finished HTTP/2 POST https://192.168.100.105:5003/api/v1/downloads/mp3 - 200 null application/json; charset=utf-8 7710.3043ms
+[21:46:48 DBG] [Microsoft.AspNetCore.Server.Kestrel.Connections] Connection id "0HNLP0DO9I0EU" accepted.
+[21:46:48 DBG] [Microsoft.AspNetCore.Server.Kestrel.Connections] Connection id "0HNLP0DO9I0EU" started.
+[21:46:48 DBG] [Microsoft.AspNetCore.Server.Kestrel.Https.Internal.HttpsConnectionMiddleware] Connection 0HNLP0DO9I0EU established using the following protocol: Tls13
+[21:46:48 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request starting HTTP/2 GET https://192.168.100.105:5003/api/v1/downloads/mp3/file/54bace851c6f4d678b62755bd46ff93c - null null
+[21:46:48 INF] [JiApp.Api] --> GET /api/v1/downloads/mp3/file/54bace851c6f4d678b62755bd46ff93c
+[21:46:48 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] 1 candidate(s) found for the request path '/api/v1/downloads/mp3/file/54bace851c6f4d678b62755bd46ff93c'
+[21:46:48 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] Endpoint 'HTTP: GET /api/v{version:apiVersion}/downloads/mp3/file/{id}' with route pattern '/api/v{version:apiVersion}/downloads/mp3/file/{id}' is valid for the request path '/api/v1/downloads/mp3/file/54bace851c6f4d678b62755bd46ff93c'
+[21:46:48 DBG] [Microsoft.AspNetCore.Routing.EndpointRoutingMiddleware] Request matched endpoint 'HTTP: GET /api/v{version:apiVersion}/downloads/mp3/file/{id}'
+[21:46:48 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] Successfully validated the token.
+[21:46:48 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] AuthenticationScheme: Bearer was successfully authenticated.
+[21:46:48 DBG] [Microsoft.AspNetCore.Authorization.DefaultAuthorizationService] Authorization was successful.
+[21:46:48 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executing endpoint 'HTTP: GET /api/v{version:apiVersion}/downloads/mp3/file/{id}'
+[21:46:48 INF] [JiApp.Api.Features.Downloads.DownloadFile.DownloadFileHandler] Download requested for file 54bace851c6f4d678b62755bd46ff93c
+[21:46:48 WRN] [JiApp.Api.Features.Downloads.DownloadFile.DownloadFileHandler] File 54bace851c6f4d678b62755bd46ff93c expired or not found for user 11
+[21:46:48 INF] [Microsoft.AspNetCore.Http.Result.JsonResult] Setting HTTP status code 404.
+[21:46:48 INF] [Microsoft.AspNetCore.Http.Result.JsonResult] Writing value of type 'ApiErrorResponse' as Json.
+[21:46:48 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executed endpoint 'HTTP: GET /api/v{version:apiVersion}/downloads/mp3/file/{id}'
+[21:46:48 INF] [JiApp.Api] <-- GET /api/v1/downloads/mp3/file/54bace851c6f4d678b62755bd46ff93c responded 404 in 1ms
+[21:46:48 INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/v1/downloads/mp3/file/54bace851c6f4d678b62755bd46ff93c responded 404 in 1.3599 ms
+[21:46:48 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request finished HTTP/2 GET https://192.168.100.105:5003/api/v1/downloads/mp3/file/54bace851c6f4d678b62755bd46ff93c - 404 null application/json; charset=utf-8 1.5473ms
+[21:46:50 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request starting HTTP/2 GET https://192.168.100.105:5003/api/v1/search/history?limit=10 - null null
+[21:46:50 INF] [JiApp.Api] --> GET /api/v1/search/history?limit=10
+[21:46:50 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] 1 candidate(s) found for the request path '/api/v1/search/history'
+[21:46:50 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] Endpoint 'HTTP: GET /api/v{version:apiVersion}/search/history' with route pattern '/api/v{version:apiVersion}/search/history' is valid for the request path '/api/v1/search/history'
+[21:46:50 DBG] [Microsoft.AspNetCore.Routing.EndpointRoutingMiddleware] Request matched endpoint 'HTTP: GET /api/v{version:apiVersion}/search/history'
+[21:46:50 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] Successfully validated the token.
+[21:46:50 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] AuthenticationScheme: Bearer was successfully authenticated.
+[21:46:50 DBG] [Microsoft.AspNetCore.Authorization.DefaultAuthorizationService] Authorization was successful.
+[21:46:50 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executing endpoint 'HTTP: GET /api/v{version:apiVersion}/search/history'
+[21:46:50 INF] [JiApp.Api.Features.Search.SearchHistory.SearchHistoryHandler] Fetching search history (limit: 10)
+[21:46:50 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] Entity Framework Core 10.0.8 initialized 'JiAppDbContext' using provider 'Microsoft.EntityFrameworkCore.Sqlite:10.0.8' with options: None
+[21:46:50 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Creating DbConnection.
+[21:46:50 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Created DbConnection. (0ms).
+[21:46:50 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opening connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:50 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opened connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:50 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Creating DbCommand for 'ExecuteReader'.
+[21:46:50 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Created DbCommand for 'ExecuteReader' (0ms).
+[21:46:50 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Initialized DbCommand for 'ExecuteReader' (0ms).
+[21:46:50 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Executing DbCommand [Parameters=[@userId='?' (DbType = Int64), @p2='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+SELECT "y"."Id", "y"."SearchText", "y"."SearchedAt", "y"."UserId"
+FROM "YoutubeSearchHistory" AS "y"
+WHERE "y"."UserId" = @userId
+ORDER BY "y"."SearchedAt" DESC
+LIMIT @p2 OFFSET @p
+[21:46:50 INF] [Microsoft.EntityFrameworkCore.Database.Command] Executed DbCommand (0ms) [Parameters=[@userId='?' (DbType = Int64), @p2='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+SELECT "y"."Id", "y"."SearchText", "y"."SearchedAt", "y"."UserId"
+FROM "YoutubeSearchHistory" AS "y"
+WHERE "y"."UserId" = @userId
+ORDER BY "y"."SearchedAt" DESC
+LIMIT @p2 OFFSET @p
+[21:46:50 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Closing data reader to 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:50 DBG] [Microsoft.EntityFrameworkCore.Database.Command] A data reader for 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' is being disposed after spending 0ms reading results.
+[21:46:50 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:50 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:46:50 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Setting HTTP status code 200.
+[21:46:50 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Writing value of type 'SearchHistoryResponse' as Json.
+[21:46:50 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executed endpoint 'HTTP: GET /api/v{version:apiVersion}/search/history'
+[21:46:50 INF] [JiApp.Api] <-- GET /api/v1/search/history responded 200 in 3ms
+[21:46:50 INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/v1/search/history responded 200 in 3.6148 ms
+[21:46:50 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] 'JiAppDbContext' disposed.
+[21:46:50 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:50 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:46:50 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request finished HTTP/2 GET https://192.168.100.105:5003/api/v1/search/history?limit=10 - 200 null application/json; charset=utf-8 4.0251ms
+[21:46:54 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request starting HTTP/2 GET https://192.168.100.105:5003/api/v1/history?limit=50 - null null
+[21:46:54 INF] [JiApp.Api] --> GET /api/v1/history?limit=50
+[21:46:54 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] 1 candidate(s) found for the request path '/api/v1/history'
+[21:46:54 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] Endpoint 'HTTP: GET /api/v{version:apiVersion}/history' with route pattern '/api/v{version:apiVersion}/history' is valid for the request path '/api/v1/history'
+[21:46:54 DBG] [Microsoft.AspNetCore.Routing.EndpointRoutingMiddleware] Request matched endpoint 'HTTP: GET /api/v{version:apiVersion}/history'
+[21:46:54 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] Successfully validated the token.
+[21:46:54 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] AuthenticationScheme: Bearer was successfully authenticated.
+[21:46:54 DBG] [Microsoft.AspNetCore.Authorization.DefaultAuthorizationService] Authorization was successful.
+[21:46:54 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executing endpoint 'HTTP: GET /api/v{version:apiVersion}/history'
+[21:46:54 INF] [JiApp.Api.Features.History.GetHistory.GetHistoryHandler] Fetching combined history (limit: 50)
+[21:46:54 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] Entity Framework Core 10.0.8 initialized 'JiAppDbContext' using provider 'Microsoft.EntityFrameworkCore.Sqlite:10.0.8' with options: None
+[21:46:54 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Creating DbConnection.
+[21:46:54 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Created DbConnection. (0ms).
+[21:46:54 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opening connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:54 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opened connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:54 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Creating DbCommand for 'ExecuteReader'.
+[21:46:54 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Created DbCommand for 'ExecuteReader' (0ms).
+[21:46:54 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Initialized DbCommand for 'ExecuteReader' (0ms).
+[21:46:54 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Executing DbCommand [Parameters=[@userId='?' (DbType = Int64), @p2='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+SELECT "y"."Id", "y"."SearchText", "y"."SearchedAt", "y"."UserId"
+FROM "YoutubeSearchHistory" AS "y"
+WHERE "y"."UserId" = @userId
+ORDER BY "y"."SearchedAt" DESC
+LIMIT @p2 OFFSET @p
+[21:46:54 INF] [Microsoft.EntityFrameworkCore.Database.Command] Executed DbCommand (0ms) [Parameters=[@userId='?' (DbType = Int64), @p2='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+SELECT "y"."Id", "y"."SearchText", "y"."SearchedAt", "y"."UserId"
+FROM "YoutubeSearchHistory" AS "y"
+WHERE "y"."UserId" = @userId
+ORDER BY "y"."SearchedAt" DESC
+LIMIT @p2 OFFSET @p
+[21:46:54 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Closing data reader to 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:54 DBG] [Microsoft.EntityFrameworkCore.Database.Command] A data reader for 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' is being disposed after spending 0ms reading results.
+[21:46:54 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:54 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:46:54 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opening connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:54 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opened connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:54 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Creating DbCommand for 'ExecuteReader'.
+[21:46:54 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Created DbCommand for 'ExecuteReader' (0ms).
+[21:46:54 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Initialized DbCommand for 'ExecuteReader' (0ms).
+[21:46:54 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Executing DbCommand [Parameters=[@userId='?' (DbType = Int64), @p2='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+SELECT "y"."Id", "y"."DownloadedAt", "y"."ImageUrl", "y"."UserId", "y"."VideoDescription", "y"."VideoId", "y"."VideoTitle", "y"."VideoUrl"
+FROM "YoutubeDownloadHistory" AS "y"
+WHERE "y"."UserId" = @userId
+ORDER BY "y"."DownloadedAt" DESC
+LIMIT @p2 OFFSET @p
+[21:46:54 INF] [Microsoft.EntityFrameworkCore.Database.Command] Executed DbCommand (0ms) [Parameters=[@userId='?' (DbType = Int64), @p2='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+SELECT "y"."Id", "y"."DownloadedAt", "y"."ImageUrl", "y"."UserId", "y"."VideoDescription", "y"."VideoId", "y"."VideoTitle", "y"."VideoUrl"
+FROM "YoutubeDownloadHistory" AS "y"
+WHERE "y"."UserId" = @userId
+ORDER BY "y"."DownloadedAt" DESC
+LIMIT @p2 OFFSET @p
+[21:46:54 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Closing data reader to 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:54 DBG] [Microsoft.EntityFrameworkCore.Database.Command] A data reader for 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' is being disposed after spending 0ms reading results.
+[21:46:54 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:54 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:46:54 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Setting HTTP status code 200.
+[21:46:54 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Writing value of type 'GetHistoryResponse' as Json.
+[21:46:54 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executed endpoint 'HTTP: GET /api/v{version:apiVersion}/history'
+[21:46:54 INF] [JiApp.Api] <-- GET /api/v1/history responded 200 in 4ms
+[21:46:54 INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/v1/history responded 200 in 4.8683 ms
+[21:46:54 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] 'JiAppDbContext' disposed.
+[21:46:54 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[21:46:54 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[21:46:54 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request finished HTTP/2 GET https://192.168.100.105:5003/api/v1/history?limit=50 - 200 null application/json; charset=utf-8 5.3325ms
+[21:48:35 DBG] [Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets] Connection id "0HNLP0DO9I0EU" received FIN.
+[21:48:35 DBG] [Microsoft.AspNetCore.Server.Kestrel.Http2] Connection id "0HNLP0DO9I0EU" is closed. The last processed stream ID was 3.
+[21:48:35 DBG] [Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets] Connection id "0HNLP0DO9I0EU" sending FIN because: "The Socket transport's send loop completed gracefully."
+[21:48:35 DBG] [Microsoft.AspNetCore.Server.Kestrel.Http2] The connection queue processing loop for 0HNLP0DO9I0EU completed.
+[21:48:35 DBG] [Microsoft.AspNetCore.Server.Kestrel.Connections] Connection id "0HNLP0DO9I0EU" stopped.
+[21:48:35 DBG] [Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets] Connection id "0HNLP0DO9I0ET" received FIN.
+[21:48:35 DBG] [Microsoft.AspNetCore.Server.Kestrel.Http2] Connection id "0HNLP0DO9I0ET" is closed. The last processed stream ID was 23.
+[21:48:35 DBG] [Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets] Connection id "0HNLP0DO9I0ET" sending FIN because: "The Socket transport's send loop completed gracefully."
+[21:48:35 DBG] [Microsoft.AspNetCore.Server.Kestrel.Http2] The connection queue processing loop for 0HNLP0DO9I0ET completed.
+[21:48:35 DBG] [Microsoft.AspNetCore.Server.Kestrel.Connections] Connection id "0HNLP0DO9I0ET" stopped.
+[22:06:41 DBG] [Microsoft.AspNetCore.Server.Kestrel.Connections] Connection id "0HNLP0DO9I0EV" accepted.
+[22:06:41 DBG] [Microsoft.AspNetCore.Server.Kestrel.Connections] Connection id "0HNLP0DO9I0EV" started.
+[22:06:41 DBG] [Microsoft.AspNetCore.Server.Kestrel.Https.Internal.HttpsConnectionMiddleware] Connection 0HNLP0DO9I0EV established using the following protocol: Tls13
+[22:06:41 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request starting HTTP/2 GET https://192.168.100.105:5003/api/v1/auth/me - null null
+[22:06:41 INF] [JiApp.Api] --> GET /api/v1/auth/me
+[22:06:41 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] 1 candidate(s) found for the request path '/api/v1/auth/me'
+[22:06:41 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] Endpoint 'HTTP: GET /api/v{version:apiVersion}/auth/me' with route pattern '/api/v{version:apiVersion}/auth/me' is valid for the request path '/api/v1/auth/me'
+[22:06:41 DBG] [Microsoft.AspNetCore.Routing.EndpointRoutingMiddleware] Request matched endpoint 'HTTP: GET /api/v{version:apiVersion}/auth/me'
+[22:06:41 INF] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] Failed to validate the token.
+Microsoft.IdentityModel.Tokens.SecurityTokenExpiredException: IDX10223: Lifetime validation failed. The token is expired. ValidTo (UTC): '05/23/2026 19:50:54', Current time (UTC): '05/23/2026 20:06:41'.
+   at Microsoft.IdentityModel.Tokens.ValidatorUtilities.ValidateLifetime(Nullable`1 notBefore, Nullable`1 expires, SecurityToken securityToken, TokenValidationParameters validationParameters)
+   at Microsoft.IdentityModel.Tokens.Validators.ValidateLifetime(Nullable`1 notBefore, Nullable`1 expires, SecurityToken securityToken, TokenValidationParameters validationParameters)
+   at Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler.ValidateTokenPayloadAsync(JsonWebToken jsonWebToken, TokenValidationParameters validationParameters, BaseConfiguration configuration)
+   at Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler.ValidateJWSAsync(JsonWebToken jsonWebToken, TokenValidationParameters validationParameters, BaseConfiguration configuration)
+[22:06:41 INF] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] Bearer was not authenticated. Failure message: IDX10223: Lifetime validation failed. The token is expired. ValidTo (UTC): '05/23/2026 19:50:54', Current time (UTC): '05/23/2026 20:06:41'.
+[22:06:41 DBG] [Microsoft.AspNetCore.Authorization.AuthorizationMiddleware] Policy authentication schemes  did not succeed
+[22:06:41 INF] [Microsoft.AspNetCore.Authorization.DefaultAuthorizationService] Authorization failed. These requirements were not met:
+DenyAnonymousAuthorizationRequirement: Requires an authenticated user.
+[22:06:41 INF] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] AuthenticationScheme: Bearer was challenged.
+[22:06:41 INF] [JiApp.Api] <-- GET /api/v1/auth/me responded 401 in 13ms
+[22:06:41 INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/v1/auth/me responded 401 in 13.6700 ms
+[22:06:41 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request finished HTTP/2 GET https://192.168.100.105:5003/api/v1/auth/me - 401 null application/json 13.9146ms
+[22:06:41 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request starting HTTP/2 POST https://192.168.100.105:5003/api/v1/auth/login - application/json 45
+[22:06:41 INF] [JiApp.Api] --> POST /api/v1/auth/login
+[22:06:41 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] 1 candidate(s) found for the request path '/api/v1/auth/login'
+[22:06:41 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] Endpoint 'HTTP: POST /api/v{version:apiVersion}/auth/login' with route pattern '/api/v{version:apiVersion}/auth/login' is valid for the request path '/api/v1/auth/login'
+[22:06:41 DBG] [Microsoft.AspNetCore.Routing.EndpointRoutingMiddleware] Request matched endpoint 'HTTP: POST /api/v{version:apiVersion}/auth/login'
+[22:06:41 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] AuthenticationScheme: Bearer was not authenticated.
+[22:06:41 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executing endpoint 'HTTP: POST /api/v{version:apiVersion}/auth/login'
+[22:06:41 DBG] [Microsoft.AspNetCore.Server.Kestrel] Connection id "0HNLP0DO9I0EV", Request id "0HNLP0DO9I0EV:00000005": started reading request body.
+[22:06:41 DBG] [Microsoft.AspNetCore.Server.Kestrel] Connection id "0HNLP0DO9I0EV", Request id "0HNLP0DO9I0EV:00000005": done reading request body.
+[22:06:41 INF] [JiApp.Api.Features.Auth.Login.LoginHandler] Login attempt for Jakub
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] Entity Framework Core 10.0.8 initialized 'JiAppDbContext' using provider 'Microsoft.EntityFrameworkCore.Sqlite:10.0.8' with options: None
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Query] Compiling query expression: 
+'DbSet<User>()
+    .FirstOrDefault(u => u.NormalizedUserName == @normalizedUserName)'
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Query] Generated query execution expression: 
+'queryContext => ShapedQueryCompilingExpressionVisitor.SingleOrDefaultAsync<User>(
+    asyncEnumerable: SingleQueryingEnumerable.Create<User>(
+        relationalQueryContext: (RelationalQueryContext)queryContext, 
+        relationalCommandResolver: parameters => [LIFTABLE Constant: RelationalCommandCache.QueryExpression(
+            Projection Mapping:
+                EmptyProjectionMember -> Dictionary<IPropertyBase, int> { [Property: User.Id (long) Required PK AfterSave:Throw ValueGenerated.OnAdd, 0], [Property: User.AccessFailedCount (int) Required, 1], [Property: User.ConcurrencyStamp (string) Concurrency, 2], [Property: User.DisplayName (string) MaxLength(50), 3], [Property: User.Email (string) MaxLength(256), 4], [Property: User.EmailConfirmed (bool) Required, 5], [Property: User.LockoutEnabled (bool) Required, 6], [Property: User.LockoutEnd (DateTimeOffset?), 7], [Property: User.NormalizedEmail (string) Index MaxLength(256), 8], [Property: User.NormalizedUserName (string) Index MaxLength(256), 9], [Property: User.PasswordHash (string), 10], [Property: User.PhoneNumber (string), 11], [Property: User.PhoneNumberConfirmed (bool) Required, 12], [Property: User.SecurityStamp (string), 13], [Property: User.TwoFactorEnabled (bool) Required, 14], [Property: User.UserName (string) MaxLength(256), 15] }
+            SELECT TOP(1) a.Id, a.AccessFailedCount, a.ConcurrencyStamp, a.DisplayName, a.Email, a.EmailConfirmed, a.LockoutEnabled, a.LockoutEnd, a.NormalizedEmail, a.NormalizedUserName, a.PasswordHash, a.PhoneNumber, a.PhoneNumberConfirmed, a.SecurityStamp, a.TwoFactorEnabled, a.UserName
+            FROM AspNetUsers AS a
+            WHERE a.NormalizedUserName == @normalizedUserName) | Resolver: c => new RelationalCommandCache(
+            c.Dependencies.MemoryCache, 
+            c.RelationalDependencies.QuerySqlGeneratorFactory, 
+            c.RelationalDependencies.RelationalParameterBasedSqlProcessorFactory, 
+            Projection Mapping:
+                EmptyProjectionMember -> Dictionary<IPropertyBase, int> { [Property: User.Id (long) Required PK AfterSave:Throw ValueGenerated.OnAdd, 0], [Property: User.AccessFailedCount (int) Required, 1], [Property: User.ConcurrencyStamp (string) Concurrency, 2], [Property: User.DisplayName (string) MaxLength(50), 3], [Property: User.Email (string) MaxLength(256), 4], [Property: User.EmailConfirmed (bool) Required, 5], [Property: User.LockoutEnabled (bool) Required, 6], [Property: User.LockoutEnd (DateTimeOffset?), 7], [Property: User.NormalizedEmail (string) Index MaxLength(256), 8], [Property: User.NormalizedUserName (string) Index MaxLength(256), 9], [Property: User.PasswordHash (string), 10], [Property: User.PhoneNumber (string), 11], [Property: User.PhoneNumberConfirmed (bool) Required, 12], [Property: User.SecurityStamp (string), 13], [Property: User.TwoFactorEnabled (bool) Required, 14], [Property: User.UserName (string) MaxLength(256), 15] }
+            SELECT TOP(1) a.Id, a.AccessFailedCount, a.ConcurrencyStamp, a.DisplayName, a.Email, a.EmailConfirmed, a.LockoutEnabled, a.LockoutEnd, a.NormalizedEmail, a.NormalizedUserName, a.PasswordHash, a.PhoneNumber, a.PhoneNumberConfirmed, a.SecurityStamp, a.TwoFactorEnabled, a.UserName
+            FROM AspNetUsers AS a
+            WHERE a.NormalizedUserName == @normalizedUserName, 
+            False, 
+            MultipleParameters
+        )].GetRelationalCommandTemplate(parameters), 
+        readerColumns: null, 
+        shaper: (queryContext, dataReader, resultContext, resultCoordinator) => 
+        {
+            User entity;
+            entity = 
+            {
+                MaterializationContext materializationContext1;
+                IEntityType entityType1;
+                User instance1;
+                InternalEntityEntry entry1;
+                bool hasNullKey1;
+                materializationContext1 = new MaterializationContext(
+                    [LIFTABLE Constant: ValueBuffer | Resolver: _ => (object)ValueBuffer.Empty], 
+                    queryContext.Context
+                );
+                instance1 = default(User);
+                entry1 = queryContext.TryGetEntry(
+                    key: [LIFTABLE Constant: Key: User.Id PK | Resolver: c => c.Dependencies.Model.FindEntityType("JiApp.Common.Models.User").FindPrimaryKey()], 
+                    keyValues: new object[]{ (object)dataReader.GetInt64(0) }, 
+                    throwOnNullKey: True, 
+                    hasNullKey: hasNullKey1);
+                !(hasNullKey1) ? entry1 != default(InternalEntityEntry) ? 
+                {
+                    entityType1 = entry1.EntityType;
+                    return instance1 = (User)entry1.Entity;
+                } : 
+                {
+                    ISnapshot shadowSnapshot1;
+                    shadowSnapshot1 = [LIFTABLE Constant: Snapshot | Resolver: _ => Snapshot.Empty];
+                    entityType1 = [LIFTABLE Constant: EntityType: User | Resolver: namelessParameter{0} => namelessParameter{0}.Dependencies.Model.FindEntityType("JiApp.Common.Models.User")];
+                    instance1 = switch (entityType1)
+                    {
+                        case [LIFTABLE Constant: EntityType: User | Resolver: namelessParameter{1} => namelessParameter{1}.Dependencies.Model.FindEntityType("JiApp.Common.Models.User")]: 
+                            {
+                                return 
+                                {
+                                    User instance;
+                                    instance = new User();
+                                    instance.<Id>k__BackingField = dataReader.GetInt64(0);
+                                    instance.<AccessFailedCount>k__BackingField = dataReader.GetInt32(1);
+                                    instance.<ConcurrencyStamp>k__BackingField = dataReader.IsDBNull(2) ? default(string) : dataReader.GetString(2);
+                                    instance.<DisplayName>k__BackingField = dataReader.IsDBNull(3) ? default(string) : dataReader.GetString(3);
+                                    instance.<Email>k__BackingField = dataReader.IsDBNull(4) ? default(string) : dataReader.GetString(4);
+                                    instance.<EmailConfirmed>k__BackingField = dataReader.GetBoolean(5);
+                                    instance.<LockoutEnabled>k__BackingField = dataReader.GetBoolean(6);
+                                    instance.<LockoutEnd>k__BackingField = dataReader.IsDBNull(7) ? default(DateTimeOffset?) : (DateTimeOffset?)dataReader.GetFieldValue<DateTimeOffset>(7);
+                                    instance.<NormalizedEmail>k__BackingField = dataReader.IsDBNull(8) ? default(string) : dataReader.GetString(8);
+                                    instance.<NormalizedUserName>k__BackingField = dataReader.IsDBNull(9) ? default(string) : dataReader.GetString(9);
+                                    instance.<PasswordHash>k__BackingField = dataReader.IsDBNull(10) ? default(string) : dataReader.GetString(10);
+                                    instance.<PhoneNumber>k__BackingField = dataReader.IsDBNull(11) ? default(string) : dataReader.GetString(11);
+                                    instance.<PhoneNumberConfirmed>k__BackingField = dataReader.GetBoolean(12);
+                                    instance.<SecurityStamp>k__BackingField = dataReader.IsDBNull(13) ? default(string) : dataReader.GetString(13);
+                                    instance.<TwoFactorEnabled>k__BackingField = dataReader.GetBoolean(14);
+                                    instance.<UserName>k__BackingField = dataReader.IsDBNull(15) ? default(string) : dataReader.GetString(15);
+                                    (instance is IInjectableService) ? ((IInjectableService)instance).Injected(
+                                        context: materializationContext1.Context, 
+                                        entity: instance, 
+                                        queryTrackingBehavior: TrackAll, 
+                                        structuralType: [LIFTABLE Constant: EntityType: User | Resolver: namelessParameter{2} => namelessParameter{2}.Dependencies.Model.FindEntityType("JiApp.Common.Models.User")]) : default(void);
+                                    return instance;
+                                }}
+                        default: 
+                            default(User)
+                    }
+                    ;
+                    entry1 = entityType1 == default(IEntityType) ? default(InternalEntityEntry) : queryContext.StartTracking(
+                        entityType: entityType1, 
+                        entity: instance1, 
+                        snapshot: shadowSnapshot1);
+                    return instance1;
+                } : default(void);
+                return instance1;
+            };
+            return entity;
+        }, 
+        contextType: JiApp.Infrastructure.Persistence.JiAppDbContext, 
+        standAloneStateManager: False, 
+        detailedErrorsEnabled: False, 
+        threadSafetyChecksEnabled: True), 
+    cancellationToken: queryContext.CancellationToken)'
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Creating DbConnection.
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Created DbConnection. (0ms).
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opening connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opened connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Creating DbCommand for 'ExecuteReader'.
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Created DbCommand for 'ExecuteReader' (0ms).
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Initialized DbCommand for 'ExecuteReader' (0ms).
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Executing DbCommand [Parameters=[@normalizedUserName='?' (Size = 5)], CommandType='Text', CommandTimeout='30']
+SELECT "a"."Id", "a"."AccessFailedCount", "a"."ConcurrencyStamp", "a"."DisplayName", "a"."Email", "a"."EmailConfirmed", "a"."LockoutEnabled", "a"."LockoutEnd", "a"."NormalizedEmail", "a"."NormalizedUserName", "a"."PasswordHash", "a"."PhoneNumber", "a"."PhoneNumberConfirmed", "a"."SecurityStamp", "a"."TwoFactorEnabled", "a"."UserName"
+FROM "AspNetUsers" AS "a"
+WHERE "a"."NormalizedUserName" = @normalizedUserName
+LIMIT 1
+[22:06:41 INF] [Microsoft.EntityFrameworkCore.Database.Command] Executed DbCommand (1ms) [Parameters=[@normalizedUserName='?' (Size = 5)], CommandType='Text', CommandTimeout='30']
+SELECT "a"."Id", "a"."AccessFailedCount", "a"."ConcurrencyStamp", "a"."DisplayName", "a"."Email", "a"."EmailConfirmed", "a"."LockoutEnabled", "a"."LockoutEnd", "a"."NormalizedEmail", "a"."NormalizedUserName", "a"."PasswordHash", "a"."PhoneNumber", "a"."PhoneNumberConfirmed", "a"."SecurityStamp", "a"."TwoFactorEnabled", "a"."UserName"
+FROM "AspNetUsers" AS "a"
+WHERE "a"."NormalizedUserName" = @normalizedUserName
+LIMIT 1
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] Context 'JiAppDbContext' started tracking 'User' entity. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Closing data reader to 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] A data reader for 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' is being disposed after spending 0ms reading results.
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[22:06:41 INF] [JiApp.Api.Features.Auth.Login.LoginHandler] Login successful for Jakub
+[22:06:41 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Setting HTTP status code 200.
+[22:06:41 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Writing value of type 'LoginResponse' as Json.
+[22:06:41 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executed endpoint 'HTTP: POST /api/v{version:apiVersion}/auth/login'
+[22:06:41 INF] [JiApp.Api] <-- POST /api/v1/auth/login responded 200 in 162ms
+[22:06:41 INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP POST /api/v1/auth/login responded 200 in 162.4380 ms
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] 'JiAppDbContext' disposed.
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[22:06:41 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request finished HTTP/2 POST https://192.168.100.105:5003/api/v1/auth/login - 200 null application/json; charset=utf-8 163.0878ms
+[22:06:41 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request starting HTTP/2 GET https://192.168.100.105:5003/api/v1/auth/me - null null
+[22:06:41 INF] [JiApp.Api] --> GET /api/v1/auth/me
+[22:06:41 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] 1 candidate(s) found for the request path '/api/v1/auth/me'
+[22:06:41 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] Endpoint 'HTTP: GET /api/v{version:apiVersion}/auth/me' with route pattern '/api/v{version:apiVersion}/auth/me' is valid for the request path '/api/v1/auth/me'
+[22:06:41 DBG] [Microsoft.AspNetCore.Routing.EndpointRoutingMiddleware] Request matched endpoint 'HTTP: GET /api/v{version:apiVersion}/auth/me'
+[22:06:41 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] Successfully validated the token.
+[22:06:41 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] AuthenticationScheme: Bearer was successfully authenticated.
+[22:06:41 DBG] [Microsoft.AspNetCore.Authorization.DefaultAuthorizationService] Authorization was successful.
+[22:06:41 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executing endpoint 'HTTP: GET /api/v{version:apiVersion}/auth/me'
+[22:06:41 INF] [JiApp.Api.Features.Auth.Me.MeHandler] Fetching current user
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] Entity Framework Core 10.0.8 initialized 'JiAppDbContext' using provider 'Microsoft.EntityFrameworkCore.Sqlite:10.0.8' with options: None
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Creating DbConnection.
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Created DbConnection. (0ms).
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opening connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opened connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Creating DbCommand for 'ExecuteReader'.
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Created DbCommand for 'ExecuteReader' (0ms).
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Initialized DbCommand for 'ExecuteReader' (0ms).
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Executing DbCommand [Parameters=[@p='?' (DbType = Int64)], CommandType='Text', CommandTimeout='30']
+SELECT "a"."Id", "a"."AccessFailedCount", "a"."ConcurrencyStamp", "a"."DisplayName", "a"."Email", "a"."EmailConfirmed", "a"."LockoutEnabled", "a"."LockoutEnd", "a"."NormalizedEmail", "a"."NormalizedUserName", "a"."PasswordHash", "a"."PhoneNumber", "a"."PhoneNumberConfirmed", "a"."SecurityStamp", "a"."TwoFactorEnabled", "a"."UserName"
+FROM "AspNetUsers" AS "a"
+WHERE "a"."Id" = @p
+LIMIT 1
+[22:06:41 INF] [Microsoft.EntityFrameworkCore.Database.Command] Executed DbCommand (0ms) [Parameters=[@p='?' (DbType = Int64)], CommandType='Text', CommandTimeout='30']
+SELECT "a"."Id", "a"."AccessFailedCount", "a"."ConcurrencyStamp", "a"."DisplayName", "a"."Email", "a"."EmailConfirmed", "a"."LockoutEnabled", "a"."LockoutEnd", "a"."NormalizedEmail", "a"."NormalizedUserName", "a"."PasswordHash", "a"."PhoneNumber", "a"."PhoneNumberConfirmed", "a"."SecurityStamp", "a"."TwoFactorEnabled", "a"."UserName"
+FROM "AspNetUsers" AS "a"
+WHERE "a"."Id" = @p
+LIMIT 1
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.ChangeTracking] Context 'JiAppDbContext' started tracking 'User' entity. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see key values.
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Closing data reader to 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] A data reader for 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' is being disposed after spending 0ms reading results.
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[22:06:41 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Setting HTTP status code 200.
+[22:06:41 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Writing value of type 'MeResponse' as Json.
+[22:06:41 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executed endpoint 'HTTP: GET /api/v{version:apiVersion}/auth/me'
+[22:06:41 INF] [JiApp.Api] <-- GET /api/v1/auth/me responded 200 in 8ms
+[22:06:41 INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/v1/auth/me responded 200 in 9.0022 ms
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] 'JiAppDbContext' disposed.
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[22:06:41 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request finished HTTP/2 GET https://192.168.100.105:5003/api/v1/auth/me - 200 null application/json; charset=utf-8 9.3538ms
+[22:06:41 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request starting HTTP/2 GET https://192.168.100.105:5003/api/v1/search/history?limit=10 - null null
+[22:06:41 INF] [JiApp.Api] --> GET /api/v1/search/history?limit=10
+[22:06:41 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] 1 candidate(s) found for the request path '/api/v1/search/history'
+[22:06:41 DBG] [Microsoft.AspNetCore.Routing.Matching.DfaMatcher] Endpoint 'HTTP: GET /api/v{version:apiVersion}/search/history' with route pattern '/api/v{version:apiVersion}/search/history' is valid for the request path '/api/v1/search/history'
+[22:06:41 DBG] [Microsoft.AspNetCore.Routing.EndpointRoutingMiddleware] Request matched endpoint 'HTTP: GET /api/v{version:apiVersion}/search/history'
+[22:06:41 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] Successfully validated the token.
+[22:06:41 DBG] [Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler] AuthenticationScheme: Bearer was successfully authenticated.
+[22:06:41 DBG] [Microsoft.AspNetCore.Authorization.DefaultAuthorizationService] Authorization was successful.
+[22:06:41 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executing endpoint 'HTTP: GET /api/v{version:apiVersion}/search/history'
+[22:06:41 INF] [JiApp.Api.Features.Search.SearchHistory.SearchHistoryHandler] Fetching search history (limit: 10)
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] Entity Framework Core 10.0.8 initialized 'JiAppDbContext' using provider 'Microsoft.EntityFrameworkCore.Sqlite:10.0.8' with options: None
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Creating DbConnection.
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Created DbConnection. (0ms).
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opening connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Opened connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Creating DbCommand for 'ExecuteReader'.
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Created DbCommand for 'ExecuteReader' (0ms).
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Initialized DbCommand for 'ExecuteReader' (0ms).
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Executing DbCommand [Parameters=[@userId='?' (DbType = Int64), @p2='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+SELECT "y"."Id", "y"."SearchText", "y"."SearchedAt", "y"."UserId"
+FROM "YoutubeSearchHistory" AS "y"
+WHERE "y"."UserId" = @userId
+ORDER BY "y"."SearchedAt" DESC
+LIMIT @p2 OFFSET @p
+[22:06:41 INF] [Microsoft.EntityFrameworkCore.Database.Command] Executed DbCommand (0ms) [Parameters=[@userId='?' (DbType = Int64), @p2='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+SELECT "y"."Id", "y"."SearchText", "y"."SearchedAt", "y"."UserId"
+FROM "YoutubeSearchHistory" AS "y"
+WHERE "y"."UserId" = @userId
+ORDER BY "y"."SearchedAt" DESC
+LIMIT @p2 OFFSET @p
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] Closing data reader to 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Command] A data reader for 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' is being disposed after spending 0ms reading results.
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Closed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[22:06:41 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Setting HTTP status code 200.
+[22:06:41 INF] [Microsoft.AspNetCore.Http.Result.OkObjectResult] Writing value of type 'SearchHistoryResponse' as Json.
+[22:06:41 INF] [Microsoft.AspNetCore.Routing.EndpointMiddleware] Executed endpoint 'HTTP: GET /api/v{version:apiVersion}/search/history'
+[22:06:41 INF] [JiApp.Api] <-- GET /api/v1/search/history responded 200 in 2ms
+[22:06:41 INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/v1/search/history responded 200 in 2.5833 ms
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Infrastructure] 'JiAppDbContext' disposed.
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposing connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db'.
+[22:06:41 DBG] [Microsoft.EntityFrameworkCore.Database.Connection] Disposed connection to database 'main' on server '/home/jakub/JiApp/dev-data/JiApp.db' (0ms).
+[22:06:41 INF] [Microsoft.AspNetCore.Hosting.Diagnostics] Request finished HTTP/2 GET https://192.168.100.105:5003/api/v1/search/history?limit=10 - 200 null application/json; charset=utf-8 2.9925ms
+[22:06:48 DBG] [Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets] Connection id "0HNLP0DO9I0EV" reset.
+[22:06:48 DBG] [Microsoft.AspNetCore.Server.Kestrel.Http2] Connection id "0HNLP0DO9I0EV" is closed. The last processed stream ID was 9.
+[22:06:48 DBG] [Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets] Connection id "0HNLP0DO9I0EV" sending FIN because: "The Socket transport's send loop completed gracefully."
+[22:06:48 DBG] [Microsoft.AspNetCore.Server.Kestrel.Http2] The connection queue processing loop for 0HNLP0DO9I0EV completed.
+[22:06:48 DBG] [Microsoft.AspNetCore.Server.Kestrel.Connections] Connection id "0HNLP0DO9I0EV" stopped.

@@ -3,6 +3,9 @@ import ReactNativeBlobUtil from 'react-native-blob-util';
 import { getToken } from './storageService';
 import type { DownloadRequest, DownloadResponse, DownloadHistoryItem } from '../types/api';
 
+const sanitizeFileName = (name: string): string =>
+  name.replace(/[/\\:*?"<>|]/g, '').trim() || 'download';
+
 export const requestDownloadLink = async (
   request: DownloadRequest,
   signal?: AbortSignal,
@@ -34,17 +37,22 @@ export const downloadFile = async (
   fileName: string,
 ): Promise<string> => {
   const token = await getToken();
-  const { dirs } = ReactNativeBlobUtil.fs;
-  const destPath = `${dirs.DownloadDir}/${fileName}.mp3`;
+
+  // Step 1: Download to internal cache (safe on scoped storage)
   const result = await ReactNativeBlobUtil.config({
     fileCache: true,
-    path: destPath,
-    addAndroidDownloads: {
-      useDownloadManager: true,
-      notification: true,
-      title: fileName,
-      path: destPath,
-    },
   }).fetch('GET', downloadUrl, token ? { Authorization: `Bearer ${token}` } : {});
-  return result.path();
+
+  // Step 2: Copy to public Downloads via MediaStore (scoped-storage compatible)
+  const destPath = await ReactNativeBlobUtil.MediaCollection.copyToMediaStore(
+    {
+      name: `${sanitizeFileName(fileName)}.mp3`,
+      parentFolder: '',
+      mimeType: 'audio/mpeg',
+    },
+    'Download',
+    result.path(),
+  );
+
+  return `Download/${sanitizeFileName(fileName)}.mp3`;
 };

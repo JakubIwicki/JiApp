@@ -1,9 +1,8 @@
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   FlatList,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -32,31 +31,6 @@ const SearchScreen: React.FC = () => {
   const lastQueryRef = useRef<string>('');
 
   useScreenTitle('search.title');
-
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <View style={styles.headerButtons}>
-          <TouchableOpacity
-            style={styles.headerButton}
-            onPress={() => navigation.navigate('Settings')}
-            accessibilityRole="button"
-            testID="header-settings-button"
-          >
-            <Text style={styles.headerButtonText}>{t('nav.settings')}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.headerButton}
-            onPress={() => navigation.navigate('History')}
-            accessibilityRole="button"
-            testID="header-history-button"
-          >
-            <Text style={styles.headerButtonText}>{t('nav.history')}</Text>
-          </TouchableOpacity>
-        </View>
-      ),
-    });
-  }, [navigation, t]);
 
   const [recentSearches, setRecentSearches] = useState<SearchHistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
@@ -236,20 +210,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     marginBottom: 6,
     overflow: 'hidden',
-  },
-  headerButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerButton: {
-    marginRight: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 6,
-  },
-  headerButtonText: {
-    fontSize: 15,
-    color: colors.primary,
-    fontWeight: '500',
   },
 });
 

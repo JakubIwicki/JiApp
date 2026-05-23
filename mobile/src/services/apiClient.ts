@@ -1,5 +1,17 @@
-import axios from 'axios';
-import { getToken, clearToken, clearUserId, clearDisplayName, clearUsername, clearCredentials } from './storageService';
+import axios, { AxiosError } from 'axios';
+import {
+  getToken,
+  clearToken,
+  clearUserId,
+  clearDisplayName,
+  clearUsername,
+  clearCredentials,
+  saveToken,
+  saveUserId,
+  saveDisplayName,
+  saveUsername,
+  getCredentials,
+} from './storageService';
 import { API_BASE_URL } from '../config';
 
 const apiClient = axios.create({
@@ -21,10 +33,45 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
+interface RetryConfig extends axios.InternalAxiosRequestConfig {
+  _isRetry?: boolean;
+}
+
 apiClient.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    if (error.response?.status === 401) {
+  async (error: AxiosError) => {
+    const config = error.config as RetryConfig | undefined;
+
+    if (error.response?.status === 401 && config && !config._isRetry) {
+      const credentials = await getCredentials();
+
+      if (credentials) {
+        try {
+          // Re-login with saved credentials using raw axios (bypasses this interceptor)
+          const loginResponse = await axios.post(
+            `${API_BASE_URL}/auth/login`,
+            { username: credentials.username, password: credentials.password },
+            { headers: { 'Content-Type': 'application/json' } },
+          );
+
+          const { token, id, displayName } = loginResponse.data;
+          await Promise.all([
+            saveToken(token),
+            saveUserId(id),
+            saveDisplayName(displayName),
+            saveUsername(credentials.username),
+          ]);
+
+          // Retry the original request with the new token
+          config._isRetry = true;
+          config.headers.Authorization = `Bearer ${token}`;
+          return apiClient.request(config);
+        } catch {
+          // Re-login failed — wipe everything
+        }
+      }
+
+      // No saved credentials or re-login failed — clear all auth state
       await Promise.all([
         clearToken(),
         clearUserId(),
@@ -33,6 +80,16 @@ apiClient.interceptors.response.use(
         clearCredentials(),
       ]);
     }
+
+    // Extract server error message for non-401 responses so downstream
+    // error utils can read it without importing axios types
+    if (error.response?.status !== 401 && error.response?.data && typeof error.response.data === 'object') {
+      const data = error.response.data as Record<string, unknown>;
+      if (typeof data.error === 'string') {
+        (error as any)._serverError = data.error;
+      }
+    }
+
     return Promise.reject(error);
   },
 );

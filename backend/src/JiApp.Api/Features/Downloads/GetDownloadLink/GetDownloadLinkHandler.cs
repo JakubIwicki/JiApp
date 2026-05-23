@@ -20,6 +20,8 @@ public sealed class GetDownloadLinkHandler(
     Settings settings,
     ILogger<GetDownloadLinkHandler> logger)
 {
+    public const string YoutubeDlErrorCategory = "YoutubeDl";
+
     public async Task<Result<DownloadResponse>> HandleAsync(DownloadRequest request)
     {
         var baseDirectory = settings.App!.BaseDirectory!;
@@ -43,8 +45,9 @@ public sealed class GetDownloadLinkHandler(
         if (!downloadResult.Success)
         {
             var errors = string.Join(", ", downloadResult.Errors);
+            logger.YoutubeDlDownloadFailed(request.VideoId, errors);
             return Result<DownloadResponse>.Failure(
-                $"Failed to download video: {errors}");
+                $"Failed to download video: {errors}", errorCategory: YoutubeDlErrorCategory);
         }
 
         var filePath = downloadResult.FilePath!;

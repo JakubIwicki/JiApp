@@ -79,4 +79,8 @@ internal static partial class HandlerLogs
 
     [LoggerMessage(EventId = 24, Level = LogLevel.Error, Message = "Unhandled exception occurred")]
     public static partial void UnhandledExceptionOccurred(this ILogger logger, Exception exception);
+
+    [LoggerMessage(EventId = 25, Level = LogLevel.Warning,
+        Message = "yt-dlp download failed for video {VideoId}: {Errors}")]
+    public static partial void YoutubeDlDownloadFailed(this ILogger logger, string videoId, string errors);
 }

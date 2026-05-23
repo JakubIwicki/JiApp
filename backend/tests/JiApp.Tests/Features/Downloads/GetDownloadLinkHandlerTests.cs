@@ -53,6 +53,7 @@ public class GetDownloadLinkHandlerTests
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().NotBeNullOrEmpty();
+        result.ErrorCategory.Should().Be("YoutubeDl");
     }
 
     [Fact]

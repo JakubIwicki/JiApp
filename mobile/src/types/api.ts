@@ -62,6 +62,12 @@ export interface DownloadHistoryItem {
   downloadedAt: string;
 }
 
+export interface ApiErrorResponse {
+  error: string;
+  details?: string;
+  retryAfterSeconds?: string;
+}
+
 export interface HistoryResponse {
   searches: SearchHistoryItem[];
   downloads: DownloadHistoryItem[];
