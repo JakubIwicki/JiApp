@@ -4,30 +4,13 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using JiApp.Api.Features.Search.SearchHistory;
 using JiApp.Common.Models;
-using JiApp.Infrastructure.Repositories;
-using JiApp.Tests.Mocks;
-using Moq;
+using JiApp.Tests.Fixtures;
 using Xunit;
 
 namespace JiApp.Tests.Features.Search;
 
 public class SearchHistoryHandlerTests
 {
-    private readonly Mock<ISearchHistoryRepository> _searchHistoryRepoMock;
-    private readonly SearchHistoryHandler _handler;
-
-    public SearchHistoryHandlerTests()
-    {
-        _searchHistoryRepoMock = SearchHistoryRepositoryMock.GetSuccessful();
-        var currentUserMock = CurrentUserServiceMock.GetSuccessful();
-        var loggerMock = LoggerMock.GetSuccessful<SearchHistoryHandler>();
-
-        _handler = new SearchHistoryHandler(
-            _searchHistoryRepoMock.Object,
-            currentUserMock.Object,
-            loggerMock.Object);
-    }
-
     [Fact]
     public async Task HandleAsync_WithHistory_ReturnsUserSearchHistory()
     {
@@ -49,12 +32,13 @@ public class SearchHistoryHandlerTests
             }
         }.AsReadOnly();
 
-        _searchHistoryRepoMock.Setup(x => x.GetByUserIdAsync(1L, 10, 0))
-            .ReturnsAsync(history);
+        var ctx = new SearchHistoryHandlerFixture()
+            .WithGetByUserIdAsync(1L, 10, history, 0)
+            .Build();
 
         var request = new SearchHistoryRequest(null);
 
-        var result = await _handler.HandleAsync(request);
+        var result = await ctx.Handler.HandleAsync(request);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
@@ -81,12 +65,13 @@ public class SearchHistoryHandlerTests
             }
         }.AsReadOnly();
 
-        _searchHistoryRepoMock.Setup(x => x.GetByUserIdAsync(1L, 5, 0))
-            .ReturnsAsync(history);
+        var ctx = new SearchHistoryHandlerFixture()
+            .WithGetByUserIdAsync(1L, 5, history, 0)
+            .Build();
 
         var request = new SearchHistoryRequest(5);
 
-        var result = await _handler.HandleAsync(request);
+        var result = await ctx.Handler.HandleAsync(request);
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Items.Should().HaveCount(1);
@@ -97,12 +82,13 @@ public class SearchHistoryHandlerTests
     {
         var emptyHistory = new List<YoutubeSearchHistory>().AsReadOnly();
 
-        _searchHistoryRepoMock.Setup(x => x.GetByUserIdAsync(1L, 10, 0))
-            .ReturnsAsync(emptyHistory);
+        var ctx = new SearchHistoryHandlerFixture()
+            .WithGetByUserIdAsync(1L, 10, emptyHistory, 0)
+            .Build();
 
         var request = new SearchHistoryRequest(null);
 
-        var result = await _handler.HandleAsync(request);
+        var result = await ctx.Handler.HandleAsync(request);
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Items.Should().BeEmpty();
