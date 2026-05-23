@@ -1,4 +1,6 @@
-using System.Reflection;
+using System;
+using System.Diagnostics;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Threading.RateLimiting;
@@ -15,22 +17,28 @@ using JiApp.Api.Features.Search.SearchHistory;
 using JiApp.Api.Features.Search.SearchVideos;
 using JiApp.Api.Middleware;
 using JiApp.Api.Services;
+using Serilog;
 using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Infrastructure.Persistence;
 using JiApp.Infrastructure.Repositories;
 using JiApp.Infrastructure.Services;
 using JiApp.YtApi;
-using JiApp.YtApi.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.OpenApi;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 
 namespace JiApp.Api;
 
-public class Startup(IConfiguration configuration)
+public class Startup(Settings settings)
 {
     public void ConfigureServices(IServiceCollection services)
     {
@@ -38,8 +46,8 @@ public class Startup(IConfiguration configuration)
         ConfigureErrorHandling(services);
         ConfigureDatabase(services);
         ConfigureIdentityAndSecurity(services);
-        ConfigureCors(services);
         ConfigureRateLimiting(services);
+        ConfigureCors(services);
         RegisterApplicationServices(services);
         RegisterRepositories(services);
         ConfigureYoutubeApi(services);
@@ -49,49 +57,56 @@ public class Startup(IConfiguration configuration)
     private static void ConfigureApiDocumentationAndValidation(IServiceCollection services)
     {
         services.AddEndpointsApiExplorer();
-        services.AddSwaggerGen();
-        services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+        services.AddSwaggerGen(options =>
+        {
+            options.SwaggerDoc(SwaggerConstants.Document.Version, new OpenApiInfo
+            {
+                Title = SwaggerConstants.Document.Title,
+                Version = SwaggerConstants.Document.Version,
+            });
+            options.DocumentFilter<SwaggerTagDescriptionsFilter>();
+        });
     }
 
     private static void ConfigureErrorHandling(IServiceCollection services)
     {
         services.AddTransient<GlobalExceptionMiddleware>();
-        services.AddTransient<RequestLoggingMiddleware>();
     }
 
     private void ConfigureDatabase(IServiceCollection services)
     {
-        var baseDir = AppContext.BaseDirectory;
-        var connectionString = (configuration.GetConnectionString("JiDb")
-                                ?? throw new InvalidOperationException("Connection string 'JiDb' is not configured."))
-            .Replace("${BaseDirectory}", baseDir);
         services.AddDbContext<JiAppDbContext>(options =>
-            options.UseSqlite(connectionString));
+            options.UseSqlite(settings.ConnectionString!));
+    }
 
-        var appBaseDir = configuration["App:BaseDirectory"];
-        if (!string.IsNullOrEmpty(appBaseDir))
+    private static void ConfigureCors(IServiceCollection services)
+    {
+        services.AddCors(options =>
         {
-            configuration["App:BaseDirectory"] = appBaseDir.Replace("${BaseDirectory}", baseDir);
-        }
+            options.AddDefaultPolicy(policy =>
+            {
+                policy.AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials()
+                    .SetIsOriginAllowed(_ => true);
+            });
+        });
     }
 
     private void ConfigureIdentityAndSecurity(IServiceCollection services)
     {
         services.AddIdentity<User, IdentityRole<long>>(options =>
             {
-                options.Password.RequireDigit = false;
+                options.Password.RequireDigit = true;
                 options.Password.RequireLowercase = false;
-                options.Password.RequireUppercase = false;
+                options.Password.RequireUppercase = true;
                 options.Password.RequireNonAlphanumeric = false;
-                options.Password.RequiredLength = 4;
+                options.Password.RequiredLength = 8;
+                options.Password.RequiredUniqueChars = 1;
                 options.User.RequireUniqueEmail = true;
             })
             .AddEntityFrameworkStores<JiAppDbContext>()
             .AddDefaultTokenProviders();
-
-        var jwtKey = configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is not configured.");
-        var jwtIssuer = configuration["Jwt:Issuer"] ?? throw new InvalidOperationException("JWT Issuer is not configured.");
-        var jwtAudience = configuration["Jwt:Audience"] ?? throw new InvalidOperationException("JWT Audience is not configured.");
 
         services.AddAuthentication(options =>
             {
@@ -106,9 +121,10 @@ public class Startup(IConfiguration configuration)
                     ValidateAudience = true,
                     ValidateIssuerSigningKey = true,
                     ValidateLifetime = true,
-                    ValidIssuer = jwtIssuer,
-                    ValidAudience = jwtAudience,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+                    ValidIssuer = settings.Jwt!.Issuer!,
+                    ValidAudience = settings.Jwt!.Audience!,
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(settings.Jwt!.Key!)),
                 };
 
                 options.Events = new JwtBearerEvents
@@ -128,61 +144,24 @@ public class Startup(IConfiguration configuration)
         services.AddAuthorization();
     }
 
-    private static void ConfigureCors(IServiceCollection services)
-    {
-        services.AddCors(options =>
-        {
-            options.AddDefaultPolicy(policy =>
-            {
-                policy.AllowAnyMethod()
-                    .AllowAnyHeader()
-                    .AllowCredentials()
-                    .SetIsOriginAllowed(_ => true);
-            });
-        });
-    }
-
     private void ConfigureRateLimiting(IServiceCollection services)
     {
-        services.Configure<RateLimitingOptions>(
-            configuration.GetSection(RateLimitingOptions.SectionName));
+        var rl = settings.RateLimiting!;
 
         services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
-            options.AddFixedWindowLimiter(RateLimitPolicyNames.Login, opt =>
-            {
-                var s = GetPolicySettings("Login", new RateLimitPolicyOptions { PermitLimit = 5, WindowInSeconds = 60 });
-                opt.PermitLimit = s.PermitLimit;
-                opt.Window = TimeSpan.FromSeconds(s.WindowInSeconds);
-                opt.QueueLimit = s.QueueLimit;
-            });
-
-            options.AddFixedWindowLimiter(RateLimitPolicyNames.Register, opt =>
-            {
-                var s = GetPolicySettings("Register", new RateLimitPolicyOptions { PermitLimit = 3, WindowInSeconds = 60 });
-                opt.PermitLimit = s.PermitLimit;
-                opt.Window = TimeSpan.FromSeconds(s.WindowInSeconds);
-                opt.QueueLimit = s.QueueLimit;
-            });
-
-            options.AddFixedWindowLimiter(RateLimitPolicyNames.Health, opt =>
-            {
-                var s = GetPolicySettings("Health", new RateLimitPolicyOptions { PermitLimit = 30, WindowInSeconds = 60 });
-                opt.PermitLimit = s.PermitLimit;
-                opt.Window = TimeSpan.FromSeconds(s.WindowInSeconds);
-                opt.QueueLimit = s.QueueLimit;
-            });
-
-            options.AddSlidingWindowLimiter(RateLimitPolicyNames.DownloadFile, opt =>
-            {
-                var s = GetPolicySettings("DownloadFile", new() { PermitLimit = 10, WindowInSeconds = 60 });
-                opt.PermitLimit = s.PermitLimit;
-                opt.Window = TimeSpan.FromSeconds(s.WindowInSeconds);
-                opt.QueueLimit = s.QueueLimit;
-                opt.SegmentsPerWindow = s.SegmentsPerWindow;
-            });
+            AddPolicy(RateLimitPolicyNames.Login, rl.Login!);
+            AddPolicy(RateLimitPolicyNames.Register, rl.Register!);
+            AddPolicy(RateLimitPolicyNames.Health, rl.Health!);
+            AddPolicy(RateLimitPolicyNames.DownloadFile, rl.DownloadFile!);
+            AddPolicy(RateLimitPolicyNames.SearchVideos, rl.SearchVideos!);
+            AddPolicy(RateLimitPolicyNames.SearchHistory, rl.SearchHistory!);
+            AddPolicy(RateLimitPolicyNames.DownloadHistory, rl.DownloadHistory!);
+            AddPolicy(RateLimitPolicyNames.GetHistory, rl.GetHistory!);
+            AddPolicy(RateLimitPolicyNames.Me, rl.Me!);
+            AddPolicy(RateLimitPolicyNames.GetDownloadLink, rl.GetDownloadLink!);
 
             options.OnRejected = async (context, cancellationToken) =>
             {
@@ -191,7 +170,7 @@ public class Startup(IConfiguration configuration)
                 string? retryAfter = null;
                 if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfterValue))
                 {
-                    retryAfter = retryAfterValue.TotalSeconds.ToString("F0");
+                    retryAfter = retryAfterValue.TotalSeconds.ToString("F0", CultureInfo.InvariantCulture);
                 }
 
                 var body = new ApiErrorResponse(
@@ -201,14 +180,52 @@ public class Startup(IConfiguration configuration)
                 await context.HttpContext.Response.WriteAsync(
                     JsonSerializer.Serialize(body, ApiErrorResponse.JsonOptions), cancellationToken);
             };
+
+            void AddPolicy(string name, Settings.RateLimitPolicyOptions policy)
+            {
+                if (policy.SegmentsPerWindow!.Value > 0)
+                {
+                    options.AddSlidingWindowLimiter(name, opt =>
+                    {
+                        opt.PermitLimit = policy.PermitLimit!.Value;
+                        opt.Window = TimeSpan.FromSeconds(policy.WindowInSeconds!.Value);
+                        opt.QueueLimit = policy.QueueLimit!.Value;
+                        opt.SegmentsPerWindow = policy.SegmentsPerWindow.Value;
+                    });
+                }
+                else
+                {
+                    options.AddFixedWindowLimiter(name, opt =>
+                    {
+                        opt.PermitLimit = policy.PermitLimit!.Value;
+                        opt.Window = TimeSpan.FromSeconds(policy.WindowInSeconds!.Value);
+                        opt.QueueLimit = policy.QueueLimit!.Value;
+                    });
+                }
+            }
         });
     }
 
-    private static void RegisterApplicationServices(IServiceCollection services)
+    private void RegisterApplicationServices(IServiceCollection services)
     {
-        services.AddSingleton<IJwtTokenService, JwtTokenService>();
+        services.AddSingleton(settings);
+        services.AddSingleton<IJwtTokenService>(_ =>
+            new JwtTokenService(
+                settings.Jwt!.Key!,
+                settings.Jwt!.Issuer!,
+                settings.Jwt!.Audience!,
+                settings.Jwt!.ExpireMinutes!.Value));
         services.AddSingleton<ITempFileStore, TempFileStore>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+        services.AddScoped<IValidator<RegisterRequest>, RegisterValidator>();
+        services.AddScoped<IValidator<LoginRequest>, LoginValidator>();
+        services.AddScoped<IValidator<DownloadRequest>, GetDownloadLinkValidator>();
+        services.AddScoped<IValidator<DownloadHistoryRequest>, DownloadHistoryValidator>();
+        services.AddScoped<IValidator<SearchVideosRequest>, SearchVideosValidator>();
+        services.AddScoped<IValidator<SearchHistoryRequest>, SearchHistoryValidator>();
+        services.AddScoped<IValidator<GetHistoryRequest>, GetHistoryValidator>();
+
         services.AddScoped<RegisterHandler>();
         services.AddScoped<LoginHandler>();
         services.AddScoped<MeHandler>();
@@ -229,11 +246,12 @@ public class Startup(IConfiguration configuration)
 
     private void ConfigureYoutubeApi(IServiceCollection services)
     {
-        var apiKey = configuration["Youtube:api-key"] ?? string.Empty;
-        var ytDlpPath = configuration["Youtube:yt-dlp"] ?? string.Empty;
-        var ffmpegPath = configuration["Youtube:ffmpeg"] ?? string.Empty;
-        services.AddSingleton(new YoutubeSettings(apiKey, ytDlpPath, ffmpegPath));
-        services.AddSingleton<IYoutubeClient, YoutubeClient>();
+        services.AddSingleton(settings.Youtube!);
+        services.AddSingleton<IYoutubeClient>(_ =>
+            new YoutubeClient(
+                settings.Youtube!.ApiKey!,
+                settings.Youtube!.YtDlpPath!,
+                settings.Youtube!.FfmpegPath!));
     }
 
     private static void RegisterInfrastructure(IServiceCollection services)
@@ -242,22 +260,53 @@ public class Startup(IConfiguration configuration)
         services.AddHostedService<TempFileCleanupService>();
     }
 
-    private RateLimitPolicyOptions GetPolicySettings(string name, RateLimitPolicyOptions fallback)
-    {
-        return configuration
-            .GetSection($"{RateLimitingOptions.SectionName}:{name}")
-            .Get<RateLimitPolicyOptions>() ?? fallback;
-    }
-
     public static void Configure(WebApplication app)
     {
+        ArgumentNullException.ThrowIfNull(app);
         app.UseMiddleware<GlobalExceptionMiddleware>();
-        app.UseMiddleware<RequestLoggingMiddleware>();
+        app.UseSerilogRequestLogging();
 
-        app.UseSwagger();
-        app.UseSwaggerUI();
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI();
+
+            app.Use(async (context, next) =>
+            {
+                app.Logger.LogInformation("--> {Method} {Path}{QueryString}",
+                    context.Request.Method,
+                    context.Request.Path,
+                    context.Request.QueryString);
+
+                var sw = Stopwatch.StartNew();
+                await next();
+                sw.Stop();
+
+                app.Logger.LogInformation("<-- {Method} {Path} responded {StatusCode} in {ElapsedMs}ms",
+                    context.Request.Method,
+                    context.Request.Path,
+                    context.Response.StatusCode,
+                    sw.ElapsedMilliseconds);
+            });
+        }
 
         app.UseRouting();
+
+        app.UseHttpsRedirection();
+
+        if (!app.Environment.IsDevelopment())
+        {
+            app.UseHsts();
+        }
+
+        app.Use(async (context, next) =>
+        {
+            context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+            context.Response.Headers["X-Frame-Options"] = "DENY";
+            context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+            await next();
+        });
+
         app.UseRateLimiter();
         app.UseCors();
         app.UseAuthentication();
@@ -274,7 +323,7 @@ public class Startup(IConfiguration configuration)
         app.MapGetHistory();
 
         app.MapGet("/api/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }))
-            .WithTags("System")
+            .WithTags(SwaggerConstants.Tags.System)
             .WithSummary("Health check")
             .Produces(StatusCodes.Status200OK)
             .RequireRateLimiting(RateLimitPolicyNames.Health);

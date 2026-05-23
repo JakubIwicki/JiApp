@@ -18,7 +18,9 @@ public sealed class RegisterValidator : AbstractValidator<RegisterRequest>
 
         RuleFor(x => x.Password)
             .NotEmpty()
-            .MinimumLength(ValidationConstants.PasswordMinLength);
+            .MinimumLength(ValidationConstants.PasswordMinLength)
+            .Matches(@"[A-Z]").WithMessage("Password must contain at least one uppercase letter.")
+            .Matches(@"[0-9]").WithMessage("Password must contain at least one digit.");
 
         RuleFor(x => x.DisplayName)
             .NotEmpty()

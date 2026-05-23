@@ -1,5 +1,7 @@
+using System;
 using FluentAssertions;
 using JiApp.Common.Models;
+using Xunit;
 
 namespace JiApp.Tests.Common;
 

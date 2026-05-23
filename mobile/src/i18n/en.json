@@ -5,6 +5,8 @@
     "retry": "Try again"
   },
   "auth": {
+    "loginTitle": "Log In",
+    "registerTitle": "Sign Up",
     "login": "Log In",
     "register": "Sign Up",
     "username": "Username",
@@ -23,11 +25,53 @@
     "emailRequired": "Email is required",
     "displayNameRequired": "Display name is required",
     "usernameTooShort": "Username must be at least 3 characters",
-    "passwordTooShort": "Password must be at least 4 characters"
+    "passwordTooShort": "Password must be at least 4 characters",
+    "invalidEmail": "Please enter a valid email address"
   },
   "nav": {
     "search": "Search",
+    "downloads": "Downloads",
     "history": "History",
     "settings": "Settings"
+  },
+  "search": {
+    "title": "Search",
+    "placeholder": "Search YouTube...",
+    "noResults": "No results found",
+    "searching": "Searching...",
+    "error": "Search error",
+    "recentSearches": "Recent searches",
+    "empty": "Search for a song or video\nto start downloading"
+  },
+  "history": {
+    "title": "History",
+    "searches": "Searches",
+    "downloads": "Downloads",
+    "noSearches": "No searches yet",
+    "noDownloads": "No downloads yet",
+    "loadError": "Error loading history",
+    "empty": "Nothing here yet.\nYour searches and downloads will appear here."
+  },
+  "download": {
+    "title": "Download",
+    "downloadMp3": "Download MP3",
+    "downloading": "Downloading...",
+    "success": "Download successful",
+    "failed": "Download failed",
+    "goBack": "Back to search",
+    "viewHistory": "View history",
+    "fileSaved": "File saved",
+    "pleaseWait": "Please wait, this may take a moment"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "account": "Account",
+    "displayName": "Display name",
+    "username": "Username",
+    "logout": "Logout",
+    "version": "Version",
+    "languagePolish": "Polish",
+    "languageEnglish": "English"
   }
 }

@@ -1,12 +1,14 @@
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using FluentAssertions;
 using Google;
 using JiApp.Api.Features.Search.SearchVideos;
-using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Infrastructure.Repositories;
+using JiApp.Tests.Mocks;
 using JiApp.YtApi;
-using Microsoft.Extensions.Logging;
 using Moq;
+using Xunit;
 
 namespace JiApp.Tests.Features.Search;
 
@@ -14,26 +16,20 @@ public class SearchVideosHandlerTests
 {
     private readonly Mock<IYoutubeClient> _youtubeClientMock;
     private readonly Mock<ISearchHistoryRepository> _searchHistoryRepoMock;
-    private readonly Mock<ICurrentUserService> _currentUserMock;
-    private readonly Mock<ILogger<SearchVideosHandler>> _loggerMock;
     private readonly SearchVideosHandler _handler;
 
     public SearchVideosHandlerTests()
     {
-        _youtubeClientMock = new Mock<IYoutubeClient>();
-        _searchHistoryRepoMock = new Mock<ISearchHistoryRepository>();
-        _currentUserMock = new Mock<ICurrentUserService>();
-        _loggerMock = new Mock<ILogger<SearchVideosHandler>>();
-
-        _currentUserMock.Setup(x => x.UserId).Returns(1L);
-
-        _searchHistoryRepoMock.Setup(x => x.SaveChangesAsync()).Returns(Task.CompletedTask);
+        _youtubeClientMock = YoutubeClientMock.GetSuccessful();
+        _searchHistoryRepoMock = SearchHistoryRepositoryMock.GetSuccessful();
+        var currentUserMock = CurrentUserServiceMock.GetSuccessful();
+        var loggerMock = LoggerMock.GetSuccessful<SearchVideosHandler>();
 
         _handler = new SearchVideosHandler(
             _youtubeClientMock.Object,
             _searchHistoryRepoMock.Object,
-            _currentUserMock.Object,
-            _loggerMock.Object);
+            currentUserMock.Object,
+            loggerMock.Object);
     }
 
     [Fact]
@@ -41,8 +37,8 @@ public class SearchVideosHandlerTests
     {
         var videos = new List<YoutubeVideo>
         {
-            new YoutubeVideo("vid1", "Test Title", "Test Description", "https://img.url/1"),
-            new YoutubeVideo("vid2", "Another Title", "Another Description", "https://img.url/2")
+            new("vid1", "Test Title", "Test Description", "https://img.url/1", "Test Channel"),
+            new("vid2", "Another Title", "Another Description", "https://img.url/2", "Another Channel")
         }.AsReadOnly();
 
         _youtubeClientMock.Setup(x => x.SearchVideosAsync("test query", 10))
@@ -72,7 +68,7 @@ public class SearchVideosHandlerTests
     {
         var videos = new List<YoutubeVideo>
         {
-            new YoutubeVideo("vid1", "Title", "Desc", "https://img.url/1")
+            new YoutubeVideo("vid1", "Title", "Desc", "https://img.url/1", "Channel")
         }.AsReadOnly();
 
         _youtubeClientMock.Setup(x => x.SearchVideosAsync("query", 5))

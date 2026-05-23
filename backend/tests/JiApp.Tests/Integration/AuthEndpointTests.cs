@@ -1,8 +1,12 @@
+using System;
 using System.Net;
+using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Threading.Tasks;
 using FluentAssertions;
 using JiApp.Common.Abstractions;
+using Xunit;
 
 namespace JiApp.Tests.Integration;
 
@@ -32,7 +36,7 @@ public class AuthEndpointTests : IClassFixture<CustomWebApplicationFactory>
         {
             username = $"testuser_{Guid.NewGuid():N}",
             email = $"test_{Guid.NewGuid():N}@example.com",
-            password = "pass1234",
+            password = "Pass1234",
             displayName = "Test User"
         };
 
@@ -49,7 +53,7 @@ public class AuthEndpointTests : IClassFixture<CustomWebApplicationFactory>
         {
             username,
             email = $"dup_{Guid.NewGuid():N}@example.com",
-            password = "pass1234",
+            password = "Pass1234",
             displayName = "Test User"
         };
 
@@ -62,7 +66,7 @@ public class AuthEndpointTests : IClassFixture<CustomWebApplicationFactory>
         {
             username,
             email = $"different_{Guid.NewGuid():N}@example.com",
-            password = "pass1234",
+            password = "Pass1234",
             displayName = "Other User"
         };
         var secondResponse = await _client.PostAsJsonAsync("/api/auth/register", duplicatePayload);
@@ -93,9 +97,56 @@ public class AuthEndpointTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
+    public async Task Register_WithShortPassword_ReturnsBadRequest()
+    {
+        var payload = new
+        {
+            username = $"shortpwd_{Guid.NewGuid():N}",
+            email = $"shortpwd_{Guid.NewGuid():N}@example.com",
+            password = "short",
+            displayName = "Test Short Password"
+        };
+
+        var response = await _client.PostAsJsonAsync("/api/auth/register", payload);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Register_WithPasswordNoUppercase_ReturnsBadRequest()
+    {
+        var payload = new
+        {
+            username = $"noupwd_{Guid.NewGuid():N}",
+            email = $"noupwd_{Guid.NewGuid():N}@example.com",
+            password = "password",
+            displayName = "Test No Uppercase"
+        };
+
+        var response = await _client.PostAsJsonAsync("/api/auth/register", payload);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Register_WithPasswordNoDigit_ReturnsBadRequest()
+    {
+        var payload = new
+        {
+            username = $"nodigit_{Guid.NewGuid():N}",
+            email = $"nodigit_{Guid.NewGuid():N}@example.com",
+            password = "Password",
+            displayName = "Test No Digit"
+        };
+
+        var response = await _client.PostAsJsonAsync("/api/auth/register", payload);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
     public async Task DownloadFile_WithInvalidId_ReturnsNotFoundWithApiErrorResponse()
     {
-        var response = await _client.GetAsync("/api/downloads/mp3/file/invalid-id");
+        var (authenticatedClient, _) = await CreateAuthenticatedClientAsync();
+
+        var response = await authenticatedClient.GetAsync("/api/downloads/mp3/file/invalid-id");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         var body = await response.Content.ReadFromJsonAsync<ApiErrorResponse>();
@@ -112,14 +163,14 @@ public class AuthEndpointTests : IClassFixture<CustomWebApplicationFactory>
         {
             username,
             email = $"login_{Guid.NewGuid():N}@example.com",
-            password = "pass1234",
+            password = "Pass1234",
             displayName = "Login User"
         };
         var registerResponse = await _client.PostAsJsonAsync("/api/auth/register", registerPayload);
         registerResponse.StatusCode.Should().Be(HttpStatusCode.Created);
 
         // Login with correct credentials
-        var loginPayload = new { username, password = "pass1234" };
+        var loginPayload = new { username, password = "Pass1234" };
         var loginResponse = await _client.PostAsJsonAsync("/api/auth/login", loginPayload);
         loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -191,6 +242,14 @@ public class AuthEndpointTests : IClassFixture<CustomWebApplicationFactory>
         body!.Error.Should().Be("Unauthorized");
     }
 
+    [Fact]
+    public async Task DownloadFile_WithoutToken_ReturnsUnauthorized()
+    {
+        var response = await _client.GetAsync("/api/downloads/mp3/file/any-id");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
     /// <summary>
     /// Registers a new user and logs in, returning an HttpClient with Bearer token set.
     /// </summary>
@@ -201,13 +260,13 @@ public class AuthEndpointTests : IClassFixture<CustomWebApplicationFactory>
         {
             username,
             email = $"auth_{Guid.NewGuid():N}@example.com",
-            password = "pass1234",
+            password = "Pass1234",
             displayName = "Auth User"
         };
         var registerResponse = await _client.PostAsJsonAsync("/api/auth/register", registerPayload);
         registerResponse.StatusCode.Should().Be(HttpStatusCode.Created);
 
-        var loginPayload = new { username, password = "pass1234" };
+        var loginPayload = new { username, password = "Pass1234" };
         var loginResponse = await _client.PostAsJsonAsync("/api/auth/login", loginPayload);
         loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var loginBody = await loginResponse.Content.ReadFromJsonAsync<LoginSuccessResponse>();

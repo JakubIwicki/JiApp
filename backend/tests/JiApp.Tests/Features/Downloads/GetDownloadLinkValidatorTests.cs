@@ -1,5 +1,6 @@
 using FluentAssertions;
 using JiApp.Api.Features.Downloads.GetDownloadLink;
+using Xunit;
 
 namespace JiApp.Tests.Features.Downloads;
 

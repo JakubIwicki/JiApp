@@ -1,0 +1,18 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
+    <!--
+      Separate build output by platform so WSL (Linux paths) and Rider/Windows
+      (UNC paths) never read each other's intermediate files. This prevents the
+      Rider error "Paths relative to drive roots are not supported."
+    -->
+    <ArtifactsPath Condition="'$(OS)' == 'Windows_NT'">$(MSBuildThisFileDirectory).artifacts</ArtifactsPath>
+    <ArtifactsPath Condition="'$(OS)' != 'Windows_NT'">$(MSBuildThisFileDirectory).artifacts-wsl</ArtifactsPath>
+  </PropertyGroup>
+</Project>

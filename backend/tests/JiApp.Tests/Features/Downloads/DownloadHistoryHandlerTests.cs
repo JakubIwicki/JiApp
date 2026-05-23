@@ -1,9 +1,14 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using FluentAssertions;
 using JiApp.Api.Features.Downloads.DownloadHistory;
-using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Infrastructure.Repositories;
+using JiApp.Tests.Mocks;
+using Microsoft.Extensions.Logging;
 using Moq;
+using Xunit;
 
 namespace JiApp.Tests.Features.Downloads;
 
@@ -14,14 +19,14 @@ public class DownloadHistoryHandlerTests
 
     public DownloadHistoryHandlerTests()
     {
-        _downloadHistoryRepoMock = new Mock<IDownloadHistoryRepository>();
-        var currentUserMock = new Mock<ICurrentUserService>();
-
-        currentUserMock.Setup(x => x.UserId).Returns(1L);
+        _downloadHistoryRepoMock = DownloadHistoryRepositoryMock.GetSuccessful();
+        var currentUserMock = CurrentUserServiceMock.GetSuccessful();
+        var loggerMock = LoggerMock.GetSuccessful<DownloadHistoryHandler>();
 
         _handler = new DownloadHistoryHandler(
             _downloadHistoryRepoMock.Object,
-            currentUserMock.Object);
+            currentUserMock.Object,
+            loggerMock.Object);
     }
 
     [Fact]

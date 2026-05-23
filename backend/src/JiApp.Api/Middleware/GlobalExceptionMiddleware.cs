@@ -1,19 +1,18 @@
+using System;
 using System.Text.Json;
+using System.Threading.Tasks;
+using JiApp.Api.Logging;
 using JiApp.Common.Abstractions;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace JiApp.Api.Middleware;
 
-public class GlobalExceptionMiddleware : IMiddleware
+public sealed class GlobalExceptionMiddleware(ILogger<GlobalExceptionMiddleware> logger, IWebHostEnvironment env)
+    : IMiddleware
 {
-    private readonly ILogger<GlobalExceptionMiddleware> _logger;
-    private readonly IWebHostEnvironment _env;
-
-    public GlobalExceptionMiddleware(ILogger<GlobalExceptionMiddleware> logger, IWebHostEnvironment env)
-    {
-        _logger = logger;
-        _env = env;
-    }
-
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
         try
@@ -22,12 +21,12 @@ public class GlobalExceptionMiddleware : IMiddleware
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Unhandled exception occurred");
+            logger.UnhandledExceptionOccurred(ex);
 
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
             context.Response.ContentType = "application/json";
 
-            var response = _env.IsDevelopment()
+            var response = env.IsDevelopment()
                 ? new ApiErrorResponse(Error: ex.Message, Details: ex.StackTrace)
                 : new ApiErrorResponse(Error: "An unexpected error occurred");
 

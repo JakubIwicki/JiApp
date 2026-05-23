@@ -1,0 +1,281 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ── Flags ────────────────────────────────────────────────────────────────
+RELEASE=false
+INSTALL=false
+CLEAN=false
+
+for arg in "$@"; do
+    case "$arg" in
+        --release) RELEASE=true ;;
+        --install) INSTALL=true ;;
+        --clean)   CLEAN=true ;;
+        --help|-h)
+            echo "Usage: $0 [--release] [--install] [--clean]"
+            echo ""
+            echo "  (none)       Build debug APK, no install"
+            echo "  --release    Build release APK with signing + version bump"
+            echo "  --install    Install APK to connected device via adb after build"
+            echo "  --clean      Run gradlew clean before building"
+            echo ""
+            echo "  Examples:"
+            echo "    $0                      # debug APK"
+            echo "    $0 --release            # signed release APK"
+            echo "    $0 --release --install  # release + install to device"
+            exit 0
+            ;;
+        *) echo "Unknown flag: $arg. Use --help for usage."; exit 1 ;;
+    esac
+done
+
+# ── Paths ────────────────────────────────────────────────────────────────
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+MOBILE_DIR="$SCRIPT_DIR/mobile"
+ANDROID_DIR="$MOBILE_DIR/android"
+GRADLE_FILE="$ANDROID_DIR/app/build.gradle"
+KEYSTORE_FILE="$ANDROID_DIR/app/jiapp-release.keystore"
+KEYSTORE_PROPS="$ANDROID_DIR/app/keystore.properties"
+DIST_DIR="$SCRIPT_DIR/dist"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+info()    { echo -e "${CYAN}[INFO]${NC}    $*"; }
+success() { echo -e "${GREEN}[OK]${NC}      $*"; }
+warn()    { echo -e "${YELLOW}[WARN]${NC}    $*"; }
+error()   { echo -e "${RED}[ERROR]${NC}   $*"; }
+
+# ── Prerequisites ────────────────────────────────────────────────────────
+check_prerequisites() {
+    info "Checking prerequisites..."
+
+    # Node.js
+    if ! command -v node &>/dev/null; then
+        error "Node.js is not installed. Please install Node.js >= 22.11.0"
+        exit 1
+    fi
+    local node_ver
+    node_ver=$(node --version | sed 's/v//' | cut -d. -f1)
+    if [ "$node_ver" -lt 22 ]; then
+        error "Node.js >= 22.11.0 required, found $(node --version)"
+        exit 1
+    fi
+    success "Node.js $(node --version)"
+
+    # Java
+    if ! command -v java &>/dev/null; then
+        error "Java is not installed. Please install JDK 17+"
+        exit 1
+    fi
+    success "Java $(java --version 2>&1 | head -1)"
+
+    # Android SDK
+    if [ -z "${ANDROID_HOME:-}" ]; then
+        # Check common locations
+        if [ -d "$HOME/Android/Sdk" ]; then
+            export ANDROID_HOME="$HOME/Android/Sdk"
+        elif [ -d "$HOME/android-sdk" ]; then
+            export ANDROID_HOME="$HOME/android-sdk"
+        else
+            error "ANDROID_HOME is not set and no SDK found in common locations."
+            error "Set ANDROID_HOME or install Android Studio."
+            exit 1
+        fi
+    fi
+    success "Android SDK at $ANDROID_HOME"
+
+    # adb (only needed for --install)
+    if $INSTALL; then
+        if ! command -v adb &>/dev/null; then
+            error "adb is required for --install but not found in PATH"
+            exit 1
+        fi
+        success "adb available"
+    fi
+
+    # keytool (only needed for --release)
+    if $RELEASE; then
+        if ! command -v keytool &>/dev/null; then
+            error "keytool is required for --release (part of JDK)"
+            exit 1
+        fi
+    fi
+
+    echo ""
+}
+
+# ── Dependencies ─────────────────────────────────────────────────────────
+install_deps() {
+    if [ -d "$MOBILE_DIR/node_modules" ]; then
+        info "node_modules/ found, skipping npm install"
+        return
+    fi
+    info "Installing npm dependencies..."
+    (cd "$MOBILE_DIR" && npm install)
+    success "npm install complete"
+    echo ""
+}
+
+# ── Keystore setup (release only) ────────────────────────────────────────
+setup_keystore() {
+    if [ -f "$KEYSTORE_FILE" ] && [ -f "$KEYSTORE_PROPS" ]; then
+        info "Release keystore already exists, skipping generation"
+        return
+    fi
+
+    info "Generating release keystore..."
+
+    local storepass keypass
+    storepass=$(openssl rand -base64 24 2>/dev/null || echo "jiapp-release-$(date +%s)")
+    keypass="$storepass"
+
+    keytool -genkeypair -v \
+        -keystore "$KEYSTORE_FILE" \
+        -alias jiapprelease \
+        -keyalg RSA \
+        -keysize 2048 \
+        -validity 10000 \
+        -storepass "$storepass" \
+        -keypass "$keypass" \
+        -dname "CN=JiApp, OU=Development, O=JiApp, L=Unknown, ST=Unknown, C=US" \
+        2>/dev/null
+
+    cat > "$KEYSTORE_PROPS" <<EOF
+storeFile=jiapp-release.keystore
+storePassword=$storepass
+keyAlias=jiapprelease
+keyPassword=$keypass
+EOF
+
+    success "Release keystore generated"
+    success "keystore.properties written (gitignored — do not commit)"
+    echo ""
+}
+
+# ── Version bump (release only) ──────────────────────────────────────────
+bump_version() {
+    local version_code
+    version_code=$(grep -oP 'versionCode \K\d+' "$GRADLE_FILE")
+
+    if [ -z "$version_code" ]; then
+        error "Could not read versionCode from $GRADLE_FILE"
+        exit 1
+    fi
+
+    local new_code=$((version_code + 1))
+
+    sed -i "s/versionCode $version_code/versionCode $new_code/" "$GRADLE_FILE"
+
+    success "versionCode bumped: $version_code → $new_code"
+    echo ""
+}
+
+# ── Build ────────────────────────────────────────────────────────────────
+build_apk() {
+    local variant="$1"  # Debug or Release
+
+    info "Building $variant APK..."
+
+    cd "$ANDROID_DIR"
+
+    if $CLEAN; then
+        info "Running gradlew clean..."
+        ./gradlew clean 2>&1 | tail -5
+    fi
+
+    local task="assemble$variant"
+    local gradle_output gradle_exit=0
+
+    set +e
+    gradle_output=$(./gradlew "$task" 2>&1)
+    gradle_exit=$?
+    set -e
+
+    echo "$gradle_output" | tail -20
+
+    if [ "$gradle_exit" -ne 0 ]; then
+        error "Gradle build failed (exit code: $gradle_exit)"
+        exit 1
+    fi
+
+    cd "$SCRIPT_DIR"
+    success "$variant build complete"
+    echo ""
+}
+
+# ── Copy to dist ─────────────────────────────────────────────────────────
+copy_to_dist() {
+    local variant="$1"  # debug or release
+    local version_code
+    version_code=$(grep -oP 'versionCode \K\d+' "$GRADLE_FILE")
+
+    mkdir -p "$DIST_DIR"
+
+    local apk_src apk_dst
+    apk_src="$ANDROID_DIR/app/build/outputs/apk/$variant/app-$variant.apk"
+    apk_dst="$DIST_DIR/JiAppMobile-${version_code}-${variant}.apk"
+
+    if [ ! -f "$apk_src" ]; then
+        error "APK not found at $apk_src"
+        exit 1
+    fi
+
+    cp "$apk_src" "$apk_dst"
+
+    local size
+    size=$(du -h "$apk_dst" | cut -f1)
+    success "APK copied: $apk_dst ($size)"
+    echo ""
+}
+
+# ── Install to device ────────────────────────────────────────────────────
+install_to_device() {
+    local variant="$1"
+    local version_code
+    version_code=$(grep -oP 'versionCode \K\d+' "$GRADLE_FILE")
+    local apk_path="$DIST_DIR/JiAppMobile-${version_code}-${variant}.apk"
+
+    info "Waiting for device..."
+    adb wait-for-device 2>&1 | tail -1
+
+    info "Installing APK to device..."
+    adb install -r "$apk_path"
+
+    success "APK installed to device"
+    echo ""
+}
+
+# ── Main ─────────────────────────────────────────────────────────────────
+echo ""
+echo -e "${CYAN}╔══════════════════════════════════════════════╗${NC}"
+echo -e "${CYAN}║       JiApp Mobile — APK Build Script        ║${NC}"
+echo -e "${CYAN}╚══════════════════════════════════════════════╝${NC}"
+echo ""
+
+check_prerequisites
+install_deps
+
+if $RELEASE; then
+    setup_keystore
+    bump_version
+    build_apk "Release"
+    copy_to_dist "release"
+    if $INSTALL; then
+        install_to_device "release"
+    fi
+else
+    build_apk "Debug"
+    copy_to_dist "debug"
+    if $INSTALL; then
+        install_to_device "debug"
+    fi
+fi
+
+echo -e "${GREEN}╔══════════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}║              Build complete!                  ║${NC}"
+echo -e "${GREEN}╚══════════════════════════════════════════════╝${NC}"
+echo ""

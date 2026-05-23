@@ -1,5 +1,11 @@
+using System.Collections.Generic;
+using System.Linq;
 using FluentValidation;
+using JiApp.Api.Configuration;
 using JiApp.Common.Abstractions;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 
 namespace JiApp.Api.Features.History.GetHistory;
 
@@ -27,11 +33,12 @@ public static class GetHistoryEndpoint
 
             return Results.Json(new ApiErrorResponse(Error: result.Error!), statusCode: StatusCodes.Status400BadRequest);
         })
-        .WithTags("History")
+        .WithTags(SwaggerConstants.Tags.History)
         .WithSummary("Get combined search and download history")
         .Produces<GetHistoryResponse>(StatusCodes.Status200OK)
         .ProducesValidationProblem(StatusCodes.Status400BadRequest)
-        .RequireAuthorization();
+        .RequireAuthorization()
+        .RequireRateLimiting(RateLimitPolicyNames.GetHistory);
 
         return endpoints;
     }

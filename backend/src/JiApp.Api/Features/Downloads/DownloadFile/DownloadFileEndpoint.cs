@@ -1,5 +1,8 @@
 using JiApp.Api.Configuration;
 using JiApp.Common.Abstractions;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 
 namespace JiApp.Api.Features.Downloads.DownloadFile;
 
@@ -15,12 +18,12 @@ public static class DownloadFileEndpoint
 
             return Results.Json(new ApiErrorResponse(Error: result.Error!), statusCode: StatusCodes.Status404NotFound);
         })
-        .WithTags("Downloads")
+        .WithTags(SwaggerConstants.Tags.Downloads)
         .WithSummary("Download the MP3 file by temporary ID")
         .Produces(StatusCodes.Status200OK, contentType: "audio/mpeg")
         .ProducesProblem(StatusCodes.Status404NotFound)
         .RequireRateLimiting(RateLimitPolicyNames.DownloadFile)
-        .AllowAnonymous();
+        .RequireAuthorization();
 
         return endpoints;
     }

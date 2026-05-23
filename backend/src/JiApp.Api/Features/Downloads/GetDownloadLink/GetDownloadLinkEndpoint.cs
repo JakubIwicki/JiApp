@@ -1,5 +1,11 @@
+using System.Collections.Generic;
+using System.Linq;
 using FluentValidation;
+using JiApp.Api.Configuration;
 using JiApp.Common.Abstractions;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 
 namespace JiApp.Api.Features.Downloads.GetDownloadLink;
 
@@ -33,12 +39,13 @@ public static class GetDownloadLinkEndpoint
             return Results.Json(
                 new ApiErrorResponse(Error: result.Error!), statusCode: StatusCodes.Status500InternalServerError);
         })
-        .WithTags("Downloads")
+        .WithTags(SwaggerConstants.Tags.Downloads)
         .WithSummary("Request an MP3 download link for a YouTube video")
         .Produces<DownloadResponse>(StatusCodes.Status200OK)
         .ProducesValidationProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status500InternalServerError)
-        .RequireAuthorization();
+        .RequireAuthorization()
+        .RequireRateLimiting(RateLimitPolicyNames.GetDownloadLink);
 
         return endpoints;
     }

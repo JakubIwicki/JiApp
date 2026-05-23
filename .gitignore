@@ -1,6 +1,8 @@
 # .NET
 **/bin/
 **/obj/
+backend/.artifacts/
+backend/.artifacts-wsl/
 *.user
 *.suo
 *.userosscache
@@ -49,3 +51,14 @@ appsettings.Development.json
 
 # Temp data
 dev-data/
+logs/
+dist/
+
+# Dev certificates (generated)
+backend/src/JiApp.Api/Infrastructure/dev-cert.pfx
+*.srl
+
+.env
+.venv
+
+graphify-out/

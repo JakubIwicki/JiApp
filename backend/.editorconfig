@@ -1,0 +1,33 @@
+[*.cs]
+
+# CA1000: Do not declare static members on generic types
+# Result<T>.Success/Failure is a well-established static factory pattern (F# style)
+dotnet_diagnostic.CA1000.severity = none
+
+# CA1054: URI parameters should not be strings
+# URLs in this project come from user input and are stored in DB -- keeping as strings avoids parsing overhead
+dotnet_diagnostic.CA1054.severity = none
+
+# CA1056: URI properties should not be strings
+# URLs in this project come from user input and are stored in DB
+dotnet_diagnostic.CA1056.severity = none
+
+# CA1707: Identifiers should not contain underscores
+# Private fields use _camelCase convention; test methods use BDD-style with underscores
+dotnet_diagnostic.CA1707.severity = none
+
+# CA1716: Identifiers should not match keywords
+# Error is a VB.NET keyword (not C#); EventLog is the project's domain name
+dotnet_diagnostic.CA1716.severity = none
+
+# CA1810: Initialize reference type static fields inline
+# Static fields are already initialized inline -- false positive with latest-all
+dotnet_diagnostic.CA1810.severity = none
+
+# CA2234: Pass System.Uri instead of strings
+# URLs come from user input and DB storage -- keeping as strings is intentional
+dotnet_diagnostic.CA2234.severity = none
+
+# CA2007: Consider calling ConfigureAwait on awaited task
+# ASP.NET Core has no SynchronizationContext -- ConfigureAwait(false) provides zero benefit
+dotnet_diagnostic.CA2007.severity = none

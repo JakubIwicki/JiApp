@@ -1,5 +1,6 @@
 using FluentAssertions;
 using JiApp.Api.Features.Search.SearchVideos;
+using Xunit;
 
 namespace JiApp.Tests.Features.Search;
 

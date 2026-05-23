@@ -1,5 +1,6 @@
 using FluentAssertions;
 using JiApp.Api.Features.Auth.Register;
+using Xunit;
 
 namespace JiApp.Tests.Features.Auth;
 
@@ -10,7 +11,7 @@ public class RegisterValidatorTests
     [Fact]
     public void Validate_ValidRequest_Passes()
     {
-        var request = new RegisterRequest("validuser", "user@example.com", "pass1234", "Display Name");
+        var request = new RegisterRequest("validuser", "user@example.com", "Pass1234", "Display Name");
         var result = _validator.Validate(request);
 
         result.IsValid.Should().BeTrue();
@@ -19,7 +20,7 @@ public class RegisterValidatorTests
     [Fact]
     public void Validate_EmptyUsername_Fails()
     {
-        var request = new RegisterRequest("", "user@example.com", "pass1234", "Display Name");
+        var request = new RegisterRequest("", "user@example.com", "Pass1234", "Display Name");
         var result = _validator.Validate(request);
 
         result.IsValid.Should().BeFalse();
@@ -29,7 +30,7 @@ public class RegisterValidatorTests
     [Fact]
     public void Validate_UsernameLessThan3Chars_Fails()
     {
-        var request = new RegisterRequest("ab", "user@example.com", "pass1234", "Display Name");
+        var request = new RegisterRequest("ab", "user@example.com", "Pass1234", "Display Name");
         var result = _validator.Validate(request);
 
         result.IsValid.Should().BeFalse();
@@ -42,7 +43,7 @@ public class RegisterValidatorTests
         var request = new RegisterRequest(
             new string('a', 51),
             "user@example.com",
-            "pass1234",
+            "Pass1234",
             "Display Name");
         var result = _validator.Validate(request);
 
@@ -53,7 +54,7 @@ public class RegisterValidatorTests
     [Fact]
     public void Validate_UsernameWithInvalidChars_Fails()
     {
-        var request = new RegisterRequest("user name", "user@example.com", "pass1234", "Display Name");
+        var request = new RegisterRequest("user name", "user@example.com", "Pass1234", "Display Name");
         var result = _validator.Validate(request);
 
         result.IsValid.Should().BeFalse();
@@ -63,7 +64,7 @@ public class RegisterValidatorTests
     [Fact]
     public void Validate_UsernameWithSpecialChars_Fails()
     {
-        var request = new RegisterRequest("user@name", "user@example.com", "pass1234", "Display Name");
+        var request = new RegisterRequest("user@name", "user@example.com", "Pass1234", "Display Name");
         var result = _validator.Validate(request);
 
         result.IsValid.Should().BeFalse();
@@ -73,7 +74,7 @@ public class RegisterValidatorTests
     [Fact]
     public void Validate_UsernameWithExclamation_Fails()
     {
-        var request = new RegisterRequest("user!name", "user@example.com", "pass1234", "Display Name");
+        var request = new RegisterRequest("user!name", "user@example.com", "Pass1234", "Display Name");
         var result = _validator.Validate(request);
 
         result.IsValid.Should().BeFalse();
@@ -83,7 +84,7 @@ public class RegisterValidatorTests
     [Fact]
     public void Validate_EmptyEmail_Fails()
     {
-        var request = new RegisterRequest("validuser", "", "pass1234", "Display Name");
+        var request = new RegisterRequest("validuser", "", "Pass1234", "Display Name");
         var result = _validator.Validate(request);
 
         result.IsValid.Should().BeFalse();
@@ -93,7 +94,7 @@ public class RegisterValidatorTests
     [Fact]
     public void Validate_InvalidEmailFormat_Fails()
     {
-        var request = new RegisterRequest("validuser", "not-an-email", "pass1234", "Display Name");
+        var request = new RegisterRequest("validuser", "not-an-email", "Pass1234", "Display Name");
         var result = _validator.Validate(request);
 
         result.IsValid.Should().BeFalse();
@@ -123,7 +124,7 @@ public class RegisterValidatorTests
     [Fact]
     public void Validate_EmptyDisplayName_Fails()
     {
-        var request = new RegisterRequest("validuser", "user@example.com", "pass1234", "");
+        var request = new RegisterRequest("validuser", "user@example.com", "Pass1234", "");
         var result = _validator.Validate(request);
 
         result.IsValid.Should().BeFalse();
@@ -136,11 +137,41 @@ public class RegisterValidatorTests
         var request = new RegisterRequest(
             "validuser",
             "user@example.com",
-            "pass1234",
+            "Pass1234",
             new string('a', 51));
         var result = _validator.Validate(request);
 
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == "DisplayName");
+    }
+
+    [Fact]
+    public void Validate_ShortPasswordNoUppercaseNoDigit_Fails()
+    {
+        var request = new RegisterRequest("validuser", "user@example.com", "short", "Display Name");
+        var result = _validator.Validate(request);
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.PropertyName == "Password");
+    }
+
+    [Fact]
+    public void Validate_PasswordNoUppercase_Fails()
+    {
+        var request = new RegisterRequest("validuser", "user@example.com", "password", "Display Name");
+        var result = _validator.Validate(request);
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.PropertyName == "Password");
+    }
+
+    [Fact]
+    public void Validate_PasswordNoDigit_Fails()
+    {
+        var request = new RegisterRequest("validuser", "user@example.com", "Password", "Display Name");
+        var result = _validator.Validate(request);
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.PropertyName == "Password");
     }
 }

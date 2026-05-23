@@ -1,6 +1,7 @@
 using System.Text.Json;
 using FluentAssertions;
 using JiApp.Common.Abstractions;
+using Xunit;
 
 namespace JiApp.Tests.Common;
 

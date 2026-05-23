@@ -1,15 +1,23 @@
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using JiApp.Api.Logging;
 using JiApp.Common.Abstractions;
 using JiApp.Infrastructure.Repositories;
+using Microsoft.Extensions.Logging;
 
 namespace JiApp.Api.Features.Search.SearchHistory;
 
 public sealed class SearchHistoryHandler(
     ISearchHistoryRepository searchHistoryRepository,
-    ICurrentUserService currentUser)
+    ICurrentUserService currentUser,
+    ILogger<SearchHistoryHandler> logger)
 {
     public async Task<Result<SearchHistoryResponse>> HandleAsync(SearchHistoryRequest request)
     {
         var limit = request.Limit ?? 10;
+
+        logger.FetchingSearchHistory(limit);
 
         var history = await searchHistoryRepository.GetByUserIdAsync(currentUser.UserId, limit);
 

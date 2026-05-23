@@ -1,9 +1,10 @@
 using System.Security.Claims;
 using JiApp.Common.Abstractions;
+using Microsoft.AspNetCore.Http;
 
 namespace JiApp.Api.Services;
 
-public class CurrentUserService(IHttpContextAccessor httpContextAccessor) : ICurrentUserService
+public sealed class CurrentUserService(IHttpContextAccessor httpContextAccessor) : ICurrentUserService
 {
     public long UserId
     {

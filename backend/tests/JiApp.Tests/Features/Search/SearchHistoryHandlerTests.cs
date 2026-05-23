@@ -1,9 +1,13 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using FluentAssertions;
 using JiApp.Api.Features.Search.SearchHistory;
-using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Infrastructure.Repositories;
+using JiApp.Tests.Mocks;
 using Moq;
+using Xunit;
 
 namespace JiApp.Tests.Features.Search;
 
@@ -14,14 +18,14 @@ public class SearchHistoryHandlerTests
 
     public SearchHistoryHandlerTests()
     {
-        _searchHistoryRepoMock = new Mock<ISearchHistoryRepository>();
-        var currentUserMock = new Mock<ICurrentUserService>();
-
-        currentUserMock.Setup(x => x.UserId).Returns(1L);
+        _searchHistoryRepoMock = SearchHistoryRepositoryMock.GetSuccessful();
+        var currentUserMock = CurrentUserServiceMock.GetSuccessful();
+        var loggerMock = LoggerMock.GetSuccessful<SearchHistoryHandler>();
 
         _handler = new SearchHistoryHandler(
             _searchHistoryRepoMock.Object,
-            currentUserMock.Object);
+            currentUserMock.Object,
+            loggerMock.Object);
     }
 
     [Fact]
@@ -68,7 +72,7 @@ public class SearchHistoryHandlerTests
     {
         var history = new List<YoutubeSearchHistory>
         {
-            new YoutubeSearchHistory
+            new()
             {
                 Id = 1,
                 UserId = 1L,

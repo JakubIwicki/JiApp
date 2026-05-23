@@ -2,7 +2,7 @@ using FluentValidation;
 
 namespace JiApp.Api.Features.Downloads.DownloadHistory;
 
-public sealed class DownloadHistoryValidator : AbstractValidator<DownloadHistoryRequest>
+ internal sealed class DownloadHistoryValidator : AbstractValidator<DownloadHistoryRequest>
 {
     public DownloadHistoryValidator()
     {

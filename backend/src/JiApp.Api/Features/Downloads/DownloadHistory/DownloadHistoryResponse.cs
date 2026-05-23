@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace JiApp.Api.Features.Downloads.DownloadHistory;
 
 public sealed record DownloadHistoryResponse(IReadOnlyList<DownloadHistoryItem> Items);

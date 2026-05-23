@@ -1,29 +1,28 @@
+using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
 namespace JiApp.Infrastructure.Services;
 
-public class JwtTokenService(IConfiguration configuration) : IJwtTokenService
+public sealed class JwtTokenService(
+    string key,
+    string issuer,
+    string audience,
+    int expireMinutes) : IJwtTokenService
 {
     private static readonly JwtSecurityTokenHandler Handler = new();
 
-    private readonly string _key = configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key is not configured");
-    private readonly string _issuer = configuration["Jwt:Issuer"] ?? throw new InvalidOperationException("Jwt:Issuer is not configured");
-    private readonly string _audience = configuration["Jwt:Audience"] ?? throw new InvalidOperationException("Jwt:Audience is not configured");
-    private readonly int _expireMinutes = int.Parse(configuration["Jwt:ExpireMinutes"] ?? "30");
-
     private TokenValidationParameters CreateValidationParameters()
     {
-        var keyBytes = Encoding.UTF8.GetBytes(_key);
+        var keyBytes = Encoding.UTF8.GetBytes(key);
         return new TokenValidationParameters
         {
             ValidateIssuer = true,
-            ValidIssuer = _issuer,
+            ValidIssuer = issuer,
             ValidateAudience = true,
-            ValidAudience = _audience,
+            ValidAudience = audience,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(keyBytes),
             ValidateLifetime = true,
@@ -33,21 +32,21 @@ public class JwtTokenService(IConfiguration configuration) : IJwtTokenService
 
     public string GenerateToken(long userId, string username)
     {
-        var keyBytes = Encoding.UTF8.GetBytes(_key);
+        var keyBytes = Encoding.UTF8.GetBytes(key);
         var signingKey = new SymmetricSecurityKey(keyBytes);
         var credentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
 
         var claims = new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+            new Claim(ClaimTypes.NameIdentifier, userId.ToString(CultureInfo.InvariantCulture)),
             new Claim(ClaimTypes.Name, username),
         };
 
         var token = new JwtSecurityToken(
-            issuer: _issuer,
-            audience: _audience,
+            issuer: issuer,
+            audience: audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(_expireMinutes),
+            expires: DateTime.UtcNow.AddMinutes(expireMinutes),
             signingCredentials: credentials
         );
 

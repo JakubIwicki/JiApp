@@ -1,4 +1,10 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using JiApp.Api.Logging;
 using JiApp.Infrastructure.Services;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace JiApp.Api.Services;
 
@@ -17,7 +23,7 @@ public sealed class TempFileCleanupService(ITempFileStore tempFileStore, ILogger
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Cleanup expired temp files failed");
+                logger.CleanupExpiredTempFilesFailed(ex);
             }
 
             await Task.Delay(_interval, stoppingToken);

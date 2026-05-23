@@ -1,5 +1,6 @@
 using FluentAssertions;
 using JiApp.Api.Features.Auth.Login;
+using Xunit;
 
 namespace JiApp.Tests.Features.Auth;
 

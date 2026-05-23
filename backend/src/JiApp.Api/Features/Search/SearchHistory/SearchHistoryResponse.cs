@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace JiApp.Api.Features.Search.SearchHistory;
 
 public sealed record SearchHistoryResponse(IReadOnlyList<SearchHistoryItem> Items);

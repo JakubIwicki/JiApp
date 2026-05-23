@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using JiApp.Api.Features.Downloads.DownloadHistory;
 using JiApp.Api.Features.Search.SearchHistory;
 

@@ -1,3 +1,4 @@
+using System;
 using FluentValidation;
 
 namespace JiApp.Api.Features.Downloads.GetDownloadLink;
@@ -14,7 +15,9 @@ public sealed class GetDownloadLinkValidator : AbstractValidator<DownloadRequest
     {
         RuleFor(x => x.VideoId)
             .NotEmpty()
-            .MaximumLength(200);
+            .MaximumLength(200)
+            .Matches(@"^[a-zA-Z0-9_-]+$")
+            .WithMessage("VideoId must contain only letters, digits, hyphens, and underscores.");
 
         RuleFor(x => x.VideoUrl)
             .NotEmpty()
@@ -48,7 +51,7 @@ public sealed class GetDownloadLinkValidator : AbstractValidator<DownloadRequest
             return true;
 
         var path = uri.AbsolutePath;
-        if (path == "/watch" || path.StartsWith("/embed/"))
+        if (path == "/watch" || path.StartsWith("/embed/", StringComparison.Ordinal))
         {
             var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
             return query["v"] is not null;

@@ -1,8 +1,14 @@
+using System;
+using System.IO;
+using System.Threading.Tasks;
+using JiApp.Api.Configuration;
+using JiApp.Api.Logging;
 using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Infrastructure.Repositories;
 using JiApp.Infrastructure.Services;
 using JiApp.YtApi;
+using Microsoft.Extensions.Logging;
 
 namespace JiApp.Api.Features.Downloads.GetDownloadLink;
 
@@ -11,12 +17,12 @@ public sealed class GetDownloadLinkHandler(
     ITempFileStore tempFileStore,
     IDownloadHistoryRepository downloadHistoryRepository,
     ICurrentUserService currentUser,
-    IConfiguration configuration)
+    Settings settings,
+    ILogger<GetDownloadLinkHandler> logger)
 {
     public async Task<Result<DownloadResponse>> HandleAsync(DownloadRequest request)
     {
-        var baseDirectory = configuration["App:BaseDirectory"]
-            ?? throw new InvalidOperationException("App:BaseDirectory is not configured");
+        var baseDirectory = settings.App!.BaseDirectory!;
 
         // Use userId instead of username to prevent path traversal
         var outputFolder = Path.Combine(baseDirectory, $"YtMp3_{currentUser.UserId}");
@@ -25,12 +31,13 @@ public sealed class GetDownloadLinkHandler(
         try
         {
             downloadResult = await youtubeClient.DownloadVideoAsync(
-                request.VideoUrl, outputFolder);
+                request.VideoId, outputFolder);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
+            logger.DownloadFailedForVideo(ex, request.VideoId);
             return Result<DownloadResponse>.Failure(
-                $"Failed to process download: {ex.Message}");
+                "Failed to process download. Please try again later.");
         }
 
         if (!downloadResult.Success)
@@ -41,7 +48,7 @@ public sealed class GetDownloadLinkHandler(
         }
 
         var filePath = downloadResult.FilePath!;
-        var tempId = tempFileStore.Add(filePath);
+        var tempId = tempFileStore.Add(filePath, currentUser.UserId);
 
         var historyEntry = new YoutubeDownloadHistory
         {

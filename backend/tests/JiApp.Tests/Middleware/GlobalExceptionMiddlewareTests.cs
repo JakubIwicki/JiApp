@@ -1,20 +1,20 @@
+using System;
 using System.Net;
 using System.Net.Http.Json;
+using System.Threading.Tasks;
 using FluentAssertions;
 using JiApp.Common.Abstractions;
+using JiApp.Tests.Integration;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Xunit;
 
 namespace JiApp.Tests.Middleware;
 
-public class GlobalExceptionMiddlewareTests : IClassFixture<WebApplicationFactory<Program>>
+public class GlobalExceptionMiddlewareTests(ConfigOnlyWebApplicationFactory factory)
+    : IClassFixture<ConfigOnlyWebApplicationFactory>
 {
-    private readonly WebApplicationFactory<Program> _factory;
-
-    public GlobalExceptionMiddlewareTests(WebApplicationFactory<Program> factory)
-    {
-        _factory = factory;
-    }
+    private readonly WebApplicationFactory<Program> _factory = factory;
 
     [Fact]
     public async Task NonExistentEndpoint_Returns404_InProduction()

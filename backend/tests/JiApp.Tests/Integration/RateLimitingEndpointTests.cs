@@ -1,15 +1,20 @@
+using System;
+using System.Globalization;
 using System.Net;
+using System.Net.Http;
 using System.Net.Http.Json;
+using System.Threading.Tasks;
 using FluentAssertions;
 using JiApp.Common.Abstractions;
 using JiApp.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
+using Xunit;
 
 namespace JiApp.Tests.Integration;
 
-public class RateLimitingEndpointTests : IDisposable
+public sealed class RateLimitingEndpointTests : IDisposable
 {
     private static readonly SqliteConnection SharedConnection;
 
@@ -21,8 +26,36 @@ public class RateLimitingEndpointTests : IDisposable
 
     public void Dispose()
     {
-        GC.SuppressFinalize(this);
+        // No managed or native resources to release
     }
+
+    private static async Task<(HttpClient Client, string Username)> CreateAuthenticatedClientAsync(WebApplicationFactory<Program> factory)
+    {
+        var client = factory.CreateClient();
+        var username = $"ratelimituser_{Guid.NewGuid():N}";
+        var registerPayload = new
+        {
+            username,
+            email = $"ratelimit_{Guid.NewGuid():N}@example.com",
+            password = "Pass1234",
+            displayName = "Rate Limit User"
+        };
+        var registerResponse = await client.PostAsJsonAsync("/api/auth/register", registerPayload);
+        registerResponse.EnsureSuccessStatusCode();
+
+        var loginPayload = new { username, password = "Pass1234" };
+        var loginResponse = await client.PostAsJsonAsync("/api/auth/login", loginPayload);
+        loginResponse.EnsureSuccessStatusCode();
+        var loginBody = await loginResponse.Content.ReadFromJsonAsync<LoginSuccessResponse>();
+        loginBody.Should().NotBeNull();
+
+        var authenticatedClient = factory.CreateClient();
+        authenticatedClient.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginBody!.token);
+        return (authenticatedClient, username);
+    }
+
+    private sealed record LoginSuccessResponse(long id, string? displayName, string token);
 
     private static WebApplicationFactory<Program> CreateFactoryWithLowLimit(string policySection, int permitLimit)
     {
@@ -31,13 +64,17 @@ public class RateLimitingEndpointTests : IDisposable
             {
                 builder.UseSetting(
                     $"RateLimiting:{policySection}:PermitLimit",
-                    permitLimit.ToString());
+                    permitLimit.ToString(CultureInfo.InvariantCulture));
                 builder.UseSetting(
                     $"RateLimiting:{policySection}:WindowInSeconds",
                     "60");
                 builder.UseSetting(
                     $"RateLimiting:{policySection}:QueueLimit",
                     "0");
+
+                // Provide test keys so Startup validations pass
+                builder.UseSetting("Jwt:Key", "test-jwt-key-that-is-at-least-32-characters-for-hmac!");
+                builder.UseSetting("Youtube:api-key", "test-youtube-api-key");
 
                 builder.ConfigureServices(services =>
                 {
@@ -130,7 +167,7 @@ public class RateLimitingEndpointTests : IDisposable
         {
             username = $"ratelimit_{uniqueSuffix}",
             email = $"ratelimit_{uniqueSuffix}@example.com",
-            password = "pass1234",
+            password = "Pass1234",
             displayName = "Rate Limit User"
         };
 
@@ -149,7 +186,7 @@ public class RateLimitingEndpointTests : IDisposable
         {
             username = $"ratelimit2_{uniqueSuffix}",
             email = $"ratelimit2_{uniqueSuffix}@example.com",
-            password = "pass1234",
+            password = "Pass1234",
             displayName = "Rate Limit User 2"
         };
 
@@ -165,7 +202,7 @@ public class RateLimitingEndpointTests : IDisposable
     public async Task DownloadFile_UnderLimit_Returns404()
     {
         var factory = CreateFactoryWithLowLimit("DownloadFile", 3);
-        var client = factory.CreateClient();
+        var (client, _) = await CreateAuthenticatedClientAsync(factory);
 
         for (int i = 0; i < 3; i++)
         {
@@ -178,7 +215,7 @@ public class RateLimitingEndpointTests : IDisposable
     public async Task DownloadFile_OverLimit_Returns429()
     {
         var factory = CreateFactoryWithLowLimit("DownloadFile", 1);
-        var client = factory.CreateClient();
+        var (client, _) = await CreateAuthenticatedClientAsync(factory);
 
         await client.GetAsync("/api/downloads/mp3/file/any");
 

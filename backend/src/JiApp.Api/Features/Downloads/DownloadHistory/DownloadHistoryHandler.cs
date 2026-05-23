@@ -1,15 +1,22 @@
+using System.Linq;
+using System.Threading.Tasks;
+using JiApp.Api.Logging;
 using JiApp.Common.Abstractions;
 using JiApp.Infrastructure.Repositories;
+using Microsoft.Extensions.Logging;
 
 namespace JiApp.Api.Features.Downloads.DownloadHistory;
 
 public sealed class DownloadHistoryHandler(
     IDownloadHistoryRepository downloadHistoryRepository,
-    ICurrentUserService currentUser)
+    ICurrentUserService currentUser,
+    ILogger<DownloadHistoryHandler> logger)
 {
     public async Task<Result<DownloadHistoryResponse>> HandleAsync(DownloadHistoryRequest request)
     {
         var limit = request.Limit ?? 10;
+
+        logger.FetchingDownloadHistory(limit);
 
         var history = await downloadHistoryRepository.GetByUserIdAsync(
             currentUser.UserId, limit);

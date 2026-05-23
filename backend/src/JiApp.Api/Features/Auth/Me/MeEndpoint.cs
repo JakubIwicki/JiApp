@@ -1,4 +1,8 @@
+using JiApp.Api.Configuration;
 using JiApp.Common.Abstractions;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 
 namespace JiApp.Api.Features.Auth.Me;
 
@@ -17,11 +21,12 @@ public static class MeEndpoint
                 new ApiErrorResponse(Error: "Token invalid or expired"),
                 statusCode: StatusCodes.Status401Unauthorized);
         })
-        .WithTags("Auth")
+        .WithTags(SwaggerConstants.Tags.Auth)
         .WithSummary("Get current authenticated user")
         .Produces<MeResponse>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status401Unauthorized)
-        .RequireAuthorization();
+        .RequireAuthorization()
+        .RequireRateLimiting(RateLimitPolicyNames.Me);
 
         return endpoints;
     }

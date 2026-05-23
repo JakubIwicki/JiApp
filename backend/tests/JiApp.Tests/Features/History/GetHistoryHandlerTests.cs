@@ -1,11 +1,13 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using FluentAssertions;
-using JiApp.Api.Features.Downloads.DownloadHistory;
 using JiApp.Api.Features.History.GetHistory;
-using JiApp.Api.Features.Search.SearchHistory;
-using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Infrastructure.Repositories;
+using JiApp.Tests.Mocks;
 using Moq;
+using Xunit;
 
 namespace JiApp.Tests.Features.History;
 
@@ -17,16 +19,16 @@ public class GetHistoryHandlerTests
 
     public GetHistoryHandlerTests()
     {
-        _searchHistoryRepoMock = new Mock<ISearchHistoryRepository>();
-        _downloadHistoryRepoMock = new Mock<IDownloadHistoryRepository>();
-        var currentUserMock = new Mock<ICurrentUserService>();
-
-        currentUserMock.Setup(x => x.UserId).Returns(1L);
+        _searchHistoryRepoMock = SearchHistoryRepositoryMock.GetSuccessful();
+        _downloadHistoryRepoMock = DownloadHistoryRepositoryMock.GetSuccessful();
+        var currentUserMock = CurrentUserServiceMock.GetSuccessful();
+        var loggerMock = LoggerMock.GetSuccessful<GetHistoryHandler>();
 
         _handler = new GetHistoryHandler(
             _searchHistoryRepoMock.Object,
             _downloadHistoryRepoMock.Object,
-            currentUserMock.Object);
+            currentUserMock.Object,
+            loggerMock.Object);
     }
 
     [Fact]

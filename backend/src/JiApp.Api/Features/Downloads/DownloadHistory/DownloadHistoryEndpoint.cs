@@ -1,5 +1,11 @@
+using System.Collections.Generic;
+using System.Linq;
 using FluentValidation;
+using JiApp.Api.Configuration;
 using JiApp.Common.Abstractions;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 
 namespace JiApp.Api.Features.Downloads.DownloadHistory;
 
@@ -27,11 +33,12 @@ public static class DownloadHistoryEndpoint
 
             return Results.Json(new ApiErrorResponse(Error: result.Error!), statusCode: StatusCodes.Status400BadRequest);
         })
-        .WithTags("Downloads")
+        .WithTags(SwaggerConstants.Tags.Downloads)
         .WithSummary("Get download history for authenticated user")
         .Produces<DownloadHistoryResponse>(StatusCodes.Status200OK)
         .ProducesValidationProblem(StatusCodes.Status400BadRequest)
-        .RequireAuthorization();
+        .RequireAuthorization()
+        .RequireRateLimiting(RateLimitPolicyNames.DownloadHistory);
 
         return endpoints;
     }

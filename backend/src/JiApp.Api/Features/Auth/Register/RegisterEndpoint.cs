@@ -1,6 +1,11 @@
+using System.Collections.Generic;
+using System.Linq;
 using FluentValidation;
 using JiApp.Api.Configuration;
 using JiApp.Common.Abstractions;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 
 namespace JiApp.Api.Features.Auth.Register;
 
@@ -13,9 +18,6 @@ public static class RegisterEndpoint
             IValidator<RegisterRequest> validator,
             RegisterHandler handler) =>
         {
-            if (request is null)
-                return Results.Json(new ApiErrorResponse(Error: "Request body cannot be null"), statusCode: StatusCodes.Status400BadRequest);
-
             var validationResult = await validator.ValidateAsync(request);
             if (!validationResult.IsValid)
             {
@@ -29,7 +31,7 @@ public static class RegisterEndpoint
 
             return Results.Json(new ApiErrorResponse(Error: result.Error!), statusCode: StatusCodes.Status400BadRequest);
         })
-        .WithTags("Auth")
+        .WithTags(SwaggerConstants.Tags.Auth)
         .WithSummary("Register a new user account")
         .Produces<RegisterResponse>(StatusCodes.Status201Created)
         .ProducesValidationProblem(StatusCodes.Status400BadRequest)

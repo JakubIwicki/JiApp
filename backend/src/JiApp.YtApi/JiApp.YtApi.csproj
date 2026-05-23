@@ -5,15 +5,17 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FFMpegCore" Version="5.4.0" />
     <PackageReference Include="Google.Apis.YouTube.v3" Version="1.74.0.4137" />
     <PackageReference Include="YoutubeDLSharp" Version="1.2.0" />
   </ItemGroup>
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="JiApp.Api" />
+    <InternalsVisibleTo Include="JiApp.Tests" />
+  </ItemGroup>
 
 </Project>

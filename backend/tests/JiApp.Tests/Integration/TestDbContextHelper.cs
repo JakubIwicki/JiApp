@@ -1,3 +1,4 @@
+using System.Linq;
 using JiApp.Infrastructure.Persistence;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;

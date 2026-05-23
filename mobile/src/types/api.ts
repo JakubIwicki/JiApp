@@ -27,6 +27,7 @@ export interface VideoItem {
   description: string;
   imageUrl: string;
   videoUrl: string;
+  channelTitle: string;
 }
 
 export interface SearchResponse {

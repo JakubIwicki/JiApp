@@ -1,5 +1,8 @@
+using System;
+using System.IO;
 using FluentAssertions;
 using JiApp.Infrastructure.Services;
+using Xunit;
 
 namespace JiApp.Tests.Infrastructure;
 
@@ -12,7 +15,7 @@ public class TempFileStoreTests
         var tempFile = Path.GetTempFileName();
         try
         {
-            var id = store.Add(tempFile);
+            var id = store.Add(tempFile, userId: 1L);
 
             id.Should().NotBeNullOrEmpty();
             Guid.TryParse(id, out _).Should().BeTrue();
@@ -30,7 +33,7 @@ public class TempFileStoreTests
         var tempFile = Path.GetTempFileName();
         try
         {
-            var id = store.Add(tempFile);
+            var id = store.Add(tempFile, userId: 1L);
 
             var path = store.Get(id);
 
@@ -59,9 +62,69 @@ public class TempFileStoreTests
         var tempFile = Path.GetTempFileName();
         try
         {
-            var id = store.Add(tempFile);
+            var id = store.Add(tempFile, userId: 1L);
 
             var path = store.Get(id);
+
+            path.Should().BeNull();
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+                File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public void Get_WithMatchingUser_ReturnsPath()
+    {
+        var store = new TempFileStore(TimeSpan.FromMinutes(10));
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            var id = store.Add(tempFile, userId: 42L);
+
+            var path = store.Get(id, userId: 42L);
+
+            path.Should().Be(tempFile);
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+                File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public void Get_WithNonMatchingUser_ReturnsNull()
+    {
+        var store = new TempFileStore(TimeSpan.FromMinutes(10));
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            var id = store.Add(tempFile, userId: 42L);
+
+            var path = store.Get(id, userId: 99L);
+
+            path.Should().BeNull();
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+                File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public void Get_WithMatchingUser_ReturnsNull_ForExpiredEntry()
+    {
+        var store = new TempFileStore(TimeSpan.FromDays(-1));
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            var id = store.Add(tempFile, userId: 42L);
+
+            var path = store.Get(id, userId: 42L);
 
             path.Should().BeNull();
         }
@@ -79,7 +142,7 @@ public class TempFileStoreTests
         var tempFile = Path.GetTempFileName();
         try
         {
-            var id = store.Add(tempFile);
+            var id = store.Add(tempFile, userId: 1L);
 
             store.CleanupExpired();
 

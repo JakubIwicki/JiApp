@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1062 // Auto-generated EF Core migration
+
 namespace JiApp.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />

@@ -1,12 +1,17 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using FluentAssertions;
+using JiApp.Api.Configuration;
 using JiApp.Api.Features.Downloads.GetDownloadLink;
-using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Infrastructure.Repositories;
 using JiApp.Infrastructure.Services;
+using JiApp.Tests.Mocks;
 using JiApp.YtApi;
 using Microsoft.Extensions.Configuration;
 using Moq;
+using Xunit;
 
 namespace JiApp.Tests.Features.Downloads;
 
@@ -19,26 +24,29 @@ public class GetDownloadLinkHandlerTests
 
     public GetDownloadLinkHandlerTests()
     {
-        _youtubeClientMock = new Mock<IYoutubeClient>();
-        _tempFileStoreMock = new Mock<ITempFileStore>();
-        _downloadHistoryRepoMock = new Mock<IDownloadHistoryRepository>();
-        var currentUserMock = new Mock<ICurrentUserService>();
-        var configurationMock = new Mock<IConfiguration>();
+        _youtubeClientMock = YoutubeClientMock.GetSuccessful();
+        _tempFileStoreMock = TempFileStoreMock.GetSuccessful();
+        _downloadHistoryRepoMock = DownloadHistoryRepositoryMock.GetSuccessful();
+        var currentUserMock = CurrentUserServiceMock.GetWithUsername(1L, "testuser");
 
-        currentUserMock.Setup(x => x.UserId).Returns(1L);
-        currentUserMock.Setup(x => x.Username).Returns("testuser");
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["App:BaseDirectory"] = "/tmp/ji_app"
+            })
+            .Build();
+        var settings = new Settings();
+        config.Bind(settings);
 
-        configurationMock.Setup(x => x["App:BaseDirectory"])
-            .Returns("/tmp/ji_app");
-
-        _downloadHistoryRepoMock.Setup(x => x.SaveChangesAsync()).Returns(Task.CompletedTask);
+        var loggerMock = LoggerMock.GetSuccessful<GetDownloadLinkHandler>();
 
         _handler = new GetDownloadLinkHandler(
             _youtubeClientMock.Object,
             _tempFileStoreMock.Object,
             _downloadHistoryRepoMock.Object,
             currentUserMock.Object,
-            configurationMock.Object);
+            settings,
+            loggerMock.Object);
     }
 
     [Fact]
@@ -51,7 +59,7 @@ public class GetDownloadLinkHandlerTests
                 It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new YoutubeClientResponse(downloadedFilePath, true, []));
 
-        _tempFileStoreMock.Setup(x => x.Add(downloadedFilePath))
+        _tempFileStoreMock.Setup(x => x.Add(downloadedFilePath, 1L))
             .Returns(tempFileId);
 
         var request = new DownloadRequest(
@@ -98,7 +106,7 @@ public class GetDownloadLinkHandlerTests
                 It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new YoutubeClientResponse(downloadedFilePath, true, []));
 
-        _tempFileStoreMock.Setup(x => x.Add(downloadedFilePath))
+        _tempFileStoreMock.Setup(x => x.Add(downloadedFilePath, 1L))
             .Returns(tempFileId);
 
         var request = new DownloadRequest(

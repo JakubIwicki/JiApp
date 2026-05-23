@@ -5,6 +5,8 @@
     "retry": "Spróbuj ponownie"
   },
   "auth": {
+    "loginTitle": "Logowanie",
+    "registerTitle": "Rejestracja",
     "login": "Zaloguj się",
     "register": "Zarejestruj się",
     "username": "Nazwa użytkownika",
@@ -23,11 +25,53 @@
     "emailRequired": "Email jest wymagany",
     "displayNameRequired": "Nazwa wyświetlana jest wymagana",
     "usernameTooShort": "Nazwa użytkownika musi mieć co najmniej 3 znaki",
-    "passwordTooShort": "Hasło musi mieć co najmniej 4 znaki"
+    "passwordTooShort": "Hasło musi mieć co najmniej 4 znaki",
+    "invalidEmail": "Wprowadź poprawny adres email"
   },
   "nav": {
     "search": "Szukaj",
+    "downloads": "Pobrane",
     "history": "Historia",
     "settings": "Ustawienia"
+  },
+  "search": {
+    "title": "Szukaj",
+    "placeholder": "Szukaj na YouTube...",
+    "noResults": "Nie znaleziono wyników",
+    "searching": "Szukanie...",
+    "error": "Błąd wyszukiwania",
+    "recentSearches": "Ostatnie wyszukiwania",
+    "empty": "Szukaj piosenki lub filmu,\naby rozpocząć pobieranie"
+  },
+  "history": {
+    "title": "Historia",
+    "searches": "Wyszukiwania",
+    "downloads": "Pobrania",
+    "noSearches": "Brak wyszukiwań",
+    "noDownloads": "Brak pobrań",
+    "loadError": "Błąd ładowania historii",
+    "empty": "Nic tu jeszcze nie ma.\nTwoje wyszukiwania i pobrania pojawią się tutaj."
+  },
+  "download": {
+    "title": "Pobieranie",
+    "downloadMp3": "Pobierz MP3",
+    "downloading": "Pobieranie...",
+    "success": "Pobrano pomyślnie",
+    "failed": "Pobieranie nie powiodło się",
+    "goBack": "Wróć do wyszukiwania",
+    "viewHistory": "Zobacz historię",
+    "fileSaved": "Plik zapisany",
+    "pleaseWait": "Proszę czekać, to może chwilę potrwać"
+  },
+  "settings": {
+    "title": "Ustawienia",
+    "language": "Język",
+    "account": "Konto",
+    "displayName": "Nazwa",
+    "username": "Nazwa użytkownika",
+    "logout": "Wyloguj",
+    "version": "Wersja",
+    "languagePolish": "Polski",
+    "languageEnglish": "English"
   }
 }

@@ -1,5 +1,11 @@
+using System.Collections.Generic;
+using System.Linq;
 using FluentValidation;
+using JiApp.Api.Configuration;
 using JiApp.Common.Abstractions;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 
 namespace JiApp.Api.Features.Search.SearchHistory;
 
@@ -27,11 +33,12 @@ public static class SearchHistoryEndpoint
 
             return Results.Json(new ApiErrorResponse(Error: result.Error!), statusCode: StatusCodes.Status400BadRequest);
         })
-        .WithTags("Search")
+        .WithTags(SwaggerConstants.Tags.Search)
         .WithSummary("Get search history for authenticated user")
         .Produces<SearchHistoryResponse>(StatusCodes.Status200OK)
         .ProducesValidationProblem(StatusCodes.Status400BadRequest)
-        .RequireAuthorization();
+        .RequireAuthorization()
+        .RequireRateLimiting(RateLimitPolicyNames.SearchHistory);
 
         return endpoints;
     }

@@ -1,6 +1,11 @@
+using System.Collections.Generic;
+using System.Linq;
 using FluentValidation;
 using JiApp.Api.Configuration;
 using JiApp.Common.Abstractions;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 
 namespace JiApp.Api.Features.Auth.Login;
 
@@ -28,7 +33,7 @@ public static class LoginEndpoint
                 new ApiErrorResponse(Error: "Invalid credentials"),
                 statusCode: StatusCodes.Status401Unauthorized);
         })
-        .WithTags("Auth")
+        .WithTags(SwaggerConstants.Tags.Auth)
         .WithSummary("Authenticate and receive a JWT bearer token")
         .Produces<LoginResponse>(StatusCodes.Status200OK)
         .ProducesValidationProblem(StatusCodes.Status400BadRequest)

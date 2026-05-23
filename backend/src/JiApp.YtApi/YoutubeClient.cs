@@ -1,15 +1,20 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using Google.Apis.YouTube.v3;
-using JiApp.YtApi.Configuration;
 using YoutubeDLSharp;
 using YoutubeDLSharp.Options;
 
 namespace JiApp.YtApi;
 
-public sealed class YoutubeClient(YoutubeSettings settings) : IYoutubeClient, IDisposable
+public sealed class YoutubeClient(
+    string apiKey, string ytDlpPath, string ffmpegPath) : IYoutubeClient, IDisposable
 {
     private readonly YouTubeService _youTubeService = new(new Google.Apis.Services.BaseClientService.Initializer
     {
-        ApiKey = settings.ApiKey
+        ApiKey = apiKey
     });
 
     public async Task<IReadOnlyList<YoutubeVideo>> SearchVideosAsync(string query, int maxResults = 10)
@@ -26,21 +31,23 @@ public sealed class YoutubeClient(YoutubeSettings settings) : IYoutubeClient, ID
                 item.Id.VideoId,
                 item.Snippet.Title,
                 item.Snippet.Description,
-                item.Snippet.Thumbnails.Default__.Url))
+                item.Snippet.Thumbnails.Default__.Url,
+                item.Snippet.ChannelTitle))
             .ToList();
 
         return results.AsReadOnly();
     }
 
-    public async Task<YoutubeClientResponse> DownloadVideoAsync(string videoUrl, string outputPath)
+    public async Task<YoutubeClientResponse> DownloadVideoAsync(string videoId, string outputPath)
     {
         Directory.CreateDirectory(outputPath);
 
+        var videoUrl = $"https://www.youtube.com/watch?v={videoId}";
         var youtubeDl = new YoutubeDL
         {
-            YoutubeDLPath = settings.YtDlpPath,
-            FFmpegPath = settings.FfmpegPath,
-            OutputFileTemplate = Path.Combine(outputPath, "%(title)s.%(ext)s")
+            YoutubeDLPath = ytDlpPath,
+            FFmpegPath = ffmpegPath,
+            OutputFileTemplate = Path.Combine(outputPath, $"{Guid.NewGuid():N}.%(ext)s")
         };
 
         var result = await youtubeDl.RunAudioDownload(videoUrl, AudioConversionFormat.Mp3);

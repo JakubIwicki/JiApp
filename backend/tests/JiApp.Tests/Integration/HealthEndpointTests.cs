@@ -1,11 +1,13 @@
+using System;
 using System.Net;
 using System.Net.Http.Json;
+using System.Threading.Tasks;
 using FluentAssertions;
-using Microsoft.AspNetCore.Mvc.Testing;
+using Xunit;
 
 namespace JiApp.Tests.Integration;
 
-public class HealthEndpointTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+public class HealthEndpointTests(ConfigOnlyWebApplicationFactory factory) : IClassFixture<ConfigOnlyWebApplicationFactory>
 {
     [Fact]
     public async Task GetHealth_Returns200WithStatusAndTimestamp()
