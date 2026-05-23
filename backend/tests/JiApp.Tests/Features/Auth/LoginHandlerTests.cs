@@ -3,11 +3,8 @@ using FluentAssertions;
 using JiApp.Api.Features.Auth.Login;
 using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
-using JiApp.Infrastructure.Services;
-using JiApp.Tests.Mocks;
+using JiApp.Tests.Fixtures;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Logging;
-using Moq;
 using Xunit;
 
 namespace JiApp.Tests.Features.Auth;
@@ -18,22 +15,14 @@ public class LoginHandlerTests
     public async Task HandleAsync_WithValidCredentials_ReturnsSuccessWithToken()
     {
         var user = new User { Id = 1, UserName = "testuser", DisplayName = "Test User" };
-        var userManagerMock = UserManagerMock.GetSuccessful();
-        userManagerMock.Setup(x => x.FindByNameAsync("testuser"))
-            .ReturnsAsync(user);
 
-        var signInManagerMock = SignInManagerMock.GetSuccessful(userManagerMock);
-        signInManagerMock.Setup(x => x.CheckPasswordSignInAsync(user, "correctpassword", true))
-            .ReturnsAsync(SignInResult.Success);
+        var ctx = new LoginHandlerFixture()
+            .WithFindByNameAsync("testuser", user)
+            .WithCheckPasswordSignInAsync(user, "correctpassword", SignInResult.Success)
+            .WithGenerateToken(1, "testuser", "jwt-token-123")
+            .Build();
 
-        var jwtTokenServiceMock = JwtTokenServiceMock.GetSuccessful();
-        jwtTokenServiceMock.Setup(x => x.GenerateToken(1, "testuser"))
-            .Returns("jwt-token-123");
-
-        var handler = new LoginHandler(signInManagerMock.Object, jwtTokenServiceMock.Object, LoggerMock.Of<LoginHandler>());
-        var request = new LoginRequest("testuser", "correctpassword");
-
-        var result = await handler.HandleAsync(request);
+        var result = await ctx.Handler.HandleAsync(new LoginRequest("testuser", "correctpassword"));
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
@@ -46,18 +35,11 @@ public class LoginHandlerTests
     [Fact]
     public async Task HandleAsync_WithInvalidUsername_ReturnsFailure()
     {
-        var userManagerMock = UserManagerMock.GetSuccessful();
-        userManagerMock.Setup(x => x.FindByNameAsync(It.IsAny<string>()))
-            .ReturnsAsync((User?)null);
+        var ctx = new LoginHandlerFixture()
+            .WithAnyFindByNameAsync(null)
+            .Build();
 
-        var signInManagerMock = SignInManagerMock.GetSuccessful(userManagerMock);
-
-        var jwtTokenServiceMock = JwtTokenServiceMock.GetSuccessful();
-
-        var handler = new LoginHandler(signInManagerMock.Object, jwtTokenServiceMock.Object, LoggerMock.Of<LoginHandler>());
-        var request = new LoginRequest("nonexistent", "password");
-
-        var result = await handler.HandleAsync(request);
+        var result = await ctx.Handler.HandleAsync(new LoginRequest("nonexistent", "password"));
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Invalid username or password");
@@ -68,20 +50,13 @@ public class LoginHandlerTests
     public async Task HandleAsync_WithInvalidPassword_ReturnsFailure()
     {
         var user = new User { Id = 1, UserName = "testuser", DisplayName = "Test User" };
-        var userManagerMock = UserManagerMock.GetSuccessful();
-        userManagerMock.Setup(x => x.FindByNameAsync("testuser"))
-            .ReturnsAsync(user);
 
-        var signInManagerMock = SignInManagerMock.GetSuccessful(userManagerMock);
-        signInManagerMock.Setup(x => x.CheckPasswordSignInAsync(user, "wrongpassword", true))
-            .ReturnsAsync(SignInResult.Failed);
+        var ctx = new LoginHandlerFixture()
+            .WithFindByNameAsync("testuser", user)
+            .WithCheckPasswordSignInAsync(user, "wrongpassword", SignInResult.Failed)
+            .Build();
 
-        var jwtTokenServiceMock = JwtTokenServiceMock.GetSuccessful();
-
-        var handler = new LoginHandler(signInManagerMock.Object, jwtTokenServiceMock.Object, LoggerMock.Of<LoginHandler>());
-        var request = new LoginRequest("testuser", "wrongpassword");
-
-        var result = await handler.HandleAsync(request);
+        var result = await ctx.Handler.HandleAsync(new LoginRequest("testuser", "wrongpassword"));
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Invalid username or password");
@@ -92,20 +67,13 @@ public class LoginHandlerTests
     public async Task HandleAsync_WhenAccountLocked_ReturnsFailureWithLockedMessage()
     {
         var user = new User { Id = 1, UserName = "testuser", DisplayName = "Test User" };
-        var userManagerMock = UserManagerMock.GetSuccessful();
-        userManagerMock.Setup(x => x.FindByNameAsync("testuser"))
-            .ReturnsAsync(user);
 
-        var signInManagerMock = SignInManagerMock.GetSuccessful(userManagerMock);
-        signInManagerMock.Setup(x => x.CheckPasswordSignInAsync(user, "password", true))
-            .ReturnsAsync(SignInResult.LockedOut);
+        var ctx = new LoginHandlerFixture()
+            .WithFindByNameAsync("testuser", user)
+            .WithCheckPasswordSignInAsync(user, "password", SignInResult.LockedOut)
+            .Build();
 
-        var jwtTokenServiceMock = JwtTokenServiceMock.GetSuccessful();
-
-        var handler = new LoginHandler(signInManagerMock.Object, jwtTokenServiceMock.Object, LoggerMock.Of<LoginHandler>());
-        var request = new LoginRequest("testuser", "password");
-
-        var result = await handler.HandleAsync(request);
+        var result = await ctx.Handler.HandleAsync(new LoginRequest("testuser", "password"));
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Account is locked. Please try again later.");
