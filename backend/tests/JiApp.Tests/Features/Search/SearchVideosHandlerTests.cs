@@ -23,7 +23,7 @@ public class SearchVideosHandlerTests
         }.AsReadOnly();
 
         var ctx = new SearchVideosHandlerFixture()
-            .WithSearchVideosAsync("test query", 10, videos)
+            .WithSearchVideosAsync("test query", 50, videos)
             .Build();
 
         var request = new SearchVideosRequest("test query", null);
@@ -50,11 +50,16 @@ public class SearchVideosHandlerTests
     {
         var videos = new List<YoutubeVideo>
         {
-            new YoutubeVideo("vid1", "Title", "Desc", "https://img.url/1", "Channel")
+            new("vid1", "Title", "Desc", "https://img.url/1", "Channel"),
+            new("vid2", "Title2", "Desc2", "https://img.url/2", "Channel2"),
+            new("vid3", "Title3", "Desc3", "https://img.url/3", "Channel3"),
+            new("vid4", "Title4", "Desc4", "https://img.url/4", "Channel4"),
+            new("vid5", "Title5", "Desc5", "https://img.url/5", "Channel5"),
+            new("vid6", "Title6", "Desc6", "https://img.url/6", "Channel6")
         }.AsReadOnly();
 
         var ctx = new SearchVideosHandlerFixture()
-            .WithSearchVideosAsync("query", 5, videos)
+            .WithSearchVideosAsync("query", 50, videos)
             .Build();
 
         var request = new SearchVideosRequest("query", 5);
@@ -62,7 +67,7 @@ public class SearchVideosHandlerTests
         var result = await ctx.Handler.HandleAsync(request);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value!.Results.Should().HaveCount(1);
+        result.Value!.Results.Should().HaveCount(5);
     }
 
     [Fact]
@@ -71,7 +76,7 @@ public class SearchVideosHandlerTests
         var emptyList = new List<YoutubeVideo>().AsReadOnly();
 
         var ctx = new SearchVideosHandlerFixture()
-            .WithSearchVideosAsync("empty query", 10, emptyList)
+            .WithSearchVideosAsync("empty query", 50, emptyList)
             .Build();
 
         var request = new SearchVideosRequest("empty query", null);
