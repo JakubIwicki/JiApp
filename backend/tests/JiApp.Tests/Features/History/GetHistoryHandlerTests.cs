@@ -4,33 +4,13 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using JiApp.Api.Features.History.GetHistory;
 using JiApp.Common.Models;
-using JiApp.Infrastructure.Repositories;
-using JiApp.Tests.Mocks;
-using Moq;
+using JiApp.Tests.Fixtures;
 using Xunit;
 
 namespace JiApp.Tests.Features.History;
 
 public class GetHistoryHandlerTests
 {
-    private readonly Mock<ISearchHistoryRepository> _searchHistoryRepoMock;
-    private readonly Mock<IDownloadHistoryRepository> _downloadHistoryRepoMock;
-    private readonly GetHistoryHandler _handler;
-
-    public GetHistoryHandlerTests()
-    {
-        _searchHistoryRepoMock = SearchHistoryRepositoryMock.GetSuccessful();
-        _downloadHistoryRepoMock = DownloadHistoryRepositoryMock.GetSuccessful();
-        var currentUserMock = CurrentUserServiceMock.GetSuccessful();
-        var loggerMock = LoggerMock.GetSuccessful<GetHistoryHandler>();
-
-        _handler = new GetHistoryHandler(
-            _searchHistoryRepoMock.Object,
-            _downloadHistoryRepoMock.Object,
-            currentUserMock.Object,
-            loggerMock.Object);
-    }
-
     [Fact]
     public async Task HandleAsync_WithHistory_ReturnsBothSearchesAndDownloads()
     {
@@ -58,14 +38,14 @@ public class GetHistoryHandlerTests
             }
         }.AsReadOnly();
 
-        _searchHistoryRepoMock.Setup(x => x.GetByUserIdAsync(1L, 10, 0))
-            .ReturnsAsync(searches);
-        _downloadHistoryRepoMock.Setup(x => x.GetByUserIdAsync(1L, 10, 0))
-            .ReturnsAsync(downloads);
+        var ctx = new GetHistoryHandlerFixture()
+            .WithSearchGetByUserIdAsync(1L, 10, searches, 0)
+            .WithDownloadGetByUserIdAsync(1L, 10, downloads, 0)
+            .Build();
 
         var request = new GetHistoryRequest(null);
 
-        var result = await _handler.HandleAsync(request);
+        var result = await ctx.Handler.HandleAsync(request);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
@@ -101,14 +81,14 @@ public class GetHistoryHandlerTests
             }
         }.AsReadOnly();
 
-        _searchHistoryRepoMock.Setup(x => x.GetByUserIdAsync(1L, 5, 0))
-            .ReturnsAsync(searches);
-        _downloadHistoryRepoMock.Setup(x => x.GetByUserIdAsync(1L, 5, 0))
-            .ReturnsAsync(downloads);
+        var ctx = new GetHistoryHandlerFixture()
+            .WithSearchGetByUserIdAsync(1L, 5, searches, 0)
+            .WithDownloadGetByUserIdAsync(1L, 5, downloads, 0)
+            .Build();
 
         var request = new GetHistoryRequest(5);
 
-        var result = await _handler.HandleAsync(request);
+        var result = await ctx.Handler.HandleAsync(request);
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Searches.Should().HaveCount(1);
@@ -121,14 +101,14 @@ public class GetHistoryHandlerTests
         var emptySearches = new List<YoutubeSearchHistory>().AsReadOnly();
         var emptyDownloads = new List<YoutubeDownloadHistory>().AsReadOnly();
 
-        _searchHistoryRepoMock.Setup(x => x.GetByUserIdAsync(1L, 10, 0))
-            .ReturnsAsync(emptySearches);
-        _downloadHistoryRepoMock.Setup(x => x.GetByUserIdAsync(1L, 10, 0))
-            .ReturnsAsync(emptyDownloads);
+        var ctx = new GetHistoryHandlerFixture()
+            .WithSearchGetByUserIdAsync(1L, 10, emptySearches, 0)
+            .WithDownloadGetByUserIdAsync(1L, 10, emptyDownloads, 0)
+            .Build();
 
         var request = new GetHistoryRequest(null);
 
-        var result = await _handler.HandleAsync(request);
+        var result = await ctx.Handler.HandleAsync(request);
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Searches.Should().BeEmpty();
@@ -138,10 +118,9 @@ public class GetHistoryHandlerTests
     [Fact]
     public async Task HandleAsync_WhenSearchHistoryFails_ReturnsPartialDownloadHistory()
     {
-        _searchHistoryRepoMock.Setup(x => x.GetByUserIdAsync(1L, 10, 0))
-            .ThrowsAsync(new InvalidOperationException("Database connection failed"));
-        _downloadHistoryRepoMock.Setup(x => x.GetByUserIdAsync(1L, 10, 0))
-            .ReturnsAsync(new List<YoutubeDownloadHistory>
+        var ctx = new GetHistoryHandlerFixture()
+            .WithSearchGetByUserIdAsync_Throws(1L, 10, new InvalidOperationException("Database connection failed"), 0)
+            .WithDownloadGetByUserIdAsync(1L, 10, new List<YoutubeDownloadHistory>
             {
                 new()
                 {
@@ -151,11 +130,12 @@ public class GetHistoryHandlerTests
                     VideoId = "abc123",
                     DownloadedAt = DateTime.UtcNow
                 }
-            }.AsReadOnly());
+            }.AsReadOnly(), 0)
+            .Build();
 
         var request = new GetHistoryRequest(null);
 
-        var result = await _handler.HandleAsync(request);
+        var result = await ctx.Handler.HandleAsync(request);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
@@ -166,14 +146,14 @@ public class GetHistoryHandlerTests
     [Fact]
     public async Task HandleAsync_WhenBothRepositoriesFail_ReturnsFailure()
     {
-        _searchHistoryRepoMock.Setup(x => x.GetByUserIdAsync(1L, 10, 0))
-            .ThrowsAsync(new InvalidOperationException("Database connection failed"));
-        _downloadHistoryRepoMock.Setup(x => x.GetByUserIdAsync(1L, 10, 0))
-            .ThrowsAsync(new InvalidOperationException("Database connection failed"));
+        var ctx = new GetHistoryHandlerFixture()
+            .WithSearchGetByUserIdAsync_Throws(1L, 10, new InvalidOperationException("Database connection failed"), 0)
+            .WithDownloadGetByUserIdAsync_Throws(1L, 10, new InvalidOperationException("Database connection failed"), 0)
+            .Build();
 
         var request = new GetHistoryRequest(null);
 
-        var result = await _handler.HandleAsync(request);
+        var result = await ctx.Handler.HandleAsync(request);
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().NotBeNullOrEmpty();
