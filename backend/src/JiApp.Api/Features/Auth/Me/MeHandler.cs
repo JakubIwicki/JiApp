@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace JiApp.Api.Features.Auth.Me;
 
- internal sealed class MeHandler(
+internal sealed class MeHandler(
     UserManager<User> userManager,
     ICurrentUserService currentUser,
     ILogger<MeHandler> logger)

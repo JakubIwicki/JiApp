@@ -16,7 +16,7 @@ public sealed class GetDownloadLinkValidator : AbstractValidator<DownloadRequest
         RuleFor(x => x.VideoId)
             .NotEmpty()
             .MaximumLength(200)
-            .Matches(@"^[a-zA-Z0-9_-]+$")
+            .Matches("^[a-zA-Z0-9_-]+$")
             .WithMessage("VideoId must contain only letters, digits, hyphens, and underscores.");
 
         RuleFor(x => x.VideoUrl)

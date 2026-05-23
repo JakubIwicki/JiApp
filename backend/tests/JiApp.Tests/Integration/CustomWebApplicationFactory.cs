@@ -53,10 +53,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         builder.UseSetting("Jwt:Key", TestConfiguration.JwtKey);
         builder.UseSetting("Youtube:api-key", TestConfiguration.YoutubeApiKey);
 
-        builder.ConfigureServices(services =>
-        {
-            TestDbContextHelper.ReplaceDbContext(services, _connection!);
-        });
+        builder.ConfigureServices(services => { TestDbContextHelper.ReplaceDbContext(services, _connection!); });
     }
 
     public async Task InitializeAsync()

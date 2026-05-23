@@ -1,0 +1,563 @@
+{
+  "info": {
+    "name": "JiApp API",
+    "description": "## JiApp API\n\nYouTube-to-MP3 downloader backend. All endpoints use JSON for request/response bodies unless noted otherwise.\n\n### Authentication\nMost endpoints require a JWT Bearer token. Set `{{jwt_token}}` by calling **POST /api/auth/login** first.\n\n### Rate Limiting\nEach endpoint has a rate limit policy applied (fixed or sliding window). See individual request descriptions for details.\n\n### Error Format\nAll error responses follow the `ApiErrorResponse` shape:\n```json\n{\n  \"error\": \"Description of what went wrong\",\n  \"details\": \"Additional context (nullable)\",\n  \"retryAfterSeconds\": \"Hint for rate-limited endpoints (nullable)\"\n}\n```",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5001",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Authentication endpoints — login, register, and current user info.",
+      "item": [
+        {
+          "name": "POST /api/auth/login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"string\",\n  \"password\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Authenticate and receive a JWT bearer token.\n\n**Auth:** Anonymous\n**Rate limit:** LoginPolicy (fixed window, 5 req/60s)"
+          },
+          "response": [
+            {
+              "name": "Success - 200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"displayName\": \"John Doe\",\n  \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"\n}"
+            },
+            {
+              "name": "Error - 400 Validation Problem",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Validation failed\",\n  \"details\": \"Username is required\",\n  \"retryAfterSeconds\": null\n}"
+            },
+            {
+              "name": "Error - 401 Invalid Credentials",
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Invalid credentials\",\n  \"details\": null,\n  \"retryAfterSeconds\": null\n}"
+            }
+          ],
+          "auth": {
+            "type": "noauth"
+          }
+        },
+        {
+          "name": "POST /api/auth/register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"string\",\n  \"email\": \"user@example.com\",\n  \"password\": \"string\",\n  \"displayName\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "description": "Register a new user account.\n\n**Auth:** Anonymous\n**Rate limit:** RegisterPolicy (fixed window, 3 req/60s)\n\nReturns 201 Created with an empty body on success. The Location header points to `/api/auth/me`."
+          },
+          "response": [
+            {
+              "name": "Success - 201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Location",
+                  "value": "/api/auth/me"
+                }
+              ],
+              "body": "{}"
+            },
+            {
+              "name": "Error - 400 Validation Problem",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Validation failed\",\n  \"details\": \"Username is already taken\",\n  \"retryAfterSeconds\": null\n}"
+            }
+          ],
+          "auth": {
+            "type": "noauth"
+          }
+        },
+        {
+          "name": "GET /api/auth/me",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "me"]
+            },
+            "description": "Get the currently authenticated user's profile from their JWT token.\n\n**Auth:** Required (JWT Bearer)\n**Rate limit:** MePolicy (fixed window, 60 req/60s)"
+          },
+          "response": [
+            {
+              "name": "Success - 200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"displayName\": \"John Doe\"\n}"
+            },
+            {
+              "name": "Error - 401 Token Invalid",
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Token invalid or expired\",\n  \"details\": null,\n  \"retryAfterSeconds\": null\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Downloads",
+      "description": "YouTube video download endpoints — request MP3 conversion, fetch the file, and browse download history.",
+      "item": [
+        {
+          "name": "POST /api/downloads/mp3",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"videoId\": \"dQw4w9WgXcQ\",\n  \"videoUrl\": \"https://www.youtube.com/watch?v=dQw4w9WgXcQ\",\n  \"title\": \"Rick Astley - Never Gonna Give You Up\",\n  \"description\": \"The official video for Rick Astley's classic\",\n  \"imageUrl\": \"https://i.ytimg.com/vi/dQw4w9WgXcQ/default.jpg\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/downloads/mp3",
+              "host": ["{{base_url}}"],
+              "path": ["api", "downloads", "mp3"]
+            },
+            "description": "Request an MP3 download link for a YouTube video. The response contains a temporary ID you can use to download the actual file.\n\n**Auth:** Required (JWT Bearer)\n**Rate limit:** GetDownloadLinkPolicy (sliding window, 10 req/60s)"
+          },
+          "response": [
+            {
+              "name": "Success - 200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"tempId\": \"abc123-def456\",\n  \"downloadUrl\": \"http://localhost:5001/api/downloads/mp3/file/abc123-def456\"\n}"
+            },
+            {
+              "name": "Error - 400 Validation Problem",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Validation failed\",\n  \"details\": \"VideoId is required\",\n  \"retryAfterSeconds\": null\n}"
+            },
+            {
+              "name": "Error - 500 Download Failed",
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Failed to process download\",\n  \"details\": \"yt-dlp exited with code 1\",\n  \"retryAfterSeconds\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /api/downloads/mp3/file/{id}",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/downloads/mp3/file/abc123-def456",
+              "host": ["{{base_url}}"],
+              "path": ["api", "downloads", "mp3", "file", "abc123-def456"]
+            },
+            "description": "Download the MP3 file by temporary ID (obtained from **POST /api/downloads/mp3**).\n\n**Auth:** Required (JWT Bearer)\n**Rate limit:** DownloadFilePolicy (sliding window, 10 req/60s)\n**Returns:** `audio/mpeg` binary stream"
+          },
+          "response": [
+            {
+              "name": "Success - 200 OK (audio/mpeg)",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "audio/mpeg"
+                },
+                {
+                  "key": "Content-Disposition",
+                  "value": "attachment; filename=\"video-title.mp3\""
+                }
+              ],
+              "body": "[binary audio/mpeg data]"
+            },
+            {
+              "name": "Error - 404 Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Temporary file not found or expired\",\n  \"details\": null,\n  \"retryAfterSeconds\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /api/downloads/history",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/downloads/history?limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "downloads", "history"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Maximum number of history items to return (optional, nullable int)"
+                }
+              ]
+            },
+            "description": "Get download history for the authenticated user.\n\n**Auth:** Required (JWT Bearer)\n**Rate limit:** DownloadHistoryPolicy (fixed window, 20 req/60s)"
+          },
+          "response": [
+            {
+              "name": "Success - 200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"videoTitle\": \"Rick Astley - Never Gonna Give You Up\",\n      \"videoDescription\": \"The official video for Rick Astley's classic\",\n      \"videoId\": \"dQw4w9WgXcQ\",\n      \"videoUrl\": \"https://www.youtube.com/watch?v=dQw4w9WgXcQ\",\n      \"imageUrl\": \"https://i.ytimg.com/vi/dQw4w9WgXcQ/default.jpg\",\n      \"downloadedAt\": \"2026-05-22T10:30:00Z\"\n    }\n  ]\n}"
+            },
+            {
+              "name": "Error - 400 Validation Problem",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Invalid limit parameter\",\n  \"details\": \"Limit must be greater than 0\",\n  \"retryAfterSeconds\": null\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "History",
+      "description": "Combined search and download history for the authenticated user.",
+      "item": [
+        {
+          "name": "GET /api/history",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/history?limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "history"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Maximum number of items per category (optional, nullable int)"
+                }
+              ]
+            },
+            "description": "Get combined search and download history for the authenticated user.\n\n**Auth:** Required (JWT Bearer)\n**Rate limit:** GetHistoryPolicy (fixed window, 20 req/60s)"
+          },
+          "response": [
+            {
+              "name": "Success - 200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"searches\": [\n    {\n      \"id\": 1,\n      \"searchText\": \"Rick Astley\",\n      \"searchedAt\": \"2026-05-22T10:25:00Z\"\n    }\n  ],\n  \"downloads\": [\n    {\n      \"id\": 1,\n      \"videoTitle\": \"Rick Astley - Never Gonna Give You Up\",\n      \"videoDescription\": \"The official video for Rick Astley's classic\",\n      \"videoId\": \"dQw4w9WgXcQ\",\n      \"videoUrl\": \"https://www.youtube.com/watch?v=dQw4w9WgXcQ\",\n      \"imageUrl\": \"https://i.ytimg.com/vi/dQw4w9WgXcQ/default.jpg\",\n      \"downloadedAt\": \"2026-05-22T10:30:00Z\"\n    }\n  ]\n}"
+            },
+            {
+              "name": "Error - 400 Validation Problem",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Invalid limit parameter\",\n  \"details\": \"Limit must be greater than 0\",\n  \"retryAfterSeconds\": null\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Search",
+      "description": "YouTube video search and search history.",
+      "item": [
+        {
+          "name": "POST /api/search",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"Rick Astley\",\n  \"maxResults\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/search",
+              "host": ["{{base_url}}"],
+              "path": ["api", "search"]
+            },
+            "description": "Search YouTube videos by query string. Results include video metadata needed for download.\n\n**Auth:** Required (JWT Bearer)\n**Rate limit:** SearchVideosPolicy (sliding window, 30 req/60s)"
+          },
+          "response": [
+            {
+              "name": "Success - 200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"results\": [\n    {\n      \"videoId\": \"dQw4w9WgXcQ\",\n      \"title\": \"Rick Astley - Never Gonna Give You Up\",\n      \"description\": \"The official video for Rick Astley's classic hit.\",\n      \"imageUrl\": \"https://i.ytimg.com/vi/dQw4w9WgXcQ/default.jpg\",\n      \"videoUrl\": \"https://www.youtube.com/watch?v=dQw4w9WgXcQ\",\n      \"channelTitle\": \"Rick Astley Official\"\n    }\n  ]\n}"
+            },
+            {
+              "name": "Error - 400 Validation Problem",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Validation failed\",\n  \"details\": \"Query is required\",\n  \"retryAfterSeconds\": null\n}"
+            },
+            {
+              "name": "Error - 502 YouTube API Failure",
+              "status": "Bad Gateway",
+              "code": 502,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Failed to search YouTube\",\n  \"details\": \"YouTube API quota exceeded\",\n  \"retryAfterSeconds\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /api/search/history",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/search/history?limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "search", "history"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Maximum number of history items to return (optional, nullable int)"
+                }
+              ]
+            },
+            "description": "Get search history for the authenticated user.\n\n**Auth:** Required (JWT Bearer)\n**Rate limit:** SearchHistoryPolicy (fixed window, 20 req/60s)"
+          },
+          "response": [
+            {
+              "name": "Success - 200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"searchText\": \"Rick Astley\",\n      \"searchedAt\": \"2026-05-22T10:25:00Z\"\n    }\n  ]\n}"
+            },
+            {
+              "name": "Error - 400 Validation Problem",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Invalid limit parameter\",\n  \"details\": \"Limit must be greater than 0\",\n  \"retryAfterSeconds\": null\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "System",
+      "description": "System-level endpoints for health checks and diagnostics.",
+      "item": [
+        {
+          "name": "GET /api/health",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/health",
+              "host": ["{{base_url}}"],
+              "path": ["api", "health"]
+            },
+            "description": "Health check endpoint. Returns the current service status.\n\n**Auth:** Anonymous\n**Rate limit:** HealthPolicy (fixed window, 30 req/60s)"
+          },
+          "response": [
+            {
+              "name": "Success - 200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"healthy\",\n  \"timestamp\": \"2026-05-22T10:00:00Z\"\n}"
+            }
+          ],
+          "auth": {
+            "type": "noauth"
+          }
+        }
+      ]
+    }
+  ]
+}

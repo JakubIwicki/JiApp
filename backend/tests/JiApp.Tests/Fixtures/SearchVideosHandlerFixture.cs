@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using JiApp.Api.Features.Search.SearchVideos;
 using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
@@ -11,26 +13,17 @@ namespace JiApp.Tests.Fixtures;
 
 public sealed class SearchVideosHandlerFixture
 {
-    private readonly Mock<IYoutubeClient> _youtubeClientMock;
-    private readonly Mock<ISearchHistoryRepository> _searchHistoryRepoMock;
-    private readonly Mock<ICurrentUserService> _currentUserServiceMock;
+    private readonly Mock<IYoutubeClient> _youtubeClientMock = YoutubeClientMock.GetSuccessful();
 
-    public SearchVideosHandlerFixture()
-    {
-        _youtubeClientMock = YoutubeClientMock.GetSuccessful();
+    private readonly Mock<ISearchHistoryRepository>
         _searchHistoryRepoMock = SearchHistoryRepositoryMock.GetSuccessful();
-        _currentUserServiceMock = CurrentUserServiceMock.GetSuccessful();
-    }
 
-    public SearchVideosHandlerFixture WithSearchVideosAsync(string query, int maxResults, IReadOnlyList<YoutubeVideo> result)
+    private readonly Mock<ICurrentUserService> _currentUserServiceMock = CurrentUserServiceMock.GetSuccessful();
+
+    public SearchVideosHandlerFixture WithSearchVideosAsync(string query, int maxResults,
+        IReadOnlyList<YoutubeVideo> result)
     {
         _youtubeClientMock.Setup(x => x.SearchVideosAsync(query, maxResults)).ReturnsAsync(result);
-        return this;
-    }
-
-    public SearchVideosHandlerFixture WithAnySearchVideosAsync(IReadOnlyList<YoutubeVideo> result)
-    {
-        _youtubeClientMock.Setup(x => x.SearchVideosAsync(It.IsAny<string>(), It.IsAny<int>())).ReturnsAsync(result);
         return this;
     }
 
@@ -49,12 +42,10 @@ public sealed class SearchVideosHandlerFixture
             LoggerMock.Of<SearchVideosHandler>());
 
         return new SearchVideosHandlerContext(
-            handler, _youtubeClientMock, _searchHistoryRepoMock, _currentUserServiceMock);
+            handler, _searchHistoryRepoMock);
     }
 }
 
 public sealed record SearchVideosHandlerContext(
     SearchVideosHandler Handler,
-    Mock<IYoutubeClient> YoutubeClientMock,
-    Mock<ISearchHistoryRepository> SearchHistoryRepoMock,
-    Mock<ICurrentUserService> CurrentUserServiceMock);
+    Mock<ISearchHistoryRepository> SearchHistoryRepoMock);

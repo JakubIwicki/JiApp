@@ -52,12 +52,9 @@ public sealed class LoginHandlerFixture
             _jwtTokenServiceMock.Object,
             LoggerMock.Of<LoginHandler>());
 
-        return new LoginHandlerContext(handler, _userManagerMock, _signInManagerMock, _jwtTokenServiceMock);
+        return new LoginHandlerContext(handler);
     }
 }
 
 public sealed record LoginHandlerContext(
-    LoginHandler Handler,
-    Mock<UserManager<User>> UserManagerMock,
-    Mock<SignInManager<User>> SignInManagerMock,
-    Mock<IJwtTokenService> JwtTokenServiceMock);
+    LoginHandler Handler);

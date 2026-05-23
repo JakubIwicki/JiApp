@@ -20,7 +20,8 @@ public class RegisterHandlerTests
             .WithAnyCreateAsync(IdentityResult.Success)
             .Build();
 
-        var result = await ctx.Handler.HandleAsync(new RegisterRequest("testuser", "test@example.com", "password", "Test User"));
+        var result =
+            await ctx.Handler.HandleAsync(new RegisterRequest("testuser", "test@example.com", "password", "Test User"));
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
@@ -36,7 +37,9 @@ public class RegisterHandlerTests
             .WithFindByNameAsync("existing", existingUser)
             .Build();
 
-        var result = await ctx.Handler.HandleAsync(new RegisterRequest("existing", "new@example.com", "password", "Existing User"));
+        var result =
+            await ctx.Handler.HandleAsync(new RegisterRequest("existing", "new@example.com", "password",
+                "Existing User"));
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Username already taken");
@@ -52,7 +55,8 @@ public class RegisterHandlerTests
             .WithFindByEmailAsync("test@example.com", existingUser)
             .Build();
 
-        var result = await ctx.Handler.HandleAsync(new RegisterRequest("newuser", "test@example.com", "password", "New User"));
+        var result =
+            await ctx.Handler.HandleAsync(new RegisterRequest("newuser", "test@example.com", "password", "New User"));
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Email already taken");

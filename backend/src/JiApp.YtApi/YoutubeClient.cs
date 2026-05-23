@@ -10,7 +10,9 @@ using YoutubeDLSharp.Options;
 namespace JiApp.YtApi;
 
 public sealed class YoutubeClient(
-    string apiKey, string ytDlpPath, string ffmpegPath) : IYoutubeClient, IDisposable
+    string apiKey,
+    string ytDlpPath,
+    string ffmpegPath) : IYoutubeClient, IDisposable
 {
     private readonly YouTubeService _youTubeService = new(new Google.Apis.Services.BaseClientService.Initializer
     {
@@ -52,7 +54,7 @@ public sealed class YoutubeClient(
 
         var result = await youtubeDl.RunAudioDownload(videoUrl, AudioConversionFormat.Mp3);
 
-        return result.Success 
+        return result.Success
             ? new YoutubeClientResponse(result.Data, true, [])
             : new YoutubeClientResponse(null, false, result.ErrorOutput ?? []);
     }

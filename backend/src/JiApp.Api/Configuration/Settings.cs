@@ -6,7 +6,7 @@ namespace JiApp.Api.Configuration;
 public sealed class Settings
 {
     public string? ConnectionString { get; set; }
-    public AppSettings? App { get; set; }
+    public AppSettings? App { get; init; }
     public JwtSettings? Jwt { get; set; }
     public YoutubeSettings? Youtube { get; set; }
     public RateLimitingOptions? RateLimiting { get; set; }
@@ -99,6 +99,7 @@ public sealed class Settings
             errors.Add($"{name} is not configured.");
             return;
         }
+
         if (!policy.PermitLimit.HasValue || policy.PermitLimit.Value <= 0)
             errors.Add($"{name}:PermitLimit must be greater than 0.");
         if (!policy.WindowInSeconds.HasValue || policy.WindowInSeconds.Value <= 0)
@@ -114,7 +115,7 @@ public sealed class Settings
     {
         public string? BaseDirectory { get; set; }
     }
-    
+
     [Serializable]
     public sealed class JwtSettings
     {
@@ -131,7 +132,7 @@ public sealed class Settings
         public string? YtDlpPath { get; set; }
         public string? FfmpegPath { get; set; }
     }
-    
+
     [Serializable]
     public sealed class RateLimitingOptions
     {
@@ -146,7 +147,7 @@ public sealed class Settings
         public RateLimitPolicyOptions? Me { get; set; }
         public RateLimitPolicyOptions? GetDownloadLink { get; set; }
     }
-    
+
     [Serializable]
     public sealed class RateLimitPolicyOptions
     {

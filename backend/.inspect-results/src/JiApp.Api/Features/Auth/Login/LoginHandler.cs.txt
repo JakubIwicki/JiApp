@@ -1,0 +1,4 @@
+Solution backend\JiApp.sln
+    Project JiApp.Api
+      src\JiApp.Api\Features\Auth\Login\LoginHandler.cs: Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Auth\Login\LoginHandler.cs:7 Using directive is not required by the code and can be safely removed

@@ -9,12 +9,7 @@ namespace JiApp.Tests.Fixtures;
 
 public sealed class RegisterHandlerFixture
 {
-    private readonly Mock<UserManager<User>> _userManagerMock;
-
-    public RegisterHandlerFixture()
-    {
-        _userManagerMock = UserManagerMock.GetSuccessful();
-    }
+    private readonly Mock<UserManager<User>> _userManagerMock = UserManagerMock.GetSuccessful();
 
     public RegisterHandlerFixture WithFindByNameAsync(string username, User? user)
     {
@@ -52,10 +47,9 @@ public sealed class RegisterHandlerFixture
             _userManagerMock.Object,
             LoggerMock.Of<RegisterHandler>());
 
-        return new RegisterHandlerContext(handler, _userManagerMock);
+        return new RegisterHandlerContext(handler);
     }
 }
 
 public sealed record RegisterHandlerContext(
-    RegisterHandler Handler,
-    Mock<UserManager<User>> UserManagerMock);
+    RegisterHandler Handler);

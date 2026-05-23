@@ -1,4 +1,5 @@
 // ReSharper disable PropertyCanBeMadeInitOnly.Global
+
 namespace JiApp.Common.Models;
 
 public abstract class BaseEntity<TKey>

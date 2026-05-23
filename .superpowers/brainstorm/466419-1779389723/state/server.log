@@ -1,0 +1,8 @@
+{"type":"server-started","port":62142,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:62142","screen_dir":"/home/jakub/JiApp/.superpowers/brainstorm/466419-1779389723/content","state_dir":"/home/jakub/JiApp/.superpowers/brainstorm/466419-1779389723/state"}
+{"type":"screen-added","file":"/home/jakub/JiApp/.superpowers/brainstorm/466419-1779389723/content/logo-placement.html"}
+{"source":"user-event","type":"click","text":"A\n    \n      Above Search Bar\n      Logo sits between the header and the search bar, centered. Visible when no results are shown, scrolls away with results.","choice":"a","id":null,"timestamp":1779389859553}
+{"source":"user-event","type":"click","text":"A\n    \n      Above Search Bar\n      Logo sits between the header and the search bar, centered. Visible when no results are shown, scrolls away with results.","choice":"a","id":null,"timestamp":1779389862047}
+{"type":"screen-added","file":"/home/jakub/JiApp/.superpowers/brainstorm/466419-1779389723/content/logo-sizing.html"}
+{"source":"user-event","type":"click","text":"A\n    \n      Small (~80px)\n      Subtle brand presence, leaves more room for content and recent searches.","choice":"a","id":null,"timestamp":1779389929884}
+{"type":"screen-added","file":"/home/jakub/JiApp/.superpowers/brainstorm/466419-1779389723/content/app-icon-approach.html"}
+{"type":"server-stopped","reason":"idle timeout"}

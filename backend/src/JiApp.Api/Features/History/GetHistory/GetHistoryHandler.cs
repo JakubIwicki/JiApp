@@ -33,7 +33,7 @@ public sealed class GetHistoryHandler(
             var results = await searchHistoryRepository.GetByUserIdAsync(currentUser.UserId, limit);
             searchHistory = results.ToList();
         }
-        #pragma warning disable CA1031 // Reading from independent repositories; one failure should not prevent the other
+#pragma warning disable CA1031 // Reading from independent repositories; one failure should not prevent the other
         catch (Exception ex)
         {
             logger.FailedToRetrieveSearchHistory(ex);

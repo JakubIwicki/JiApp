@@ -12,36 +12,27 @@ namespace JiApp.Tests.Fixtures;
 
 public sealed class GetDownloadLinkHandlerFixture
 {
-    private readonly Mock<IYoutubeClient> _youtubeClientMock;
-    private readonly Mock<ITempFileStore> _tempFileStoreMock;
-    private readonly Mock<IDownloadHistoryRepository> _downloadHistoryRepoMock;
-    private readonly Mock<ICurrentUserService> _currentUserServiceMock;
-    private readonly Settings _settings;
+    private readonly Mock<IYoutubeClient> _youtubeClientMock = YoutubeClientMock.GetSuccessful();
+    private readonly Mock<ITempFileStore> _tempFileStoreMock = TempFileStoreMock.GetSuccessful();
 
-    public GetDownloadLinkHandlerFixture()
+    private readonly Mock<IDownloadHistoryRepository> _downloadHistoryRepoMock =
+        DownloadHistoryRepositoryMock.GetSuccessful();
+
+    private readonly Mock<ICurrentUserService> _currentUserServiceMock =
+        CurrentUserServiceMock.GetWithUsername(1L, "testuser");
+
+    private readonly Settings _settings = new()
     {
-        _youtubeClientMock = YoutubeClientMock.GetSuccessful();
-        _tempFileStoreMock = TempFileStoreMock.GetSuccessful();
-        _downloadHistoryRepoMock = DownloadHistoryRepositoryMock.GetSuccessful();
-        _currentUserServiceMock = CurrentUserServiceMock.GetWithUsername(1L, "testuser");
-        _settings = new Settings
+        App = new Settings.AppSettings
         {
-            App = new Settings.AppSettings
-            {
-                BaseDirectory = "/tmp/ji_app"
-            }
-        };
-    }
-
-    public GetDownloadLinkHandlerFixture WithDownloadVideoAsync(string videoId, string outputFolder, YoutubeClientResponse result)
-    {
-        _youtubeClientMock.Setup(x => x.DownloadVideoAsync(videoId, outputFolder)).ReturnsAsync(result);
-        return this;
-    }
+            BaseDirectory = "/tmp/ji_app"
+        }
+    };
 
     public GetDownloadLinkHandlerFixture WithAnyDownloadVideoAsync(YoutubeClientResponse result)
     {
-        _youtubeClientMock.Setup(x => x.DownloadVideoAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(result);
+        _youtubeClientMock.Setup(x => x.DownloadVideoAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(result);
         return this;
     }
 
@@ -63,16 +54,10 @@ public sealed class GetDownloadLinkHandlerFixture
 
         return new GetDownloadLinkHandlerContext(
             handler,
-            _youtubeClientMock,
-            _tempFileStoreMock,
-            _downloadHistoryRepoMock,
-            _currentUserServiceMock);
+            _downloadHistoryRepoMock);
     }
 }
 
 public sealed record GetDownloadLinkHandlerContext(
     GetDownloadLinkHandler Handler,
-    Mock<IYoutubeClient> YoutubeClientMock,
-    Mock<ITempFileStore> TempFileStoreMock,
-    Mock<IDownloadHistoryRepository> DownloadHistoryRepoMock,
-    Mock<ICurrentUserService> CurrentUserServiceMock);
+    Mock<IDownloadHistoryRepository> DownloadHistoryRepoMock);

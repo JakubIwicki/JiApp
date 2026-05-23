@@ -1,0 +1,9 @@
+[*.cs]
+
+# CA1812: Uninstantiated internal classes
+# Test helper DTOs are instantiated via JSON deserialization -- analyzer cannot detect this
+dotnet_diagnostic.CA1812.severity = none
+
+# CA2000: Call Dispose before references go out of scope
+# WebApplicationFactory instances are managed by xUnit's IAsyncLifetime fixture
+dotnet_diagnostic.CA2000.severity = none

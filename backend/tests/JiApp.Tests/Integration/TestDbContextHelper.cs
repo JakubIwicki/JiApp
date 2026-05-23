@@ -19,13 +19,12 @@ internal static class TestDbContextHelper
     /// </summary>
     public static void ReplaceDbContext(IServiceCollection services, SqliteConnection connection)
     {
-        var dbOptionsDescriptor = services.SingleOrDefault(
-            d => d.ServiceType == typeof(DbContextOptions<JiAppDbContext>));
+        var dbOptionsDescriptor =
+            services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<JiAppDbContext>));
         if (dbOptionsDescriptor is not null)
             services.Remove(dbOptionsDescriptor);
 
-        var dbContextDescriptor = services.SingleOrDefault(
-            d => d.ServiceType == typeof(JiAppDbContext));
+        var dbContextDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(JiAppDbContext));
         if (dbContextDescriptor is not null)
             services.Remove(dbContextDescriptor);
 

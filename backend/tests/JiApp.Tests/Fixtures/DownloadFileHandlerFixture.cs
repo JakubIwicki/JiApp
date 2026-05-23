@@ -9,20 +9,8 @@ namespace JiApp.Tests.Fixtures;
 
 public sealed class DownloadFileHandlerFixture
 {
-    private readonly Mock<ITempFileStore> _tempFileStoreMock;
-    private readonly Mock<ICurrentUserService> _currentUserServiceMock;
-
-    public DownloadFileHandlerFixture()
-    {
-        _tempFileStoreMock = TempFileStoreMock.GetSuccessful();
-        _currentUserServiceMock = CurrentUserServiceMock.GetSuccessful();
-    }
-
-    public DownloadFileHandlerFixture WithUserId(long userId)
-    {
-        _currentUserServiceMock.Setup(x => x.UserId).Returns(userId);
-        return this;
-    }
+    private readonly Mock<ITempFileStore> _tempFileStoreMock = TempFileStoreMock.GetSuccessful();
+    private readonly Mock<ICurrentUserService> _currentUserServiceMock = CurrentUserServiceMock.GetSuccessful();
 
     public DownloadFileHandlerFixture WithGet(string id, long userId, string? filePath)
     {
@@ -37,11 +25,9 @@ public sealed class DownloadFileHandlerFixture
             _currentUserServiceMock.Object,
             LoggerMock.Of<DownloadFileHandler>());
 
-        return new DownloadFileHandlerContext(handler, _tempFileStoreMock, _currentUserServiceMock);
+        return new DownloadFileHandlerContext(handler);
     }
 }
 
 public sealed record DownloadFileHandlerContext(
-    DownloadFileHandler Handler,
-    Mock<ITempFileStore> TempFileStoreMock,
-    Mock<ICurrentUserService> CurrentUserServiceMock);
+    DownloadFileHandler Handler);

@@ -11,14 +11,8 @@ namespace JiApp.Tests.Fixtures;
 
 internal sealed class MeHandlerFixture
 {
-    private readonly Mock<UserManager<User>> _userManagerMock;
-    private readonly Mock<ICurrentUserService> _currentUserServiceMock;
-
-    public MeHandlerFixture()
-    {
-        _userManagerMock = UserManagerMock.GetSuccessful();
-        _currentUserServiceMock = CurrentUserServiceMock.GetSuccessful();
-    }
+    private readonly Mock<UserManager<User>> _userManagerMock = UserManagerMock.GetSuccessful();
+    private readonly Mock<ICurrentUserService> _currentUserServiceMock = CurrentUserServiceMock.GetSuccessful();
 
     public MeHandlerFixture WithUserId(long userId)
     {
@@ -39,11 +33,9 @@ internal sealed class MeHandlerFixture
             _currentUserServiceMock.Object,
             LoggerMock.Of<MeHandler>());
 
-        return new MeHandlerContext(handler, _userManagerMock, _currentUserServiceMock);
+        return new MeHandlerContext(handler);
     }
 }
 
 internal sealed record MeHandlerContext(
-    MeHandler Handler,
-    Mock<UserManager<User>> UserManagerMock,
-    Mock<ICurrentUserService> CurrentUserServiceMock);
+    MeHandler Handler);

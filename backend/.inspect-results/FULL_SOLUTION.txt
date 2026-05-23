@@ -1,0 +1,336 @@
+Solution backend\JiApp.sln
+    Project JiApp.Api
+      src\JiApp.Api\Configuration\Settings.cs: Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Configuration\Settings.cs:2 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Configuration\Settings.cs:8 Auto-property accessor 'ConnectionString.set' is never used
+      src\JiApp.Api\Configuration\Settings.cs:9 Property can be made init-only
+      src\JiApp.Api\Configuration\Settings.cs:10 Auto-property accessor 'Jwt.set' is never used
+      src\JiApp.Api\Configuration\Settings.cs:11 Auto-property accessor 'Youtube.set' is never used
+      src\JiApp.Api\Configuration\Settings.cs:12 Auto-property accessor 'RateLimiting.set' is never used
+      src\JiApp.Api\Configuration\SwaggerTagDescriptionsFilter.cs: Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Configuration\SwaggerTagDescriptionsFilter.cs:7 Class 'SwaggerTagDescriptionsFilter' is never instantiated
+      src\JiApp.Api\Features\Auth\Login\LoginEndpoint.cs: Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Auth\Login\LoginEndpoint.cs:2 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Auth\Login\LoginEndpoint.cs:6 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Auth\Login\LoginEndpoint.cs:7 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Auth\Login\LoginEndpoint.cs:8 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Auth\Login\LoginEndpoint.cs:14 Method 'MapLogin' return value is never used
+      src\JiApp.Api\Features\Auth\Login\LoginEndpoint.cs:38 The parameter 'statusCode' has the same default value
+      src\JiApp.Api\Features\Auth\Login\LoginEndpoint.cs:39 The parameter 'statusCode' has the same default value
+      src\JiApp.Api\Features\Auth\Login\LoginHandler.cs: Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Auth\Login\LoginHandler.cs:7 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Auth\Me\MeEndpoint.cs:3 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Auth\Me\MeEndpoint.cs:4 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Auth\Me\MeEndpoint.cs:5 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Auth\Me\MeEndpoint.cs:11 Method 'MapMe' return value is never used
+      src\JiApp.Api\Features\Auth\Me\MeEndpoint.cs:26 The parameter 'statusCode' has the same default value
+      src\JiApp.Api\Features\Auth\Me\MeHandler.cs:2 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Auth\Me\MeHandler.cs:6 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Auth\Me\MeHandler.cs:8 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Auth\Register\RegisterEndpoint.cs: Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Auth\Register\RegisterEndpoint.cs:2 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Auth\Register\RegisterEndpoint.cs:6 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Auth\Register\RegisterEndpoint.cs:7 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Auth\Register\RegisterEndpoint.cs:8 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Auth\Register\RegisterEndpoint.cs:14 Method 'MapRegister' return value is never used
+      src\JiApp.Api\Features\Auth\Register\RegisterEndpoint.cs:38 The parameter 'statusCode' has the same default value
+      src\JiApp.Api\Features\Auth\Register\RegisterHandler.cs: Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Auth\Register\RegisterHandler.cs:2 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Auth\Register\RegisterHandler.cs:7 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Auth\Register\RegisterResponse.cs:3 Empty constructor is redundant. The compiler generates the same by default.
+      src\JiApp.Api\Features\Auth\Register\RegisterValidator.cs:22 Redundant verbatim string prefix
+      src\JiApp.Api\Features\Auth\Register\RegisterValidator.cs:23 Redundant verbatim string prefix
+      src\JiApp.Api\Features\Downloads\DownloadFile\DownloadFileEndpoint.cs:3 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Downloads\DownloadFile\DownloadFileEndpoint.cs:4 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Downloads\DownloadFile\DownloadFileEndpoint.cs:5 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Downloads\DownloadFile\DownloadFileEndpoint.cs:11 Method 'MapDownloadFile' return value is never used
+      src\JiApp.Api\Features\Downloads\DownloadFile\DownloadFileHandler.cs:4 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Downloads\DownloadHistory\DownloadHistoryEndpoint.cs: Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Downloads\DownloadHistory\DownloadHistoryEndpoint.cs:2 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Downloads\DownloadHistory\DownloadHistoryEndpoint.cs:6 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Downloads\DownloadHistory\DownloadHistoryEndpoint.cs:7 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Downloads\DownloadHistory\DownloadHistoryEndpoint.cs:8 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Downloads\DownloadHistory\DownloadHistoryEndpoint.cs:14 Method 'MapDownloadHistory' return value is never used
+      src\JiApp.Api\Features\Downloads\DownloadHistory\DownloadHistoryEndpoint.cs:39 The parameter 'statusCode' has the same default value
+      src\JiApp.Api\Features\Downloads\DownloadHistory\DownloadHistoryEndpoint.cs:40 The parameter 'statusCode' has the same default value
+      src\JiApp.Api\Features\Downloads\DownloadHistory\DownloadHistoryHandler.cs: Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Downloads\DownloadHistory\DownloadHistoryHandler.cs:2 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Downloads\DownloadHistory\DownloadHistoryHandler.cs:6 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Downloads\DownloadHistory\DownloadHistoryResponse.cs: Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Downloads\DownloadHistory\DownloadHistoryResponse.cs:2 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Downloads\DownloadHistory\DownloadHistoryResponse.cs:11 Positional property 'JiApp.Api.Features.Downloads.DownloadHistory.DownloadHistoryItem.VideoDescription' is never accessed (except in implicit Equals/ToString implementations)
+      src\JiApp.Api\Features\Downloads\DownloadHistory\DownloadHistoryResponse.cs:14 Positional property 'JiApp.Api.Features.Downloads.DownloadHistory.DownloadHistoryItem.ImageUrl' is never accessed (except in implicit Equals/ToString implementations)
+      src\JiApp.Api\Features\Downloads\DownloadHistory\DownloadHistoryResponse.cs:15 Positional property 'JiApp.Api.Features.Downloads.DownloadHistory.DownloadHistoryItem.DownloadedAt' is never accessed (except in implicit Equals/ToString implementations)
+      src\JiApp.Api\Features\Downloads\GetDownloadLink\DownloadResponse.cs:3 Positional property 'JiApp.Api.Features.Downloads.GetDownloadLink.DownloadResponse.DownloadUrl' is never accessed (except in implicit Equals/ToString implementations)
+      src\JiApp.Api\Features\Downloads\GetDownloadLink\GetDownloadLinkEndpoint.cs: Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Downloads\GetDownloadLink\GetDownloadLinkEndpoint.cs:2 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Downloads\GetDownloadLink\GetDownloadLinkEndpoint.cs:6 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Downloads\GetDownloadLink\GetDownloadLinkEndpoint.cs:7 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Downloads\GetDownloadLink\GetDownloadLinkEndpoint.cs:8 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Downloads\GetDownloadLink\GetDownloadLinkEndpoint.cs:14 Method 'MapGetDownloadLink' return value is never used
+      src\JiApp.Api\Features\Downloads\GetDownloadLink\GetDownloadLinkEndpoint.cs:44 The parameter 'statusCode' has the same default value
+      src\JiApp.Api\Features\Downloads\GetDownloadLink\GetDownloadLinkEndpoint.cs:45 The parameter 'statusCode' has the same default value
+      src\JiApp.Api\Features\Downloads\GetDownloadLink\GetDownloadLinkHandler.cs: Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Downloads\GetDownloadLink\GetDownloadLinkHandler.cs:2 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Downloads\GetDownloadLink\GetDownloadLinkHandler.cs:3 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Downloads\GetDownloadLink\GetDownloadLinkHandler.cs:11 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Downloads\GetDownloadLink\GetDownloadLinkValidator.cs: Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Downloads\GetDownloadLink\GetDownloadLinkValidator.cs:19 Redundant verbatim string prefix
+      src\JiApp.Api\Features\History\GetHistory\GetHistoryEndpoint.cs: Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\History\GetHistory\GetHistoryEndpoint.cs:2 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\History\GetHistory\GetHistoryEndpoint.cs:6 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\History\GetHistory\GetHistoryEndpoint.cs:7 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\History\GetHistory\GetHistoryEndpoint.cs:8 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\History\GetHistory\GetHistoryEndpoint.cs:14 Method 'MapGetHistory' return value is never used
+      src\JiApp.Api\Features\History\GetHistory\GetHistoryEndpoint.cs:39 The parameter 'statusCode' has the same default value
+      src\JiApp.Api\Features\History\GetHistory\GetHistoryEndpoint.cs:40 The parameter 'statusCode' has the same default value
+      src\JiApp.Api\Features\History\GetHistory\GetHistoryHandler.cs: Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\History\GetHistory\GetHistoryHandler.cs:2 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\History\GetHistory\GetHistoryHandler.cs:3 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\History\GetHistory\GetHistoryHandler.cs:4 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\History\GetHistory\GetHistoryHandler.cs:11 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\History\GetHistory\GetHistoryResponse.cs: Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Search\SearchHistory\SearchHistoryEndpoint.cs: Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Search\SearchHistory\SearchHistoryEndpoint.cs:2 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Search\SearchHistory\SearchHistoryEndpoint.cs:6 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Search\SearchHistory\SearchHistoryEndpoint.cs:7 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Search\SearchHistory\SearchHistoryEndpoint.cs:8 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Search\SearchHistory\SearchHistoryEndpoint.cs:14 Method 'MapSearchHistory' return value is never used
+      src\JiApp.Api\Features\Search\SearchHistory\SearchHistoryEndpoint.cs:39 The parameter 'statusCode' has the same default value
+      src\JiApp.Api\Features\Search\SearchHistory\SearchHistoryEndpoint.cs:40 The parameter 'statusCode' has the same default value
+      src\JiApp.Api\Features\Search\SearchHistory\SearchHistoryHandler.cs: Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Search\SearchHistory\SearchHistoryHandler.cs:2 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Search\SearchHistory\SearchHistoryHandler.cs:3 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Search\SearchHistory\SearchHistoryHandler.cs:7 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Search\SearchHistory\SearchHistoryResponse.cs: Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Search\SearchHistory\SearchHistoryResponse.cs:2 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Search\SearchHistory\SearchHistoryResponse.cs:8 Positional property 'JiApp.Api.Features.Search.SearchHistory.SearchHistoryItem.SearchedAt' is never accessed (except in implicit Equals/ToString implementations)
+      src\JiApp.Api\Features\Search\SearchVideos\SearchVideosEndpoint.cs: Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Search\SearchVideos\SearchVideosEndpoint.cs:2 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Search\SearchVideos\SearchVideosEndpoint.cs:6 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Search\SearchVideos\SearchVideosEndpoint.cs:7 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Search\SearchVideos\SearchVideosEndpoint.cs:8 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Search\SearchVideos\SearchVideosEndpoint.cs:14 Method 'MapSearchVideos' return value is never used
+      src\JiApp.Api\Features\Search\SearchVideos\SearchVideosEndpoint.cs:37 The parameter 'statusCode' has the same default value
+      src\JiApp.Api\Features\Search\SearchVideos\SearchVideosEndpoint.cs:38 The parameter 'statusCode' has the same default value
+      src\JiApp.Api\Features\Search\SearchVideos\SearchVideosHandler.cs: Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Search\SearchVideos\SearchVideosHandler.cs:2 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Search\SearchVideos\SearchVideosHandler.cs:3 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Search\SearchVideos\SearchVideosHandler.cs:10 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Search\SearchVideos\SearchVideosResponse.cs: Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Features\Search\SearchVideos\SearchVideosResponse.cs:10 Positional property 'JiApp.Api.Features.Search.SearchVideos.VideoItem.Description' is never accessed (except in implicit Equals/ToString implementations)
+      src\JiApp.Api\Features\Search\SearchVideos\SearchVideosResponse.cs:11 Positional property 'JiApp.Api.Features.Search.SearchVideos.VideoItem.ImageUrl' is never accessed (except in implicit Equals/ToString implementations)
+      src\JiApp.Api\Features\Search\SearchVideos\SearchVideosResponse.cs:13 Positional property 'JiApp.Api.Features.Search.SearchVideos.VideoItem.ChannelTitle' is never accessed (except in implicit Equals/ToString implementations)
+      src\JiApp.Api\Logging\HandlerLogs.cs: Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Logging\HandlerLogs.cs:2 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Middleware\GlobalExceptionMiddleware.cs: Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Middleware\GlobalExceptionMiddleware.cs:3 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Middleware\GlobalExceptionMiddleware.cs:6 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Middleware\GlobalExceptionMiddleware.cs:7 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Middleware\GlobalExceptionMiddleware.cs:8 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Middleware\GlobalExceptionMiddleware.cs:9 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Program.cs:3 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Program.cs:4 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Services\CurrentUserService.cs:3 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Services\TempFileCleanupService.cs: Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Services\TempFileCleanupService.cs:2 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Services\TempFileCleanupService.cs:3 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Services\TempFileCleanupService.cs:6 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Services\TempFileCleanupService.cs:7 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Startup.cs: Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Startup.cs:28 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Startup.cs:29 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Startup.cs:34 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Startup.cs:35 Using directive is not required by the code and can be safely removed
+      src\JiApp.Api\Startup.cs:36 Using directive is not required by the code and can be safely removed
+    Project JiApp.Common
+      src\JiApp.Common\Constants\AppConstants.cs:3 Class 'AppConstants' is never used
+      src\JiApp.Common\Constants\AppConstants.cs:5 Constant 'DefaultPageSize' is never used
+      src\JiApp.Common\Constants\AppConstants.cs:6 Constant 'MaxPageSize' is never used
+      src\JiApp.Common\Constants\ValidationConstants.cs:9 Constant 'QueryMaxLength' is never used
+      src\JiApp.Common\Constants\ValidationConstants.cs:10 Constant 'VideoTitleMaxLength' is never used
+      src\JiApp.Common\Constants\ValidationConstants.cs:11 Constant 'VideoDescriptionMaxLength' is never used
+    Project JiApp.Infrastructure
+      src\JiApp.Infrastructure\Repositories\IEventLogRepository.cs:7 Method 'AddAsync' is never used
+      src\JiApp.Infrastructure\Repositories\IEventLogRepository.cs:8 Method 'SaveChangesAsync' is never used
+      src\JiApp.Infrastructure\Services\IJwtTokenService.cs:6 Only implementations of method 'IsTokenValid' are used
+      src\JiApp.Infrastructure\Services\IJwtTokenService.cs:7 Only implementations of method 'GetUsernameFromToken' are used
+      src\JiApp.Infrastructure\Services\IJwtTokenService.cs:8 Only implementations of method 'GetUserIdFromToken' are used
+      src\JiApp.Infrastructure\Services\ITempFileStore.cs:6 Only implementations of method 'Get' are used
+    Project JiApp.Tests
+      tests\JiApp.Tests\Common\ApiErrorResponseTests.cs:4 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Common\ApiErrorResponseTests.cs:33 The nullable warning suppression expression is redundant
+      tests\JiApp.Tests\Common\EntityTests.cs: Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Common\EntityTests.cs:4 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Common\ResultTests.cs:2 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Configuration\SettingsTests.cs: Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Configuration\SettingsTests.cs:2 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Configuration\SettingsTests.cs:6 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Configuration\SettingsTests.cs:59 Convert into method group
+      tests\JiApp.Tests\Configuration\SettingsTests.cs:69 Convert into method group
+      tests\JiApp.Tests\Configuration\SettingsTests.cs:80 Convert into method group
+      tests\JiApp.Tests\Configuration\SettingsTests.cs:91 Convert into method group
+      tests\JiApp.Tests\Configuration\SettingsTests.cs:102 Convert into method group
+      tests\JiApp.Tests\Configuration\SettingsTests.cs:113 Convert into method group
+      tests\JiApp.Tests\Configuration\SettingsTests.cs:124 Convert into method group
+      tests\JiApp.Tests\Configuration\SettingsTests.cs:135 Convert into method group
+      tests\JiApp.Tests\Configuration\SettingsTests.cs:146 Convert into method group
+      tests\JiApp.Tests\Configuration\SettingsTests.cs:157 Convert into method group
+      tests\JiApp.Tests\Configuration\SettingsTests.cs:168 Convert into method group
+      tests\JiApp.Tests\Configuration\SettingsTests.cs:179 Convert into method group
+      tests\JiApp.Tests\Configuration\SettingsTests.cs:190 Convert into method group
+      tests\JiApp.Tests\Configuration\SettingsTests.cs:248 Convert into method group
+      tests\JiApp.Tests\Features\Auth\LoginHandlerTests.cs: Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\Auth\LoginHandlerTests.cs:4 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\Auth\LoginHandlerTests.cs:8 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\Auth\LoginValidatorTests.cs:3 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\Auth\MeHandlerTests.cs:2 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\Auth\MeHandlerTests.cs:4 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\Auth\MeHandlerTests.cs:5 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\Auth\MeHandlerTests.cs:8 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\Auth\RegisterHandlerTests.cs: Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\Auth\RegisterHandlerTests.cs:4 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\Auth\RegisterHandlerTests.cs:8 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\Auth\RegisterValidatorTests.cs:3 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\Downloads\DownloadFileHandlerTests.cs:2 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\Downloads\DownloadFileHandlerTests.cs:4 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\Downloads\DownloadHistoryHandlerTests.cs: Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\Downloads\DownloadHistoryHandlerTests.cs:2 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\Downloads\DownloadHistoryHandlerTests.cs:3 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\Downloads\DownloadHistoryHandlerTests.cs:8 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\Downloads\DownloadHistoryHandlerTests.cs:40 The parameter 'offset' has the same default value
+      tests\JiApp.Tests\Features\Downloads\DownloadHistoryHandlerTests.cs:79 The parameter 'offset' has the same default value
+      tests\JiApp.Tests\Features\Downloads\DownloadHistoryHandlerTests.cs:96 The parameter 'offset' has the same default value
+      tests\JiApp.Tests\Features\Downloads\GetDownloadLinkHandlerTests.cs: Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\Downloads\GetDownloadLinkHandlerTests.cs:2 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\Downloads\GetDownloadLinkHandlerTests.cs:9 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\Downloads\GetDownloadLinkValidatorTests.cs:3 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\History\GetHistoryHandlerTests.cs: Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\History\GetHistoryHandlerTests.cs:2 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\History\GetHistoryHandlerTests.cs:3 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\History\GetHistoryHandlerTests.cs:8 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\History\GetHistoryHandlerTests.cs:42 The parameter 'offset' has the same default value
+      tests\JiApp.Tests\Features\History\GetHistoryHandlerTests.cs:43 The parameter 'offset' has the same default value
+      tests\JiApp.Tests\Features\History\GetHistoryHandlerTests.cs:85 The parameter 'offset' has the same default value
+      tests\JiApp.Tests\Features\History\GetHistoryHandlerTests.cs:86 The parameter 'offset' has the same default value
+      tests\JiApp.Tests\Features\History\GetHistoryHandlerTests.cs:105 The parameter 'offset' has the same default value
+      tests\JiApp.Tests\Features\History\GetHistoryHandlerTests.cs:106 The parameter 'offset' has the same default value
+      tests\JiApp.Tests\Features\History\GetHistoryHandlerTests.cs:122 The parameter 'offset' has the same default value
+      tests\JiApp.Tests\Features\History\GetHistoryHandlerTests.cs:133 The parameter 'offset' has the same default value
+      tests\JiApp.Tests\Features\History\GetHistoryHandlerTests.cs:150 The parameter 'offset' has the same default value
+      tests\JiApp.Tests\Features\History\GetHistoryHandlerTests.cs:151 The parameter 'offset' has the same default value
+      tests\JiApp.Tests\Features\Search\SearchHistoryHandlerTests.cs: Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\Search\SearchHistoryHandlerTests.cs:2 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\Search\SearchHistoryHandlerTests.cs:3 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\Search\SearchHistoryHandlerTests.cs:8 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\Search\SearchHistoryHandlerTests.cs:36 The parameter 'offset' has the same default value
+      tests\JiApp.Tests\Features\Search\SearchHistoryHandlerTests.cs:69 The parameter 'offset' has the same default value
+      tests\JiApp.Tests\Features\Search\SearchHistoryHandlerTests.cs:86 The parameter 'offset' has the same default value
+      tests\JiApp.Tests\Features\Search\SearchVideosHandlerTests.cs: Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\Search\SearchVideosHandlerTests.cs:2 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\Search\SearchVideosHandlerTests.cs:10 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Features\Search\SearchVideosHandlerTests.cs:53 Redundant type specification
+      tests\JiApp.Tests\Features\Search\SearchVideosValidatorTests.cs:3 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Fixtures\DownloadFileHandlerFixture.cs:5 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Fixtures\DownloadFileHandlerFixture.cs:15 Convert constructor into member initializers
+      tests\JiApp.Tests\Fixtures\DownloadFileHandlerFixture.cs:21 Method 'WithUserId' is never used
+      tests\JiApp.Tests\Fixtures\DownloadFileHandlerFixture.cs:46 Positional property 'JiApp.Tests.Fixtures.DownloadFileHandlerContext.TempFileStoreMock' is never accessed (except in implicit Equals/ToString implementations)
+      tests\JiApp.Tests\Fixtures\DownloadFileHandlerFixture.cs:47 Positional property 'JiApp.Tests.Fixtures.DownloadFileHandlerContext.CurrentUserServiceMock' is never accessed (except in implicit Equals/ToString implementations)
+      tests\JiApp.Tests\Fixtures\DownloadHistoryHandlerFixture.cs: Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Fixtures\DownloadHistoryHandlerFixture.cs:7 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Fixtures\DownloadHistoryHandlerFixture.cs:17 Convert constructor into member initializers
+      tests\JiApp.Tests\Fixtures\DownloadHistoryHandlerFixture.cs:43 Positional property 'JiApp.Tests.Fixtures.DownloadHistoryHandlerContext.DownloadHistoryRepoMock' is never accessed (except in implicit Equals/ToString implementations)
+      tests\JiApp.Tests\Fixtures\DownloadHistoryHandlerFixture.cs:44 Positional property 'JiApp.Tests.Fixtures.DownloadHistoryHandlerContext.CurrentUserServiceMock' is never accessed (except in implicit Equals/ToString implementations)
+      tests\JiApp.Tests\Fixtures\GetDownloadLinkHandlerFixture.cs:8 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Fixtures\GetDownloadLinkHandlerFixture.cs:21 Convert constructor into member initializers
+      tests\JiApp.Tests\Fixtures\GetDownloadLinkHandlerFixture.cs:36 Method 'WithDownloadVideoAsync' is never used
+      tests\JiApp.Tests\Fixtures\GetDownloadLinkHandlerFixture.cs:77 Positional property 'JiApp.Tests.Fixtures.GetDownloadLinkHandlerContext.YoutubeClientMock' is never accessed (except in implicit Equals/ToString implementations)
+      tests\JiApp.Tests\Fixtures\GetDownloadLinkHandlerFixture.cs:78 Positional property 'JiApp.Tests.Fixtures.GetDownloadLinkHandlerContext.TempFileStoreMock' is never accessed (except in implicit Equals/ToString implementations)
+      tests\JiApp.Tests\Fixtures\GetDownloadLinkHandlerFixture.cs:80 Positional property 'JiApp.Tests.Fixtures.GetDownloadLinkHandlerContext.CurrentUserServiceMock' is never accessed (except in implicit Equals/ToString implementations)
+      tests\JiApp.Tests\Fixtures\GetHistoryHandlerFixture.cs: Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Fixtures\GetHistoryHandlerFixture.cs:2 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Fixtures\GetHistoryHandlerFixture.cs:65 Positional property 'JiApp.Tests.Fixtures.GetHistoryHandlerContext.SearchHistoryRepoMock' is never accessed (except in implicit Equals/ToString implementations)
+      tests\JiApp.Tests\Fixtures\GetHistoryHandlerFixture.cs:66 Positional property 'JiApp.Tests.Fixtures.GetHistoryHandlerContext.DownloadHistoryRepoMock' is never accessed (except in implicit Equals/ToString implementations)
+      tests\JiApp.Tests\Fixtures\GetHistoryHandlerFixture.cs:67 Positional property 'JiApp.Tests.Fixtures.GetHistoryHandlerContext.CurrentUserServiceMock' is never accessed (except in implicit Equals/ToString implementations)
+      tests\JiApp.Tests\Fixtures\LoginHandlerFixture.cs:6 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Fixtures\LoginHandlerFixture.cs:61 Positional property 'JiApp.Tests.Fixtures.LoginHandlerContext.UserManagerMock' is never accessed (except in implicit Equals/ToString implementations)
+      tests\JiApp.Tests\Fixtures\LoginHandlerFixture.cs:62 Positional property 'JiApp.Tests.Fixtures.LoginHandlerContext.SignInManagerMock' is never accessed (except in implicit Equals/ToString implementations)
+      tests\JiApp.Tests\Fixtures\LoginHandlerFixture.cs:63 Positional property 'JiApp.Tests.Fixtures.LoginHandlerContext.JwtTokenServiceMock' is never accessed (except in implicit Equals/ToString implementations)
+      tests\JiApp.Tests\Fixtures\MeHandlerFixture.cs:4 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Fixtures\MeHandlerFixture.cs:7 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Fixtures\MeHandlerFixture.cs:17 Convert constructor into member initializers
+      tests\JiApp.Tests\Fixtures\MeHandlerFixture.cs:48 Positional property 'JiApp.Tests.Fixtures.MeHandlerContext.UserManagerMock' is never accessed (except in implicit Equals/ToString implementations)
+      tests\JiApp.Tests\Fixtures\MeHandlerFixture.cs:49 Positional property 'JiApp.Tests.Fixtures.MeHandlerContext.CurrentUserServiceMock' is never accessed (except in implicit Equals/ToString implementations)
+      tests\JiApp.Tests\Fixtures\RegisterHandlerFixture.cs:5 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Fixtures\RegisterHandlerFixture.cs:14 Convert constructor into member initializers
+      tests\JiApp.Tests\Fixtures\RegisterHandlerFixture.cs:61 Positional property 'JiApp.Tests.Fixtures.RegisterHandlerContext.UserManagerMock' is never accessed (except in implicit Equals/ToString implementations)
+      tests\JiApp.Tests\Fixtures\SearchHistoryHandlerFixture.cs: Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Fixtures\SearchHistoryHandlerFixture.cs:38 Positional property 'JiApp.Tests.Fixtures.SearchHistoryHandlerContext.SearchHistoryRepoMock' is never accessed (except in implicit Equals/ToString implementations)
+      tests\JiApp.Tests\Fixtures\SearchHistoryHandlerFixture.cs:39 Positional property 'JiApp.Tests.Fixtures.SearchHistoryHandlerContext.CurrentUserServiceMock' is never accessed (except in implicit Equals/ToString implementations)
+      tests\JiApp.Tests\Fixtures\SearchVideosHandlerFixture.cs: Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Fixtures\SearchVideosHandlerFixture.cs:2 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Fixtures\SearchVideosHandlerFixture.cs:5 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Fixtures\SearchVideosHandlerFixture.cs:9 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Fixtures\SearchVideosHandlerFixture.cs:30 Method 'WithAnySearchVideosAsync' is never used
+      tests\JiApp.Tests\Fixtures\SearchVideosHandlerFixture.cs:57 Positional property 'JiApp.Tests.Fixtures.SearchVideosHandlerContext.YoutubeClientMock' is never accessed (except in implicit Equals/ToString implementations)
+      tests\JiApp.Tests\Fixtures\SearchVideosHandlerFixture.cs:59 Positional property 'JiApp.Tests.Fixtures.SearchVideosHandlerContext.CurrentUserServiceMock' is never accessed (except in implicit Equals/ToString implementations)
+      tests\JiApp.Tests\Infrastructure\JwtTokenServiceTests.cs:3 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Infrastructure\TempFileStoreTests.cs: Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Infrastructure\TempFileStoreTests.cs:2 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Infrastructure\TempFileStoreTests.cs:5 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Integration\AuthEndpointTests.cs: Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Integration\AuthEndpointTests.cs:3 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Integration\AuthEndpointTests.cs:6 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Integration\AuthEndpointTests.cs:9 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Integration\AuthEndpointTests.cs:77 The nullable warning suppression expression is redundant
+      tests\JiApp.Tests\Integration\AuthEndpointTests.cs:154 The nullable warning suppression expression is redundant
+      tests\JiApp.Tests\Integration\AuthEndpointTests.cs:179 The nullable warning suppression expression is redundant
+      tests\JiApp.Tests\Integration\AuthEndpointTests.cs:194 The nullable warning suppression expression is redundant
+      tests\JiApp.Tests\Integration\AuthEndpointTests.cs:208 The nullable warning suppression expression is redundant
+      tests\JiApp.Tests\Integration\AuthEndpointTests.cs:220 The nullable warning suppression expression is redundant
+      tests\JiApp.Tests\Integration\AuthEndpointTests.cs:242 The nullable warning suppression expression is redundant
+      tests\JiApp.Tests\Integration\AuthEndpointTests.cs:277 The nullable warning suppression expression is redundant
+      tests\JiApp.Tests\Integration\AuthEndpointTests.cs:283 Name 'id' does not match rule 'Properties'. Suggested name is 'Id'.
+      tests\JiApp.Tests\Integration\AuthEndpointTests.cs:283 Name 'displayName' does not match rule 'Properties'. Suggested name is 'DisplayName'.
+      tests\JiApp.Tests\Integration\AuthEndpointTests.cs:283 Name 'token' does not match rule 'Properties'. Suggested name is 'Token'.
+      tests\JiApp.Tests\Integration\AuthEndpointTests.cs:285 Name 'id' does not match rule 'Properties'. Suggested name is 'Id'.
+      tests\JiApp.Tests\Integration\AuthEndpointTests.cs:285 Name 'displayName' does not match rule 'Properties'. Suggested name is 'DisplayName'.
+      tests\JiApp.Tests\Integration\AuthEndpointTests.cs:287 Name 'error' does not match rule 'Properties'. Suggested name is 'Error'.
+      tests\JiApp.Tests\Integration\AuthEndpointTests.cs:289 Record 'ValidationErrorResponse' is never used
+      tests\JiApp.Tests\Integration\AuthEndpointTests.cs:289 Name 'errors' does not match rule 'Properties'. Suggested name is 'Errors'.
+      tests\JiApp.Tests\Integration\AuthEndpointTests.cs:289 Positional property 'JiApp.Tests.Integration.AuthEndpointTests.ValidationErrorResponse.errors' is never accessed (except in implicit Equals/ToString implementations)
+      tests\JiApp.Tests\Integration\CustomWebApplicationFactory.cs: Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Integration\CustomWebApplicationFactory.cs:2 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Integration\CustomWebApplicationFactory.cs:8 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Integration\CustomWebApplicationFactory.cs:28 Class 'ConfigOnlyWebApplicationFactory' is never instantiated
+      tests\JiApp.Tests\Integration\CustomWebApplicationFactory.cs:43 Class 'CustomWebApplicationFactory' is never instantiated
+      tests\JiApp.Tests\Integration\HealthEndpointTests.cs: Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Integration\HealthEndpointTests.cs:4 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Integration\HealthEndpointTests.cs:6 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Integration\HealthEndpointTests.cs:23 The nullable warning suppression expression is redundant
+      tests\JiApp.Tests\Integration\RateLimitingEndpointTests.cs: Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Integration\RateLimitingEndpointTests.cs:4 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Integration\RateLimitingEndpointTests.cs:6 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Integration\RateLimitingEndpointTests.cs:13 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Integration\RateLimitingEndpointTests.cs:55 The nullable warning suppression expression is redundant
+      tests\JiApp.Tests\Integration\RateLimitingEndpointTests.cs:59 Name 'id' does not match rule 'Properties'. Suggested name is 'Id'.
+      tests\JiApp.Tests\Integration\RateLimitingEndpointTests.cs:59 Name 'displayName' does not match rule 'Properties'. Suggested name is 'DisplayName'.
+      tests\JiApp.Tests\Integration\RateLimitingEndpointTests.cs:59 Name 'token' does not match rule 'Properties'. Suggested name is 'Token'.
+      tests\JiApp.Tests\Integration\RateLimitingEndpointTests.cs:123 The nullable warning suppression expression is redundant
+      tests\JiApp.Tests\Integration\TestDbContextHelper.cs: Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Middleware\GlobalExceptionMiddlewareTests.cs: Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Middleware\GlobalExceptionMiddlewareTests.cs:4 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Middleware\GlobalExceptionMiddlewareTests.cs:10 Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Middleware\GlobalExceptionMiddlewareTests.cs:40 The nullable warning suppression expression is redundant
+      tests\JiApp.Tests\Mocks\IdentityMocks.cs: Using directive is not required by the code and can be safely removed
+      tests\JiApp.Tests\Mocks\LoggerMocks.cs:8 Method 'GetSuccessful' is never used
+      tests\JiApp.Tests\Mocks\RepositoryMocks.cs: Using directive is not required by the code and can be safely removed
+    Project JiApp.YtApi
+      src\JiApp.YtApi\IYoutubeClient.cs: Using directive is not required by the code and can be safely removed
+      src\JiApp.YtApi\IYoutubeClient.cs:2 Using directive is not required by the code and can be safely removed
+      src\JiApp.YtApi\YoutubeClient.cs: Using directive is not required by the code and can be safely removed
+      src\JiApp.YtApi\YoutubeClient.cs:2 Using directive is not required by the code and can be safely removed
+      src\JiApp.YtApi\YoutubeClient.cs:3 Using directive is not required by the code and can be safely removed
+      src\JiApp.YtApi\YoutubeClient.cs:4 Using directive is not required by the code and can be safely removed
+      src\JiApp.YtApi\YoutubeClient.cs:5 Using directive is not required by the code and can be safely removed
+      src\JiApp.YtApi\YoutubeClientResponse.cs: Using directive is not required by the code and can be safely removed

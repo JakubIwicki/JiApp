@@ -1,0 +1,78 @@
+<h2>Navigation Structure</h2>
+<p class="subtitle">Current stack-only approach vs. bottom tabs — which feels simpler for non-technical users?</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">Current — Stack Only</div>
+    <div class="mockup-body" style="background: #F5F0EB; padding: 12px; font-family: sans-serif; border-radius: 8px;">
+      <!-- Phone mockup -->
+      <div style="max-width: 240px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.1);">
+        <!-- Status bar -->
+        <div style="background: #F5F0EB; padding: 8px 14px; display: flex; justify-content: space-between; font-size: 9px; color: #2B2118;">9:41</div>
+        <!-- Header -->
+        <div style="background: white; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E8E0D8;">
+          <div style="font-size: 13px; font-weight: 600; color: #2B2118;">Search</div>
+          <div style="display: flex; gap: 8px;">
+            <div style="font-size: 9px; color: #8B7E74; background: #F5F0EB; padding: 4px 8px; border-radius: 6px;">History</div>
+            <div style="font-size: 9px; color: #8B7E74; background: #F5F0EB; padding: 4px 8px; border-radius: 6px;">Settings</div>
+          </div>
+        </div>
+        <!-- Content -->
+        <div style="padding: 12px;">
+          <div style="background: #F5F0EB; border-radius: 8px; padding: 6px 10px; margin-bottom: 10px; font-size: 10px; color: #A0998F;">Search YouTube...</div>
+          <div style="font-size: 9px; color: #8B8682; text-align: center; padding: 20px 0;">
+            No results yet<br>
+            <span style="font-size: 8px;">Use header buttons to reach other screens</span>
+          </div>
+        </div>
+        <!-- No bottom nav -->
+        <div style="padding: 8px; text-align: center; font-size: 8px; color: #C0B8AE; border-top: 1px solid #F0EAE4;">← no tabs, swipe back to go back</div>
+      </div>
+      <div style="margin-top: 10px; font-size: 10px; color: #C1440E; text-align: center; max-width: 240px; margin-left: auto; margin-right: auto;">
+        <strong>Problems:</strong> History &amp; Settings hidden in header. Non-technical users won't discover them.
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">Proposed — Bottom Tabs</div>
+    <div class="mockup-body" style="background: #F5F0EB; padding: 12px; font-family: sans-serif; border-radius: 8px;">
+      <!-- Phone mockup -->
+      <div style="max-width: 240px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.1);">
+        <!-- Status bar -->
+        <div style="background: #F5F0EB; padding: 8px 14px; display: flex; justify-content: space-between; font-size: 9px; color: #2B2118;">9:41</div>
+        <!-- Header - clean -->
+        <div style="background: white; padding: 10px 14px; border-bottom: 1px solid #E8E0D8;">
+          <div style="font-size: 13px; font-weight: 600; color: #2B2118;">Search</div>
+        </div>
+        <!-- Content -->
+        <div style="padding: 12px;">
+          <div style="background: #F5F0EB; border-radius: 8px; padding: 6px 10px; margin-bottom: 10px; font-size: 10px; color: #A0998F;">Search YouTube...</div>
+          <div style="font-size: 9px; color: #8B8682; text-align: center; padding: 20px 0;">No results yet</div>
+        </div>
+        <!-- Bottom tabs -->
+        <div style="display: flex; justify-content: space-around; padding: 8px 4px; border-top: 1px solid #E8E0D8; background: white;">
+          <div style="text-align: center; font-size: 8px; color: #8B7E74; font-weight: 600;">
+            <div style="font-size: 16px; margin-bottom: 2px;">&#x1F50D;</div>
+            Search
+          </div>
+          <div style="text-align: center; font-size: 8px; color: #C0B8AE;">
+            <div style="font-size: 16px; margin-bottom: 2px;">&#x2B07;</div>
+            Downloads
+          </div>
+          <div style="text-align: center; font-size: 8px; color: #C0B8AE;">
+            <div style="font-size: 16px; margin-bottom: 2px;">&#x1F4C4;</div>
+            History
+          </div>
+          <div style="text-align: center; font-size: 8px; color: #C0B8AE;">
+            <div style="font-size: 16px; margin-bottom: 2px;">&#x2699;</div>
+            Settings
+          </div>
+        </div>
+      </div>
+      <div style="margin-top: 10px; font-size: 10px; color: #7A9A7E; text-align: center; max-width: 240px; margin-left: auto; margin-right: auto;">
+        <strong>Benefits:</strong> All destinations always visible. One tap to go anywhere. Familiar pattern (YouTube, Spotify, etc).
+      </div>
+    </div>
+  </div>
+</div>

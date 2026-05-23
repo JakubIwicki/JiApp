@@ -1,0 +1,3 @@
+Solution backend\JiApp.sln
+    Project JiApp.Api
+      src\JiApp.Api\Features\Downloads\GetDownloadLink\GetDownloadLinkValidator.cs: Using directive is not required by the code and can be safely removed

@@ -8,10 +8,12 @@ internal static partial class HandlerLogs
     [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Processing registration for {Username}")]
     public static partial void ProcessingRegistration(this ILogger logger, string username);
 
-    [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "Registration failed - Username {Username} already taken")]
+    [LoggerMessage(EventId = 2, Level = LogLevel.Warning,
+        Message = "Registration failed - Username {Username} already taken")]
     public static partial void RegistrationFailedUsernameTaken(this ILogger logger, string username);
 
-    [LoggerMessage(EventId = 3, Level = LogLevel.Warning, Message = "Registration failed - Email {Email} already taken")]
+    [LoggerMessage(EventId = 3, Level = LogLevel.Warning,
+        Message = "Registration failed - Email {Email} already taken")]
     public static partial void RegistrationFailedEmailTaken(this ILogger logger, string email);
 
     [LoggerMessage(EventId = 4, Level = LogLevel.Warning, Message = "Registration failed for {Username} - {Errors}")]
@@ -44,7 +46,8 @@ internal static partial class HandlerLogs
     [LoggerMessage(EventId = 13, Level = LogLevel.Information, Message = "Download requested for file {FileId}")]
     public static partial void DownloadRequestedForFile(this ILogger logger, string fileId);
 
-    [LoggerMessage(EventId = 14, Level = LogLevel.Warning, Message = "File {FileId} expired or not found for user {UserId}")]
+    [LoggerMessage(EventId = 14, Level = LogLevel.Warning,
+        Message = "File {FileId} expired or not found for user {UserId}")]
     public static partial void FileExpiredOrNotFound(this ILogger logger, string fileId, long userId);
 
     [LoggerMessage(EventId = 15, Level = LogLevel.Information, Message = "Fetching download history (limit: {Limit})")]

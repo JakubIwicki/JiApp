@@ -30,7 +30,7 @@ public class ApiErrorResponseTests
         var response = JsonSerializer.Deserialize<ApiErrorResponse>(json, ApiErrorResponse.JsonOptions);
 
         response.Should().NotBeNull();
-        response!.Error.Should().Be("Test");
+        response.Error.Should().Be("Test");
         response.Details.Should().Be("Detail");
         response.RetryAfterSeconds.Should().Be("30");
     }

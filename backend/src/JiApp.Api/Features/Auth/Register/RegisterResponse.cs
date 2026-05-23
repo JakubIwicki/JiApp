@@ -1,3 +1,3 @@
 namespace JiApp.Api.Features.Auth.Register;
 
-public sealed record RegisterResponse();
+public sealed record RegisterResponse;
