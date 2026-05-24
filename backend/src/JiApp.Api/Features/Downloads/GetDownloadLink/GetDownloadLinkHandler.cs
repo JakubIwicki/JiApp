@@ -22,9 +22,12 @@ public sealed class GetDownloadLinkHandler(
 {
     public const string YoutubeDlErrorCategory = "YoutubeDl";
 
-    public async Task<Result<DownloadResponse>> HandleAsync(DownloadRequest request)
+    public async Task<Result<DownloadResponse>> HandleAsync(DownloadRequest request,
+        CancellationToken cancellationToken = default)
     {
-        var baseDirectory = settings.App!.BaseDirectory!;
+        var appSettings = settings.App ?? throw new InvalidOperationException("App settings are not configured.");
+        var baseDirectory = appSettings.BaseDirectory ??
+                            throw new InvalidOperationException("App:BaseDirectory is not configured.");
 
         // Use userId instead of username to prevent path traversal
         var outputFolder = Path.Combine(baseDirectory, $"YtMp3_{currentUser.UserId}");
@@ -33,9 +36,9 @@ public sealed class GetDownloadLinkHandler(
         try
         {
             downloadResult = await youtubeClient.DownloadVideoAsync(
-                request.VideoId, outputFolder);
+                request.VideoId, outputFolder, cancellationToken);
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex)
         {
             logger.DownloadFailedForVideo(ex, request.VideoId);
             return Result<DownloadResponse>.Failure(
@@ -50,7 +53,23 @@ public sealed class GetDownloadLinkHandler(
                 $"Failed to download video: {errors}", errorCategory: YoutubeDlErrorCategory);
         }
 
-        var filePath = downloadResult.FilePath!;
+        var filePath = downloadResult.FilePath ??
+                       throw new InvalidOperationException("Download result FilePath is null despite Success=true");
+
+        if (!File.Exists(filePath))
+        {
+            return Result<DownloadResponse>.Failure("Download completed but file is missing.",
+                errorCategory: YoutubeDlErrorCategory);
+        }
+
+        var fileInfo = new FileInfo(filePath);
+        if (fileInfo.Length == 0)
+        {
+            File.Delete(filePath);
+            return Result<DownloadResponse>.Failure("Download completed but file is empty.",
+                errorCategory: YoutubeDlErrorCategory);
+        }
+
         var tempId = tempFileStore.Add(filePath, currentUser.UserId);
 
         var historyEntry = new YoutubeDownloadHistory

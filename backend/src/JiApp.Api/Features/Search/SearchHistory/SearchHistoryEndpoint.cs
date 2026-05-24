@@ -31,7 +31,7 @@ public static class SearchHistoryEndpoint
                 if (result.IsSuccess)
                     return Results.Ok(result.Value);
 
-                return Results.Json(new ApiErrorResponse(Error: result.Error!),
+                return Results.Json(new ApiErrorResponse(Error: result.Error ?? "An unknown error occurred"),
                     statusCode: StatusCodes.Status400BadRequest);
             })
             .WithTags(SwaggerConstants.Tags.Search)

@@ -37,7 +37,7 @@ public static class LoginEndpoint
             .WithSummary("Authenticate and receive a JWT bearer token")
             .Produces<LoginResponse>()
             .ProducesValidationProblem()
-            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .Produces<ApiErrorResponse>(StatusCodes.Status401Unauthorized)
             .RequireRateLimiting(RateLimitPolicyNames.Login)
             .AllowAnonymous()
             .HasApiVersion(1);

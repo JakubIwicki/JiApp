@@ -24,7 +24,7 @@ public static class MeEndpoint
             .WithTags(SwaggerConstants.Tags.Auth)
             .WithSummary("Get current authenticated user")
             .Produces<MeResponse>()
-            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .Produces<ApiErrorResponse>(StatusCodes.Status401Unauthorized)
             .RequireAuthorization()
             .RequireRateLimiting(RateLimitPolicyNames.Me)
             .HasApiVersion(1);

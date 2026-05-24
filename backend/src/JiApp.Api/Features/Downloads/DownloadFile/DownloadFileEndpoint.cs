@@ -16,13 +16,13 @@ public static class DownloadFileEndpoint
                 if (result.IsSuccess)
                     return Results.File(result.Value!, "audio/mpeg");
 
-                return Results.Json(new ApiErrorResponse(Error: result.Error!),
+                return Results.Json(new ApiErrorResponse(Error: result.Error ?? "An unknown error occurred"),
                     statusCode: StatusCodes.Status404NotFound);
             })
             .WithTags(SwaggerConstants.Tags.Downloads)
             .WithSummary("Download the MP3 file by temporary ID")
             .Produces(StatusCodes.Status200OK, contentType: "audio/mpeg")
-            .ProducesProblem(StatusCodes.Status404NotFound)
+            .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound)
             .RequireRateLimiting(RateLimitPolicyNames.DownloadFile)
             .RequireAuthorization()
             .HasApiVersion(1);
