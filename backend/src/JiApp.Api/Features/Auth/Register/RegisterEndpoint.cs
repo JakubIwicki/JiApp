@@ -29,7 +29,7 @@ public static class RegisterEndpoint
                 if (result.IsSuccess)
                     return Results.Created("/api/v1/auth/me", result.Value);
 
-                return Results.Json(new ApiErrorResponse(Error: result.Error!),
+                return Results.Json(new ApiErrorResponse(Error: result.Error ?? "An unknown error occurred"),
                     statusCode: StatusCodes.Status400BadRequest);
             })
             .WithTags(SwaggerConstants.Tags.Auth)

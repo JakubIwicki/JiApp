@@ -26,7 +26,7 @@ public static class GetDownloadLinkEndpoint
                     return Results.ValidationProblem(new Dictionary<string, string[]> { ["errors"] = errors });
                 }
 
-                var result = await handler.HandleAsync(request);
+                var result = await handler.HandleAsync(request, httpContext.RequestAborted);
                 if (result is { IsSuccess: true, Value: not null })
                 {
                     var response = DownloadResponse.WithUrl(
@@ -41,14 +41,14 @@ public static class GetDownloadLinkEndpoint
                     : StatusCodes.Status500InternalServerError;
 
                 return Results.Json(
-                    new ApiErrorResponse(Error: result.Error!), statusCode: statusCode);
+                    new ApiErrorResponse(Error: result.Error ?? "An unknown error occurred"), statusCode: statusCode);
             })
             .WithTags(SwaggerConstants.Tags.Downloads)
             .WithSummary("Request an MP3 download link for a YouTube video")
             .Produces<DownloadResponse>()
             .ProducesValidationProblem()
-            .ProducesProblem(StatusCodes.Status500InternalServerError)
-            .ProducesProblem(StatusCodes.Status502BadGateway)
+            .Produces<ApiErrorResponse>(StatusCodes.Status500InternalServerError)
+            .Produces<ApiErrorResponse>(StatusCodes.Status502BadGateway)
             .RequireAuthorization()
             .RequireRateLimiting(RateLimitPolicyNames.GetDownloadLink)
             .HasApiVersion(1);

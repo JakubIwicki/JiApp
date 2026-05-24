@@ -31,8 +31,17 @@ public sealed class GetDownloadLinkHandlerFixture
 
     public GetDownloadLinkHandlerFixture WithAnyDownloadVideoAsync(YoutubeClientResponse result)
     {
-        _youtubeClientMock.Setup(x => x.DownloadVideoAsync(It.IsAny<string>(), It.IsAny<string>()))
+        _youtubeClientMock.Setup(x =>
+                x.DownloadVideoAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(result);
+        return this;
+    }
+
+    public GetDownloadLinkHandlerFixture WithThrowingDownloadVideoAsync(Exception exception)
+    {
+        _youtubeClientMock.Setup(x =>
+                x.DownloadVideoAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(exception);
         return this;
     }
 

@@ -30,13 +30,14 @@ public static class SearchVideosEndpoint
                     return Results.Ok(result.Value);
 
                 return Results.Json(
-                    new ApiErrorResponse(Error: result.Error!), statusCode: StatusCodes.Status502BadGateway);
+                    new ApiErrorResponse(Error: result.Error ?? "An unknown error occurred"),
+                    statusCode: StatusCodes.Status502BadGateway);
             })
             .WithTags(SwaggerConstants.Tags.Search)
             .WithSummary("Search YouTube videos by query")
             .Produces<SearchVideosResponse>()
             .ProducesValidationProblem()
-            .ProducesProblem(StatusCodes.Status502BadGateway)
+            .Produces<ApiErrorResponse>(StatusCodes.Status502BadGateway)
             .RequireAuthorization()
             .RequireRateLimiting(RateLimitPolicyNames.SearchVideos)
             .HasApiVersion(1);

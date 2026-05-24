@@ -29,7 +29,7 @@ public sealed class YoutubeClient(
         var response = await searchRequest.ExecuteAsync();
 
         var results = response.Items
-            .Where(item => item.Id.Kind == "youtube#video")
+            .Where(item => item is { Id.Kind: "youtube#video", Snippet: not null })
             .Select(item => new YoutubeVideo(
                 item.Id.VideoId,
                 WebUtility.HtmlDecode(item.Snippet.Title),
@@ -41,7 +41,8 @@ public sealed class YoutubeClient(
         return results.AsReadOnly();
     }
 
-    public async Task<YoutubeClientResponse> DownloadVideoAsync(string videoId, string outputPath)
+    public async Task<YoutubeClientResponse> DownloadVideoAsync(string videoId, string outputPath,
+        CancellationToken cancellationToken = default)
     {
         Directory.CreateDirectory(outputPath);
 
@@ -60,7 +61,15 @@ public sealed class YoutubeClient(
             AudioFormat = AudioConversionFormat.Mp3,
             ExtractorArgs = "youtube:player_client=android_vr"
         };
-        var result = await youtubeDl.RunWithOptions(videoUrl, options, ct: CancellationToken.None);
+        var result = await youtubeDl.RunWithOptions(videoUrl, options, ct: cancellationToken);
+
+        if (!result.Success)
+        {
+            options.ExtractorArgs = null;
+            var fallbackResult = await youtubeDl.RunWithOptions(videoUrl, options, ct: cancellationToken);
+            if (fallbackResult.Success)
+                result = fallbackResult;
+        }
 
         return result.Success
             ? new YoutubeClientResponse(result.Data, true, [])
