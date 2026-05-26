@@ -146,6 +146,7 @@ public sealed class Settings
         public RateLimitPolicyOptions? GetHistory { get; set; }
         public RateLimitPolicyOptions? Me { get; set; }
         public RateLimitPolicyOptions? GetDownloadLink { get; set; }
+        public RateLimitPolicyOptions? Preview { get; set; }
     }
 
     [Serializable]
@@ -170,4 +171,5 @@ public static class RateLimitPolicyNames
     public const string GetHistory = "GetHistoryPolicy";
     public const string Me = "MePolicy";
     public const string GetDownloadLink = "GetDownloadLinkPolicy";
+    public const string Preview = "PreviewPolicy";
 }

@@ -10,9 +10,11 @@ using JiApp.Api.Features.Auth.Login;
 using JiApp.Api.Features.Auth.Me;
 using JiApp.Api.Features.Auth.Register;
 using JiApp.Api.Features.Downloads.DownloadFile;
+using JiApp.Api.Features.Downloads.ArchiveDownload;
 using JiApp.Api.Features.Downloads.DownloadHistory;
 using JiApp.Api.Features.Downloads.GetDownloadLink;
 using JiApp.Api.Features.History.GetHistory;
+using JiApp.Api.Features.Search.ArchiveSearch;
 using JiApp.Api.Features.Search.SearchHistory;
 using JiApp.Api.Features.Search.SearchVideos;
 using JiApp.Api.Middleware;
@@ -175,6 +177,7 @@ public class Startup(Settings settings)
             AddPolicy(RateLimitPolicyNames.GetHistory, rl.GetHistory!);
             AddPolicy(RateLimitPolicyNames.Me, rl.Me!);
             AddPolicy(RateLimitPolicyNames.GetDownloadLink, rl.GetDownloadLink!);
+            AddPolicy(RateLimitPolicyNames.Preview, rl.Preview!);
 
             options.OnRejected = async (context, cancellationToken) =>
             {
@@ -241,6 +244,8 @@ public class Startup(Settings settings)
         services.AddScoped<IValidator<SearchVideosRequest>, SearchVideosValidator>();
         services.AddScoped<IValidator<SearchHistoryRequest>, SearchHistoryValidator>();
         services.AddScoped<IValidator<GetHistoryRequest>, GetHistoryValidator>();
+        services.AddScoped<IValidator<ArchiveDownloadRequest>, ArchiveDownloadValidator>();
+        services.AddScoped<IValidator<ArchiveSearchRequest>, ArchiveSearchValidator>();
 
         services.AddScoped<RegisterHandler>();
         services.AddScoped<LoginHandler>();
@@ -251,6 +256,8 @@ public class Startup(Settings settings)
         services.AddScoped<DownloadFileHandler>();
         services.AddScoped<DownloadHistoryHandler>();
         services.AddScoped<GetHistoryHandler>();
+        services.AddScoped<ArchiveDownloadHandler>();
+        services.AddScoped<ArchiveSearchHandler>();
     }
 
     private static void RegisterRepositories(IServiceCollection services)
@@ -345,6 +352,8 @@ public class Startup(Settings settings)
         v1.MapDownloadFile();
         v1.MapDownloadHistory();
         v1.MapGetHistory();
+        v1.MapArchiveDownload();
+        v1.MapArchiveSearch();
 
         v1.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }))
             .WithTags(SwaggerConstants.Tags.System)
