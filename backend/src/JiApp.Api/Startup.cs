@@ -11,6 +11,7 @@ using JiApp.Api.Features.Auth.Me;
 using JiApp.Api.Features.Auth.Register;
 using JiApp.Api.Features.Downloads.DownloadFile;
 using JiApp.Api.Features.Downloads.ArchiveDownload;
+using JiApp.Api.Features.Preview.StreamPreview;
 using JiApp.Api.Features.Downloads.DownloadHistory;
 using JiApp.Api.Features.Downloads.GetDownloadLink;
 using JiApp.Api.Features.History.GetHistory;
@@ -258,6 +259,7 @@ public class Startup(Settings settings)
         services.AddScoped<GetHistoryHandler>();
         services.AddScoped<ArchiveDownloadHandler>();
         services.AddScoped<ArchiveSearchHandler>();
+        services.AddScoped<StreamPreviewHandler>();
     }
 
     private static void RegisterRepositories(IServiceCollection services)
@@ -354,6 +356,7 @@ public class Startup(Settings settings)
         v1.MapGetHistory();
         v1.MapArchiveDownload();
         v1.MapArchiveSearch();
+        v1.MapStreamPreview();
 
         v1.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }))
             .WithTags(SwaggerConstants.Tags.System)
