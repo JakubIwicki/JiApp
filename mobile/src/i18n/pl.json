@@ -2,7 +2,8 @@
   "common": {
     "loading": "Ładowanie...",
     "error": "Wystąpił błąd",
-    "retry": "Spróbuj ponownie"
+    "retry": "Spróbuj ponownie",
+    "cancel": "Anuluj"
   },
   "auth": {
     "loginTitle": "Logowanie",
@@ -41,7 +42,8 @@
     "searching": "Szukanie...",
     "error": "Błąd wyszukiwania",
     "recentSearches": "Ostatnie wyszukiwania",
-    "empty": "Szukaj piosenki lub filmu,\naby rozpocząć pobieranie"
+    "empty": "Szukaj piosenki lub filmu,\naby rozpocząć pobieranie",
+    "backToRecent": "Powrót do ostatnich wyszukiwań"
   },
   "history": {
     "title": "Historia",
@@ -50,7 +52,11 @@
     "noSearches": "Brak wyszukiwań",
     "noDownloads": "Brak pobrań",
     "loadError": "Błąd ładowania historii",
-    "empty": "Nic tu jeszcze nie ma.\nTwoje wyszukiwania i pobrania pojawią się tutaj."
+    "empty": "Nic tu jeszcze nie ma.\nTwoje wyszukiwania i pobrania pojawią się tutaj.",
+    "archiveConfirm": "Archiwizować ten element?",
+    "archiveAction": "Archiwizuj",
+    "filterSearches": "Filtruj wyszukiwania...",
+    "filterDownloads": "Filtruj pobrania..."
   },
   "download": {
     "title": "Pobieranie",
@@ -61,7 +67,24 @@
     "goBack": "Wróć do wyszukiwania",
     "viewHistory": "Zobacz historię",
     "fileSaved": "Plik zapisany",
-    "pleaseWait": "Proszę czekać, to może chwilę potrwać"
+    "pleaseWait": "Proszę czekać, to może chwilę potrwać",
+    "openInPlayer": "Odtwórz w odtwarzaczu",
+    "openWith": "Otwórz za pomocą..."
+  },
+  "preview": {
+    "tapToListen": "Dotknij, aby odsłuchać",
+    "loading": "Ładowanie podglądu...",
+    "playing": "Teraz gra",
+    "duration": "0:10",
+    "error": "Podgląd niedostępny"
+  },
+  "toast": {
+    "loggedOff": "Wylogowano",
+    "searchArchived": "Wyszukiwanie zarchiwizowane",
+    "downloadArchived": "Pobranie zarchiwizowane",
+    "archiveFailed": "Nie udało się zarchiwizować",
+    "loggedIn": "Zalogowano",
+    "registerSuccess": "Rejestracja pomyślna"
   },
   "settings": {
     "title": "Ustawienia",
