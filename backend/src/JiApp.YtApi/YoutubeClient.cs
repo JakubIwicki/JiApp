@@ -47,11 +47,12 @@ public sealed class YoutubeClient(
         Directory.CreateDirectory(outputPath);
 
         var videoUrl = $"https://www.youtube.com/watch?v={videoId}";
+        var outputTemplate = Path.Combine(outputPath, $"{Guid.NewGuid():N}.%(ext)s");
+
         var youtubeDl = new YoutubeDL
         {
             YoutubeDLPath = ytDlpPath,
             FFmpegPath = ffmpegPath,
-            OutputFileTemplate = Path.Combine(outputPath, $"{Guid.NewGuid():N}.%(ext)s")
         };
 
         var options = new OptionSet
@@ -59,21 +60,71 @@ public sealed class YoutubeClient(
             NoPlaylist = true,
             ExtractAudio = true,
             AudioFormat = AudioConversionFormat.Mp3,
-            ExtractorArgs = "youtube:player_client=android_vr"
+            ExtractorArgs = "youtube:player_client=android_vr",
+            Output = outputTemplate
         };
         var result = await youtubeDl.RunWithOptions(videoUrl, options, ct: cancellationToken);
 
         if (!result.Success)
         {
             options.ExtractorArgs = null;
+            options.Output = outputTemplate;
             var fallbackResult = await youtubeDl.RunWithOptions(videoUrl, options, ct: cancellationToken);
             if (fallbackResult.Success)
                 result = fallbackResult;
         }
 
-        return result.Success
-            ? new YoutubeClientResponse(result.Data, true, [])
-            : new YoutubeClientResponse(null, false, result.ErrorOutput ?? []);
+        if (result.Success)
+        {
+            var resolvedPath = result.Data;
+            if (string.IsNullOrEmpty(resolvedPath) || !File.Exists(resolvedPath))
+            {
+                resolvedPath = Directory.GetFiles(outputPath, "*.mp3")
+                    .OrderByDescending(File.GetLastWriteTimeUtc)
+                    .FirstOrDefault();
+            }
+
+            return new YoutubeClientResponse(resolvedPath, !string.IsNullOrEmpty(resolvedPath), []);
+        }
+
+        return new YoutubeClientResponse(null, false, result.ErrorOutput ?? []);
+    }
+
+    public async Task<string> ResolveAudioUrlAsync(string videoId)
+    {
+        var videoUrl = $"https://www.youtube.com/watch?v={videoId}";
+
+        var youtubeDl = new YoutubeDL
+        {
+            YoutubeDLPath = ytDlpPath,
+            FFmpegPath = ffmpegPath,
+        };
+
+        var options = new OptionSet
+        {
+            NoPlaylist = true,
+            ExtractAudio = true,
+            AudioFormat = AudioConversionFormat.Mp3,
+            GetUrl = true,
+        };
+
+        var result = await youtubeDl.RunWithOptions(videoUrl, options);
+
+        if (!result.Success)
+        {
+            throw new InvalidOperationException(
+                $"""Failed to resolve audio URL for video "{videoId}": {string.Join(", ", result.ErrorOutput ?? [])}""");
+        }
+
+        var audioUrl = result.Data?.Trim();
+
+        if (string.IsNullOrEmpty(audioUrl) || !audioUrl.StartsWith("https://", StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException(
+                $"""Resolved audio URL for video "{videoId}" is invalid: '{audioUrl}'""");
+        }
+
+        return audioUrl;
     }
 
     public void Dispose()
