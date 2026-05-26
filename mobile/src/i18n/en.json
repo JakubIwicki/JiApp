@@ -2,7 +2,8 @@
   "common": {
     "loading": "Loading...",
     "error": "An error occurred",
-    "retry": "Try again"
+    "retry": "Try again",
+    "cancel": "Cancel"
   },
   "auth": {
     "loginTitle": "Log In",
@@ -41,7 +42,8 @@
     "searching": "Searching...",
     "error": "Search error",
     "recentSearches": "Recent searches",
-    "empty": "Search for a song or video\nto start downloading"
+    "empty": "Search for a song or video\nto start downloading",
+    "backToRecent": "Back to recent searches"
   },
   "history": {
     "title": "History",
@@ -50,7 +52,11 @@
     "noSearches": "No searches yet",
     "noDownloads": "No downloads yet",
     "loadError": "Error loading history",
-    "empty": "Nothing here yet.\nYour searches and downloads will appear here."
+    "empty": "Nothing here yet.\nYour searches and downloads will appear here.",
+    "archiveConfirm": "Archive this item?",
+    "archiveAction": "Archive",
+    "filterSearches": "Filter searches...",
+    "filterDownloads": "Filter downloads..."
   },
   "download": {
     "title": "Download",
@@ -61,7 +67,24 @@
     "goBack": "Back to search",
     "viewHistory": "View history",
     "fileSaved": "File saved",
-    "pleaseWait": "Please wait, this may take a moment"
+    "pleaseWait": "Please wait, this may take a moment",
+    "openInPlayer": "Play in music player",
+    "openWith": "Open with..."
+  },
+  "preview": {
+    "tapToListen": "Tap to preview",
+    "loading": "Loading preview...",
+    "playing": "Now playing",
+    "duration": "0:10",
+    "error": "Preview unavailable"
+  },
+  "toast": {
+    "loggedOff": "Logged off",
+    "searchArchived": "Search archived",
+    "downloadArchived": "Download archived",
+    "archiveFailed": "Failed to archive",
+    "loggedIn": "Logged in",
+    "registerSuccess": "Registration successful"
   },
   "settings": {
     "title": "Settings",
