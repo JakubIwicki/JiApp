@@ -16,6 +16,8 @@ export const colors = {
   successLight: '#EDF2EE',
   error: '#C1440E',
   errorLight: '#FDF0EB',
+  info: '#5B7FA5',
+  warning: '#B8860B',
 
   // Text
   textPrimary: '#2B2118',

@@ -1,6 +1,10 @@
 import apiClient from './apiClient';
 import { SearchResponse, SearchHistoryItem } from '../types/api';
 
+export const archiveSearchHistory = async (id: number): Promise<void> => {
+  await apiClient.patch(`/search/history/${id}/archive`);
+};
+
 export const searchVideos = async (
   query: string,
   maxResults?: number,

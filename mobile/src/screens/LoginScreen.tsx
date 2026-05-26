@@ -13,6 +13,7 @@ import AuthLayout from '../components/AuthLayout';
 import FormInput from '../components/FormInput';
 import useAuth from '../hooks/useAuth';
 import useScreenTitle from '../hooks/useScreenTitle';
+import useToast from '../hooks/useToast';
 import * as storageService from '../services/storageService';
 import { makeChangeHandler } from '../utils/formUtils';
 import { colors, spacing } from '../styles/theme';
@@ -23,6 +24,7 @@ const LoginScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<LoginNavigationProp>();
   const { login } = useAuth();
+  const { showInfo } = useToast();
 
   useScreenTitle('auth.loginTitle');
 
@@ -68,6 +70,7 @@ const LoginScreen: React.FC = () => {
     setIsLoading(true);
     try {
       await login(username.trim(), password.trim());
+      showInfo('toast.loggedIn');
 
       if (rememberMe) {
         const validUntil = new Date(

@@ -20,7 +20,7 @@ import Logo from '../components/Logo';
 import useSearch from '../hooks/useSearch';
 import useScreenTitle from '../hooks/useScreenTitle';
 import { RECENT_SEARCHES_LIMIT } from '../constants/app';
-import { colors, commonStyles, spacing, borderRadius } from '../styles/theme';
+import { colors, commonStyles, spacing, borderRadius, typography } from '../styles/theme';
 
 type SearchNavigationProp = StackNavigationProp<MainStackParamList, 'Search'>;
 
@@ -34,6 +34,7 @@ const SearchScreen: React.FC = () => {
 
   const [recentSearches, setRecentSearches] = useState<SearchHistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
+  const [searchBarText, setSearchBarText] = useState('');
 
   useEffect(() => {
     const loadHistory = async () => {
@@ -54,6 +55,7 @@ const SearchScreen: React.FC = () => {
     (query: string) => {
       if (query.trim().length === 0) {
         clearResults();
+        setSearchBarText('');
         lastQueryRef.current = '';
         return;
       }
@@ -75,6 +77,12 @@ const SearchScreen: React.FC = () => {
       search(lastQueryRef.current);
     }
   }, [search]);
+
+  const handleBackToRecent = useCallback(() => {
+    clearResults();
+    setSearchBarText('');
+    lastQueryRef.current = '';
+  }, [clearResults]);
 
   const renderContent = () => {
     if (isLoading) {
@@ -100,15 +108,23 @@ const SearchScreen: React.FC = () => {
 
     if (results.length > 0) {
       return (
-        <FlatList
-          data={results}
-          keyExtractor={(item) => item.videoId}
-          renderItem={({ item }) => (
-            <VideoCard video={item} onPress={handleVideoPress} />
-          )}
-          contentContainerStyle={styles.listContent}
-          keyboardShouldPersistTaps="handled"
-        />
+        <View style={styles.resultsContainer}>
+          <Text
+            style={styles.backButton}
+            onPress={handleBackToRecent}
+          >
+            {'← ' + t('search.backToRecent')}
+          </Text>
+          <FlatList
+            data={results}
+            keyExtractor={(item) => item.videoId}
+            renderItem={({ item }) => (
+              <VideoCard video={item} onPress={handleVideoPress} />
+            )}
+            contentContainerStyle={styles.listContent}
+            keyboardShouldPersistTaps="handled"
+          />
+        </View>
       );
     }
 
@@ -123,7 +139,10 @@ const SearchScreen: React.FC = () => {
             <Text
               key={item.id}
               style={styles.recentItem}
-              onPress={() => handleSearch(item.searchText)}
+              onPress={() => {
+                setSearchBarText(item.searchText);
+                handleSearch(item.searchText);
+              }}
             >
               {item.searchText}
             </Text>
@@ -151,7 +170,11 @@ const SearchScreen: React.FC = () => {
           <Logo />
         </View>
       )}
-      <SearchBar onSearch={handleSearch} />
+      <SearchBar
+        onSearch={handleSearch}
+        value={searchBarText}
+        onChangeText={setSearchBarText}
+      />
       <View style={styles.content}>{renderContent()}</View>
     </View>
   );
@@ -160,6 +183,16 @@ const SearchScreen: React.FC = () => {
 const styles = StyleSheet.create({
   content: {
     flex: 1,
+  },
+  resultsContainer: {
+    flex: 1,
+  },
+  backButton: {
+    ...typography.caption,
+    color: colors.primary,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
   },
   logoContainer: {
     alignItems: 'center',

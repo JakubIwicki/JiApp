@@ -10,4 +10,6 @@ public class YoutubeSearchHistory : BaseEntity<long>
     public DateTime? SearchedAt { get; set; }
 
     [MaxLength(100)] public string? SearchText { get; set; }
+
+    public bool IsArchived { get; set; }
 }

@@ -9,6 +9,22 @@ CYAN='\033[0;36m'
 BOLD='\033[1m'
 NC='\033[0m'
 
+# ── Helper: discover PID listening on a TCP port ───────
+# Uses fuser, lsof, or ss (tried in that order).
+# Returns empty string if port is free or no tools are available.
+discover_pid_by_port() {
+    local port="$1"
+    local pid=""
+    if command -v fuser &>/dev/null; then
+        pid=$(fuser "$port/tcp" 2>/dev/null | grep -oP '\d+' | head -1)
+    elif command -v lsof &>/dev/null; then
+        pid=$(lsof -ti :"$port" 2>/dev/null | head -1)
+    elif command -v ss &>/dev/null; then
+        pid=$(ss -tlnp "sport = :$port" 2>/dev/null | grep -oP 'pid=\K\d+' | head -1)
+    fi
+    echo "$pid"
+}
+
 MODE="${1:-debug}"
 
 # ── Validate mode ───────────────────────────────────────
@@ -25,16 +41,39 @@ BACKEND_DIR="$SCRIPT_DIR/backend"
 PID_FILE="$BACKEND_DIR/.api-pid"
 LOG_FILE="$BACKEND_DIR/.api-${MODE}.log"
 
-# ── Check if already running ────────────────────────────
+# ── Check if already running via PID file ───────────────
 if [ -f "$PID_FILE" ]; then
     OLD_PID=$(cat "$PID_FILE")
-    if kill -0 "$OLD_PID" 2>/dev/null; then
+    if [ -n "$OLD_PID" ] && kill -0 "$OLD_PID" 2>/dev/null; then
         echo -e "${YELLOW}API is already running (PID $OLD_PID). Use stop-api.sh to stop it first.${NC}"
         exit 1
-    else
-        rm -f "$PID_FILE"
     fi
+    rm -f "$PID_FILE"
 fi
+
+# ── Check for orphaned processes on our ports ───────────
+for port in 5001 5003; do
+    PORT_PID=$(discover_pid_by_port "$port")
+    if [ -n "$PORT_PID" ]; then
+        if ps -p "$PORT_PID" -o comm= 2>/dev/null | grep -qE "JiApp\.Api|dotnet"; then
+            echo -e "${YELLOW}Found orphaned process (PID $PORT_PID) on port $port. Killing...${NC}"
+            kill "$PORT_PID" 2>/dev/null || true
+            sleep 1
+            if kill -0 "$PORT_PID" 2>/dev/null; then
+                kill -9 "$PORT_PID" 2>/dev/null || true
+                sleep 1
+            fi
+            if kill -0 "$PORT_PID" 2>/dev/null; then
+                echo -e "${RED}Failed to kill PID $PORT_PID on port $port. Cannot start.${NC}"
+                exit 1
+            fi
+            echo -e "${GREEN}✓${NC} Killed orphaned process on port $port"
+        else
+            echo -e "${RED}Port $port is in use by PID $PORT_PID ($(ps -p "$PORT_PID" -o comm= 2>/dev/null)). Cannot start.${NC}"
+            exit 1
+        fi
+    fi
+done
 
 # ── Banner ──────────────────────────────────────────────
 ENV_LABEL=$([ "$MODE" = "debug" ] && echo "Development" || echo "Production")
@@ -161,19 +200,34 @@ echo ""
 # ── Launch ──────────────────────────────────────────────
 cd "$BACKEND_DIR"
 nohup dotnet run "${DOTNET_ARGS[@]}" > "$LOG_FILE" 2>&1 &
-API_PID=$!
-echo "$API_PID" > "$PID_FILE"
+LAUNCHER_PID=$!
+echo "$LAUNCHER_PID" > "$PID_FILE"
 
-# Give it a moment to start up
-sleep 2
+# ── Wait for the app to bind a port and discover real PID ──
+REAL_PID=""
+for ((i=1; i<=15; i++)); do
+    for port in 5001 5003; do
+        REAL_PID=$(discover_pid_by_port "$port")
+        if [ -n "$REAL_PID" ]; then
+            break 2
+        fi
+    done
+    sleep 1
+done
 
-if kill -0 "$API_PID" 2>/dev/null; then
-    echo -e "${GREEN}${BOLD}✓ API started${NC} (PID ${BOLD}$API_PID${NC})"
+if [ -n "$REAL_PID" ]; then
+    echo "$REAL_PID" > "$PID_FILE"
+    echo -e "${GREEN}${BOLD}✓ API started${NC} (PID ${BOLD}$REAL_PID${NC})"
     echo -e "  Stop it with: ${BOLD}./stop-api.sh${NC}"
     echo -e "  Tail logs:    ${BOLD}tail -f ${LOG_FILE}${NC}"
 else
-    echo -e "${RED}${BOLD}✗ API failed to start${NC}"
-    echo -e "  Check the log: ${BOLD}cat ${LOG_FILE}${NC}"
-    rm -f "$PID_FILE"
-    exit 1
+    if kill -0 "$LAUNCHER_PID" 2>/dev/null; then
+        echo -e "${YELLOW}⚠  API may have started but port not detected (launcher PID $LAUNCHER_PID)${NC}"
+        echo -e "  Check the log: ${BOLD}tail -f ${LOG_FILE}${NC}"
+    else
+        echo -e "${RED}${BOLD}✗ API failed to start${NC}"
+        echo -e "  Check the log: ${BOLD}cat ${LOG_FILE}${NC}"
+        rm -f "$PID_FILE"
+        exit 1
+    fi
 fi

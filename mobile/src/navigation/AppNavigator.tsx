@@ -2,6 +2,8 @@ import React from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { colors } from '../styles/theme';
 import { AuthProvider, AuthContext } from '../context/AuthContext';
+import { ToastProvider } from '../context/ToastContext';
+import ToastContainer from '../components/ToastContainer';
 import AuthNavigator from './AuthNavigator';
 import MainNavigator from './MainNavigator';
 
@@ -22,7 +24,10 @@ const AppContent: React.FC = () => {
 const AppNavigator: React.FC = () => {
   return (
     <AuthProvider>
-      <AppContent />
+      <ToastProvider>
+        <AppContent />
+        <ToastContainer />
+      </ToastProvider>
     </AuthProvider>
   );
 };

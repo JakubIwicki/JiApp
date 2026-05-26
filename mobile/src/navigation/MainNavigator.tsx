@@ -4,6 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TabIcon from '../components/TabIcon';
+import TabBarButton from '../components/TabBarButton';
 import SearchScreen from '../screens/SearchScreen';
 import DownloadScreen from '../screens/DownloadScreen';
 import DownloadsScreen from '../screens/DownloadsScreen';
@@ -25,6 +26,7 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 const SearchStack = createStackNavigator<MainStackParamList>();
 const HistoryStack = createStackNavigator<HistoryStackParamList>();
 const SettingsStack = createStackNavigator<SettingsStackParamList>();
+const DownloadsStack = createStackNavigator<MainStackParamList>();
 
 const stackScreenOptions = {
   headerStyle: {
@@ -50,6 +52,12 @@ const HistoryStackScreen: React.FC = () => (
   </HistoryStack.Navigator>
 );
 
+const DownloadsStackScreen: React.FC = () => (
+  <DownloadsStack.Navigator screenOptions={stackScreenOptions}>
+    <DownloadsStack.Screen name="DownloadsMain" component={DownloadsScreen} />
+  </DownloadsStack.Navigator>
+);
+
 const SettingsStackScreen: React.FC = () => (
   <SettingsStack.Navigator screenOptions={stackScreenOptions}>
     <SettingsStack.Screen name="Settings" component={SettingsScreen} />
@@ -64,6 +72,7 @@ const MainNavigator: React.FC = () => {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
+        tabBarButton: (props) => <TabBarButton {...props} />,
         tabBarActiveTintColor: tabBar.activeColor,
         tabBarInactiveTintColor: tabBar.inactiveColor,
         tabBarStyle: {
@@ -91,7 +100,7 @@ const MainNavigator: React.FC = () => {
       />
       <Tab.Screen
         name="DownloadsTab"
-        component={DownloadsScreen}
+        component={DownloadsStackScreen}
         options={{
           tabBarLabel: t('nav.downloads'),
           tabBarIcon: ({ color, size }) => (

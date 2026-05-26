@@ -10,7 +10,7 @@ public sealed class SearchHistoryRepository(JiAppDbContext dbContext) : ISearchH
     {
         var results = await dbContext.YoutubeSearchHistory
             .AsNoTracking()
-            .Where(h => h.UserId == userId)
+            .Where(h => h.UserId == userId && !h.IsArchived)
             .OrderByDescending(h => h.SearchedAt)
             .Skip(offset)
             .Take(limit)
@@ -23,6 +23,20 @@ public sealed class SearchHistoryRepository(JiAppDbContext dbContext) : ISearchH
     {
         dbContext.YoutubeSearchHistory.Add(entry);
         return Task.CompletedTask;
+    }
+
+    public async Task<bool> ArchiveAsync(long id, long userId)
+    {
+        var entry = await dbContext.YoutubeSearchHistory
+            .Where(h => h.Id == id && h.UserId == userId)
+            .FirstOrDefaultAsync();
+
+        if (entry is null)
+            return false;
+
+        entry.IsArchived = true;
+        await dbContext.SaveChangesAsync();
+        return true;
     }
 
     public async Task SaveChangesAsync()

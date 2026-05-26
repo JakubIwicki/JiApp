@@ -6,5 +6,6 @@ public interface ISearchHistoryRepository
 {
     Task<IReadOnlyList<YoutubeSearchHistory>> GetByUserIdAsync(long userId, int limit, int offset = 0);
     Task AddAsync(YoutubeSearchHistory entry);
+    Task<bool> ArchiveAsync(long id, long userId);
     Task SaveChangesAsync();
 }
