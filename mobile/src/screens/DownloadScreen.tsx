@@ -16,6 +16,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import SuccessCheckmark from '../components/SuccessCheckmark';
 import FloatingParticles from '../components/FloatingParticles';
+import AudioPreviewPlayer from '../components/AudioPreviewPlayer';
 import useDownload from '../hooks/useDownload';
 import useScreenTitle from '../hooks/useScreenTitle';
 import { colors, commonStyles, spacing, typography, borderRadius } from '../styles/theme';
@@ -31,7 +32,7 @@ const DownloadScreen: React.FC = () => {
 
   useScreenTitle('download.title');
 
-  const { isDownloading, error, localFilePath, download } = useDownload();
+  const { isDownloading, error, localFilePath, download, playInMusicPlayer } = useDownload();
 
   const handleDownload = useCallback(() => {
     download({
@@ -50,6 +51,10 @@ const DownloadScreen: React.FC = () => {
   const handleViewHistory = useCallback(() => {
     navigation.navigate('DownloadsTab');
   }, [navigation]);
+
+  const handlePlay = useCallback(() => {
+    playInMusicPlayer(t('download.openWith'));
+  }, [playInMusicPlayer, t]);
 
   const renderContent = () => {
     if (isDownloading) {
@@ -76,19 +81,25 @@ const DownloadScreen: React.FC = () => {
             {localFilePath}
           </Text>
           <View style={styles.successButtons}>
-            <View style={styles.buttonWrapper}>
-              <Button
-                title={t('download.goBack')}
-                onPress={handleGoBack}
-                variant="outline"
-              />
+            <View style={styles.buttonRow}>
+              <View style={styles.successButtonWrapper}>
+                <Button
+                  title={t('download.goBack')}
+                  onPress={handleGoBack}
+                  variant="outline"
+                />
+              </View>
+              <View style={styles.successButtonWrapper}>
+                <Button
+                  title={t('download.viewHistory')}
+                  onPress={handleViewHistory}
+                />
+              </View>
             </View>
-            <View style={styles.buttonWrapper}>
-              <Button
-                title={t('download.viewHistory')}
-                onPress={handleViewHistory}
-              />
-            </View>
+            <Button
+              title={t('download.openInPlayer')}
+              onPress={handlePlay}
+            />
           </View>
         </View>
       );
@@ -105,9 +116,10 @@ const DownloadScreen: React.FC = () => {
       );
     }
 
-    // Initial state — show download button
+    // Initial state — show preview player and download button
     return (
       <View style={styles.buttonWrapper}>
+        <AudioPreviewPlayer videoId={videoId} />
         <Button
           title={t('download.downloadMp3')}
           onPress={handleDownload}
@@ -212,11 +224,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   successButtons: {
+    paddingHorizontal: spacing.lg,
+    gap: spacing.md,
+  },
+  buttonRow: {
     flexDirection: 'row',
     gap: spacing.md,
-    paddingHorizontal: spacing.lg,
   },
-  buttonWrapper: {
+  successButtonWrapper: {
     flex: 1,
   },
 });
