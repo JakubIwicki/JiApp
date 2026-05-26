@@ -105,7 +105,7 @@ public sealed class YoutubeClient(
             NoPlaylist = true,
             ExtractAudio = true,
             AudioFormat = AudioConversionFormat.Mp3,
-            GetUrl = true,
+            Print = "urls",
         };
 
         var result = await youtubeDl.RunWithOptions(videoUrl, options);
