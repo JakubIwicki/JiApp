@@ -9,4 +9,6 @@ public interface IYoutubeClient
 
     Task<YoutubeClientResponse> DownloadVideoAsync(string videoId, string outputPath,
         CancellationToken cancellationToken = default);
+
+    Task<string> ResolveAudioUrlAsync(string videoId);
 }
