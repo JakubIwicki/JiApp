@@ -54,8 +54,15 @@ public static class StreamPreviewEndpoint
 
                 linkedCts.Token.Register(() =>
                 {
-                    try { if (!ffmpeg.HasExited) ffmpeg.Kill(entireProcessTree: true); }
-                    catch { /* process may already be gone */ }
+                    try
+                    {
+                        if (!ffmpeg.HasExited) ffmpeg.Kill(entireProcessTree: true);
+                    }
+                    catch
+                    {
+                        /* process may already be gone */
+                    }
+
                     ffmpeg.Dispose();
                 });
 

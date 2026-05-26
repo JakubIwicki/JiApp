@@ -1,5 +1,4 @@
 import React, { useCallback, useState } from 'react';
-import { Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import type { StackNavigationProp } from '@react-navigation/stack';
@@ -8,6 +7,7 @@ import AuthLayout from '../components/AuthLayout';
 import FormInput from '../components/FormInput';
 import useAuth from '../hooks/useAuth';
 import useScreenTitle from '../hooks/useScreenTitle';
+import useToast from '../hooks/useToast';
 import { makeChangeHandler } from '../utils/formUtils';
 
 type RegisterNavigationProp = StackNavigationProp<
@@ -19,6 +19,7 @@ const RegisterScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<RegisterNavigationProp>();
   const { register } = useAuth();
+  const { showSuccess } = useToast();
 
   useScreenTitle('auth.registerTitle');
 
@@ -91,7 +92,7 @@ const RegisterScreen: React.FC = () => {
         password.trim(),
         displayName.trim(),
       );
-      Alert.alert('', t('auth.registerSuccess'));
+      showSuccess('toast.registerSuccess');
       navigation.navigate('Login');
     } catch {
       setApiError(t('auth.registerFailed'));

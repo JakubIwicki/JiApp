@@ -16,5 +16,7 @@ public class YoutubeSearchHistoryConfiguration : IEntityTypeConfiguration<Youtub
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(e => e.UserId);
+
+        builder.Property(h => h.IsArchived).HasDefaultValue(false);
     }
 }

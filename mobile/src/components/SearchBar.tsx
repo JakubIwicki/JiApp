@@ -13,16 +13,24 @@ import { colors, spacing } from '../styles/theme';
 interface SearchBarProps {
   onSearch: (query: string) => void;
   initialValue?: string;
+  value?: string;
+  onChangeText?: (text: string) => void;
+  placeholder?: string;
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
   onSearch,
   initialValue = '',
+  value: controlledValue,
+  onChangeText,
+  placeholder,
 }) => {
   const { t } = useTranslation();
-  const [value, setValue] = useState(initialValue);
+  const [internalValue, setInternalValue] = useState(initialValue);
   const [isFocused, setIsFocused] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const displayValue = controlledValue !== undefined ? controlledValue : internalValue;
 
   const debouncedSearch = useCallback(
     (text: string) => {
@@ -38,19 +46,25 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
   const handleChangeText = useCallback(
     (text: string) => {
-      setValue(text);
+      if (controlledValue === undefined) {
+        setInternalValue(text);
+      }
+      onChangeText?.(text);
       debouncedSearch(text);
     },
-    [debouncedSearch],
+    [debouncedSearch, onChangeText, controlledValue],
   );
 
   const handleClear = useCallback(() => {
-    setValue('');
+    if (controlledValue === undefined) {
+      setInternalValue('');
+    }
+    onChangeText?.('');
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
     onSearch('');
-  }, [onSearch]);
+  }, [onSearch, onChangeText, controlledValue]);
 
   const handleFocus = useCallback(() => {
     setIsFocused(true);
@@ -61,7 +75,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
   }, []);
 
   useEffect(() => {
-    setValue(initialValue);
+    setInternalValue(initialValue);
   }, [initialValue]);
 
   useEffect(() => {
@@ -84,18 +98,18 @@ const SearchBar: React.FC<SearchBarProps> = ({
         </Svg>
         <TextInput
           style={styles.input}
-          value={value}
+          value={displayValue}
           onChangeText={handleChangeText}
           onFocus={handleFocus}
           onBlur={handleBlur}
-          placeholder={t('search.placeholder')}
+          placeholder={placeholder ?? t('search.placeholder')}
           placeholderTextColor={colors.placeholderDark}
           returnKeyType="search"
           autoCapitalize="none"
           autoCorrect={false}
           testID="search-input"
         />
-        {value.length > 0 && (
+        {displayValue.length > 0 && (
           <TouchableOpacity
             onPress={handleClear}
             style={styles.clearButton}

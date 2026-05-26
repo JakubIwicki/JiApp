@@ -32,10 +32,19 @@ export const getDownloadHistory = async (
   return response.data.items;
 };
 
+export const archiveDownload = async (id: number): Promise<void> => {
+  await apiClient.patch(`/downloads/history/${id}/archive`);
+};
+
+export interface DownloadedFile {
+  contentUri: string;
+  displayPath: string;
+}
+
 export const downloadFile = async (
   downloadUrl: string,
   fileName: string,
-): Promise<string> => {
+): Promise<DownloadedFile> => {
   const token = await getToken();
 
   // Step 1: Download to internal cache (safe on scoped storage)
@@ -44,9 +53,10 @@ export const downloadFile = async (
   }).fetch('GET', downloadUrl, token ? { Authorization: `Bearer ${token}` } : {});
 
   // Step 2: Copy to public Downloads via MediaStore (scoped-storage compatible)
-  const destPath = await ReactNativeBlobUtil.MediaCollection.copyToMediaStore(
+  const displayName = sanitizeFileName(fileName);
+  const contentUri = await ReactNativeBlobUtil.MediaCollection.copyToMediaStore(
     {
-      name: `${sanitizeFileName(fileName)}.mp3`,
+      name: `${displayName}.mp3`,
       parentFolder: '',
       mimeType: 'audio/mpeg',
     },
@@ -54,5 +64,11 @@ export const downloadFile = async (
     result.path(),
   );
 
-  return `Download/${sanitizeFileName(fileName)}.mp3`;
+  return { contentUri, displayPath: `Download/${displayName}.mp3` };
 };
+
+export const openAudioFile = (
+  filePath: string,
+  chooserTitle: string,
+): Promise<boolean | null> =>
+  ReactNativeBlobUtil.android.actionViewIntent(filePath, 'audio/mpeg', chooserTitle);

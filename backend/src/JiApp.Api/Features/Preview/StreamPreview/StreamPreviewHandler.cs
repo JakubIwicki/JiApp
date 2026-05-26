@@ -47,6 +47,8 @@ public sealed class StreamPreviewHandler(
 public abstract record StreamPreviewResult
 {
     public sealed record StreamReady(Process FfmpegProcess) : StreamPreviewResult;
+
     public static readonly StreamPreviewResult ResolveFailed = new ResolveFailedRecord();
+
     private sealed record ResolveFailedRecord : StreamPreviewResult;
 }

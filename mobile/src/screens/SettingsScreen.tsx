@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import { useTranslation } from 'react-i18next';
 import useAuth from '../hooks/useAuth';
 import useScreenTitle from '../hooks/useScreenTitle';
+import useToast from '../hooks/useToast';
 import LanguagePicker from '../components/LanguagePicker';
 import { APP_VERSION } from '../constants/app';
 import { colors, commonStyles, typography, spacing } from '../styles/theme';
@@ -10,6 +11,7 @@ import { colors, commonStyles, typography, spacing } from '../styles/theme';
 const SettingsScreen: React.FC = () => {
   const { t } = useTranslation();
   const { displayName, username, logout } = useAuth();
+  const { showSuccess } = useToast();
 
   useScreenTitle('settings.title');
 
@@ -43,7 +45,10 @@ const SettingsScreen: React.FC = () => {
       <View style={styles.logoutSection}>
         <TouchableOpacity
           style={styles.logoutButton}
-          onPress={logout}
+          onPress={() => {
+            showSuccess('toast.loggedOff');
+            logout();
+          }}
           testID="logout-button"
           accessibilityRole="button"
         >

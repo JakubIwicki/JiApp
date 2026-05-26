@@ -1,5 +1,7 @@
 import React from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Swipeable } from 'react-native-gesture-handler';
+import { useTranslation } from 'react-i18next';
 import type { SearchHistoryItem, DownloadHistoryItem } from '../types/api';
 import { formatDate } from '../utils/dateUtils';
 import { colors, spacing, borderRadius } from '../styles/theme';
@@ -11,61 +13,88 @@ interface BaseProps {
   item: SearchHistoryItem | DownloadHistoryItem;
   /** Callback fired on press for download type items. */
   onPress?: (item: DownloadHistoryItem) => void;
+  /** Callback fired when the item is archived via swipe action. */
+  onArchive?: () => void;
 }
 
-const HistoryItem: React.FC<BaseProps> = ({ type, item, onPress }) => {
-  if (type === 'search') {
-    const searchItem = item as SearchHistoryItem;
+const HistoryItem: React.FC<BaseProps> = ({ type, item, onPress, onArchive }) => {
+  const { t } = useTranslation();
+
+  const renderRightActions = (
+    _progress: Animated.AnimatedInterpolation<number>,
+    _dragX: Animated.AnimatedInterpolation<number>,
+  ) => {
+    if (!onArchive) {
+      return null;
+    }
     return (
+      <View style={styles.archiveContainer}>
+        <TouchableOpacity
+          style={styles.archiveButton}
+          onPress={onArchive}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={t('history.archiveAction')}
+        >
+          <Text style={styles.archiveButtonText}>{t('history.archiveAction')}</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  const content =
+    type === 'search' ? (
       <View style={styles.container} testID="history-item-search">
         <View style={styles.iconContainer}>
           <Text style={styles.searchIcon}>🔍</Text>
         </View>
         <View style={styles.content}>
           <Text style={styles.title} numberOfLines={1}>
-            {searchItem.searchText}
+            {(item as SearchHistoryItem).searchText}
           </Text>
-          <Text style={styles.date}>{formatDate(searchItem.searchedAt)}</Text>
+          <Text style={styles.date}>{formatDate((item as SearchHistoryItem).searchedAt)}</Text>
         </View>
       </View>
+    ) : (
+      (() => {
+        const downloadItem = item as DownloadHistoryItem;
+        return (
+          <TouchableOpacity
+            style={styles.container}
+            onPress={() => onPress?.(downloadItem)}
+            activeOpacity={0.7}
+            testID="history-item-download"
+            accessibilityRole="button"
+          >
+            {downloadItem.imageUrl ? (
+              <Image
+                source={{ uri: downloadItem.imageUrl }}
+                style={styles.thumbnail}
+                testID="history-thumbnail"
+                resizeMode="cover"
+              />
+            ) : (
+              <View
+                style={[styles.thumbnail, styles.placeholder]}
+                testID="history-thumbnail-placeholder"
+              />
+            )}
+            <View style={styles.content}>
+              <Text style={styles.title} numberOfLines={1}>
+                {downloadItem.videoTitle}
+              </Text>
+              <Text style={styles.date}>{formatDate(downloadItem.downloadedAt)}</Text>
+            </View>
+          </TouchableOpacity>
+        );
+      })()
     );
+
+  if (onArchive) {
+    return <Swipeable renderRightActions={renderRightActions}>{content}</Swipeable>;
   }
 
-  const downloadItem = item as DownloadHistoryItem;
-
-  const handlePress = () => {
-    onPress?.(downloadItem);
-  };
-
-  return (
-    <TouchableOpacity
-      style={styles.container}
-      onPress={handlePress}
-      activeOpacity={0.7}
-      testID="history-item-download"
-      accessibilityRole="button"
-    >
-      {downloadItem.imageUrl ? (
-        <Image
-          source={{ uri: downloadItem.imageUrl }}
-          style={styles.thumbnail}
-          testID="history-thumbnail"
-          resizeMode="cover"
-        />
-      ) : (
-        <View
-          style={[styles.thumbnail, styles.placeholder]}
-          testID="history-thumbnail-placeholder"
-        />
-      )}
-      <View style={styles.content}>
-        <Text style={styles.title} numberOfLines={1}>
-          {downloadItem.videoTitle}
-        </Text>
-        <Text style={styles.date}>{formatDate(downloadItem.downloadedAt)}</Text>
-      </View>
-    </TouchableOpacity>
-  );
+  return content;
 };
 
 const styles = StyleSheet.create({
@@ -120,6 +149,24 @@ const styles = StyleSheet.create({
   date: {
     fontSize: 12,
     color: colors.textTertiary,
+  },
+  archiveContainer: {
+    justifyContent: 'center',
+    marginLeft: spacing.xs,
+  },
+  archiveButton: {
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 64,
+    height: '100%',
+    borderTopRightRadius: borderRadius.lg,
+    borderBottomRightRadius: borderRadius.lg,
+  },
+  archiveButtonText: {
+    color: colors.textInverse,
+    fontSize: 12,
+    fontWeight: '600',
   },
 });
 

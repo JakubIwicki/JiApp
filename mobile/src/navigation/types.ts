@@ -10,6 +10,7 @@ export type MainStackParamList = {
   Search: undefined;
   Download: VideoItem;
   History: undefined;
+  DownloadsMain: undefined;
   Settings: undefined;
 };
 

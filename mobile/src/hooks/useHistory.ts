@@ -1,6 +1,9 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { getHistory } from '../services/historyService';
+import { archiveSearchHistory } from '../services/searchService';
+import { archiveDownload as archiveDownloadService } from '../services/downloadService';
 import { getErrorMessage } from '../utils/errorUtils';
+import useToast from './useToast';
 import type { SearchHistoryItem, DownloadHistoryItem } from '../types/api';
 
 interface UseHistoryResult {
@@ -10,6 +13,8 @@ interface UseHistoryResult {
   error: string | null;
   loadHistory: (limit?: number) => Promise<void>;
   refresh: () => Promise<void>;
+  archiveSearch: (id: number) => Promise<void>;
+  archiveDownload: (id: number) => Promise<void>;
 }
 
 const useHistory = (): UseHistoryResult => {
@@ -19,6 +24,7 @@ const useHistory = (): UseHistoryResult => {
   const [error, setError] = useState<string | null>(null);
   const currentLimitRef = useRef<number | undefined>(undefined);
   const abortRef = useRef<AbortController | null>(null);
+  const { showSuccess, showError } = useToast();
 
   useEffect(() => {
     return () => {
@@ -57,6 +63,30 @@ const useHistory = (): UseHistoryResult => {
     await loadHistory(currentLimitRef.current ?? 50);
   }, [loadHistory]);
 
+  const archiveSearch = useCallback(async (id: number) => {
+    const previous = searches;
+    setSearches((prev) => prev.filter((item) => item.id !== id));
+    try {
+      await archiveSearchHistory(id);
+      showSuccess('toast.searchArchived');
+    } catch {
+      showError('toast.archiveFailed');
+      setSearches(previous);
+    }
+  }, [searches]);
+
+  const archiveDownload = useCallback(async (id: number) => {
+    const previous = downloads;
+    setDownloads((prev) => prev.filter((item) => item.id !== id));
+    try {
+      await archiveDownloadService(id);
+      showSuccess('toast.downloadArchived');
+    } catch {
+      showError('toast.archiveFailed');
+      setDownloads(previous);
+    }
+  }, [downloads]);
+
   return {
     searches,
     downloads,
@@ -64,6 +94,8 @@ const useHistory = (): UseHistoryResult => {
     error,
     loadHistory,
     refresh,
+    archiveSearch,
+    archiveDownload,
   };
 };
 

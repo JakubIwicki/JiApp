@@ -18,4 +18,6 @@ public class YoutubeDownloadHistory : BaseEntity<long>
     [MaxLength(300)] public string? VideoUrl { get; set; }
 
     [MaxLength(300)] public string? ImageUrl { get; set; }
+
+    public bool IsArchived { get; set; }
 }

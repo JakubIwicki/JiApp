@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   RefreshControl,
   ScrollView,
@@ -6,11 +6,12 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { MainStackParamList } from '../navigation/types';
 import type { SearchHistoryItem, DownloadHistoryItem } from '../types/api';
+import SearchBar from '../components/SearchBar';
 import HistoryItem from '../components/HistoryItem';
 import HistorySection from '../components/HistorySection';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -26,13 +27,16 @@ const HistoryScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<HistoryNavigationProp>();
   useScreenTitle('history.title');
+  const [filterQuery, setFilterQuery] = useState('');
 
-  const { searches, downloads, isLoading, error, loadHistory, refresh } =
+  const { searches, downloads, isLoading, error, loadHistory, refresh, archiveSearch, archiveDownload } =
     useHistory();
 
-  useEffect(() => {
-    loadHistory(HISTORY_PAGE_SIZE);
-  }, [loadHistory]);
+  useFocusEffect(
+    useCallback(() => {
+      loadHistory(HISTORY_PAGE_SIZE);
+    }, [loadHistory]),
+  );
 
   const handleDownloadPress = useCallback(
     (item: DownloadHistoryItem) => {
@@ -50,6 +54,17 @@ const HistoryScreen: React.FC = () => {
   const handleRetry = useCallback(() => {
     loadHistory(HISTORY_PAGE_SIZE);
   }, [loadHistory]);
+
+  const filteredSearches = filterQuery
+    ? searches.filter((s) =>
+        s.searchText.toLowerCase().includes(filterQuery.toLowerCase()),
+      )
+    : searches;
+  const filteredDownloads = filterQuery
+    ? downloads.filter((d) =>
+        d.videoTitle.toLowerCase().includes(filterQuery.toLowerCase()),
+      )
+    : downloads;
 
   if (isLoading && searches.length === 0 && downloads.length === 0) {
     return <LoadingSpinner />;
@@ -85,12 +100,21 @@ const HistoryScreen: React.FC = () => {
         </View>
       ) : null}
 
+      <SearchBar
+        onSearch={setFilterQuery}
+        placeholder={t('history.filterSearches')}
+      />
+
       <HistorySection
         title={t('history.searches')}
-        items={searches}
+        items={filteredSearches}
         emptyText={t('history.noSearches')}
         renderItem={(item: SearchHistoryItem) => (
-          <HistoryItem type="search" item={item} />
+          <HistoryItem
+            type="search"
+            item={item}
+            onArchive={() => archiveSearch(item.id)}
+          />
         )}
         keyExtractor={(item: SearchHistoryItem) =>
           String(item.id)
@@ -101,13 +125,14 @@ const HistoryScreen: React.FC = () => {
 
       <HistorySection
         title={t('history.downloads')}
-        items={downloads}
+        items={filteredDownloads}
         emptyText={t('history.noDownloads')}
         renderItem={(item: DownloadHistoryItem) => (
           <HistoryItem
             type="download"
             item={item}
             onPress={handleDownloadPress}
+            onArchive={() => archiveDownload(item.id)}
           />
         )}
         keyExtractor={(item: DownloadHistoryItem) =>

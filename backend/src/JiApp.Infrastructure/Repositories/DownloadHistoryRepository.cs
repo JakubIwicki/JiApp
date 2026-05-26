@@ -10,7 +10,7 @@ public sealed class DownloadHistoryRepository(JiAppDbContext dbContext) : IDownl
     {
         var results = await dbContext.YoutubeDownloadHistory
             .AsNoTracking()
-            .Where(h => h.UserId == userId)
+            .Where(h => h.UserId == userId && !h.IsArchived)
             .OrderByDescending(h => h.DownloadedAt)
             .Skip(offset)
             .Take(limit)
@@ -23,6 +23,20 @@ public sealed class DownloadHistoryRepository(JiAppDbContext dbContext) : IDownl
     {
         dbContext.YoutubeDownloadHistory.Add(entry);
         return Task.CompletedTask;
+    }
+
+    public async Task<bool> ArchiveAsync(long id, long userId)
+    {
+        var entry = await dbContext.YoutubeDownloadHistory
+            .Where(h => h.Id == id && h.UserId == userId)
+            .FirstOrDefaultAsync();
+
+        if (entry is null)
+            return false;
+
+        entry.IsArchived = true;
+        await dbContext.SaveChangesAsync();
+        return true;
     }
 
     public async Task SaveChangesAsync()
