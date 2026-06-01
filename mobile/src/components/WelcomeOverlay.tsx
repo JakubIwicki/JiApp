@@ -145,7 +145,7 @@ const WelcomeOverlay: React.FC<Props> = ({ displayName, type, onComplete }) => {
       }, 200);
       // Name scale + opacity
       schedule(() => {
-        nameScale.value = withSpring(1, { tension: 170, friction: 14 });
+        nameScale.value = withSpring(1, { stiffness: 170, damping: 14 });
         nameOpacity.value = withTiming(1, { duration: 400 });
       }, 500);
       // Subtitle

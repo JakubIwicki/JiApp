@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import Animated, { useSharedValue, withSpring, useAnimatedStyle } from 'react-native-reanimated';
-import { colors } from '../styles/theme';
+import { animation, colors } from '../styles/theme';
 
 interface SuccessCheckmarkProps {
   size?: number;
@@ -13,10 +13,7 @@ const SuccessCheckmark: React.FC<SuccessCheckmarkProps> = ({
   const scaleAnim = useSharedValue(0);
 
   useEffect(() => {
-    scaleAnim.value = withSpring(1, {
-      tension: 200,
-      friction: 12,
-    });
+    scaleAnim.value = withSpring(1, animation.spring.bouncy);
   }, [scaleAnim]);
 
   const animatedStyle = useAnimatedStyle(() => ({

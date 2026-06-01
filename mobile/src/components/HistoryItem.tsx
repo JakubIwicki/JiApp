@@ -6,7 +6,7 @@ import type { SearchHistoryItem, DownloadHistoryItem } from '../types/api';
 import { formatDate } from '../utils/dateUtils';
 import { colors, spacing, borderRadius } from '../styles/theme';
 
-type AnimatedInterpolation<T> = import('react-native').Animated.AnimatedInterpolation<T>;
+type AnimatedInterpolation<T extends string | number> = import('react-native').Animated.AnimatedInterpolation<T>;
 
 interface BaseProps {
   /** Discriminator to determine which data type to render. */

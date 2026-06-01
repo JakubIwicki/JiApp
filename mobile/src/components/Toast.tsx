@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   Pressable,
   StyleSheet,
@@ -13,7 +13,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { colors, borderRadius } from '../styles/theme';
+import { animation, colors, borderRadius } from '../styles/theme';
 import type { ToastType } from '../context/ToastContext';
 
 interface ToastProps {
@@ -55,10 +55,7 @@ const Toast: React.FC<ToastProps> = ({ type, title, description, persistent, onD
   }, [translateY, opacity]);
 
   useEffect(() => {
-    translateY.value = withSpring(0, {
-      tension: 200,
-      friction: 12,
-    });
+    translateY.value = withSpring(0, animation.spring.bouncy);
     opacity.value = withTiming(1, { duration: 300 });
   }, [translateY, opacity]);
 

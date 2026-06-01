@@ -161,14 +161,12 @@ export const animation = {
   },
   spring: {
     bouncy: {
-      tension: 200,
-      friction: 12,
-      useNativeDriver: true,
+      stiffness: 200,
+      damping: 12,
     },
     gentle: {
-      tension: 120,
-      friction: 14,
-      useNativeDriver: true,
+      stiffness: 120,
+      damping: 14,
     },
   },
   stagger: {
