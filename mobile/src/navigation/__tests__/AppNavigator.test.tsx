@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, waitFor } from '@testing-library/react-native';
 import { NavigationContainer } from '@react-navigation/native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from '../AppNavigator';
 
 // Mock the screens to simplify testing
@@ -95,12 +96,20 @@ describe('AppNavigator', () => {
     mockGetTokenImpl = () => Promise.resolve(null);
   });
 
-  it('renders AuthNavigator (LoginScreen) when token null', async () => {
-    const { findByText } = render(
-      <NavigationContainer>
-        <AppNavigator />
-      </NavigationContainer>,
+  const testMetrics = {
+    insets: { top: 0, bottom: 0, left: 0, right: 0 },
+    frame: { x: 0, y: 0, width: 390, height: 844 },
+  };
+
+  const renderWithProviders = (ui: React.ReactElement) =>
+    render(
+      <SafeAreaProvider initialMetrics={testMetrics}>
+        <NavigationContainer>{ui}</NavigationContainer>
+      </SafeAreaProvider>,
     );
+
+  it('renders AuthNavigator (LoginScreen) when token null', async () => {
+    const { findByText } = renderWithProviders(<AppNavigator />);
     expect(await findByText('LoginScreen')).toBeTruthy();
   });
 
@@ -108,11 +117,7 @@ describe('AppNavigator', () => {
     // Make getToken never resolve so isLoading stays true
     mockGetTokenImpl = () => new Promise(() => {});
 
-    const { findByTestId } = render(
-      <NavigationContainer>
-        <AppNavigator />
-      </NavigationContainer>,
-    );
+    const { findByTestId } = renderWithProviders(<AppNavigator />);
     expect(await findByTestId('loading-screen')).toBeTruthy();
   });
 
@@ -125,11 +130,7 @@ describe('AppNavigator', () => {
         token: 'valid-token',
       });
 
-    const { findByText } = render(
-      <NavigationContainer>
-        <AppNavigator />
-      </NavigationContainer>,
-    );
+    const { findByText } = renderWithProviders(<AppNavigator />);
     expect(await findByText('SearchScreen')).toBeTruthy();
   });
 });

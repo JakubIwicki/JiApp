@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { use } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { colors } from '../styles/theme';
 import { AuthProvider, AuthContext } from '../context/AuthContext';
@@ -8,7 +8,7 @@ import AuthNavigator from './AuthNavigator';
 import MainNavigator from './MainNavigator';
 
 const AppContent: React.FC = () => {
-  const { isLoading, token } = React.useContext(AuthContext);
+  const { isLoading, token } = use(AuthContext);
 
   if (isLoading) {
     return (

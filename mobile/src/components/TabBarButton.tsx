@@ -1,11 +1,11 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback } from 'react';
 import {
-  Animated,
   type GestureResponderEvent,
+  Pressable,
   StyleSheet,
-  TouchableOpacity,
 } from 'react-native';
-import type { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
+import Animated, { useSharedValue, withSpring, useAnimatedStyle } from 'react-native-reanimated';
+import type { BottomTabBarButtonProps } from '../navigation/bottomTabs';
 import { animation } from '../styles/theme';
 
 const TabBarButton: React.FC<BottomTabBarButtonProps> = ({
@@ -20,14 +20,11 @@ const TabBarButton: React.FC<BottomTabBarButtonProps> = ({
   testID,
   style,
 }) => {
-  const scaleValue = useRef(new Animated.Value(1)).current;
+  const scaleValue = useSharedValue(1);
 
   const handlePressIn = useCallback(
     (e: GestureResponderEvent) => {
-      Animated.spring(scaleValue, {
-        toValue: 0.96,
-        ...animation.spring.bouncy,
-      }).start();
+      scaleValue.value = withSpring(0.96, animation.spring.bouncy);
       onPressIn?.(e);
     },
     [scaleValue, onPressIn],
@@ -35,37 +32,41 @@ const TabBarButton: React.FC<BottomTabBarButtonProps> = ({
 
   const handlePressOut = useCallback(
     (e: GestureResponderEvent) => {
-      Animated.spring(scaleValue, {
-        toValue: 1,
-        ...animation.spring.bouncy,
-      }).start();
+      scaleValue.value = withSpring(1, animation.spring.bouncy);
       onPressOut?.(e);
     },
     [scaleValue, onPressOut],
   );
 
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scaleValue.value }],
+  }));
+
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={onPress ?? undefined}
       onLongPress={onLongPress ?? undefined}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      activeOpacity={0.8}
       accessibilityLabel={accessibilityLabel}
       accessibilityRole={accessibilityRole ?? 'button'}
       accessibilityState={accessibilityState}
       testID={testID}
-      style={[styles.container, style]}
+      style={({ pressed }) => [
+        styles.container,
+        style,
+        pressed && { opacity: 0.8 },
+      ]}
     >
       <Animated.View
         style={[
           styles.inner,
-          { transform: [{ scale: scaleValue }] },
+          animatedStyle,
         ]}
       >
         {children}
       </Animated.View>
-    </TouchableOpacity>
+    </Pressable>
   );
 };
 

@@ -1,33 +1,24 @@
-import React, { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, Text } from 'react-native';
-import { colors } from '../styles/theme';
+import React, { useEffect } from 'react';
+import { StyleSheet, Text } from 'react-native';
+import Animated, { useSharedValue, withSpring, useAnimatedStyle } from 'react-native-reanimated';
+import { animation, colors } from '../styles/theme';
 
 interface SuccessCheckmarkProps {
-  visible: boolean;
   size?: number;
 }
 
 const SuccessCheckmark: React.FC<SuccessCheckmarkProps> = ({
-  visible,
   size = 64,
 }) => {
-  const scaleAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useSharedValue(0);
 
   useEffect(() => {
-    if (visible) {
-      scaleAnim.setValue(0);
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        tension: 200,
-        friction: 12,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [visible, scaleAnim]);
+    scaleAnim.value = withSpring(1, animation.spring.bouncy);
+  }, [scaleAnim]);
 
-  if (!visible) {
-    return null;
-  }
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scaleAnim.value }],
+  }));
 
   return (
     <Animated.View
@@ -37,8 +28,8 @@ const SuccessCheckmark: React.FC<SuccessCheckmarkProps> = ({
           width: size,
           height: size,
           borderRadius: size / 2,
-          transform: [{ scale: scaleAnim }],
         },
+        animatedStyle,
       ]}
       testID="success-checkmark"
     >

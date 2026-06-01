@@ -1,9 +1,7 @@
-// ReSharper disable PropertyCanBeMadeInitOnly.Global
-
 namespace JiApp.Common.Models;
 
 public abstract class BaseEntity<TKey>
-    where TKey : IEquatable<TKey>, IComparable<TKey>
+    where TKey : IEquatable<TKey>
 {
-    public TKey Id { get; set; } = default!;
+    public TKey Id { get; init; } = default!;
 }

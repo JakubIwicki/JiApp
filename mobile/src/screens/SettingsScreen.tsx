@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import useAuth from '../hooks/useAuth';
 import useScreenTitle from '../hooks/useScreenTitle';
@@ -43,8 +43,8 @@ const SettingsScreen: React.FC = () => {
       </View>
 
       <View style={styles.logoutSection}>
-        <TouchableOpacity
-          style={styles.logoutButton}
+        <Pressable
+          style={({ pressed }) => [styles.logoutButton, pressed && { opacity: 0.7 }]}
           onPress={() => {
             showSuccess('toast.loggedOff');
             logout();
@@ -53,7 +53,7 @@ const SettingsScreen: React.FC = () => {
           accessibilityRole="button"
         >
           <Text style={styles.logoutText}>{t('settings.logout')}</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       <Text style={styles.versionText}>

@@ -24,10 +24,11 @@ const useDownload = (): UseDownloadResult => {
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
+    const controller = abortRef.current;
     return () => {
-      abortRef.current?.abort();
+      controller?.abort();
     };
-  }, []);
+  }, [abortRef]);
 
   const download = useCallback(async (video: VideoItem) => {
     // Cancel any previous in-flight request

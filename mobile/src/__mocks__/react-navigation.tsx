@@ -19,7 +19,7 @@ export const resetNavigationMocks = () => {
 const navigation = {
   navigate: (..._args: unknown[]) => {},
   setOptions: (_opts: Record<string, unknown>) => {
-    if (_opts.title) _screenTitle = _opts.title;
+    if (typeof _opts.title === 'string') _screenTitle = _opts.title;
   },
   goBack: () => {},
   addListener: () => () => {},
@@ -39,8 +39,8 @@ export const useIsFocused = () => true;
 export const CommonActions = { navigate: () => {}, reset: () => {}, goBack: () => {} };
 export const StackActions = { push: () => {}, pop: () => {}, replace: () => {} };
 
-// @react-navigation/stack mocks
-export const createStackNavigator = () => ({
+// @react-navigation/native-stack mocks
+export const createNativeStackNavigator = () => ({
   Navigator: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   Screen: ({
     children,
@@ -77,17 +77,20 @@ const TAB_ICONS: Record<string, string> = {
 
 export const createBottomTabNavigator = () => ({
   Navigator: ({ children }: { children: React.ReactNode }) => {
-    const childrenArr = React.Children.toArray(children) as React.ReactElement[];
+    const childrenArr = React.Children.toArray(children) as React.ReactElement<{
+      name?: string;
+      initialParams?: Record<string, unknown>;
+    }>[];
     const activeChild = childrenArr.find(
       (c) => c.props?.initialParams?.active === true,
     ) || childrenArr[0];
-    const activeName = (activeChild as any)?.props?.name || 'SearchTab';
+    const activeName = activeChild?.props?.name || 'SearchTab';
 
     return (
       <View style={btStyles.shell}>
         <View style={btStyles.content}>{children}</View>
         <View style={btStyles.tabBar}>
-          {childrenArr.map((child: React.ReactElement) => {
+          {childrenArr.map((child) => {
             const name = child.props?.name || '';
             const isActive = name === activeName;
             return (

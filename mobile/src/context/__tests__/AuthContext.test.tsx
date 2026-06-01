@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { use } from 'react';
 import { render, waitFor } from '@testing-library/react-native';
 import { AuthProvider, AuthContext } from '../AuthContext';
 
@@ -48,7 +48,7 @@ describe('AuthContext', () => {
   let capturedCtx: React.ContextType<typeof AuthContext> | undefined;
 
   const ContextReader: React.FC = () => {
-    const ctx = React.useContext(AuthContext);
+    const ctx = use(AuthContext);
     capturedCtx = ctx;
     return null;
   };

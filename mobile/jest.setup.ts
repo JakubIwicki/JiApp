@@ -2,6 +2,36 @@
 // replaces deprecated @testing-library/jest-native
 import '@testing-library/react-native/build/matchers/extend-expect';
 
+// Mock react-native-reanimated for Jest (ESM modules not parseable by Jest)
+jest.mock('react-native-reanimated', () => {
+  const { View, Text, ScrollView, Image } = require('react-native');
+  return {
+    __esModule: true,
+    default: {
+      View,
+      Text,
+      ScrollView,
+      Image,
+    },
+    useSharedValue: (init: unknown) => ({ value: init }),
+    useAnimatedStyle: (factory: () => Record<string, unknown>) => factory(),
+    useDerivedValue: (factory: () => unknown) => ({ value: factory() }),
+    withSpring: (toValue: unknown) => toValue,
+    withTiming: (toValue: unknown) => toValue,
+    withSequence: (...vals: unknown[]) => vals[vals.length - 1],
+    withDelay: (_delay: unknown, value: unknown) => value,
+    withRepeat: (value: unknown) => value,
+    interpolate: (_val: unknown, _input: unknown[], output: unknown[]) => output[output.length - 1],
+    Easing: { linear: jest.fn(), ease: jest.fn(), bezier: jest.fn() },
+    runOnJS: (fn: (...args: unknown[]) => unknown) => (...args: unknown[]) => fn(...args),
+    cancelAnimation: jest.fn(),
+    setUpTests: jest.fn(),
+    Extrapolation: { CLAMP: 'clamp', EXTEND: 'extend', IDENTITY: 'identity' },
+    Extrapolate: { CLAMP: 'clamp', EXTEND: 'extend', IDENTITY: 'identity' },
+    createAnimatedComponent: (comp: React.ComponentType) => comp,
+  };
+});
+
 // Mock native gesture handler (used by react-navigation stack)
 jest.mock('react-native-gesture-handler', () => {
   const actual = jest.requireActual('react-native-gesture-handler/jestSetup');

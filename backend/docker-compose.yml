@@ -1,0 +1,81 @@
+services:
+  postgres:
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: jiapp
+      POSTGRES_PASSWORD: changeme
+      POSTGRES_MULTIPLE_DATABASES: jiapp_identity,jiapp_ytdownloader,jiapp_scheduler
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jiapp"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  identity:
+    build:
+      context: .
+      dockerfile: ./src/JiApp.Identity/Dockerfile
+    ports:
+      - "5001:5001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionString=Host=postgres;Database=jiapp_identity;Username=jiapp;Password=changeme
+
+  ytdownloader:
+    build:
+      context: .
+      dockerfile: ./src/JiApp.YtDownloader/Dockerfile
+    ports:
+      - "5002:5002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionString=Host=postgres;Database=jiapp_ytdownloader;Username=jiapp;Password=changeme
+
+  imagetools:
+    build:
+      context: .
+      dockerfile: ./src/JiApp.ImageTools/Dockerfile
+    ports:
+      - "5003:5003"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=5003
+      - ASPNETCORE_HTTPS_PORTS=""
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: ./src/JiApp.Scheduler/Dockerfile
+    ports:
+      - "5004:5004"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionString=Host=postgres;Port=5432;Database=jiapp_scheduler;Username=jiapp;Password=changeme
+
+  gateway:
+    build:
+      context: .
+      dockerfile: ./src/JiApp.Gateway/Dockerfile
+    ports:
+      - "5000:5000"
+    depends_on:
+      - identity
+      - ytdownloader
+      - imagetools
+      - scheduler
+
+volumes:
+  pgdata:

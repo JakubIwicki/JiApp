@@ -149,6 +149,7 @@ describe('DownloadScreen', () => {
         description: 'Test video description for unit testing',
         imageUrl: 'https://example.com/thumb.jpg',
         videoUrl: 'https://example.com/video.mp4',
+        channelTitle: '',
       });
     });
   });

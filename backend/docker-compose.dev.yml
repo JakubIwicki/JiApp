@@ -1,0 +1,41 @@
+# Dev override: uses SQLite instead of PostgreSQL and mounts source for hot reload.
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  postgres:
+    profiles:
+      - production
+
+  identity:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://*:5001
+      - ConnectionStrings__IdentityDb=Data Source=/app/data/identity.db
+    volumes:
+      - identity-data:/app/data
+
+  ytdownloader:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://*:5002
+      - ConnectionStrings__YtDb=Data Source=/app/data/ytdownloader.db
+    volumes:
+      - ytdownloader-data:/app/data
+
+  scheduler:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://*:5004
+      - ConnectionString=Data Source=/app/data/scheduler_dev.db
+    volumes:
+      - scheduler-data:/app/data
+
+  gateway:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://*:5000
+
+volumes:
+  identity-data:
+  ytdownloader-data:
+  scheduler-data:

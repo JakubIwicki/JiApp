@@ -3,25 +3,19 @@ import { render } from '@testing-library/react-native';
 import SuccessCheckmark from '../SuccessCheckmark';
 
 describe('SuccessCheckmark', () => {
-  it('renders when visible is true', () => {
-    const { getByTestId } = render(<SuccessCheckmark visible={true} />);
+  it('renders the checkmark', () => {
+    const { getByTestId } = render(<SuccessCheckmark />);
     expect(getByTestId('success-checkmark')).toBeTruthy();
   });
 
-  it('does not render when visible is false', () => {
-    const { queryByTestId } = render(<SuccessCheckmark visible={false} />);
-    expect(queryByTestId('success-checkmark')).toBeNull();
-  });
-
   it('renders checkmark symbol', () => {
-    const { getByText } = render(<SuccessCheckmark visible={true} />);
+    const { getByText } = render(<SuccessCheckmark />);
     expect(getByText('✓')).toBeTruthy();
   });
 
   it('renders with default size 64', () => {
-    const { getByTestId } = render(<SuccessCheckmark visible={true} />);
+    const { getByTestId } = render(<SuccessCheckmark />);
     const container = getByTestId('success-checkmark');
-    // Should have width/height of 64
     const style = container.props.style;
     const stylesArray = Array.isArray(style) ? style : [style];
     const hasSize = stylesArray.some(
@@ -31,7 +25,7 @@ describe('SuccessCheckmark', () => {
   });
 
   it('renders with custom size when provided', () => {
-    const { getByTestId } = render(<SuccessCheckmark visible={true} size={80} />);
+    const { getByTestId } = render(<SuccessCheckmark size={80} />);
     const container = getByTestId('success-checkmark');
     const style = container.props.style;
     const stylesArray = Array.isArray(style) ? style : [style];
@@ -42,7 +36,7 @@ describe('SuccessCheckmark', () => {
   });
 
   it('uses success color (#7A9A7E) background', () => {
-    const { getByTestId } = render(<SuccessCheckmark visible={true} />);
+    const { getByTestId } = render(<SuccessCheckmark />);
     const container = getByTestId('success-checkmark');
     const style = container.props.style;
     const stylesArray = Array.isArray(style) ? style : [style];

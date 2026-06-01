@@ -1,13 +1,13 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { Meta, StoryObj } from '@storybook/react';
 import RegisterScreen from './RegisterScreen';
 import { AuthContext } from '../context/AuthContext';
 import * as authService from '../services/__mocks__/authService';
 import type { AuthStackParamList } from '../navigation/types';
 
-const Stack = createStackNavigator<AuthStackParamList>();
+const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 const mockAuthValue = {
   token: null,

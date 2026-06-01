@@ -45,11 +45,12 @@ const usePreview = (): UsePreviewResult => {
 
   // Cleanup on unmount
   useEffect(() => {
+    const controller = abortRef.current;
     return () => {
-      abortRef.current?.abort();
+      controller?.abort();
       TrackPlayer.reset();
     };
-  }, []);
+  }, [abortRef]);
 
   const play = useCallback(async (videoId: string) => {
     // Cancel any previous in-flight request
@@ -62,15 +63,19 @@ const usePreview = (): UsePreviewResult => {
     setError(null);
 
     try {
-      await TrackPlayer.reset();
-
       if (controller.signal.aborted) {
         return;
       }
 
-      const headers = await getPreviewHeaders();
+      await TrackPlayer.reset();
+      const abortedAfterReset = controller.signal.aborted;
+      if (abortedAfterReset) {
+        return;
+      }
 
-      if (controller.signal.aborted) {
+      const headers = await getPreviewHeaders();
+      const abortedAfterHeaders = controller.signal.aborted;
+      if (abortedAfterHeaders) {
         return;
       }
 
@@ -80,8 +85,8 @@ const usePreview = (): UsePreviewResult => {
         headers,
         title: 'Preview',
       });
-
-      if (controller.signal.aborted) {
+      const abortedAfterAdd = controller.signal.aborted;
+      if (abortedAfterAdd) {
         return;
       }
 

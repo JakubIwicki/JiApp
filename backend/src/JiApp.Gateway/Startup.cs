@@ -1,0 +1,184 @@
+using System.Globalization;
+using System.Text;
+using System.Text.Json;
+using System.Threading.RateLimiting;
+using JiApp.Common.Abstractions;
+using JiApp.Common.Middleware;
+using JiApp.Gateway.Configuration;
+using JiApp.Gateway.HealthDashboard;
+using JiApp.Gateway.RateLimiting;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
+using Serilog;
+
+namespace JiApp.Gateway;
+
+public class Startup(GatewaySettings settings, IConfiguration configuration)
+{
+    public void ConfigureServices(IServiceCollection services)
+    {
+        // JWT Bearer authentication — validates tokens issued by JiApp-Identity
+        // Validate() guarantees Jwt is configured at this point.
+        var jwt = settings.Jwt ?? throw new InvalidOperationException("Jwt must be configured");
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidateLifetime = true,
+                    ValidIssuer = jwt.Issuer,
+                    ValidAudience = jwt.Audience,
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(jwt.Key)),
+                };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnChallenge = context =>
+                    {
+                        context.HandleResponse();
+                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                        context.Response.ContentType = "application/json";
+                        var response = JsonSerializer.Serialize(
+                            new ApiErrorResponse(Error: "Unauthorized"), ApiErrorResponse.JsonOptions);
+                        return context.Response.WriteAsync(response);
+                    },
+                };
+            });
+
+        services.AddAuthorization();
+
+        // CORS — AllowCredentials prevents using AllowAnyOrigin, so we use
+        // SetIsOriginAllowed. In production, restrict to configured origins.
+        // In development, accept any origin by default (null/empty config).
+        services.AddCors(options =>
+        {
+            options.AddDefaultPolicy(policy =>
+            {
+                policy.AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials();
+
+                if (settings.CorsAllowedOrigins is { Length: > 0 } origins)
+                    policy.SetIsOriginAllowed(origin => origins.Contains(origin));
+                else
+                    policy.SetIsOriginAllowed(_ => true);
+            });
+        });
+
+        // Rate limiting — reads policy config from GatewaySettings
+        services.AddRateLimiter(options =>
+        {
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+            foreach (var (sectionName, policyConfig) in settings.RateLimiting!)
+            {
+                var policyName = sectionName + "Policy";
+                if (policyConfig.SegmentsPerWindow > 0)
+                {
+                    options.AddSlidingWindowLimiter(policyName, opt =>
+                    {
+                        opt.PermitLimit = policyConfig.PermitLimit;
+                        opt.Window = TimeSpan.FromSeconds(policyConfig.WindowInSeconds);
+                        opt.QueueLimit = policyConfig.QueueLimit;
+                        opt.SegmentsPerWindow = policyConfig.SegmentsPerWindow;
+                    });
+                }
+                else
+                {
+                    options.AddFixedWindowLimiter(policyName, opt =>
+                    {
+                        opt.PermitLimit = policyConfig.PermitLimit;
+                        opt.Window = TimeSpan.FromSeconds(policyConfig.WindowInSeconds);
+                        opt.QueueLimit = policyConfig.QueueLimit;
+                    });
+                }
+            }
+
+            options.OnRejected = async (context, cancellationToken) =>
+            {
+                var logger = context.HttpContext.RequestServices
+                    .GetRequiredService<ILogger<Startup>>();
+                logger.LogWarning("Rate limit exceeded for {Path} by client {RemoteIp}",
+                    context.HttpContext.Request.Path, context.HttpContext.Connection.RemoteIpAddress);
+
+                context.HttpContext.Response.ContentType = "application/json";
+
+                string? retryAfter = null;
+                if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfterValue))
+                {
+                    retryAfter = retryAfterValue.TotalSeconds.ToString("F0", CultureInfo.InvariantCulture);
+                }
+
+                var body = new ApiErrorResponse(
+                    Error: "Too many requests. Please try again later.",
+                    RetryAfterSeconds: retryAfter);
+
+                await context.HttpContext.Response.WriteAsync(
+                    JsonSerializer.Serialize(body, ApiErrorResponse.JsonOptions), cancellationToken);
+            };
+        });
+
+        // YARP reverse proxy
+        services.AddReverseProxy()
+            .LoadFromConfig(configuration.GetSection("ReverseProxy"));
+
+        // Rate limit policy service — endpoint manipulation for rate limiting
+        services.AddSingleton<RateLimitPolicyService>();
+
+        // Global exception middleware — catches unhandled exceptions, returns JSON
+        services.AddScoped<GlobalExceptionMiddleware>();
+
+        // HttpClient for health dashboard
+        services.AddHttpClient("healthCheck");
+    }
+
+    public static void Configure(WebApplication app)
+    {
+        // Global exception handler — catches unhandled exceptions before any middleware
+        app.UseMiddleware<GlobalExceptionMiddleware>();
+
+        app.UseSerilogRequestLogging();
+
+        // Correlation ID middleware — reads or generates X-Correlation-ID, forwards downstream
+        app.Use(async (context, next) =>
+        {
+            var correlationId = context.Request.Headers["X-Correlation-ID"].FirstOrDefault()
+                                ?? Guid.NewGuid().ToString("N");
+
+            context.Request.Headers["X-Correlation-ID"] = correlationId;
+            context.Response.Headers["X-Correlation-ID"] = correlationId;
+            context.Items["CorrelationId"] = correlationId;
+
+            await next();
+        });
+
+        app.UseRouting();
+        app.UseCors();
+        app.UseMiddleware<global::JiApp.Gateway.RateLimiting.RateLimitPolicySelector>();
+        app.UseRateLimiter();
+        app.UseAuthentication();
+        app.UseAuthorization();
+
+        app.MapReverseProxy();
+
+        app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
+        app.MapGet("/health/live", () => Results.Ok(new { status = "alive" }));
+        app.MapGet("/health/ready", () => Results.Ok(new { status = "ready" }));
+
+        // Health dashboard — dev only
+        if (app.Environment.IsDevelopment())
+        {
+            HealthDashboardEndpoint.MapHealthDashboard(
+                app, "https://localhost:5001", "http://localhost:5002", "https://localhost:5003",
+                "https://localhost:5004");
+        }
+    }
+}

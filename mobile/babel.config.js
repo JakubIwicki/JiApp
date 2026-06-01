@@ -1,4 +1,7 @@
 module.exports = {
   presets: ['module:@react-native/babel-preset'],
-  plugins: ['babel-plugin-transform-inline-environment-variables'],
+  plugins: [
+    'babel-plugin-transform-inline-environment-variables',
+    'react-native-reanimated/plugin',
+  ],
 };

@@ -1,6 +1,5 @@
 import React, { useCallback, useState } from 'react';
 import {
-  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -8,9 +7,10 @@ import {
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import type { StackNavigationProp } from '@react-navigation/stack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MainStackParamList } from '../navigation/types';
 import type { SearchHistoryItem, DownloadHistoryItem } from '../types/api';
+import RefreshableScrollView from '../components/RefreshableScrollView';
 import SearchBar from '../components/SearchBar';
 import HistoryItem from '../components/HistoryItem';
 import HistorySection from '../components/HistorySection';
@@ -21,7 +21,7 @@ import useScreenTitle from '../hooks/useScreenTitle';
 import { HISTORY_PAGE_SIZE } from '../constants/app';
 import { colors, commonStyles, spacing } from '../styles/theme';
 
-type HistoryNavigationProp = StackNavigationProp<MainStackParamList, 'History'>;
+type HistoryNavigationProp = NativeStackNavigationProp<MainStackParamList, 'History'>;
 
 const HistoryScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -46,6 +46,7 @@ const HistoryScreen: React.FC = () => {
         description: item.videoDescription,
         imageUrl: item.imageUrl,
         videoUrl: item.videoUrl,
+        channelTitle: '',
       });
     },
     [navigation],
@@ -54,6 +55,39 @@ const HistoryScreen: React.FC = () => {
   const handleRetry = useCallback(() => {
     loadHistory(HISTORY_PAGE_SIZE);
   }, [loadHistory]);
+
+  const renderSearchItem = useCallback(
+    (item: SearchHistoryItem) => (
+      <HistoryItem
+        type="search"
+        item={item}
+        onArchive={() => archiveSearch(item.id)}
+      />
+    ),
+    [archiveSearch],
+  );
+
+  const searchKeyExtractor = useCallback(
+    (item: SearchHistoryItem) => String(item.id),
+    [],
+  );
+
+  const renderDownloadItem = useCallback(
+    (item: DownloadHistoryItem) => (
+      <HistoryItem
+        type="download"
+        item={item}
+        onPress={handleDownloadPress}
+        onArchive={() => archiveDownload(item.id)}
+      />
+    ),
+    [handleDownloadPress, archiveDownload],
+  );
+
+  const downloadKeyExtractor = useCallback(
+    (item: DownloadHistoryItem) => String(item.id),
+    [],
+  );
 
   const filteredSearches = filterQuery
     ? searches.filter((s) =>
@@ -80,17 +114,12 @@ const HistoryScreen: React.FC = () => {
   }
 
   return (
-    <ScrollView
+    <RefreshableScrollView
       style={commonStyles.screenContainer}
       contentContainerStyle={commonStyles.scrollContent}
-      refreshControl={
-        <RefreshControl
-          refreshing={isLoading}
-          onRefresh={refresh}
-          testID="history-refresh-control"
-          tintColor={colors.primary}
-        />
-      }
+      refreshing={isLoading}
+      onRefresh={refresh}
+      refreshTestID="history-refresh-control"
     >
       {error && (searches.length > 0 || downloads.length > 0) ? (
         <View style={styles.errorBanner}>
@@ -109,16 +138,8 @@ const HistoryScreen: React.FC = () => {
         title={t('history.searches')}
         items={filteredSearches}
         emptyText={t('history.noSearches')}
-        renderItem={(item: SearchHistoryItem) => (
-          <HistoryItem
-            type="search"
-            item={item}
-            onArchive={() => archiveSearch(item.id)}
-          />
-        )}
-        keyExtractor={(item: SearchHistoryItem) =>
-          String(item.id)
-        }
+        renderItem={renderSearchItem}
+        keyExtractor={searchKeyExtractor}
       />
 
       <View style={styles.separator} />
@@ -127,19 +148,10 @@ const HistoryScreen: React.FC = () => {
         title={t('history.downloads')}
         items={filteredDownloads}
         emptyText={t('history.noDownloads')}
-        renderItem={(item: DownloadHistoryItem) => (
-          <HistoryItem
-            type="download"
-            item={item}
-            onPress={handleDownloadPress}
-            onArchive={() => archiveDownload(item.id)}
-          />
-        )}
-        keyExtractor={(item: DownloadHistoryItem) =>
-          String(item.id)
-        }
+        renderItem={renderDownloadItem}
+        keyExtractor={downloadKeyExtractor}
       />
-    </ScrollView>
+    </RefreshableScrollView>
   );
 };
 

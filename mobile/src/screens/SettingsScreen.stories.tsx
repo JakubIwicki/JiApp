@@ -1,12 +1,12 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { Meta, StoryObj } from '@storybook/react';
 import SettingsScreen from './SettingsScreen';
 import { AuthContext } from '../context/AuthContext';
 import type { MainStackParamList } from '../navigation/types';
 
-const Stack = createStackNavigator<MainStackParamList>();
+const Stack = createNativeStackNavigator<MainStackParamList>();
 
 const mockAuthValue = {
   token: 'mock-jwt-token',

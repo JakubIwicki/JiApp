@@ -18,10 +18,11 @@ const useSearch = (): UseSearchResult => {
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
+    const controller = abortRef.current;
     return () => {
-      abortRef.current?.abort();
+      controller?.abort();
     };
-  }, []);
+  }, [abortRef]);
 
   const search = useCallback(
     async (query: string, maxResults?: number) => {

@@ -1,6 +1,6 @@
 import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createBottomTabNavigator } from '../navigation/bottomTabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TabIcon from '../components/TabIcon';
@@ -23,10 +23,10 @@ import type {
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-const SearchStack = createStackNavigator<MainStackParamList>();
-const HistoryStack = createStackNavigator<HistoryStackParamList>();
-const SettingsStack = createStackNavigator<SettingsStackParamList>();
-const DownloadsStack = createStackNavigator<MainStackParamList>();
+const SearchStack = createNativeStackNavigator<MainStackParamList>();
+const HistoryStack = createNativeStackNavigator<HistoryStackParamList>();
+const SettingsStack = createNativeStackNavigator<SettingsStackParamList>();
+const DownloadsStack = createNativeStackNavigator<MainStackParamList>();
 
 const stackScreenOptions = {
   headerStyle: {

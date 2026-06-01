@@ -35,7 +35,7 @@ public class TempFileStoreTests
         {
             var id = store.Add(tempFile, userId: 1L);
 
-            var path = store.Get(id);
+            var path = store.Get(id, userId: 1L);
 
             path.Should().Be(tempFile);
         }
@@ -50,7 +50,7 @@ public class TempFileStoreTests
     {
         var store = new TempFileStore(TimeSpan.FromMinutes(10));
 
-        var path = store.Get("nonexistent-id");
+        var path = store.Get("nonexistent-id", userId: 1L);
 
         path.Should().BeNull();
     }
@@ -64,7 +64,7 @@ public class TempFileStoreTests
         {
             var id = store.Add(tempFile, userId: 1L);
 
-            var path = store.Get(id);
+            var path = store.Get(id, userId: 1L);
 
             path.Should().BeNull();
         }
@@ -147,7 +147,7 @@ public class TempFileStoreTests
             store.CleanupExpired();
 
             File.Exists(tempFile).Should().BeFalse();
-            store.Get(id).Should().BeNull();
+            store.Get(id, userId: 1L).Should().BeNull();
         }
         finally
         {

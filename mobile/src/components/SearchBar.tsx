@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Pressable,
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import Svg, { Circle, Line } from 'react-native-svg';
@@ -29,6 +29,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const [internalValue, setInternalValue] = useState(initialValue);
   const [isFocused, setIsFocused] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prevInitialRef = useRef(initialValue);
 
   const displayValue = controlledValue !== undefined ? controlledValue : internalValue;
 
@@ -66,25 +67,28 @@ const SearchBar: React.FC<SearchBarProps> = ({
     onSearch('');
   }, [onSearch, onChangeText, controlledValue]);
 
-  const handleFocus = useCallback(() => {
+  const activateSearch = useCallback(() => {
     setIsFocused(true);
   }, []);
 
-  const handleBlur = useCallback(() => {
+  const deactivateSearch = useCallback(() => {
     setIsFocused(false);
   }, []);
 
-  useEffect(() => {
+  // Sync initialValue for uncontrolled mode when prop changes (render-time pattern)
+  if (controlledValue === undefined && initialValue !== prevInitialRef.current) {
+    prevInitialRef.current = initialValue;
     setInternalValue(initialValue);
-  }, [initialValue]);
+  }
 
   useEffect(() => {
+    const timer = debounceRef.current;
     return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
+      if (timer) {
+        clearTimeout(timer);
       }
     };
-  }, []);
+  }, [debounceRef]);
 
   return (
     <View style={styles.container}>
@@ -100,8 +104,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
           style={styles.input}
           value={displayValue}
           onChangeText={handleChangeText}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
+          onFocus={activateSearch}
+          onBlur={deactivateSearch}
           placeholder={placeholder ?? t('search.placeholder')}
           placeholderTextColor={colors.placeholderDark}
           returnKeyType="search"
@@ -110,15 +114,18 @@ const SearchBar: React.FC<SearchBarProps> = ({
           testID="search-input"
         />
         {displayValue.length > 0 && (
-          <TouchableOpacity
+          <Pressable
             onPress={handleClear}
-            style={styles.clearButton}
+            style={({ pressed }) => [
+              styles.clearButton,
+              pressed && { opacity: 0.7 },
+            ]}
             testID="search-clear-button"
             accessibilityRole="button"
             accessibilityLabel="Clear search"
           >
             <Text style={styles.clearButtonText}>X</Text>
-          </TouchableOpacity>
+          </Pressable>
         )}
       </View>
     </View>

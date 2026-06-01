@@ -2,6 +2,23 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 import TabIcon from '../TabIcon';
 
+// Mock react-native-svg so testID and size props are forwarded to host elements
+jest.mock('react-native-svg', () => {
+  const React = require('react');
+  const MockSvg = ({ children, testID, width, height, ...props }: any) =>
+    React.createElement('View', { testID, width, height, ...props }, children);
+  const MockShape = (props: any) => React.createElement('View', props);
+  return {
+    __esModule: true,
+    default: MockSvg,
+    Svg: MockSvg,
+    Circle: MockShape,
+    Line: MockShape,
+    Path: MockShape,
+    Polyline: MockShape,
+  };
+});
+
 describe('TabIcon', () => {
   it('renders search icon', () => {
     const { getByTestId } = render(<TabIcon name="search" color="#8B7E74" />);

@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import * as storageService from '../services/storageService';
 import { colors } from '../styles/theme';
@@ -20,14 +20,14 @@ const LanguagePicker: React.FC = () => {
       <View style={styles.row}>
         <Text style={styles.labelText}>{t('settings.language')}</Text>
         <View style={styles.togglePill} testID="language-picker-button">
-          <TouchableOpacity
+          <Pressable
             onPress={currentLanguage !== 'pl' ? toggleLanguage : undefined}
-            activeOpacity={currentLanguage === 'pl' ? 1 : 0.6}
             accessibilityRole="button"
             accessibilityLabel={t('settings.languagePolish')}
-            style={[
+            style={({ pressed }) => [
               styles.pillOption,
               currentLanguage === 'pl' && styles.pillActive,
+              pressed && currentLanguage !== 'pl' && { opacity: 0.7 },
             ]}
           >
             <Text
@@ -40,15 +40,15 @@ const LanguagePicker: React.FC = () => {
             >
               PL
             </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
+          </Pressable>
+          <Pressable
             onPress={currentLanguage !== 'en' ? toggleLanguage : undefined}
-            activeOpacity={currentLanguage === 'en' ? 1 : 0.6}
             accessibilityRole="button"
             accessibilityLabel={t('settings.languageEnglish')}
-            style={[
+            style={({ pressed }) => [
               styles.pillOption,
               currentLanguage === 'en' && styles.pillActive,
+              pressed && currentLanguage !== 'en' && { opacity: 0.7 },
             ]}
           >
             <Text
@@ -61,7 +61,7 @@ const LanguagePicker: React.FC = () => {
             >
               EN
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
     </View>

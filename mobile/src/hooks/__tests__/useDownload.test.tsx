@@ -18,6 +18,7 @@ const createVideoItem = (id: string): VideoItem => ({
   description: `Description for video ${id}`,
   imageUrl: `https://example.com/${id}.jpg`,
   videoUrl: `https://example.com/${id}.mp4`,
+  channelTitle: 'TestChannel',
 });
 
 describe('useDownload', () => {
@@ -29,7 +30,10 @@ describe('useDownload', () => {
     mockRequestDownloadLink.mockResolvedValue({
       downloadUrl: 'https://example.com/dl',
     });
-    mockDownloadFile.mockResolvedValue('/path/file.mp3');
+    mockDownloadFile.mockResolvedValue({
+      displayPath: '/path/file.mp3',
+      contentUri: 'content://test/file.mp3',
+    });
 
     const video = createVideoItem('1');
     const { result } = renderHook(() => useDownload());
@@ -75,7 +79,10 @@ describe('useDownload', () => {
     mockRequestDownloadLink.mockResolvedValue({
       downloadUrl: mockDownloadUrl,
     });
-    mockDownloadFile.mockResolvedValue(mockFilePath);
+    mockDownloadFile.mockResolvedValue({
+      displayPath: mockFilePath,
+      contentUri: 'content://test/TestVideo.mp3',
+    });
 
     const video = createVideoItem('1');
     const { result } = renderHook(() => useDownload());

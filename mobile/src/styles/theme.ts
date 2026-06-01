@@ -1,7 +1,10 @@
 import { StyleSheet } from 'react-native';
 
-// ─── Colors ─ Wabi-Sabi Palette ────────────────────────────────────────────────
-export const colors = {
+// ─── Color Palette Types ─────────────────────────────────────────────────────
+export type ColorPalette = { readonly [K in keyof typeof colorsLight]: string };
+
+// ─── Light Palette (Wabi-Sabi) ───────────────────────────────────────────────
+export const colorsLight = {
   // Core
   primary: '#8B7E74',
   primaryDark: '#6B5F52',
@@ -35,6 +38,45 @@ export const colors = {
   // Misc
   cardShadow: '#2B2118',
 } as const;
+
+// ─── Dark Palette (Midnight Wabi-Sabi) ───────────────────────────────────────
+export const colorsDark: ColorPalette = {
+  // Core — brand slightly lightened for dark bg visibility
+  primary: '#A09080',
+  primaryDark: '#8B7E74',
+  primaryLight: '#3A3530',
+
+  // Surfaces
+  background: '#1A1A2E',
+  surface: '#2D2D44',
+
+  // Semantic — slightly brightened for contrast on dark
+  success: '#8BAE8E',
+  successLight: '#2A3A2E',
+  error: '#D45A2E',
+  errorLight: '#3D1A10',
+  info: '#6B9EC0',
+  warning: '#D4A020',
+
+  // Text — inverted for dark backgrounds
+  textPrimary: '#F0E6DC',
+  textSecondary: '#A09080',
+  textTertiary: '#7A6E60',
+  textDescription: '#A09080',
+  textInverse: '#2B2118',
+
+  // Borders & separators — lightened for visibility on dark bg
+  border: '#3A3A52',
+  separator: '#35354A',
+  placeholder: '#2D2D44',
+  placeholderDark: '#3A3A52',
+
+  // Misc
+  cardShadow: '#000000',
+};
+
+// ─── Backwards-compatible default export ─────────────────────────────────────
+export const colors = colorsLight;
 
 // ─── Typography ──────────────────────────────────────────────────────────────
 export const typography = {
@@ -100,6 +142,16 @@ export const borderRadius = {
 } as const;
 
 // ─── Animation Tokens ────────────────────────────────────────────────────────
+// ─── Z-Index Scale ────────────────────────────────────────────────────────────
+// Keeps stacking contexts predictable and prevents escalation of arbitrary values.
+export const zIndexScale = {
+  dropdown: 10,
+  sticky: 20,
+  modal: 30,
+  toast: 40,
+  overlay: 50,
+} as const;
+
 export const animation = {
   duration: {
     fast: 150,
@@ -109,14 +161,12 @@ export const animation = {
   },
   spring: {
     bouncy: {
-      tension: 200,
-      friction: 12,
-      useNativeDriver: true,
+      stiffness: 200,
+      damping: 12,
     },
     gentle: {
-      tension: 120,
-      friction: 14,
-      useNativeDriver: true,
+      stiffness: 120,
+      damping: 14,
     },
   },
   stagger: {

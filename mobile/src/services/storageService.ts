@@ -7,6 +7,7 @@ const DISPLAY_NAME_KEY = 'auth_display_name';
 const USERNAME_KEY = 'auth_username';
 const CREDENTIALS_KEY = 'saved_credentials';
 const LANGUAGE_KEY = 'app_language';
+const SELECTED_BOARD_KEY = 'selected_board_id';
 
 interface SavedCredentials {
   username: string;
@@ -109,4 +110,19 @@ export const saveLanguage = async (language: string): Promise<void> => {
 
 export const getLanguage = async (): Promise<string | null> => {
   return AsyncStorage.getItem(LANGUAGE_KEY);
+};
+
+// --- Selected Board ID ---
+
+export const getSelectedBoardId = async (): Promise<number | null> => {
+  const value = await AsyncStorage.getItem(SELECTED_BOARD_KEY);
+  return value ? Number(value) : null;
+};
+
+export const saveSelectedBoardId = async (id: number): Promise<void> => {
+  await AsyncStorage.setItem(SELECTED_BOARD_KEY, String(id));
+};
+
+export const clearSelectedBoardId = async (): Promise<void> => {
+  await AsyncStorage.removeItem(SELECTED_BOARD_KEY);
 };

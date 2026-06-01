@@ -47,6 +47,15 @@ public class ResultTests
     }
 
     [Fact]
+    public void Result_is_class_not_struct()
+    {
+        // The "default trap" — a struct's default has IsSuccess=false, making it
+        // indistinguishable from a valid failure. A class record's default is null,
+        // making misuse obvious. Guard against accidental regression to struct.
+        typeof(Result<int>).IsValueType.Should().BeFalse();
+    }
+
+    [Fact]
     public void Failure_DefaultErrorCategoryIsNull()
     {
         var result = Result<int>.Failure("something went wrong");
