@@ -136,7 +136,7 @@ const SearchContent: React.FC<{ query: string; setQuery: (q: string) => void }> 
         style={fullStyles.searchInput}
         value={query}
         onChangeText={setQuery}
-        placeholder="Search YouTube videos..."
+        placeholder="Search YouTube videos…"
         placeholderTextColor="#B5ACA0"
       />
       {query.length > 0 && (
@@ -312,7 +312,7 @@ const fullStyles = StyleSheet.create({
   card: {
     flexDirection: 'row', backgroundColor: colors.surface, borderRadius: borderRadius.lg,
     padding: 10, marginBottom: 8, borderWidth: 1, borderColor: '#F0EAE4',
-    shadowColor: colors.cardShadow, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 3, elevation: 2,
+    boxShadow: '0 1px 3px rgba(43,33,24,0.06)',
   },
   thumb: { width: 96, height: 64, borderRadius: 8, backgroundColor: colors.primaryLight },
   cardInfo: { flex: 1, marginLeft: 10, justifyContent: 'center' },

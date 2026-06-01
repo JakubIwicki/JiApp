@@ -1,4 +1,4 @@
-import { useCallback, useContext } from 'react';
+import { useCallback, use } from 'react';
 import { ToastContext } from '../context/ToastContext';
 
 interface UseToastResult {
@@ -9,7 +9,7 @@ interface UseToastResult {
 }
 
 const useToast = (): UseToastResult => {
-  const { pushToast } = useContext(ToastContext);
+  const { pushToast } = use(ToastContext);
 
   const showSuccess = useCallback(
     (titleKey: string, descKey?: string) => {

@@ -1,12 +1,12 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { Meta, StoryObj } from '@storybook/react';
 import SearchScreen from './SearchScreen';
 import type { MainStackParamList } from '../navigation/types';
 import { setSearchMode } from '../services/__mocks__/searchService';
 
-const Stack = createStackNavigator<MainStackParamList>();
+const Stack = createNativeStackNavigator<MainStackParamList>();
 
 const meta: Meta<typeof SearchScreen> = {
   title: 'Screens/SearchScreen',

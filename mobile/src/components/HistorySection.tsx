@@ -10,6 +10,16 @@ interface HistorySectionProps<T> {
   keyExtractor: (item: T) => string;
 }
 
+function HistorySectionItem<T>({
+  item,
+  render,
+}: {
+  item: T;
+  render: (item: T) => React.ReactNode;
+}): React.ReactElement {
+  return <>{render(item)}</>;
+}
+
 function HistorySection<T>({
   title,
   items,
@@ -26,9 +36,11 @@ function HistorySection<T>({
         </View>
       ) : (
         items.map((item) => (
-          <React.Fragment key={keyExtractor(item)}>
-            {renderItem(item)}
-          </React.Fragment>
+          <HistorySectionItem
+            key={keyExtractor(item)}
+            item={item}
+            render={renderItem}
+          />
         ))
       )}
     </View>

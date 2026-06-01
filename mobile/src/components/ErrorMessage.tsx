@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { colors } from '../styles/theme';
 
@@ -16,14 +16,17 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({ message, onRetry }) => {
       <Text style={styles.icon}>!</Text>
       <Text style={styles.message}>{message}</Text>
       {onRetry && (
-        <TouchableOpacity
-          style={styles.retryButton}
+        <Pressable
+          style={({ pressed }) => [
+            styles.retryButton,
+            pressed && { opacity: 0.7 },
+          ]}
           onPress={onRetry}
           testID="error-retry-button"
           accessibilityRole="button"
         >
           <Text style={styles.retryText}>{t('common.retry')}</Text>
-        </TouchableOpacity>
+        </Pressable>
       )}
     </View>
   );

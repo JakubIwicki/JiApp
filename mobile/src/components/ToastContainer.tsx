@@ -1,12 +1,13 @@
-import React, { useContext } from 'react';
+import React, { use } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import Toast from './Toast';
 import { ToastContext } from '../context/ToastContext';
+import { zIndexScale } from '../styles/theme';
 
 const ToastContainer: React.FC = () => {
-  const { queue, popToast } = useContext(ToastContext);
+  const { queue, popToast } = use(ToastContext);
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
 
@@ -36,7 +37,7 @@ const ToastContainer: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    zIndex: 9999,
+    zIndex: zIndexScale.toast,
   },
   item: {
     marginBottom: 8,

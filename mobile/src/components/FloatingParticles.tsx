@@ -1,5 +1,14 @@
-import React, { useEffect, useMemo, useRef } from 'react';
-import { Animated, Easing, StyleSheet, View } from 'react-native';
+import React, { useEffect, useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
+import Animated, {
+  useSharedValue,
+  withTiming,
+  withRepeat,
+  withDelay,
+  interpolate,
+  Easing,
+  useAnimatedStyle,
+} from 'react-native-reanimated';
 
 interface FloatingParticlesProps {
   count?: number;
@@ -8,94 +17,79 @@ interface FloatingParticlesProps {
 const PARTICLE_CHARS = ['🍃', '🌿', '🍂', '🌱'];
 const DURATIONS = [4000, 5000, 6000];
 
-interface Particle {
+let particleIdCounter = 0;
+
+interface ParticleData {
+  id: string;
   char: string;
   x: number;
   duration: number;
   delay: number;
-  animValue: Animated.Value;
 }
 
-function createParticle(index: number): Particle {
-  return {
-    char: PARTICLE_CHARS[index % PARTICLE_CHARS.length],
-    x: 10 + Math.random() * 80,
-    duration: DURATIONS[index % DURATIONS.length],
-    delay: index * 800 + Math.random() * 1000,
-    animValue: new Animated.Value(0),
-  };
+interface ParticleItemProps {
+  particle: ParticleData;
 }
+
+const ParticleItem: React.FC<ParticleItemProps> = React.memo(({ particle }) => {
+  const animValue = useSharedValue(0);
+
+  useEffect(() => {
+    const { delay, duration } = particle;
+    animValue.value = withRepeat(
+      withDelay(delay, withTiming(1, { duration, easing: Easing.linear })),
+      -1,
+      false,
+    );
+    // No cleanup needed — shared value lifecycle is component-bound
+  }, [particle.delay, particle.duration, animValue]);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    const translateY = interpolate(animValue.value, [0, 1], [0, -60]);
+    const rotate = interpolate(animValue.value, [0, 0.5, 1], [0, 15, -15]);
+    const opacity = interpolate(animValue.value, [0, 0.1, 0.9, 1], [0, 0.6, 0.6, 0]);
+    return {
+      transform: [{ translateY }, { rotate: `${rotate}deg` }],
+      opacity,
+    };
+  });
+
+  return (
+    <Animated.View
+      style={[
+        styles.particle,
+        {
+          left: `${particle.x}%` as unknown as number,
+        },
+        animatedStyle,
+      ]}
+    >
+      <Animated.Text style={styles.particleChar}>
+        {particle.char}
+      </Animated.Text>
+    </Animated.View>
+  );
+});
 
 const FloatingParticles: React.FC<FloatingParticlesProps> = ({
   count = 6,
 }) => {
   const particles = useMemo(
-    () => Array.from({ length: count }, (_, i) => createParticle(i)),
+    () => Array.from({ length: count }, (_, i) => ({
+      id: `particle-${particleIdCounter++}-${i}`,
+      char: PARTICLE_CHARS[i % PARTICLE_CHARS.length],
+      x: 10 + Math.random() * 80,
+      duration: DURATIONS[i % DURATIONS.length],
+      delay: i * 800 + Math.random() * 1000,
+    })),
     [count],
   );
 
-  const animRefs = useRef<Animated.CompositeAnimation[]>([]);
-
-  useEffect(() => {
-    animRefs.current.forEach((a) => a.stop());
-
-    animRefs.current = particles.map((p) => {
-      return Animated.loop(
-        Animated.sequence([
-          Animated.delay(p.delay),
-          Animated.timing(p.animValue, {
-            toValue: 1,
-            duration: p.duration,
-            easing: Easing.linear,
-            useNativeDriver: true,
-          }),
-        ]),
-      );
-    });
-
-    animRefs.current.forEach((a) => a.start());
-
-    return () => {
-      animRefs.current.forEach((a) => a.stop());
-    };
-  }, [particles]);
-
   return (
     <View style={styles.container} pointerEvents="none" testID="floating-particles">
-      {particles.map((particle, index) => {
-        const translateY = particle.animValue.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, -60],
-        });
-
-        const rotate = particle.animValue.interpolate({
-          inputRange: [0, 0.5, 1],
-          outputRange: ['0deg', '15deg', '-15deg'],
-        });
-
-        const opacity = particle.animValue.interpolate({
-          inputRange: [0, 0.1, 0.9, 1],
-          outputRange: [0, 0.6, 0.6, 0],
-        });
-
-        return (
-          <Animated.View
-            key={index}
-            style={[
-              styles.particle,
-              {
-                left: `${particle.x}%` as unknown as number,
-                transform: [{ translateY }, { rotate }],
-                opacity,
-              },
-            ]}
-          >
-            <Animated.Text style={styles.particleChar}>
-              {particle.char}
-            </Animated.Text>
-          </Animated.View>
-        );
-      })}
+      {particles.map((particle) => (
+        <ParticleItem key={particle.id} particle={particle} />
+      ))}
     </View>
   );
 };

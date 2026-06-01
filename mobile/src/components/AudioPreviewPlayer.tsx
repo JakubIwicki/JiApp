@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
 import {
   ActivityIndicator,
+  Pressable,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -49,15 +49,17 @@ const AudioPreviewPlayer = ({ videoId }: AudioPreviewPlayerProps) => {
   return (
     <View style={styles.container}>
       <View style={styles.controls}>
-        <TouchableOpacity
-          style={styles.playButton}
+        <Pressable
+          style={({ pressed }) => [
+            styles.playButton,
+            pressed && { opacity: 0.7 },
+          ]}
           onPress={handlePress}
           testID="preview-play-button"
           accessibilityRole="button"
           accessibilityLabel={
             isPlaying ? t('common.stop') : t('preview.tapToListen')
           }
-          activeOpacity={0.7}
         >
           {isLoading ? (
             <ActivityIndicator
@@ -69,7 +71,7 @@ const AudioPreviewPlayer = ({ videoId }: AudioPreviewPlayerProps) => {
           ) : (
             <Text style={styles.playIcon}>&#9654;</Text>
           )}
-        </TouchableOpacity>
+        </Pressable>
 
         <View style={styles.labelContainer}>
           {isLoading ? (

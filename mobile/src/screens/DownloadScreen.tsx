@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import type { StackNavigationProp } from '@react-navigation/stack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import type { MainStackParamList, MainTabParamList } from '../navigation/types';
 import Button from '../components/Button';
@@ -21,8 +21,88 @@ import useDownload from '../hooks/useDownload';
 import useScreenTitle from '../hooks/useScreenTitle';
 import { colors, commonStyles, spacing, typography, borderRadius } from '../styles/theme';
 
-type DownloadNavigationProp = StackNavigationProp<MainStackParamList & MainTabParamList, 'Download'>;
+type DownloadNavigationProp = NativeStackNavigationProp<MainStackParamList & MainTabParamList, 'Download'>;
 type DownloadRouteProp = RouteProp<MainStackParamList, 'Download'>;
+
+const DownloadPendingView: React.FC<{
+  videoId: string;
+  onDownload: () => void;
+  downloadLabel: string;
+}> = ({ videoId, onDownload, downloadLabel }) => (
+  <View style={styles.buttonWrapper}>
+    <AudioPreviewPlayer videoId={videoId} />
+    <Button title={downloadLabel} onPress={onDownload} />
+  </View>
+);
+
+const DownloadingView: React.FC<{
+  title: string;
+  downloadingText: string;
+  pleaseWaitText: string;
+}> = ({ title, downloadingText, pleaseWaitText }) => (
+  <View style={commonStyles.centerContent}>
+    <LoadingSpinner text={downloadingText} />
+    <Text style={styles.downloadingTitle} numberOfLines={1}>
+      {title}
+    </Text>
+    <Text style={commonStyles.statusText}>{pleaseWaitText}</Text>
+  </View>
+);
+
+const DownloadSuccessView: React.FC<{
+  localFilePath: string;
+  successLabel: string;
+  fileSavedLabel: string;
+  goBackLabel: string;
+  viewHistoryLabel: string;
+  openInPlayerLabel: string;
+  onGoBack: () => void;
+  onViewHistory: () => void;
+  onPlay: () => void;
+}> = ({
+  localFilePath,
+  successLabel,
+  fileSavedLabel,
+  goBackLabel,
+  viewHistoryLabel,
+  openInPlayerLabel,
+  onGoBack,
+  onViewHistory,
+  onPlay,
+}) => (
+  <View style={commonStyles.centerContent}>
+    <SuccessCheckmark size={64} />
+    <Text style={styles.successTitle}>{successLabel}</Text>
+    <Text style={styles.fileSavedLabel}>{fileSavedLabel}</Text>
+    <Text style={styles.filePath} testID="file-path">
+      {localFilePath}
+    </Text>
+    <View style={styles.successButtons}>
+      <View style={styles.buttonRow}>
+        <View style={styles.successButtonWrapper}>
+          <Button title={goBackLabel} onPress={onGoBack} variant="outline" />
+        </View>
+        <View style={styles.successButtonWrapper}>
+          <Button title={viewHistoryLabel} onPress={onViewHistory} />
+        </View>
+      </View>
+      <Button title={openInPlayerLabel} onPress={onPlay} />
+    </View>
+  </View>
+);
+
+const DownloadErrorView: React.FC<{
+  error: string;
+  onRetry: () => void;
+  failedLabel: string;
+}> = ({ error, onRetry, failedLabel }) => (
+  <View style={commonStyles.centerContent}>
+    <ErrorMessage
+      message={failedLabel + ': ' + error}
+      onRetry={onRetry}
+    />
+  </View>
+);
 
 const DownloadScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -56,78 +136,6 @@ const DownloadScreen: React.FC = () => {
     playInMusicPlayer(t('download.openWith'));
   }, [playInMusicPlayer, t]);
 
-  const renderContent = () => {
-    if (isDownloading) {
-      return (
-        <View style={commonStyles.centerContent}>
-          <LoadingSpinner text={t('download.downloading')} />
-          <Text style={styles.downloadingTitle} numberOfLines={1}>
-            {title}
-          </Text>
-          <Text style={commonStyles.statusText}>
-            {t('download.pleaseWait')}
-          </Text>
-        </View>
-      );
-    }
-
-    if (localFilePath) {
-      return (
-        <View style={commonStyles.centerContent}>
-          <SuccessCheckmark visible={true} size={64} />
-          <Text style={styles.successTitle}>{t('download.success')}</Text>
-          <Text style={styles.fileSavedLabel}>{t('download.fileSaved')}</Text>
-          <Text style={styles.filePath} testID="file-path">
-            {localFilePath}
-          </Text>
-          <View style={styles.successButtons}>
-            <View style={styles.buttonRow}>
-              <View style={styles.successButtonWrapper}>
-                <Button
-                  title={t('download.goBack')}
-                  onPress={handleGoBack}
-                  variant="outline"
-                />
-              </View>
-              <View style={styles.successButtonWrapper}>
-                <Button
-                  title={t('download.viewHistory')}
-                  onPress={handleViewHistory}
-                />
-              </View>
-            </View>
-            <Button
-              title={t('download.openInPlayer')}
-              onPress={handlePlay}
-            />
-          </View>
-        </View>
-      );
-    }
-
-    if (error) {
-      return (
-        <View style={commonStyles.centerContent}>
-          <ErrorMessage
-            message={t('download.failed') + ': ' + error}
-            onRetry={handleDownload}
-          />
-        </View>
-      );
-    }
-
-    // Initial state — show preview player and download button
-    return (
-      <View style={styles.buttonWrapper}>
-        <AudioPreviewPlayer videoId={videoId} />
-        <Button
-          title={t('download.downloadMp3')}
-          onPress={handleDownload}
-        />
-      </View>
-    );
-  };
-
   return (
     <ScrollView
       style={commonStyles.screenContainer}
@@ -157,7 +165,37 @@ const DownloadScreen: React.FC = () => {
         ) : null}
       </View>
 
-      {renderContent()}
+      {isDownloading ? (
+        <DownloadingView
+          title={title}
+          downloadingText={t('download.downloading')}
+          pleaseWaitText={t('download.pleaseWait')}
+        />
+      ) : localFilePath ? (
+        <DownloadSuccessView
+          localFilePath={localFilePath}
+          successLabel={t('download.success')}
+          fileSavedLabel={t('download.fileSaved')}
+          goBackLabel={t('download.goBack')}
+          viewHistoryLabel={t('download.viewHistory')}
+          openInPlayerLabel={t('download.openInPlayer')}
+          onGoBack={handleGoBack}
+          onViewHistory={handleViewHistory}
+          onPlay={handlePlay}
+        />
+      ) : error ? (
+        <DownloadErrorView
+          error={error}
+          onRetry={handleDownload}
+          failedLabel={t('download.failed')}
+        />
+      ) : (
+        <DownloadPendingView
+          videoId={videoId}
+          onDownload={handleDownload}
+          downloadLabel={t('download.downloadMp3')}
+        />
+      )}
     </ScrollView>
   );
 };

@@ -27,10 +27,11 @@ const useHistory = (): UseHistoryResult => {
   const { showSuccess, showError } = useToast();
 
   useEffect(() => {
+    const controller = abortRef.current;
     return () => {
-      abortRef.current?.abort();
+      controller?.abort();
     };
-  }, []);
+  }, [abortRef]);
 
   const loadHistory = useCallback(async (limit?: number) => {
     // Cancel any previous in-flight request
@@ -73,7 +74,7 @@ const useHistory = (): UseHistoryResult => {
       showError('toast.archiveFailed');
       setSearches(previous);
     }
-  }, [searches]);
+  }, [searches, showSuccess, showError]);
 
   const archiveDownload = useCallback(async (id: number) => {
     const previous = downloads;
@@ -85,7 +86,7 @@ const useHistory = (): UseHistoryResult => {
       showError('toast.archiveFailed');
       setDownloads(previous);
     }
-  }, [downloads]);
+  }, [downloads, showSuccess, showError]);
 
   return {
     searches,

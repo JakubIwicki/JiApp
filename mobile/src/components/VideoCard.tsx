@@ -1,12 +1,12 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import {
-  Animated,
   Image,
+  Pressable,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
+import Animated, { useSharedValue, withTiming, useAnimatedStyle } from 'react-native-reanimated';
 import type { VideoItem } from '../types/api';
 import { colors, borderRadius, spacing } from '../styles/theme';
 
@@ -16,41 +16,34 @@ interface VideoCardProps {
 }
 
 const VideoCard: React.FC<VideoCardProps> = ({ video, onPress }) => {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(8)).current;
+  const fadeAnim = useSharedValue(0);
+  const slideAnim = useSharedValue(8);
 
   useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-
-    Animated.timing(slideAnim, {
-      toValue: 0,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
+    fadeAnim.value = withTiming(1, { duration: 300 });
+    slideAnim.value = withTiming(0, { duration: 300 });
   }, [fadeAnim, slideAnim]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: fadeAnim.value,
+    transform: [{ translateY: slideAnim.value }],
+  }));
 
   const handlePress = () => {
     onPress(video);
   };
 
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={handlePress}
-      activeOpacity={0.7}
+      style={({ pressed }) => pressed && { opacity: 0.7 }}
       testID="video-card"
       accessibilityRole="button"
     >
       <Animated.View
         style={[
           styles.card,
-          {
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }],
-          },
+          animatedStyle,
         ]}
       >
         {video.imageUrl ? (
@@ -75,7 +68,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onPress }) => {
           </Text>
         </View>
       </Animated.View>
-    </TouchableOpacity>
+    </Pressable>
   );
 };
 
@@ -87,11 +80,7 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.lg,
     marginVertical: 6,
     overflow: 'hidden',
-    shadowColor: colors.cardShadow,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    boxShadow: '0 1px 2px rgba(43,33,24,0.1)',
   },
   thumbnail: {
     width: 120,

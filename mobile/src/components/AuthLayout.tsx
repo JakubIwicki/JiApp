@@ -2,9 +2,9 @@ import React from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   Text,
-  TouchableOpacity,
 } from 'react-native';
 import Button from './Button';
 import { commonStyles, typography, spacing } from '../styles/theme';
@@ -52,12 +52,12 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
           loading={buttonLoading}
         />
 
-        <TouchableOpacity
+        <Pressable
           onPress={onFooterLinkPress}
-          style={commonStyles.linkContainer}
+          style={({ pressed }) => [commonStyles.linkContainer, pressed && { opacity: 0.7 }]}
         >
           <Text style={commonStyles.linkText}>{footerLinkText}</Text>
-        </TouchableOpacity>
+        </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
   );

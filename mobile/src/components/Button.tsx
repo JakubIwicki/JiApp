@@ -1,11 +1,11 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback } from 'react';
 import {
   ActivityIndicator,
-  Animated,
+  Pressable,
   StyleSheet,
   Text,
-  TouchableOpacity,
 } from 'react-native';
+import Animated, { useSharedValue, withSpring, useAnimatedStyle } from 'react-native-reanimated';
 import { animation, colors } from '../styles/theme';
 
 interface ButtonProps {
@@ -24,29 +24,27 @@ const Button: React.FC<ButtonProps> = ({
   variant = 'primary',
 }) => {
   const isDisabled = disabled || loading;
-  const scaleValue = useRef(new Animated.Value(1)).current;
+  const scaleValue = useSharedValue(1);
 
   const handlePressIn = useCallback(() => {
-    Animated.spring(scaleValue, {
-      toValue: 0.96,
-      ...animation.spring.bouncy,
-    }).start();
+    scaleValue.value = withSpring(0.96, animation.spring.bouncy);
   }, [scaleValue]);
 
   const handlePressOut = useCallback(() => {
-    Animated.spring(scaleValue, {
-      toValue: 1,
-      ...animation.spring.bouncy,
-    }).start();
+    scaleValue.value = withSpring(1, animation.spring.bouncy);
   }, [scaleValue]);
 
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scaleValue.value }],
+  }));
+
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={onPress}
       disabled={isDisabled}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      activeOpacity={0.8}
+      style={({ pressed }) => pressed && { opacity: 0.8 }}
       accessibilityRole="button"
       testID="button"
     >
@@ -55,7 +53,7 @@ const Button: React.FC<ButtonProps> = ({
           styles.button,
           variant === 'outline' && styles.outlineButton,
           isDisabled && styles.disabled,
-          { transform: [{ scale: scaleValue }] },
+          animatedStyle,
         ]}
       >
         {loading ? (
@@ -68,7 +66,7 @@ const Button: React.FC<ButtonProps> = ({
           <Text style={[styles.text, variant === 'outline' && styles.outlineText]}>{title}</Text>
         )}
       </Animated.View>
-    </TouchableOpacity>
+    </Pressable>
   );
 };
 

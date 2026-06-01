@@ -39,8 +39,8 @@ export const useIsFocused = () => true;
 export const CommonActions = { navigate: () => {}, reset: () => {}, goBack: () => {} };
 export const StackActions = { push: () => {}, pop: () => {}, replace: () => {} };
 
-// @react-navigation/stack mocks
-export const createStackNavigator = () => ({
+// @react-navigation/native-stack mocks
+export const createNativeStackNavigator = () => ({
   Navigator: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   Screen: ({
     children,

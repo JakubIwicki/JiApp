@@ -1,12 +1,18 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import {
-  Animated,
-  PanResponder,
+  Pressable,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  withSpring,
+  withTiming,
+  useAnimatedStyle,
+  runOnJS,
+} from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { colors, borderRadius } from '../styles/theme';
 import type { ToastType } from '../context/ToastContext';
 
@@ -33,98 +39,88 @@ const BG_COLORS: Record<ToastType, string> = {
 };
 
 const Toast: React.FC<ToastProps> = ({ type, title, description, persistent, onDismiss }) => {
-  const translateY = useRef(new Animated.Value(-100)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
-  const panX = useRef(new Animated.Value(0)).current;
+  const translateY = useSharedValue(-100);
+  const opacity = useSharedValue(0);
+  const panX = useSharedValue(0);
   const dismissingRef = useRef(false);
 
-  const animateOut = (callback?: () => void) => {
+  const animateOut = useCallback((callback?: () => void) => {
     dismissingRef.current = true;
-    Animated.parallel([
-      Animated.timing(translateY, {
-        toValue: -100,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacity, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start(() => callback?.());
-  };
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.spring(translateY, {
-        toValue: 0,
-        tension: 200,
-        friction: 12,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    translateY.value = withTiming(-100, { duration: 200 });
+    opacity.value = withTiming(0, { duration: 200 }, () => {
+      if (callback) {
+        runOnJS(callback)();
+      }
+    });
   }, [translateY, opacity]);
 
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gesture) =>
-        Math.abs(gesture.dx) > 5 && Math.abs(gesture.dy) < 10,
-      onPanResponderMove: (_, gesture) => {
-        if (gesture.dx < 0) {
-          panX.setValue(gesture.dx);
-        }
-      },
-      onPanResponderRelease: (_, gesture) => {
-        if (gesture.dx < -50) {
-          animateOut(() => onDismiss());
-        } else {
-          Animated.spring(panX, {
-            toValue: 0,
-            useNativeDriver: true,
-          }).start();
-        }
-      },
-    }),
-  ).current;
+  useEffect(() => {
+    translateY.value = withSpring(0, {
+      tension: 200,
+      friction: 12,
+    });
+    opacity.value = withTiming(1, { duration: 300 });
+  }, [translateY, opacity]);
+
+  const panGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .activeOffsetX([-5, 5])
+        .onUpdate((event) => {
+          if (event.translationX < 0) {
+            panX.value = event.translationX;
+          }
+        })
+        .onEnd((event) => {
+          if (event.translationX < -50) {
+            animateOut(() => onDismiss());
+          } else {
+            panX.value = withSpring(0);
+          }
+        }),
+    [panX, onDismiss, animateOut],
+  );
 
   const handleDismiss = () => {
     if (dismissingRef.current) return;
     animateOut(() => onDismiss());
   };
 
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }, { translateX: panX.value }],
+    opacity: opacity.value,
+  }));
+
   const bgColor = BG_COLORS[type];
   const icon = ICONS[type];
 
   return (
-    <Animated.View
-      style={[
-        styles.container,
-        { backgroundColor: bgColor, transform: [{ translateY }, { translateX: panX }], opacity },
-      ]}
-      {...panResponder.panHandlers}
-    >
-      <Text style={styles.icon}>{icon}</Text>
-      <View style={styles.content}>
-        <Text style={styles.title} numberOfLines={1}>
-          {title}
-        </Text>
-        {description ? (
-          <Text style={styles.description} numberOfLines={1}>
-            {description}
+    <GestureDetector gesture={panGesture}>
+      <Animated.View
+        style={[
+          styles.container,
+          { backgroundColor: bgColor },
+          animatedStyle,
+        ]}
+      >
+        <Text style={styles.icon}>{icon}</Text>
+        <View style={styles.content}>
+          <Text style={styles.title} numberOfLines={1}>
+            {title}
           </Text>
+          {description ? (
+            <Text style={styles.description} numberOfLines={1}>
+              {description}
+            </Text>
+          ) : null}
+        </View>
+        {persistent ? (
+          <Pressable onPress={handleDismiss} style={({ pressed }) => [styles.closeButton, pressed && { opacity: 0.7 }]} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Text style={styles.closeText}>{'✕'}</Text>
+          </Pressable>
         ) : null}
-      </View>
-      {persistent ? (
-        <TouchableOpacity onPress={handleDismiss} style={styles.closeButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Text style={styles.closeText}>{'✕'}</Text>
-        </TouchableOpacity>
-      ) : null}
-    </Animated.View>
+      </Animated.View>
+    </GestureDetector>
   );
 };
 

@@ -12,6 +12,7 @@ jest.mock('axios', () => {
 
 jest.mock('../storageService', () => ({
   getToken: jest.fn(),
+  getCredentials: jest.fn(),
   clearToken: jest.fn(),
   clearUserId: jest.fn(),
   clearDisplayName: jest.fn(),
@@ -36,7 +37,7 @@ describe('apiClient 401 response interceptor', () => {
   });
 
   it('clears all 5 auth storage keys on 401 response', async () => {
-    const error401 = { response: { status: 401 } };
+    const error401 = { response: { status: 401 }, config: {} };
 
     await expect(errorHandler(error401)).rejects.toEqual(error401);
 

@@ -62,13 +62,17 @@ export const ToastContext = createContext<ToastContextValue>({
 
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(toastReducer, { queue: [] });
-  const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(null!);
+  if (timersRef.current === null) {
+    timersRef.current = new Map();
+  }
 
   useEffect(() => {
+    const timers = timersRef.current;
     return () => {
-      timersRef.current.forEach((timer) => clearTimeout(timer));
+      timers.forEach((timer) => clearTimeout(timer));
     };
-  }, []);
+  }, [timersRef]);
 
   const popToast = useCallback((id: string) => {
     dispatch({ type: 'POP', id });

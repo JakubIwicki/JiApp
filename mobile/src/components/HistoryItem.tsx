@@ -1,10 +1,12 @@
 import React from 'react';
-import { Animated, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 import type { SearchHistoryItem, DownloadHistoryItem } from '../types/api';
 import { formatDate } from '../utils/dateUtils';
 import { colors, spacing, borderRadius } from '../styles/theme';
+
+type AnimatedInterpolation<T> = import('react-native').Animated.AnimatedInterpolation<T>;
 
 interface BaseProps {
   /** Discriminator to determine which data type to render. */
@@ -21,23 +23,25 @@ const HistoryItem: React.FC<BaseProps> = ({ type, item, onPress, onArchive }) =>
   const { t } = useTranslation();
 
   const renderRightActions = (
-    _progress: Animated.AnimatedInterpolation<number>,
-    _dragX: Animated.AnimatedInterpolation<number>,
+    _progress: AnimatedInterpolation<number>,
+    _dragX: AnimatedInterpolation<number>,
   ) => {
     if (!onArchive) {
       return null;
     }
     return (
       <View style={styles.archiveContainer}>
-        <TouchableOpacity
-          style={styles.archiveButton}
+        <Pressable
+          style={({ pressed }) => [
+            styles.archiveButton,
+            pressed && { opacity: 0.7 },
+          ]}
           onPress={onArchive}
-          activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel={t('history.archiveAction')}
         >
           <Text style={styles.archiveButtonText}>{t('history.archiveAction')}</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     );
   };
@@ -59,10 +63,12 @@ const HistoryItem: React.FC<BaseProps> = ({ type, item, onPress, onArchive }) =>
       (() => {
         const downloadItem = item as DownloadHistoryItem;
         return (
-          <TouchableOpacity
-            style={styles.container}
+          <Pressable
+            style={({ pressed }) => [
+              styles.container,
+              pressed && { opacity: 0.7 },
+            ]}
             onPress={() => onPress?.(downloadItem)}
-            activeOpacity={0.7}
             testID="history-item-download"
             accessibilityRole="button"
           >
@@ -85,7 +91,7 @@ const HistoryItem: React.FC<BaseProps> = ({ type, item, onPress, onArchive }) =>
               </Text>
               <Text style={styles.date}>{formatDate(downloadItem.downloadedAt)}</Text>
             </View>
-          </TouchableOpacity>
+          </Pressable>
         );
       })()
     );
@@ -106,11 +112,7 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.lg,
     marginVertical: spacing.xs,
     padding: 10,
-    shadowColor: colors.cardShadow,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 1,
+    boxShadow: '0 1px 2px rgba(43,33,24,0.08)',
   },
   iconContainer: {
     width: 40,

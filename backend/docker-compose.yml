@@ -1,0 +1,71 @@
+services:
+  postgres:
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: jiapp
+      POSTGRES_PASSWORD: jiapp_dev
+      POSTGRES_MULTIPLE_DATABASES: jiapp_identity,jiapp_ytdownloader,jiapp_scheduler
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jiapp"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  identity:
+    build: ./src/JiApp.Identity
+    ports:
+      - "5001:5001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionString=Host=postgres;Database=jiapp_identity;Username=jiapp;Password=jiapp_dev
+
+  ytdownloader:
+    build: ./src/JiApp.YtDownloader
+    ports:
+      - "5002:5002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionString=Host=postgres;Database=jiapp_ytdownloader;Username=jiapp;Password=jiapp_dev
+
+  imagetools:
+    build: ./src/JiApp.ImageTools
+    ports:
+      - "5003:5003"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=5003
+      - ASPNETCORE_HTTPS_PORTS=""
+
+  scheduler:
+    build: ./src/JiApp.Scheduler
+    ports:
+      - "5004:5004"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionString=Host=postgres;Port=5432;Database=jiapp_scheduler;Username=jiapp;Password=jiapp_dev
+
+  gateway:
+    build: ./src/JiApp.Gateway
+    ports:
+      - "5000:5000"
+    depends_on:
+      - identity
+      - ytdownloader
+      - imagetools
+      - scheduler
+
+volumes:
+  pgdata:

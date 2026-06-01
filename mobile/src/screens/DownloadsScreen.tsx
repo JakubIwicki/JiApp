@@ -1,14 +1,14 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useReducer, useState } from 'react';
 import {
-  RefreshControl,
   ScrollView,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import type { StackNavigationProp } from '@react-navigation/stack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MainStackParamList } from '../navigation/types';
 import type { DownloadHistoryItem } from '../types/api';
 import { getDownloadHistory, archiveDownload } from '../services/downloadService';
+import RefreshableScrollView from '../components/RefreshableScrollView';
 import SearchBar from '../components/SearchBar';
 import HistoryItem from '../components/HistoryItem';
 import HistorySection from '../components/HistorySection';
@@ -18,7 +18,47 @@ import useScreenTitle from '../hooks/useScreenTitle';
 import useToast from '../hooks/useToast';
 import { colors, commonStyles } from '../styles/theme';
 
-type DownloadsNavigationProp = StackNavigationProp<MainStackParamList, 'Download'>;
+type DownloadsNavigationProp = NativeStackNavigationProp<MainStackParamList, 'Download'>;
+
+interface DownloadsState {
+  downloads: DownloadHistoryItem[];
+  isLoading: boolean;
+  isRefreshing: boolean;
+  error: string | null;
+}
+
+type DownloadsAction =
+  | { type: 'FETCH_START'; pull: boolean }
+  | { type: 'FETCH_SUCCESS'; downloads: DownloadHistoryItem[] }
+  | { type: 'FETCH_ERROR'; error: string }
+  | { type: 'REMOVE_DOWNLOAD'; id: number };
+
+function downloadsReducer(state: DownloadsState, action: DownloadsAction): DownloadsState {
+  switch (action.type) {
+    case 'FETCH_START':
+      return {
+        ...state,
+        error: null,
+        isLoading: action.pull ? state.isLoading : true,
+        isRefreshing: action.pull ? true : false,
+      };
+    case 'FETCH_SUCCESS':
+      return { ...state, downloads: action.downloads, isLoading: false, isRefreshing: false, error: null };
+    case 'FETCH_ERROR':
+      return { ...state, error: action.error, isLoading: false, isRefreshing: false };
+    case 'REMOVE_DOWNLOAD':
+      return { ...state, downloads: state.downloads.filter((d) => d.id !== action.id) };
+    default:
+      return state;
+  }
+}
+
+const initialDownloadsState: DownloadsState = {
+  downloads: [],
+  isLoading: true,
+  isRefreshing: false,
+  error: null,
+};
 
 const DownloadsScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -26,29 +66,17 @@ const DownloadsScreen: React.FC = () => {
   useScreenTitle('nav.downloads');
   const { showSuccess, showError } = useToast();
 
-  const [downloads, setDownloads] = useState<DownloadHistoryItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [state, dispatch] = useReducer(downloadsReducer, initialDownloadsState);
   const [filterQuery, setFilterQuery] = useState('');
 
   const loadDownloads = useCallback(async (pull: boolean) => {
+    dispatch({ type: 'FETCH_START', pull });
     try {
-      if (pull) {
-        setIsRefreshing(true);
-      } else {
-        setIsLoading(true);
-      }
-      setError(null);
-
       const items = await getDownloadHistory();
-      setDownloads(items);
+      dispatch({ type: 'FETCH_SUCCESS', downloads: items });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      setError(message);
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
+      dispatch({ type: 'FETCH_ERROR', error: message });
     }
   }, []);
 
@@ -81,7 +109,7 @@ const DownloadsScreen: React.FC = () => {
 
   const handleArchive = useCallback(
     (item: DownloadHistoryItem) => {
-      setDownloads((prev) => prev.filter((d) => d.id !== item.id));
+      dispatch({ type: 'REMOVE_DOWNLOAD', id: item.id });
       archiveDownload(item.id)
         .then(() => showSuccess('toast.downloadArchived'))
         .catch(() => {
@@ -89,40 +117,52 @@ const DownloadsScreen: React.FC = () => {
           loadDownloads(false);
         });
     },
-    [loadDownloads],
+    [loadDownloads, showSuccess, showError],
+  );
+
+  const renderDownloadItem = useCallback(
+    (item: DownloadHistoryItem) => (
+      <HistoryItem
+        type="download"
+        item={item}
+        onPress={handleDownloadPress}
+        onArchive={() => handleArchive(item)}
+      />
+    ),
+    [handleDownloadPress, handleArchive],
+  );
+
+  const downloadKeyExtractor = useCallback(
+    (item: DownloadHistoryItem) => String(item.id),
+    [],
   );
 
   const filteredDownloads = filterQuery
-    ? downloads.filter((d) =>
+    ? state.downloads.filter((d) =>
         d.videoTitle.toLowerCase().includes(filterQuery.toLowerCase()),
       )
-    : downloads;
+    : state.downloads;
 
-  if (isLoading) {
+  if (state.isLoading) {
     return <LoadingSpinner />;
   }
 
-  if (error && downloads.length === 0) {
+  if (state.error && state.downloads.length === 0) {
     return (
       <ErrorMessage
-        message={t('history.loadError') + ': ' + error}
+        message={t('history.loadError') + ': ' + state.error}
         onRetry={handleRetry}
       />
     );
   }
 
   return (
-    <ScrollView
+    <RefreshableScrollView
       style={commonStyles.screenContainer}
       contentContainerStyle={commonStyles.scrollContent}
-      refreshControl={
-        <RefreshControl
-          refreshing={isRefreshing}
-          onRefresh={handleRefresh}
-          testID="downloads-refresh-control"
-          tintColor={colors.primary}
-        />
-      }
+      refreshing={state.isRefreshing}
+      onRefresh={handleRefresh}
+      refreshTestID="downloads-refresh-control"
     >
       <SearchBar
         onSearch={setFilterQuery}
@@ -132,19 +172,10 @@ const DownloadsScreen: React.FC = () => {
         title={t('history.downloads')}
         items={filteredDownloads}
         emptyText={t('history.noDownloads')}
-        renderItem={(item: DownloadHistoryItem) => (
-          <HistoryItem
-            type="download"
-            item={item}
-            onPress={handleDownloadPress}
-            onArchive={() => handleArchive(item)}
-          />
-        )}
-        keyExtractor={(item: DownloadHistoryItem) =>
-          String(item.id)
-        }
+        renderItem={renderDownloadItem}
+        keyExtractor={downloadKeyExtractor}
       />
-    </ScrollView>
+    </RefreshableScrollView>
   );
 };
 

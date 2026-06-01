@@ -18,7 +18,7 @@ using JiApp.Api.Features.History.GetHistory;
 using JiApp.Api.Features.Search.ArchiveSearch;
 using JiApp.Api.Features.Search.SearchHistory;
 using JiApp.Api.Features.Search.SearchVideos;
-using JiApp.Api.Middleware;
+using JiApp.Common.Middleware;
 using JiApp.Api.Services;
 using Serilog;
 using Asp.Versioning;
