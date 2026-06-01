@@ -126,9 +126,14 @@ public class Startup(GatewaySettings settings, IConfiguration configuration)
             };
         });
 
-        // YARP reverse proxy
+        // YARP reverse proxy — in dev, bypass SSL validation for self-signed certs
         services.AddReverseProxy()
-            .LoadFromConfig(configuration.GetSection("ReverseProxy"));
+            .LoadFromConfig(configuration.GetSection("ReverseProxy"))
+            .ConfigureHttpClient((context, handler) =>
+            {
+                handler.SslOptions.RemoteCertificateValidationCallback =
+                    (sender, cert, chain, errors) => true;
+            });
 
         // Rate limit policy service — endpoint manipulation for rate limiting
         services.AddSingleton<RateLimitPolicyService>();
@@ -136,8 +141,12 @@ public class Startup(GatewaySettings settings, IConfiguration configuration)
         // Global exception middleware — catches unhandled exceptions, returns JSON
         services.AddScoped<GlobalExceptionMiddleware>();
 
-        // HttpClient for health dashboard
-        services.AddHttpClient("healthCheck");
+        // HttpClient for health dashboard — bypass SSL for dev self-signed certs
+        services.AddHttpClient("healthCheck")
+            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (_, _, _, _) => true
+            });
     }
 
     public static void Configure(WebApplication app)
@@ -177,8 +186,8 @@ public class Startup(GatewaySettings settings, IConfiguration configuration)
         if (app.Environment.IsDevelopment())
         {
             HealthDashboardEndpoint.MapHealthDashboard(
-                app, "https://localhost:5001", "http://localhost:5002", "https://localhost:5003",
-                "https://localhost:5004");
+                app, "https://localhost:6701", "https://localhost:6702", "https://localhost:6703",
+                "https://localhost:6704");
         }
     }
 }

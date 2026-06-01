@@ -17,7 +17,7 @@
   "variable": [
     {
       "key": "base_url",
-      "value": "http://localhost:5001",
+      "value": "http://localhost":6701",
       "type": "string"
     },
     {
@@ -240,7 +240,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"tempId\": \"abc123-def456\",\n  \"downloadUrl\": \"http://localhost:5001/api/downloads/mp3/file/abc123-def456\"\n}"
+              "body": "{\n  \"tempId\": \"abc123-def456\",\n  \"downloadUrl\": \"http://localhost":6701/api/downloads/mp3/file/abc123-def456\"\n}"
             },
             {
               "name": "Error - 400 Validation Problem",

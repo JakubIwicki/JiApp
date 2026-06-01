@@ -41,7 +41,7 @@ fi
 APP_PIDS=()
 
 # By port (primary — finds the actual process holding our ports)
-for port in 5001 5003; do
+for port in 6701 6703; do
     pid=$(discover_pid_by_port "$port")
     if [ -n "$pid" ]; then
         APP_PIDS+=("$pid")
@@ -121,7 +121,7 @@ if $any_alive; then
 fi
 
 # ── Final port check ────────────────────────────────────
-for port in 5001 5003; do
+for port in 6701 6703; do
     pid=$(discover_pid_by_port "$port")
     if [ -n "$pid" ]; then
         echo -e "${YELLOW}Port $port still held by PID $pid, force-killing...${NC}"
@@ -131,7 +131,7 @@ for port in 5001 5003; do
 done
 
 # ── Final verification ──────────────────────────────────
-for port in 5001 5003; do
+for port in 6701 6703; do
     pid=$(discover_pid_by_port "$port")
     if [ -n "$pid" ]; then
         echo -e "${RED}${BOLD}✗ Failed to stop all API processes${NC}"

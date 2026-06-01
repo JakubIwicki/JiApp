@@ -398,7 +398,7 @@ Jest is the test runner (pre-installed via `@react-native/jest-preset`). Compone
 | Type | INTEGER | enum (0=Exception, 1=ThirdPartyService, 2=Insider) |
 | UserId | long? | FK -> AspNetUsers.Id, ON DELETE SET NULL, nullable, indexed |
 | Timestamp | DateTime | nullable |
-| Message | TEXT | MaxLength 50000, nullable |
+| Message | TEXT | MaxLength 67000, nullable |
 | Exception | TEXT | MaxLength 20000, nullable |
 
 ### 6.5 Identity Tables (managed by ASP.NET Identity)

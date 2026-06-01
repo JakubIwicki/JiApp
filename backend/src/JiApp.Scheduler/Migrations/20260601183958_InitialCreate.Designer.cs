@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace JiApp.Scheduler.Migrations
 {
     [DbContext(typeof(SchedulerDbContext))]
-    [Migration("20260529123538_InitialCreate")]
+    [Migration("20260601183958_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -195,13 +195,13 @@ namespace JiApp.Scheduler.Migrations
                     b.HasOne("JiApp.Scheduler.Domain.Client", "Client")
                         .WithMany("Appointments")
                         .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("JiApp.Scheduler.Domain.Service", "Service")
                         .WithMany()
                         .HasForeignKey("ServiceId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.OwnsOne("JiApp.Scheduler.Domain.Price", "Price", b1 =>

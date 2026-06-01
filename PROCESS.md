@@ -83,11 +83,11 @@ This document contains the detailed, task-level execution plan for building JiAp
   - Add Swagger/OpenAPI services
   - Add FluentValidation from assembly
   - Map a single GET `/api/health` endpoint returning 200 with `{ status: "healthy", timestamp: DateTime.UtcNow }`
-  - Configure Kestrel to listen on `http://*:5001`
+  - Configure Kestrel to listen on `http://*:6701`
   - Use Swagger UI in Development
 - File: `backend/src/JiApp.Api/appsettings.json`
   - Logging section (Default: Information, Microsoft.AspNetCore: Warning)
-  - Kestrel endpoints (Http: `http://*:5001`)
+  - Kestrel endpoints (Http: `http://*:6701`)
   - App section with BaseDirectory placeholder
   - ConnectionStrings section with JiDb SQLite connection string using `${BaseDirectory}` placeholder
   - Youtube section with api-key, yt-dlp path, ffmpeg path placeholders
@@ -96,10 +96,10 @@ This document contains the detailed, task-level execution plan for building JiAp
   - Override BaseDirectory to local dev path
   - Set YouTube API key (or user-secrets reference)
   - Set Jwt:Key to a development base64 key
-  - Set Jwt:Issuer to "JiApp-Dev", Jwt:Audience to "http://localhost:5001", ExpireMinutes to 60
+  - Set Jwt:Issuer to "JiApp-Dev", Jwt:Audience to "http://localhost:6701", ExpireMinutes to 60
 - File: `backend/src/JiApp.Api/Properties/launchSettings.json`
-  - Profile "http": commandName Project, applicationUrl `http://localhost:5001`, ASPNETCORE_ENVIRONMENT Development
-- Acceptance: `dotnet run --project backend/src/JiApp.Api` starts; `GET http://localhost:5001/api/health` returns 200 with JSON containing "healthy"
+  - Profile "http": commandName Project, applicationUrl `http://localhost:6701`, ASPNETCORE_ENVIRONMENT Development
+- Acceptance: `dotnet run --project backend/src/JiApp.Api` starts; `GET http://localhost:6701/api/health` returns 200 with JSON containing "healthy"
 
 **B0.5: Create global error handling middleware**
 - File: `backend/src/JiApp.Api/Middleware/GlobalExceptionMiddleware.cs`
@@ -170,7 +170,7 @@ This document contains the detailed, task-level execution plan for building JiAp
 
 **F0.5: Set up API client skeleton**
 - File: `mobile/src/services/apiClient.ts`
-  - Create Axios instance with configurable baseURL (default: `http://10.0.2.2:5001/api` for Android emulator accessing host machine)
+  - Create Axios instance with configurable baseURL (default: `http://10.0.2.2:6701/api` for Android emulator accessing host machine)
   - Add request interceptor that reads token from encrypted storage and attaches `Authorization: Bearer <token>` header
   - Add response interceptor that catches 401 and clears auth state
 - File: `mobile/src/types/api.ts`
@@ -214,8 +214,8 @@ This document contains the detailed, task-level execution plan for building JiAp
 
 ### Integration Tasks
 
-- [x] Verify backend health endpoint is reachable via curl: `GET http://localhost:5001/api/health` returns 200 with `{"status":"healthy","timestamp":"..."}`
-- [ ] Verify from Android emulator: `GET http://10.0.2.2:5001/api/health` from mobile API client (deferred — no emulator available)
+- [x] Verify backend health endpoint is reachable via curl: `GET http://localhost:6701/api/health` returns 200 with `{"status":"healthy","timestamp":"..."}`
+- [ ] Verify from Android emulator: `GET http://10.0.2.2:6701/api/health` from mobile API client (deferred — no emulator available)
 
 ### Definition of Done - Phase 0
 
@@ -225,7 +225,7 @@ This document contains the detailed, task-level execution plan for building JiAp
 - [ ] React Native app builds and launches on Android emulator (deferred — no emulator available)
 - [x] Navigation skeleton works — AuthNavigator, MainNavigator, AppNavigator, 6 placeholder screens
 - [x] i18n shows Polish strings by default, English when device language is English (40+ keys)
-- [x] API client configured with `http://10.0.2.2:5001/api` baseURL, TypeScript types matching API contract
+- [x] API client configured with `http://10.0.2.2:6701/api` baseURL, TypeScript types matching API contract
 - [x] All files follow naming conventions (PascalCase for C#, camelCase for TS)
 - [x] Backend middleware: GlobalExceptionMiddleware returns structured JSON errors, RequestLoggingMiddleware logs method/path/status
 - [x] Storybook setup: packages installed, .storybook/ config created, launch toggle wired in App.tsx
@@ -251,7 +251,7 @@ This document contains the detailed, task-level execution plan for building JiAp
 - File: `backend/src/JiApp.Common/Models/EventLog.cs`
   - `public enum EventLogType { Exception = 0, ThirdPartyService = 1, Insider = 2 }`
   - `public class EventLog : BaseEntity<long>`
-  - Properties: `EventLogType Type`, `long? UserId`, `DateTime? Timestamp`, `string? Message` (MaxLength 50000), `string? Exception` (MaxLength 20000)
+  - Properties: `EventLogType Type`, `long? UserId`, `DateTime? Timestamp`, `string? Message` (MaxLength 67000), `string? Exception` (MaxLength 20000)
   - Static factory: `public static EventLog Create(EventLogType type, long? userId, string message)` returning new EventLog with Timestamp = DateTime.UtcNow
 - Acceptance: All models compile; no circular references
 
@@ -1270,7 +1270,7 @@ Iteration 1: Critique failed. Issues: All three review agents have completed. Bo
 ### Low Priority
 
 - **Silent empty catch** in `GlobalExceptionMiddleware` line 35-38 — event log persistence failure should at least emit a warning log.
-- **Hardcoded `baseURL: 'http://10.0.2.2:5001/api'`** in `apiClient.ts` — should come from env config.
+- **Hardcoded `baseURL: 'http://10.0.2.2:6701/api'`** in `apiClient.ts` — should come from env config.
 - **Unconditional Storybook import** in `App.tsx` — may not be tree-shaken by bundler, pulling Storybook into production builds.
 - **`@testing-library/jest-native` is deprecated** — migration guide at callstack.github.io recommends built-in matchers in `@testing-library/react-native` v12.4+.
 - **Empty state `hasSearched` boolean** in `SearchScreen.tsx` — derivable from `results.length > 0` and `lastQueryRef.current`.

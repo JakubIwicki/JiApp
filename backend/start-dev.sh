@@ -33,11 +33,11 @@ export Youtube__ApiKey="${YOUTUBE_API_KEY:-placeholder}"
 # format: name|port|project_path|connection_string|protocol
 # Dev mode: all services use HTTPS with self-signed cert at ../../certs/dev-cert.pfx
 SERVICES=(
-  "Identity|5001|src/JiApp.Identity|Data Source=$DATA_DIR/identity_dev.db|https"
-  "YtDownloader|5002|src/JiApp.YtDownloader|Data Source=$DATA_DIR/ytdownloader_dev.db|https"
-  "ImageTools|5003|src/JiApp.ImageTools||https"
-  "Scheduler|5004|src/JiApp.Scheduler|Data Source=$DATA_DIR/scheduler_dev.db|https"
-  "Gateway|5000|src/JiApp.Gateway||https"
+  "Identity|6701|src/JiApp.Identity|Data Source=$DATA_DIR/identity_dev.db|https"
+  "YtDownloader|6702|src/JiApp.YtDownloader|Data Source=$DATA_DIR/ytdownloader_dev.db|https"
+  "ImageTools|6703|src/JiApp.ImageTools||https"
+  "Scheduler|6704|src/JiApp.Scheduler|Data Source=$DATA_DIR/scheduler_dev.db|https"
+  "Gateway|6700|src/JiApp.Gateway||https"
 )
 
 # ── Kill existing processes on our ports ─────────────────
@@ -73,7 +73,7 @@ done
 echo ""
 echo -ne "${YELLOW}Waiting for Gateway${NC}"
 for i in $(seq 1 30); do
-  if curl -sk "https://localhost:5000/health" > /dev/null 2>&1; then
+  if curl -sk "https://localhost:6700/health" > /dev/null 2>&1; then
     echo -e " ${GREEN}ready${NC}"
     break
   fi
@@ -85,9 +85,9 @@ done
 echo ""
 echo -e "${GREEN}${BOLD}All services started.${NC}"
 echo ""
-echo "  Gateway:    https://localhost:5000"
-echo "  Health:     https://localhost:5000/health"
-echo "  Dashboard:  https://localhost:5000/health/dashboard"
+echo "  Gateway:    https://localhost:6700"
+echo "  Health:     https://localhost:6700/health"
+echo "  Dashboard:  https://localhost:6700/health/dashboard"
 echo ""
 echo "  Logs:       $LOG_DIR/"
 echo "  Stop:       ./stop-dev.sh"

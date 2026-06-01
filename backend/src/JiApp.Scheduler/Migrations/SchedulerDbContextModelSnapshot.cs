@@ -81,7 +81,7 @@ namespace JiApp.Scheduler.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.PrimitiveCollection<string>("MemberUserIds")
+                    b.Property<string>("MemberUserIds")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -101,6 +101,9 @@ namespace JiApp.Scheduler.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<long>("BoardId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -115,6 +118,8 @@ namespace JiApp.Scheduler.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BoardId");
 
                     b.ToTable("Clients");
                 });
@@ -187,13 +192,13 @@ namespace JiApp.Scheduler.Migrations
                     b.HasOne("JiApp.Scheduler.Domain.Client", "Client")
                         .WithMany("Appointments")
                         .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("JiApp.Scheduler.Domain.Service", "Service")
                         .WithMany()
                         .HasForeignKey("ServiceId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.OwnsOne("JiApp.Scheduler.Domain.Price", "Price", b1 =>
@@ -229,6 +234,17 @@ namespace JiApp.Scheduler.Migrations
                         .IsRequired();
 
                     b.Navigation("Service");
+                });
+
+            modelBuilder.Entity("JiApp.Scheduler.Domain.Client", b =>
+                {
+                    b.HasOne("JiApp.Scheduler.Domain.Board", "Board")
+                        .WithMany()
+                        .HasForeignKey("BoardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Board");
                 });
 
             modelBuilder.Entity("JiApp.Scheduler.Domain.Expense", b =>

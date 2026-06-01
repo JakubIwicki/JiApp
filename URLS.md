@@ -15,22 +15,22 @@ graph TD
 
     %% Infrastructure
     PG[("🗄️ PostgreSQL<br/>:5432")]
-    GW["🚪 Gateway<br/>YARP Reverse Proxy<br/>:5000"]
+    GW["🚪 Gateway<br/>YARP Reverse Proxy<br/>:6700"]
 
     %% Services
-    ID["🔐 Identity<br/>:5001"]
-    YT["🎵 YtDownloader<br/>:5002"]
-    IMG["🖼️ ImageTools<br/>:5003"]
-    SCH["📅 Scheduler<br/>:5004"]
+    ID["🔐 Identity<br/>:6701"]
+    YT["🎵 YtDownloader<br/>:6702"]
+    IMG["🖼️ ImageTools<br/>:6703"]
+    SCH["📅 Scheduler<br/>:6704"]
 
     %% Mobile → Gateway
-    Mobile -->|"HTTPS :5000<br/>/api/v1/*"| GW
+    Mobile -->|"HTTPS :6700<br/>/api/v1/*"| GW
 
     %% Gateway → Downstream (YARP routes)
-    GW -->|"/api/v1/auth/* → :5001"| ID
-    GW -->|"/api/v1/yt/* → :5002"| YT
-    GW -->|"/api/v1/imagetools/* → :5003"| IMG
-    GW -->|"/api/v1/scheduler/* → :5004"| SCH
+    GW -->|"/api/v1/auth/* → :6701"| ID
+    GW -->|"/api/v1/yt/* → :6702"| YT
+    GW -->|"/api/v1/imagetools/* → :6703"| IMG
+    GW -->|"/api/v1/scheduler/* → :6704"| SCH
 
     %% Gateway health probes
     GW -.->|"health check"| ID
@@ -64,35 +64,35 @@ graph TD
 
 | Service | Dev URL | Prod Docker URL | Port |
 |---------|---------|-----------------|------|
-| **Gateway** | `https://*:5000` | `http://*:5000` | 5000 |
-| **Identity** | `https://*:5001` | `http://*:5001` | 5001 |
-| **YtDownloader** | `https://*:5002` | `http://*:5002` | 5002 |
-| **ImageTools** | `https://*:5003` | `http://*:5003` | 5003 |
-| **Scheduler** | `https://*:5004` | `http://*:5004` | 5004 |
+| **Gateway** | `https://*:6700` | `http://*:6700` | 6700 |
+| **Identity** | `https://*:6701` | `http://*:6701` | 6701 |
+| **YtDownloader** | `https://*:6702` | `http://*:6702` | 6702 |
+| **ImageTools** | `https://*:6703` | `http://*:6703` | 6703 |
+| **Scheduler** | `https://*:6704` | `http://*:6704` | 6704 |
 | **PostgreSQL** | `localhost:5432` | `postgres:5432` | 5432 |
 
 ### Docker Compose Internal URLs
 
 | Source | Target | Address |
 |--------|--------|---------|
-| Gateway → Identity | YARP destination | `http://identity:5001` |
-| Gateway → YtDownloader | YARP destination | `http://ytdownloader:5002` |
-| Gateway → ImageTools | YARP destination | `http://imagetools:5003` |
-| Gateway → Scheduler | YARP destination | `http://scheduler:5004` |
+| Gateway → Identity | YARP destination | `http://identity:6701` |
+| Gateway → YtDownloader | YARP destination | `http://ytdownloader:6702` |
+| Gateway → ImageTools | YARP destination | `http://imagetools:6703` |
+| Gateway → Scheduler | YARP destination | `http://scheduler:6704` |
 | All services → DB | PostgreSQL | `Host=postgres;Port=5432;Database=jiapp_{service}` |
 
 ---
 
-## 2. Gateway (port 5000)
+## 2. Gateway (port 6700)
 
 ### YARP Reverse Proxy Routes
 
 | Incoming Path | → Cluster | Dev Destination | Prod Destination |
 |---------------|-----------|-----------------|------------------|
-| `/api/v1/auth/{**catch-all}` | identity-cluster | `https://localhost:5001` | `http://identity:5001` |
-| `/api/v1/yt/{**catch-all}` | yt-cluster | `https://localhost:5002` | `http://ytdownloader:5002` |
-| `/api/v1/imagetools/{**catch-all}` | imagetools-cluster | `https://localhost:5003` | `http://imagetools:5003` |
-| `/api/v1/scheduler/{**catch-all}` | scheduler-cluster | `https://localhost:5004` | `http://scheduler:5004` |
+| `/api/v1/auth/{**catch-all}` | identity-cluster | `https://localhost:6701` | `http://identity:6701` |
+| `/api/v1/yt/{**catch-all}` | yt-cluster | `https://localhost:6702` | `http://ytdownloader:6702` |
+| `/api/v1/imagetools/{**catch-all}` | imagetools-cluster | `https://localhost:6703` | `http://imagetools:6703` |
+| `/api/v1/scheduler/{**catch-all}` | scheduler-cluster | `https://localhost:6704` | `http://scheduler:6704` |
 
 ### Health Endpoints
 
@@ -113,7 +113,7 @@ All origins accepted. Same policy on all services.
 
 ---
 
-## 3. Identity Service (port 5001) — prefix `/api/v1/auth`
+## 3. Identity Service (port 6701) — prefix `/api/v1/auth`
 
 | Method | Path | Handler | Status |
 |--------|------|---------|--------|
@@ -129,7 +129,7 @@ All origins accepted. Same policy on all services.
 
 ---
 
-## 4. YtDownloader Service (port 5002) — prefix `/api/v1/yt`
+## 4. YtDownloader Service (port 6702) — prefix `/api/v1/yt`
 
 ### API Endpoints
 
@@ -158,7 +158,7 @@ All origins accepted. Same policy on all services.
 
 ---
 
-## 5. ImageTools Service (port 5003) — prefix `/api/v1/imagetools`
+## 5. ImageTools Service (port 6703) — prefix `/api/v1/imagetools`
 
 | Method | Path | Handler | Status |
 |--------|------|---------|--------|
@@ -167,7 +167,7 @@ All origins accepted. Same policy on all services.
 
 ---
 
-## 6. Scheduler Service (port 5004) — prefix `/api/v1/scheduler`
+## 6. Scheduler Service (port 6704) — prefix `/api/v1/scheduler`
 
 #### Boards
 
@@ -243,14 +243,14 @@ All origins accepted. Same policy on all services.
 ### API Base URL
 
 ```
-https://192.168.100.105:5000/api/v1
+https://192.168.100.105:6700/api/v1
 ```
 
 Override via build-time env: `JIAPP_API_URL`
 
 ### API Calls by Module
 
-All calls go through the Gateway at `:5000` and are proxied via YARP.
+All calls go through the Gateway at `:6700` and are proxied via YARP.
 
 #### Authentication
 
@@ -413,7 +413,7 @@ Custom CA cert `jiapp_dev_ca` trusted for HTTPS with self-signed dev certificate
 | `JWT_ACCESS_EXPIRE` | Access token lifetime | 15 minutes |
 | `JWT_REFRESH_EXPIRE` | Refresh token lifetime | 7 days |
 | `YOUTUBE_API_KEY` | YouTube Data API v3 key | *(required)* |
-| `JIAPP_API_URL` | Mobile API base URL (build-time) | `https://192.168.100.105:5000/api/v1` |
+| `JIAPP_API_URL` | Mobile API base URL (build-time) | `https://192.168.100.105:6700/api/v1` |
 | `CORS_ALLOWED_ORIGIN` | CORS origin override | *(none)* |
 
 ---
@@ -423,11 +423,11 @@ Custom CA cert `jiapp_dev_ca` trusted for HTTPS with self-signed dev certificate
 ### Port Map
 
 ```
-:5000  →  Gateway (YARP reverse proxy)
-:5001  →  Identity (auth)
-:5002  →  YtDownloader (YouTube search/download/preview)
-:5003  →  ImageTools
-:5004  →  Scheduler (boards, clients)
+:6700  →  Gateway (YARP reverse proxy)
+:6701  →  Identity (auth)
+:6702  →  YtDownloader (YouTube search/download/preview)
+:6703  →  ImageTools
+:6704  →  Scheduler (boards, clients)
 :5432  →  PostgreSQL
 ```
 
@@ -445,9 +445,9 @@ Scheduler:   GET /api/v1/scheduler/health
 
 | Environment | URL |
 |-------------|-----|
-| Dev (local) | `https://localhost:5000` |
-| Dev (mobile) | `https://192.168.100.105:5000` |
-| Prod (Docker) | `http://gateway:5000` |
+| Dev (local) | `https://localhost:6700` |
+| Dev (mobile) | `https://192.168.100.105:6700` |
+| Prod (Docker) | `http://gateway:6700` |
 
 ### API Prefixes
 

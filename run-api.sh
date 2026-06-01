@@ -52,7 +52,7 @@ if [ -f "$PID_FILE" ]; then
 fi
 
 # ── Check for orphaned processes on our ports ───────────
-for port in 5001 5003; do
+for port in 6701 6703; do
     PORT_PID=$(discover_pid_by_port "$port")
     if [ -n "$PORT_PID" ]; then
         if ps -p "$PORT_PID" -o comm= 2>/dev/null | grep -qE "JiApp\.Api|dotnet"; then
@@ -161,13 +161,13 @@ if [ "$MODE" = "prod" ]; then
     export ASPNETCORE_ENVIRONMENT=Production
 
     if $HAS_CERT; then
-        export ASPNETCORE_URLS="http://*:5001;https://*:5003"
+        export ASPNETCORE_URLS="http://*:6701;https://*:6703"
         DOTNET_ARGS+=(
             --Kestrel:Endpoints:Https:Certificate:Path "$CERT_PATH"
             --Kestrel:Endpoints:Https:Certificate:Password "$CERT_PASSWORD"
         )
     else
-        export ASPNETCORE_URLS="http://*:5001"
+        export ASPNETCORE_URLS="http://*:6701"
     fi
 
 else
@@ -175,7 +175,7 @@ else
     DEV_CERT="$BACKEND_DIR/src/JiApp.Api/Infrastructure/dev-cert.pfx"
 
     export ASPNETCORE_ENVIRONMENT=Development
-    export ASPNETCORE_URLS="http://*:5001;https://*:5003"
+    export ASPNETCORE_URLS="http://*:6701;https://*:6703"
 
     if [ -f "$DEV_CERT" ]; then
         echo -e "${GREEN}✓${NC} Dev certificate: Infrastructure/dev-cert.pfx"
@@ -185,7 +185,7 @@ else
         )
     else
         echo -e "${YELLOW}⚠${NC}  Dev certificate not found, running HTTP-only"
-        export ASPNETCORE_URLS="http://*:5001"
+        export ASPNETCORE_URLS="http://*:6701"
     fi
 fi
 
@@ -206,7 +206,7 @@ echo "$LAUNCHER_PID" > "$PID_FILE"
 # ── Wait for the app to bind a port and discover real PID ──
 REAL_PID=""
 for ((i=1; i<=15; i++)); do
-    for port in 5001 5003; do
+    for port in 6701 6703; do
         REAL_PID=$(discover_pid_by_port "$port")
         if [ -n "$REAL_PID" ]; then
             break 2

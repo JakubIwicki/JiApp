@@ -10,14 +10,14 @@ graph TD
     YouTube["🌐 YouTube Data API v3<br/>yt-dlp / ffmpeg"]
 
     PG[("🗄️ PostgreSQL 16<br/>:5432")]
-    GW["🚪 Gateway<br/>YARP Reverse Proxy<br/>:5000"]
+    GW["🚪 Gateway<br/>YARP Reverse Proxy<br/>:6700"]
 
-    ID["🔐 Identity<br/>:5001"]
-    YT["🎵 YtDownloader<br/>:5002"]
-    IMG["🖼️ ImageTools<br/>:5003"]
-    SCH["📅 Scheduler<br/>:5004"]
+    ID["🔐 Identity<br/>:6701"]
+    YT["🎵 YtDownloader<br/>:6702"]
+    IMG["🖼️ ImageTools<br/>:6703"]
+    SCH["📅 Scheduler<br/>:6704"]
 
-    Mobile -->|"HTTPS :5000<br/>/api/v1/*"| GW
+    Mobile -->|"HTTPS :6700<br/>/api/v1/*"| GW
 
     GW -->|"/api/v1/auth/*"| ID
     GW -->|"/api/v1/yt/*"| YT
@@ -31,7 +31,7 @@ graph TD
     YT -->|"Search + Download"| YouTube
 ```
 
-All traffic enters through the Gateway on port 5000, which validates JWTs, applies rate limiting (14 policies), and proxies requests via YARP to downstream services. In development, services bind to `https://localhost:5001-5004`; in Docker, they use HTTP with Docker DNS service names.
+All traffic enters through the Gateway on port 6700, which validates JWTs, applies rate limiting (14 policies), and proxies requests via YARP to downstream services. In development, services bind to `https://localhost:6701-6704`; in Docker, they use HTTP with Docker DNS service names.
 
 ## Tech Stack
 
@@ -55,11 +55,11 @@ All traffic enters through the Gateway on port 5000, which validates JWTs, appli
 
 | Service | Port | Responsibility | Database |
 |---------|------|---------------|----------|
-| **Gateway** | 5000 | JWT auth, rate limiting, YARP reverse proxy, health dashboard | — |
-| **Identity** | 5001 | Registration, login, JWT tokens, refresh token rotation | `jiapp_identity` |
-| **YtDownloader** | 5002 | YouTube search, MP3 download, audio preview streaming | `jiapp_ytdownloader` |
-| **ImageTools** | 5003 | Image processing (stub) | — |
-| **Scheduler** | 5004 | Boards, clients, appointments, expenses, revenue reports | `jiapp_scheduler` |
+| **Gateway** | 6700 | JWT auth, rate limiting, YARP reverse proxy, health dashboard | — |
+| **Identity** | 6701 | Registration, login, JWT tokens, refresh token rotation | `jiapp_identity` |
+| **YtDownloader** | 6702 | YouTube search, MP3 download, audio preview streaming | `jiapp_ytdownloader` |
+| **ImageTools** | 6703 | Image processing (stub) | — |
+| **Scheduler** | 6704 | Boards, clients, appointments, expenses, revenue reports | `jiapp_scheduler` |
 
 ### Mobile
 
@@ -185,11 +185,11 @@ JiApp/
 ## Port Map
 
 ```
-:5000  →  Gateway   (YARP reverse proxy — public)
-:5001  →  Identity  (auth — internal)
-:5002  →  YtDownloader (YouTube — internal)
-:5003  →  ImageTools   (internal)
-:5004  →  Scheduler    (internal)
+:6700  →  Gateway   (YARP reverse proxy — public)
+:6701  →  Identity  (auth — internal)
+:6702  →  YtDownloader (YouTube — internal)
+:6703  →  ImageTools   (internal)
+:6704  →  Scheduler    (internal)
 :5432  →  PostgreSQL   (internal)
 ```
 
@@ -213,7 +213,7 @@ dotnet run --project src/JiApp.Scheduler
 dotnet run --project src/JiApp.Gateway
 
 # Health check
-curl http://localhost:5000/health
+curl http://localhost:6700/health
 ```
 
 ### Mobile

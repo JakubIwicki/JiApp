@@ -9,7 +9,7 @@ services:
   identity:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://*:5001
+      - ASPNETCORE_URLS="http://*:6701"
       - ConnectionStrings__IdentityDb=Data Source=/app/data/identity.db
     volumes:
       - identity-data:/app/data
@@ -17,7 +17,7 @@ services:
   ytdownloader:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://*:5002
+      - ASPNETCORE_URLS="http://*:6702"
       - ConnectionStrings__YtDb=Data Source=/app/data/ytdownloader.db
     volumes:
       - ytdownloader-data:/app/data
@@ -25,7 +25,7 @@ services:
   scheduler:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://*:5004
+      - ASPNETCORE_URLS="http://*:6704"
       - ConnectionString=Data Source=/app/data/scheduler_dev.db
     volumes:
       - scheduler-data:/app/data
@@ -33,7 +33,7 @@ services:
   gateway:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://*:5000
+      - ASPNETCORE_URLS="http://*:6700"
 
 volumes:
   identity-data:

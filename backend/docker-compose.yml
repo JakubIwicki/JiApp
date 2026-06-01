@@ -20,7 +20,7 @@ services:
       context: .
       dockerfile: ./src/JiApp.Identity/Dockerfile
     ports:
-      - "5001:5001"
+      - "6701:6701"
     depends_on:
       postgres:
         condition: service_healthy
@@ -33,7 +33,7 @@ services:
       context: .
       dockerfile: ./src/JiApp.YtDownloader/Dockerfile
     ports:
-      - "5002:5002"
+      - "6702:6702"
     depends_on:
       postgres:
         condition: service_healthy
@@ -46,10 +46,10 @@ services:
       context: .
       dockerfile: ./src/JiApp.ImageTools/Dockerfile
     ports:
-      - "5003:5003"
+      - "6703:6703"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_HTTP_PORTS=5003
+      - ASPNETCORE_HTTP_PORTS=6703
       - ASPNETCORE_HTTPS_PORTS=""
 
   scheduler:
@@ -57,7 +57,7 @@ services:
       context: .
       dockerfile: ./src/JiApp.Scheduler/Dockerfile
     ports:
-      - "5004:5004"
+      - "6704:6704"
     depends_on:
       postgres:
         condition: service_healthy
@@ -70,7 +70,7 @@ services:
       context: .
       dockerfile: ./src/JiApp.Gateway/Dockerfile
     ports:
-      - "5000:5000"
+      - "6700:6700"
     depends_on:
       - identity
       - ytdownloader

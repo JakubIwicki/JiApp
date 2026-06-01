@@ -91,13 +91,13 @@ fi
 
 # ── Kestrel binding ─────────────────────────────────────
 if $HAS_CERT; then
-    export ASPNETCORE_URLS="http://*:5001;https://*:5003"
+    export ASPNETCORE_URLS="http://*:6701;https://*:6703"
     DOTNET_ARGS+=(
         --Kestrel:Endpoints:Https:Certificate:Path "$CERT_PATH"
         --Kestrel:Endpoints:Https:Certificate:Password "$CERT_PASSWORD"
     )
 else
-    export ASPNETCORE_URLS="http://*:5001"
+    export ASPNETCORE_URLS="http://*:6701"
 fi
 
 export ASPNETCORE_ENVIRONMENT=Production

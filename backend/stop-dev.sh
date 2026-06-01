@@ -12,7 +12,7 @@ echo "Stopping JiApp services..."
 
 if [ ! -d "$PID_DIR" ]; then
   echo "No PID directory found. Killing by port instead..."
-  for port in 5000 5001 5002 5003 5004; do
+  for port in 6700 6701 6702 6703 6704; do
     pid=$(lsof -ti ":$port" 2>/dev/null || true)
     if [ -n "$pid" ]; then
       kill "$pid" 2>/dev/null || true
@@ -36,7 +36,7 @@ for pidfile in "$PID_DIR"/*.pid; do
 done
 
 # Clean up any remaining processes on our ports
-for port in 5000 5001 5002 5003 5004; do
+for port in 6700 6701 6702 6703 6704; do
   pid=$(lsof -ti ":$port" 2>/dev/null || true)
   if [ -n "$pid" ]; then
     kill "$pid" 2>/dev/null || true

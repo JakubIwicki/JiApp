@@ -22,7 +22,7 @@ services:
       dockerfile: ./src/JiApp.Identity/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      ASPNETCORE_URLS: http://*:5001
+      ASPNETCORE_URLS: "http://*:6701"
       ConnectionString: Host=postgres;Port=5432;Database=jiapp_identity;Username=jiapp;Password=${POSTGRES_PASSWORD}
       Jwt__Key: ${JWT_KEY:?required}
       Jwt__Issuer: ${JWT_ISSUER:-JiApp-Identity}
@@ -41,7 +41,7 @@ services:
       dockerfile: ./src/JiApp.YtDownloader/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      ASPNETCORE_URLS: http://*:5002
+      ASPNETCORE_URLS: "http://*:6702"
       ConnectionString: Host=postgres;Port=5432;Database=jiapp_ytdownloader;Username=jiapp;Password=${POSTGRES_PASSWORD}
       Jwt__Key: ${JWT_KEY:?required}
       Jwt__Issuer: ${JWT_ISSUER:-JiApp-Identity}
@@ -59,7 +59,7 @@ services:
       dockerfile: ./src/JiApp.ImageTools/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      ASPNETCORE_URLS: http://*:5003
+      ASPNETCORE_URLS: "http://*:6703"
       Jwt__Key: ${JWT_KEY:?required}
       Jwt__Issuer: ${JWT_ISSUER:-JiApp-Identity}
       Jwt__Audience: ${JWT_AUDIENCE:-jiapp-gateway}
@@ -74,7 +74,7 @@ services:
       dockerfile: ./src/JiApp.Scheduler/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      ASPNETCORE_URLS: http://*:5004
+      ASPNETCORE_URLS: "http://*:6704"
       ConnectionString: Host=postgres;Port=5432;Database=jiapp_scheduler;Username=jiapp;Password=${POSTGRES_PASSWORD}
       Jwt__Key: ${JWT_KEY:?required}
       Jwt__Issuer: ${JWT_ISSUER:-JiApp-Identity}
@@ -89,18 +89,18 @@ services:
       context: .
       dockerfile: ./src/JiApp.Gateway/Dockerfile
     ports:
-      - "5000:5000"
+      - "6700:6700"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      ASPNETCORE_HTTP_PORTS: 5000
+      ASPNETCORE_HTTP_PORTS: 6700
       ASPNETCORE_HTTPS_PORTS:
       Jwt__Key: ${JWT_KEY:?required}
       Jwt__Issuer: ${JWT_ISSUER:-JiApp-Identity}
       Jwt__Audience: ${JWT_AUDIENCE:-jiapp-gateway}
-      ReverseProxy__Clusters__identity-cluster__Destinations__identity__Address: http://identity:5001
-      ReverseProxy__Clusters__yt-cluster__Destinations__yt__Address: http://ytdownloader:5002
-      ReverseProxy__Clusters__imagetools-cluster__Destinations__imagetools__Address: http://imagetools:5003
-      ReverseProxy__Clusters__scheduler-cluster__Destinations__scheduler__Address: http://scheduler:5004
+      ReverseProxy__Clusters__identity-cluster__Destinations__identity__Address: "http://identity:6701"
+      ReverseProxy__Clusters__yt-cluster__Destinations__yt__Address: "http://ytdownloader:6702"
+      ReverseProxy__Clusters__imagetools-cluster__Destinations__imagetools__Address: "http://imagetools:6703"
+      ReverseProxy__Clusters__scheduler-cluster__Destinations__scheduler__Address: "http://scheduler:6704"
     depends_on:
       - identity
       - ytdownloader

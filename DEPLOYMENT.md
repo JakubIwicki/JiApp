@@ -22,7 +22,7 @@ Note: double-underscore (`__`) maps to colon (`:`) in ASP.NET Core's environment
 ASPNETCORE_ENVIRONMENT=Production dotnet run --project backend/src/JiApp.Api
 ```
 
-- Listens on HTTP `*:5001` and HTTPS `*:5003`.
+- Listens on HTTP `*:6701` and HTTPS `*:6703`.
 - SQLite database is created at `{AppContext.BaseDirectory}/JiApp.db` unless overridden via `ConnectionStrings:JiDb`.
 - Swagger is disabled. HSTS is enabled. Security headers (X-Content-Type-Options, X-Frame-Options, Referrer-Policy) are always applied.
 
