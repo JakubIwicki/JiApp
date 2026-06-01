@@ -15,5 +15,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: millionco/react-doctor@main
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          diff: main
+          directory: mobile
+          fail-on: warning
+          comment: true
+          annotations: true
