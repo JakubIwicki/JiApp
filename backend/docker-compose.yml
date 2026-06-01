@@ -16,7 +16,9 @@ services:
       retries: 5
 
   identity:
-    build: ./src/JiApp.Identity
+    build:
+      context: .
+      dockerfile: ./src/JiApp.Identity/Dockerfile
     ports:
       - "5001:5001"
     depends_on:
@@ -27,7 +29,9 @@ services:
       - ConnectionString=Host=postgres;Database=jiapp_identity;Username=jiapp;Password=jiapp_dev
 
   ytdownloader:
-    build: ./src/JiApp.YtDownloader
+    build:
+      context: .
+      dockerfile: ./src/JiApp.YtDownloader/Dockerfile
     ports:
       - "5002:5002"
     depends_on:
@@ -38,7 +42,9 @@ services:
       - ConnectionString=Host=postgres;Database=jiapp_ytdownloader;Username=jiapp;Password=jiapp_dev
 
   imagetools:
-    build: ./src/JiApp.ImageTools
+    build:
+      context: .
+      dockerfile: ./src/JiApp.ImageTools/Dockerfile
     ports:
       - "5003:5003"
     environment:
@@ -47,7 +53,9 @@ services:
       - ASPNETCORE_HTTPS_PORTS=""
 
   scheduler:
-    build: ./src/JiApp.Scheduler
+    build:
+      context: .
+      dockerfile: ./src/JiApp.Scheduler/Dockerfile
     ports:
       - "5004:5004"
     depends_on:
@@ -58,7 +66,9 @@ services:
       - ConnectionString=Host=postgres;Port=5432;Database=jiapp_scheduler;Username=jiapp;Password=jiapp_dev
 
   gateway:
-    build: ./src/JiApp.Gateway
+    build:
+      context: .
+      dockerfile: ./src/JiApp.Gateway/Dockerfile
     ports:
       - "5000:5000"
     depends_on:
