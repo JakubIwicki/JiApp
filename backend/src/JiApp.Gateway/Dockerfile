@@ -2,6 +2,7 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY ["src/JiApp.Gateway/JiApp.Gateway.csproj", "src/JiApp.Gateway/"]
 COPY ["src/JiApp.Common/JiApp.Common.csproj", "src/JiApp.Common/"]
+COPY Directory.Build.props .
 RUN dotnet restore "src/JiApp.Gateway/JiApp.Gateway.csproj"
 COPY . .
 WORKDIR "/src/src/JiApp.Gateway"
