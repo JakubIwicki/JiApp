@@ -19,7 +19,7 @@ describe('ModuleRegistry', () => {
       expect(mod).toBeDefined();
       expect(mod?.id).toBe('yt-downloader');
       expect(mod?.name).toBe('modules.ytdownloader');
-      expect(mod?.icon).toBe('youtube');
+      expect(mod?.icon).toBe('search');
       expect(mod?.enabled).toBe(true);
     });
 

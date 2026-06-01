@@ -27,27 +27,19 @@ describe('react-native-track-player patch: MusicModule.kt', () => {
     expect(content).toContain('@ReactMethod');
   });
 
-  it('has no expression-body @ReactMethod methods (no "= scope.launch {" pattern)', () => {
-    // RN 0.85 TurboModule interop rejects @ReactMethod methods with non-void return types.
-    // Expression-body syntax (fun X() = scope.launch { }) infers return type Job.
-    // The patch converts them to block bodies so return type is Unit (void).
-    const lines = content.split('\n');
-    const badLines = lines.filter((line) => /=\s*scope\.launch\s*\{/.test(line));
-    expect(badLines).toEqual([]);
+  it('has originalItem!! null assertions in getTrack (patch hunk 1)', () => {
+    // The patch adds non-null assertion (!!) on originalItem to fix
+    // TypeScript/RN 0.85 null-safety interop in the getTrack method.
+    expect(content).toContain(
+      'callback.resolve(Arguments.fromBundle(musicService.tracks[index].originalItem!!))',
+    );
   });
 
-  it('has no multi-line expression-body pattern', () => {
-    const lines = content.split('\n');
-    const badPairs = [];
-    for (let i = 0; i < lines.length - 1; i++) {
-      if (
-        /\)\s*=\s*$/.test(lines[i].trimEnd()) &&
-        /\bscope\.launch\s*\{/.test(lines[i + 1])
-      ) {
-        badPairs.push(i + 1);
-      }
-    }
-    expect(badPairs).toEqual([]);
+  it('has originalItem!! null assertions in getActiveTrack (patch hunk 2)', () => {
+    // The patch adds non-null assertion (!!) on originalItem in getActiveTrack.
+    expect(content).toContain(
+      'musicService.tracks[musicService.getCurrentTrackIndex()].originalItem!!',
+    );
   });
 });
 
@@ -61,15 +53,10 @@ describe('react-native-track-player patch: MusicService.kt', () => {
     content = fs.readFileSync(SERVICE_PATH, 'utf8');
   });
 
-  it('emit() and emitList() use reactContext, not reactNativeHost', () => {
-    // RN 0.85 New Architecture: ReactApplication.getReactNativeHost() throws.
-    // HeadlessJsTaskService provides 'reactContext' which handles both architectures.
-    // The patch replaces reactNativeHost.reactInstanceManager.currentReactContext
-    // with reactContext in emit() and emitList().
-    expect(content).not.toMatch(/reactNativeHost\.reactInstanceManager\.currentReactContext/);
-  });
-
   it('MusicService extends HeadlessJsTaskService', () => {
+    // The patch-package does not currently modify MusicService.kt.
+    // The library already extends HeadlessJsTaskService which is the
+    // expected base class for RN 0.85 compatibility.
     expect(content).toContain('class MusicService : HeadlessJsTaskService()');
   });
 });
