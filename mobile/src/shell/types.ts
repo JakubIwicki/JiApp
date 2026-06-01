@@ -1,7 +1,7 @@
 export interface JiModule {
   id: string;
   name: string; // i18n key
-  icon: string; // IconName for TabIcon
+  icon: 'search' | 'downloads' | 'history' | 'settings';
   component: React.ComponentType<any>;
   enabled: boolean;
 }

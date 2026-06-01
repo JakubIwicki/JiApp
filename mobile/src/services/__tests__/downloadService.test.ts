@@ -76,7 +76,7 @@ import {
   openAudioFile,
 } from '../downloadService';
 import ReactNativeBlobUtil from 'react-native-blob-util';
-import type { DownloadRequest, DownloadResponse, DownloadHistoryItem } from '../types/api';
+import type { DownloadRequest, DownloadResponse, DownloadHistoryItem } from '../../types/api';
 
 const mockPost = apiClient.post as jest.Mock;
 const mockGet = apiClient.get as jest.Mock;

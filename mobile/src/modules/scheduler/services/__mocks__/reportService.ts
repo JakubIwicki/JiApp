@@ -55,35 +55,35 @@ const mockRevenueReports: RevenueReport[] = [
 
 const mockClientReports: ClientReportItem[] = [
   {
-    client: { id: 1, name: 'Anna Kowalska', phone: '+48 601 111 222' },
+    client: { id: 1, boardId: 1, name: 'Anna Kowalska', phone: '+48 601 111 222' },
     visitCount: 12,
     totalSpent: 720,
     lastVisit: '2026-05-30',
     averagePerVisit: 60,
   },
   {
-    client: { id: 2, name: 'Marta Zielinska', phone: '+48 602 222 333' },
+    client: { id: 2, boardId: 1, name: 'Marta Zielinska', phone: '+48 602 222 333' },
     visitCount: 8,
     totalSpent: 1600,
     lastVisit: '2026-05-28',
     averagePerVisit: 200,
   },
   {
-    client: { id: 3, name: 'Piotr Nowak' },
+    client: { id: 3, boardId: 1, name: 'Piotr Nowak' },
     visitCount: 6,
     totalSpent: 300,
     lastVisit: '2026-05-25',
     averagePerVisit: 50,
   },
   {
-    client: { id: 4, name: 'Katarzyna Adamczyk', phone: '+48 603 333 444' },
+    client: { id: 4, boardId: 1, name: 'Katarzyna Adamczyk', phone: '+48 603 333 444' },
     visitCount: 5,
     totalSpent: 1250,
     lastVisit: '2026-05-20',
     averagePerVisit: 250,
   },
   {
-    client: { id: 5, name: 'Michal Lewandowski', phone: '+48 604 555 666' },
+    client: { id: 5, boardId: 1, name: 'Michal Lewandowski', phone: '+48 604 555 666' },
     visitCount: 3,
     totalSpent: 120,
     lastVisit: '2026-05-15',

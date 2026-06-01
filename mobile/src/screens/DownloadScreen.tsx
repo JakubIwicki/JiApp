@@ -121,6 +121,7 @@ const DownloadScreen: React.FC = () => {
       description,
       imageUrl,
       videoUrl,
+      channelTitle: '',
     });
   }, [videoId, title, description, imageUrl, videoUrl, download]);
 

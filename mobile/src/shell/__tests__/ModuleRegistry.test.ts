@@ -7,7 +7,7 @@ describe('ModuleRegistry', () => {
     registerModule({
       id: 'yt-downloader',
       name: 'modules.ytdownloader',
-      icon: 'youtube',
+      icon: 'search',
       component: null as unknown as React.ComponentType<any>,
       enabled: true,
     });
@@ -54,7 +54,7 @@ describe('ModuleRegistry', () => {
       registerModule({
         id: 'yt-downloader',
         name: 'updated',
-        icon: 'youtube',
+        icon: 'search',
         component: null as unknown as React.ComponentType<any>,
         enabled: false,
       });

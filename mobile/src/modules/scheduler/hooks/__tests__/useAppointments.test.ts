@@ -19,7 +19,7 @@ const mockUpdateStatus = appointmentService.updateStatus as jest.Mock;
 
 const mockAppointment: Appointment = {
   id: 1, boardId: 1,
-  client: { id: 2, name: 'Jane' },
+  client: { id: 2, boardId: 1, name: 'Jane' },
   service: { id: 3, boardId: 1, name: 'Cut', category: 'WomensHaircut', baseDuration: 30, basePrice: { amount: 80, currency: 'PLN' } },
   date: '2026-05-23', startTime: '10:00', endTime: '10:30',
   price: { amount: 80, currency: 'PLN' }, location: 'Salon', status: 'Created',

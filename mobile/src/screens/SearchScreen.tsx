@@ -179,6 +179,9 @@ const SearchScreen: React.FC = () => {
               setSearchBarText(text);
               handleSearch(text);
             }}
+            onSearch={(text) => {
+              handleSearch(text);
+            }}
             title={t('search.recentSearches')}
           />
         ) : (

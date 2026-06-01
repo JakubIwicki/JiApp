@@ -26,6 +26,7 @@ const defaultVideo = {
     'The official video for "Never Gonna Give You Up" by Rick Astley. This classic 80s hit has become a beloved internet meme over the years.',
   imageUrl: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/maxresdefault.jpg',
   videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+  channelTitle: 'TestChannel',
 };
 
 export const Default: Story = {

@@ -71,7 +71,7 @@ const ClientPicker: React.FC<ClientPickerProps> = ({
     try {
       const newId = await onCreateNew(name);
       if (newId) {
-        onSelect({ id: newId, name, phone: undefined, notes: undefined });
+        onSelect({ id: newId, boardId: 1, name, phone: undefined, notes: undefined });
         setQuery('');
         setIsOpen(false);
       }

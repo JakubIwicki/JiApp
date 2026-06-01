@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import {
   getToken,
   clearToken,
@@ -33,7 +33,7 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-interface RetryConfig extends axios.InternalAxiosRequestConfig {
+interface RetryConfig extends InternalAxiosRequestConfig {
   _isRetry?: boolean;
 }
 

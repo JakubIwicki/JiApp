@@ -8,7 +8,7 @@ const appointments: Appointment[] = [
   {
     id: 1,
     boardId: 1,
-    client: { id: 1, name: 'Anna Kowalska', phone: '+48 601 111 222' },
+    client: { id: 1, boardId: 1, name: 'Anna Kowalska', phone: '+48 601 111 222' },
     service: {
       id: 1,
       boardId: 1,
@@ -28,7 +28,7 @@ const appointments: Appointment[] = [
   {
     id: 2,
     boardId: 1,
-    client: { id: 2, name: 'Marta Zielinska', phone: '+48 602 222 333' },
+    client: { id: 2, boardId: 1, name: 'Marta Zielinska', phone: '+48 602 222 333' },
     service: {
       id: 5,
       boardId: 1,
@@ -48,7 +48,7 @@ const appointments: Appointment[] = [
   {
     id: 3,
     boardId: 1,
-    client: { id: 3, name: 'Piotr Nowak' },
+    client: { id: 3, boardId: 1, name: 'Piotr Nowak' },
     service: {
       id: 3,
       boardId: 1,

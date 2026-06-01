@@ -94,6 +94,7 @@ const DownloadsScreen: React.FC = () => {
         description: item.videoDescription,
         imageUrl: item.imageUrl,
         videoUrl: item.videoUrl,
+        channelTitle: '',
       });
     },
     [navigation],

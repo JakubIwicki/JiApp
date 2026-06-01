@@ -7,7 +7,7 @@ import type { Appointment } from '../types/api';
 const mensHaircutAppointment: Appointment = {
   id: 1,
   boardId: 1,
-  client: { id: 1, name: 'Anna Kowalska', phone: '+48 601 111 222' },
+  client: { id: 1, boardId: 1, name: 'Anna Kowalska', phone: '+48 601 111 222' },
   service: {
     id: 1,
     boardId: 1,
@@ -28,7 +28,7 @@ const mensHaircutAppointment: Appointment = {
 const womensStylingAppointment: Appointment = {
   id: 2,
   boardId: 1,
-  client: { id: 2, name: 'Marta Zielinska', phone: '+48 602 222 333' },
+  client: { id: 2, boardId: 1, name: 'Marta Zielinska', phone: '+48 602 222 333' },
   service: {
     id: 5,
     boardId: 1,
@@ -49,7 +49,7 @@ const womensStylingAppointment: Appointment = {
 const appointmentWithDescription: Appointment = {
   id: 3,
   boardId: 1,
-  client: { id: 4, name: 'Katarzyna Adamczyk', phone: '+48 603 333 444' },
+  client: { id: 4, boardId: 1, name: 'Katarzyna Adamczyk', phone: '+48 603 333 444' },
   service: {
     id: 7,
     boardId: 1,

@@ -34,7 +34,7 @@ const baseAppointments: Omit<Appointment, 'date'>[] = [
   {
     id: 1,
     boardId: 1,
-    client: { id: 1, name: 'Anna Kowalska', phone: '+48 601 111 222' },
+    client: { id: 1, boardId: 1, name: 'Anna Kowalska', phone: '+48 601 111 222' },
     service: {
       id: 1,
       boardId: 1,
@@ -53,7 +53,7 @@ const baseAppointments: Omit<Appointment, 'date'>[] = [
   {
     id: 2,
     boardId: 1,
-    client: { id: 2, name: 'Marta Zielinska', phone: '+48 602 222 333' },
+    client: { id: 2, boardId: 1, name: 'Marta Zielinska', phone: '+48 602 222 333' },
     service: {
       id: 5,
       boardId: 1,
@@ -73,7 +73,7 @@ const baseAppointments: Omit<Appointment, 'date'>[] = [
   {
     id: 3,
     boardId: 1,
-    client: { id: 3, name: 'Piotr Nowak' },
+    client: { id: 3, boardId: 1, name: 'Piotr Nowak' },
     service: {
       id: 3,
       boardId: 1,
@@ -92,7 +92,7 @@ const baseAppointments: Omit<Appointment, 'date'>[] = [
   {
     id: 4,
     boardId: 1,
-    client: { id: 4, name: 'Katarzyna Adamczyk', phone: '+48 603 333 444' },
+    client: { id: 4, boardId: 1, name: 'Katarzyna Adamczyk', phone: '+48 603 333 444' },
     service: {
       id: 7,
       boardId: 1,

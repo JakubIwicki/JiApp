@@ -37,7 +37,7 @@ describe('ModuleLoader', () => {
     registerModule({
       id: 'yt-downloader',
       name: 'modules.ytdownloader',
-      icon: 'youtube',
+      icon: 'search',
       component: () => null,
       enabled: true,
     });

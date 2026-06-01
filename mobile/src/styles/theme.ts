@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native';
 
 // ─── Color Palette Types ─────────────────────────────────────────────────────
-export type ColorPalette = typeof colorsLight;
+export type ColorPalette = { readonly [K in keyof typeof colorsLight]: string };
 
 // ─── Light Palette (Wabi-Sabi) ───────────────────────────────────────────────
 export const colorsLight = {

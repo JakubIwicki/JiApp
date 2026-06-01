@@ -18,6 +18,7 @@ const createVideoItem = (id: string): VideoItem => ({
   description: `Description for video ${id}`,
   imageUrl: `https://example.com/${id}.jpg`,
   videoUrl: `https://example.com/${id}.mp4`,
+  channelTitle: 'TestChannel',
 });
 
 describe('useDownload', () => {
