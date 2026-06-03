@@ -60,8 +60,14 @@ backend/.nuget-packages/
 backend/.pids/
 
 # Dev certificates (generated)
-backend/src/JiApp.Api/Infrastructure/dev-cert.pfx
+backend/certs/dev-cert.pfx
 *.srl
+
+# Runtime logs
+backend/.api-debug.log
+
+# NuGet lock files
+**/packages.lock.json
 
 .env
 .venv
