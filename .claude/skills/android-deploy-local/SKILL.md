@@ -14,7 +14,7 @@ Run these before proceeding. If any fail, tell the user what's missing.
 
 | Check | Command |
 |-------|---------|
-| Backend running | `curl -sk https://192.168.100.105:6703/api/v1/health` → expect `{"status":"healthy"}` |
+| Backend running | `curl -sk https://{DEV_IP}:6703/api/v1/health` → expect `{"status":"healthy"}` |
 | Dev cert exists | `ls backend/certs/dev-cert.pfx` |
 | ADB sees device | `adb devices` — at least one `device` entry (not `offline`/`unauthorized`) |
 | Build script | `ls build-apk.sh` |
@@ -95,7 +95,7 @@ Tell the user to open the app and test. The backend must be running in Developme
 
 ## Background: Why This Process Exists
 
-The release APK embeds the dev certificate as a raw resource (`res/raw/jiapp_dev_ca`) and trusts it for the `192.168.100.105` domain. This is necessary because **Android API 24+ ignores user-installed CAs for release builds**. Embedding the cert directly in the network security config bypasses this restriction while keeping the device-level CA install as an additional trust anchor.
+The release APK embeds the dev certificate as a raw resource (`res/raw/jiapp_dev_ca`) and trusts it for the dev machine domain. This is necessary because **Android API 24+ ignores user-installed CAs for release builds**. Embedding the cert directly in the network security config bypasses this restriction while keeping the device-level CA install as an additional trust anchor.
 
 ## Network Troubleshooting
 
@@ -103,10 +103,10 @@ If the app spins and times out after deployment:
 
 | Symptom | Diagnosis | Fix |
 |----------|-----------|-----|
-| App times out (30s spinner) | `adb shell "nc 192.168.100.105 6703 < /dev/null && echo OK \|\| echo FAIL"` | If FAIL → firewall issue |
+| App times out (30s spinner) | `adb shell "nc {DEV_IP} 6703 < /dev/null && echo OK \|\| echo FAIL"` | If FAIL → firewall issue |
 | `nc` fails from device | Packet blocked before reaching WSL2 | Check firewall chain below |
 | `nc` works but app fails | TLS issue | Re-check cert installation |
-| Windows browser can't reach `https://192.168.100.105:6703` | Hyper-V firewall active | `firewall=false` in `.wslconfig` |
+| Windows browser can't reach `https://{DEV_IP}:6703` | Hyper-V firewall active | `firewall=false` in `.wslconfig` |
 
 ### Firewall Chain (WSL2 Mirrored Networking)
 
@@ -114,7 +114,7 @@ Three layers must all allow traffic:
 
 1. **Windows Defender Firewall** — Inbound rules for TCP 6701, 6703 (Profile: Any)
 2. **Hyper-V Firewall** — `firewall=false` in `C:\Users\jakub\.wslconfig` under `[wsl2]`, then `wsl --shutdown` + restart
-3. **Verify end-to-end:** Open `https://192.168.100.105:6703/api/v1/health` in Windows browser — must return `{"status":"healthy"}`
+3. **Verify end-to-end:** Open `https://{DEV_IP}:6703/api/v1/health` in Windows browser — must return `{"status":"healthy"}`
 
 ## Notes
 

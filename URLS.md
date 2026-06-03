@@ -243,10 +243,10 @@ All origins accepted. Same policy on all services.
 ### API Base URL
 
 ```
-https://192.168.100.105:6700/api/v1
+https://{DEV_IP}:6700/api/v1
 ```
 
-Override via build-time env: `JIAPP_API_URL`
+Override via build-time env: `JIAPP_API_URL`. Defaults to `localhost`; set `JIAPP_API_URL` at build time for physical devices.
 
 ### API Calls by Module
 
@@ -354,7 +354,7 @@ Uses `ReactNativeBlobUtil` with a dynamic `downloadUrl` obtained from `POST /api
 ```xml
 <!-- Allows cleartext only to dev machine -->
 <domain-config cleartextTrafficPermitted="true">
-    <domain includeSubdomains="false">192.168.100.105</domain>
+    <domain includeSubdomains="false">{DEV_IP}</domain>
     <trust-anchors>
         <certificates src="@raw/jiapp_dev_ca" />
     </trust-anchors>
@@ -407,13 +407,13 @@ Custom CA cert `jiapp_dev_ca` trusted for HTTPS with self-signed dev certificate
 | Variable | Purpose | Default |
 |----------|---------|---------|
 | `POSTGRES_PASSWORD` | Database password | *(required)* |
-| `JWT_KEY` | JWT signing key (min 32 chars) | `dev-key-at-least-32-chars-long!!` |
+| `JWT_KEY` | JWT signing key (min 32 chars) | `{JWT_KEY}` |
 | `JWT_ISSUER` | JWT issuer claim | `JiApp-Identity` |
 | `JWT_AUDIENCE` | JWT audience claim | `jiapp-gateway` |
 | `JWT_ACCESS_EXPIRE` | Access token lifetime | 15 minutes |
 | `JWT_REFRESH_EXPIRE` | Refresh token lifetime | 7 days |
 | `YOUTUBE_API_KEY` | YouTube Data API v3 key | *(required)* |
-| `JIAPP_API_URL` | Mobile API base URL (build-time) | `https://192.168.100.105:6700/api/v1` |
+| `JIAPP_API_URL` | Mobile API base URL (build-time) | `https://localhost:6700/api/v1` |
 | `CORS_ALLOWED_ORIGIN` | CORS origin override | *(none)* |
 
 ---
@@ -446,7 +446,7 @@ Scheduler:   GET /api/v1/scheduler/health
 | Environment | URL |
 |-------------|-----|
 | Dev (local) | `https://localhost:6700` |
-| Dev (mobile) | `https://192.168.100.105:6700` |
+| Dev (mobile) | `https://{DEV_IP}:6700` |
 | Prod (Docker) | `http://gateway:6700` |
 
 ### API Prefixes

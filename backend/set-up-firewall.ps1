@@ -14,5 +14,5 @@ Get-NetFirewallRule -DisplayName "JiApp*" | Remove-NetFirewallRule
 }
 
 Write-Host ""
-Write-Host "Done. Test: https://192.168.100.105:5000/health" -ForegroundColor Cyan
+Write-Host "Done. Test: https://localhost:5000/health" -ForegroundColor Cyan
 Read-Host "Press Enter to exit"

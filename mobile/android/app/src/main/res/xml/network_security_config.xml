@@ -1,4 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Default: Android emulator loopback (10.0.2.2 → host localhost).
+  For physical devices, replace with your dev machine LAN IP.
+-->
 <network-security-config>
     <base-config>
         <trust-anchors>
@@ -6,7 +9,7 @@
         </trust-anchors>
     </base-config>
     <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">192.168.100.105</domain>
+        <domain includeSubdomains="false">10.0.2.2</domain>
         <trust-anchors>
             <certificates src="@raw/jiapp_dev_ca" />
         </trust-anchors>

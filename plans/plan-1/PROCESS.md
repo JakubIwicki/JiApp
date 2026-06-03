@@ -19,7 +19,7 @@ This document contains the detailed, task-level execution plan for building JiAp
 - .NET 10 SDK installed
 - Node.js 18+ and npm installed
 - React Native CLI environment set up (JDK 17, Android SDK, Android Studio)
-- Git initialized in `/home/jakub/JiApp/`
+- Git initialized in the repo root
 
 ### Backend Tasks
 

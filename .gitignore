@@ -23,6 +23,7 @@ mobile/android/local.properties
 *.hprof
 *.keystore
 !*.keystore.keep
+*.aab
 
 # Metro
 mobile/.metro-health-check*
@@ -53,16 +54,20 @@ appsettings.Development.json
 dev-data/
 logs/
 dist/
+*.tmp
+*.zip
 
 # Runtime artifacts
 backend/.logs/
 backend/.nuget-packages/
 backend/.pids/
 backend/.api-pid
+backend/.data/
 
 # Dev certificates (generated)
 backend/certs/dev-cert.pfx
 *.srl
+*.cer
 
 # Runtime logs
 backend/.api-debug.log

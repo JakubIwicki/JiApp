@@ -103,7 +103,7 @@ This document contains the detailed, task-level execution plan for migrating JiA
   - Jwt: Key, Issuer ("JiApp-Identity"), Audience ("jiapp-gateway"), AccessTokenExpireMinutes (15), RefreshTokenExpireDays (7)
   - Serilog: Console + File sinks
 - File: `backend/src/JiApp.Identity/appsettings.Development.json`
-  - ConnectionStrings:IdentityDb = "Data Source=/home/jakub/JiApp/backend/.data/identity_dev.db"
+  - ConnectionStrings:IdentityDb = "Data Source=../../.data/identity_dev.db"
   - Jwt:Key = development base64 key
   - Kestrel endpoints: Http at `http://*:5001`
 - File: `backend/src/JiApp.Identity/Properties/launchSettings.json`
@@ -226,7 +226,7 @@ This document contains the detailed, task-level execution plan for migrating JiA
 
 **F0.4: Update config for gateway URL**
 
-- Edit `mobile/src/config.ts`: Change default `API_BASE_URL` from `'https://192.168.100.105:5003/api/v1'` to `'http://localhost:5000/api/v1'` (gateway)
+- Edit `mobile/src/config.ts`: Change default `API_BASE_URL` from the monolith port to the gateway port `'http://localhost:5000/api/v1'`
 - Add comment noting: override via `JIAPP_API_URL` env var for physical device IP
 - Acceptance: API_BASE_URL points to gateway port; app compiles
 
@@ -397,7 +397,7 @@ This document contains the detailed, task-level execution plan for migrating JiA
   - Youtube: ApiKey, YtDlpPath, FfmpegPath
   - Serilog: Console + File
 - File: `backend/src/JiApp.YtDownloader/appsettings.Development.json`
-  - ConnectionStrings:YtDb = "Data Source=/home/jakub/JiApp/backend/.data/yt_dev.db"
+  - ConnectionStrings:YtDb = "Data Source=../../.data/yt_dev.db"
   - Kestrel endpoints: Http at `http://*:5002`
 - Acceptance: `dotnet run --project backend/src/JiApp.YtDownloader` starts on port 5002; health check returns 200
 

@@ -1,14 +1,12 @@
-<?xml version="1.0" encoding="utf-8"?>
+<!-- Default: Android emulator loopback. Physical device: replace with your LAN IP. -->
 <network-security-config>
-    <!-- Trust user-installed CAs (for the dev cert) -->
     <base-config>
         <trust-anchors>
             <certificates src="system" />
             <certificates src="user" />
         </trust-anchors>
     </base-config>
-    <!-- Allow cleartext to local dev server (belt-and-suspenders) -->
     <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">192.168.100.105</domain>
+        <domain includeSubdomains="false">10.0.2.2</domain>
     </domain-config>
 </network-security-config>
