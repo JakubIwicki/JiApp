@@ -78,5 +78,9 @@ docs/
 .agents/
 .zencoder/
 
+# Inspect artifacts
+backend/.inspect-results/
+backend/inspect-file.sh
+
 # Media
 *.mp3

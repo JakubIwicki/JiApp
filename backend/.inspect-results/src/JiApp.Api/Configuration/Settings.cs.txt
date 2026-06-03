@@ -1,8 +1,0 @@
-Solution backend\JiApp.sln
-    Project JiApp.Api
-      src\JiApp.Api\Configuration\Settings.cs: Using directive is not required by the code and can be safely removed
-      src\JiApp.Api\Configuration\Settings.cs:2 Using directive is not required by the code and can be safely removed
-      src\JiApp.Api\Configuration\Settings.cs:8 Auto-property accessor 'ConnectionString.set' is never used
-      src\JiApp.Api\Configuration\Settings.cs:10 Auto-property accessor 'Jwt.set' is never used
-      src\JiApp.Api\Configuration\Settings.cs:11 Auto-property accessor 'Youtube.set' is never used
-      src\JiApp.Api\Configuration\Settings.cs:12 Auto-property accessor 'RateLimiting.set' is never used
