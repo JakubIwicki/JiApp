@@ -78,3 +78,6 @@ debug-storybook.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# Graphify
+graphify-out/
