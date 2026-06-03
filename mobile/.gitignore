@@ -43,6 +43,9 @@ npm-debug.log
 yarn-error.log
 debug-storybook.log
 
+# React doctor
+.react-doctor/
+
 # fastlane
 #
 # It is recommended to not store the screenshots in the git repo. Instead, use fastlane to re-generate the
