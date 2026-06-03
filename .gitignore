@@ -54,6 +54,11 @@ dev-data/
 logs/
 dist/
 
+# Runtime artifacts
+backend/.logs/
+backend/.nuget-packages/
+backend/.pids/
+
 # Dev certificates (generated)
 backend/src/JiApp.Api/Infrastructure/dev-cert.pfx
 *.srl
@@ -64,6 +69,8 @@ backend/src/JiApp.Api/Infrastructure/dev-cert.pfx
 graphify-out/
 docs/
 .superpowers/
+.agents/
+.zencoder/
 
 # Media
 *.mp3
