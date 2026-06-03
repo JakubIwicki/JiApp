@@ -19,12 +19,15 @@ Note: double-underscore (`__`) maps to colon (`:`) in ASP.NET Core's environment
 ### Runtime
 
 ```sh
-ASPNETCORE_ENVIRONMENT=Production dotnet run --project backend/src/JiApp.Api
+# Start all microservices via Docker Compose
+docker compose -f backend/docker-compose.yml up -d
+
+# Or with production overrides
+docker compose -f backend/docker-compose.yml -f backend/docker-compose.prod.yml up -d
 ```
 
-- Listens on HTTP `*:6701` and HTTPS `*:6703`.
-- SQLite database is created at `{AppContext.BaseDirectory}/JiApp.db` unless overridden via `ConnectionStrings:JiDb`.
-- Swagger is disabled. HSTS is enabled. Security headers (X-Content-Type-Options, X-Frame-Options, Referrer-Policy) are always applied.
+- Gateway listens on `https://*:6700`, proxying to Identity, YtDownloader, ImageTools, and Scheduler.
+- Each service uses PostgreSQL in production or SQLite for development.
 
 ### Startup Validation
 

@@ -17,8 +17,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="JiApp.Api" />
-    <InternalsVisibleTo Include="JiApp.Tests" />
   </ItemGroup>
 
 </Project>

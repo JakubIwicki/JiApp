@@ -15,7 +15,7 @@ Run these before proceeding. If any fail, tell the user what's missing.
 | Check | Command |
 |-------|---------|
 | Backend running | `curl -sk https://192.168.100.105:6703/api/v1/health` → expect `{"status":"healthy"}` |
-| Dev cert exists | `ls backend/src/JiApp.Api/Infrastructure/dev-cert.pfx` |
+| Dev cert exists | `ls backend/certs/dev-cert.pfx` |
 | ADB sees device | `adb devices` — at least one `device` entry (not `offline`/`unauthorized`) |
 | Build script | `ls build-apk.sh` |
 
@@ -51,10 +51,10 @@ Ask the user:
 
 ### Step 1: Extract Dev Cert
 
-Read the cert password from `backend/src/JiApp.Api/appsettings.Development.json` (path: `Kestrel.Endpoints.Https.Certificate.Password`), then:
+Read the cert password from `backend/src/JiApp.Gateway/appsettings.Development.json` (path: `Kestrel.Endpoints.Https.Certificate.Password`), then:
 
 ```bash
-openssl pkcs12 -in backend/src/JiApp.Api/Infrastructure/dev-cert.pfx \
+openssl pkcs12 -in backend/certs/dev-cert.pfx \
   -passin pass:"<PASSWORD>" -nokeys -clcerts 2>/dev/null \
   | openssl x509 -outform PEM -out /tmp/jiapp-dev-ca.crt 2>/dev/null
 ```
