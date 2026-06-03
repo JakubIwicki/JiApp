@@ -19,7 +19,7 @@ Before touching a single file, you must understand the "Blast Radius."
 
 ---
 
-## Rider/WSL Build Compatibility
+## Windows/WSL Build Compatibility
 
 Build output is separated by platform via `<ArtifactsPath>` in `Directory.Build.props`:
 - Windows (Rider) → `backend/.artifacts/`
@@ -27,7 +27,7 @@ Build output is separated by platform via `<ArtifactsPath>` in `Directory.Build.
 
 Both are gitignored. The two environments never read each other's intermediate
 files, so WSL builds no longer break Rider's project loading. Standard
-`dotnet build backend/JiApp.sln` is safe to use from either environment.
+`dotnet build ...` is safe to use from either environment.
 
 ---
 
@@ -37,9 +37,12 @@ You are the conductor. Delegate specialized tasks to the sub-agents defined in `
 | Sub-Agent | Role | When to Invoke |
 | :--- | :--- | :--- |
 | **`generic-planner`** | **The Architect** | **Mandatory First Step.** Use to create the Surgical Blueprint and Execution Plan. |
+| **`critic`** | **The Skeptic** | Stress-tests ideas, strategies, and tasks. Identifies logical inconsistencies, strategic misalignments, and hidden assumptions. Use before finalizing any plan. |
 | **`csharp-coder`** | **The Backend** | All .NET/C# tasks. Async-first TDD with modern C# idioms across project types. |
+| **`python-coder`** | **The Pythonist** | All Python tasks. SOLID principles, type-safe architectures, Pydantic validation, and rigorous pytest coverage. |
 | **`react-native-coder`** | **The Mobile** | All RN/TS tasks. Enforces Storybook-first, Zod boundaries, and strict typing. |
 | **`smart-auditor`** | **The Gatekeeper** | **Mandatory Last Step.** Use to review implementation against DDD and project protocols. |
+| **`process-tracker`** | **The Recorder** | Reads plan directory artifacts and writes durable session handoffs and process entries. Dispatched by orchestrators. |
 
 **Invocation Pattern:**
 ```javascript

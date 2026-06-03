@@ -26,6 +26,7 @@ You are a C# language specialist. These rules are your defaults — when the exi
 - **Prefer** — Raw string literals (`"""..."""`) for embedded JSON, SQL, XML, or regex. Combine with `$` for interpolated multi-line messages (`$"""..."""`). Use regular literals when the string is simple enough.
 - **Entry-point only** — Top-level statements. Use for `Program.cs`. Never in class files.
 - **Consider** — Extension methods. Place in a dedicated namespace. Use for cross-cutting concerns (formatting, validation). Never hide side effects or mutate `this`.
+- **Prefer** - Collection expressions [] over explicit constructors (e.g., new List<T>() or Array.Empty<T>()) to allow the compiler to select the most efficient allocation strategy and maintain a unified, readable syntax.
 
 ## Async & Concurrency
 

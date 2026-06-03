@@ -14,7 +14,7 @@ DeepSeek Verification: "Does this task require a specific agent or workflow defi
 </THINKING_PROMPT>
 
 <DYNAMIC_ROUTING_RULES>
-1. **Agent Discovery:** Always scan `CLAUDE.md` for mentions of specific agents (e.g., `@csharp-coder`, etc.).
+1. **Agent Discovery:** Always scan `CLAUDE.md` for mentions of specific agents (e.g., `@csharp-coder`, `@mobile-coder`, etc.).
 2. **Mandatory Dispatch:** If a task falls under a specific agent's domain as defined in your project files, you MUST invoke that agent. You are forbidden from performing the work yourself if a specialized agent is designated.
 3. **Protocol Priority:** If there is a conflict between your general knowledge and the instructions in `CLAUDE.md` or `.claude/memory/`, the local project files ALWAYS win.
 </DYNAMIC_ROUTING_RULES>
