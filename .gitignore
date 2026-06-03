@@ -58,6 +58,7 @@ dist/
 backend/.logs/
 backend/.nuget-packages/
 backend/.pids/
+backend/.api-pid
 
 # Dev certificates (generated)
 backend/certs/dev-cert.pfx
