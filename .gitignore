@@ -83,5 +83,8 @@ docs/
 backend/.inspect-results/
 backend/inspect-file.sh
 
+# Test artifacts
+mobile/test-results/
+
 # Media
 *.mp3
