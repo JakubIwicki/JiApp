@@ -22,6 +22,13 @@ echo -e "${CYAN}${BOLD}│${NC}     ${BOLD}JiApp API — Dev Mode (SQLite)${NC} 
 echo -e "${CYAN}${BOLD}╰──────────────────────────────────────────╯${NC}"
 echo ""
 
+# ── Load secrets from .env ───────────────────────────────
+if [ -f "$SCRIPT_DIR/.env" ]; then
+    set -a
+    source "$SCRIPT_DIR/.env"
+    set +a
+fi
+
 # ── JWT key for local dev ───────────────────────────────
 export Jwt__Key="${JWT_KEY:-dev-key-at-least-32-chars-long!!}"
 export Jwt__Issuer="${JWT_ISSUER:-JiApp-Identity}"

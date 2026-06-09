@@ -214,9 +214,9 @@ describe('AuthContext', () => {
     renderProvider();
     await waitForLoggedOut();
 
-    await expect(
-      capturedCtx!.login('baduser', 'wrongpass'),
-    ).rejects.toThrow('Invalid credentials');
+    await expect(capturedCtx!.login('baduser', 'wrongpass')).rejects.toThrow(
+      'Invalid credentials',
+    );
   });
 
   it('register() calls API (no auto-login)', async () => {
@@ -288,5 +288,47 @@ describe('AuthContext', () => {
     expect(mockClearDisplayName).toHaveBeenCalled();
     expect(mockClearUsername).toHaveBeenCalled();
     expect(mockClearCredentials).toHaveBeenCalled();
+  });
+
+  it('login() sets token synchronously enough that AppNavigator can switch', async () => {
+    // When AppNavigator reads `token`, a successful login must make it
+    // truthy so that <MainNavigator /> is rendered instead of <AuthNavigator />.
+    mockLogin.mockResolvedValueOnce({
+      id: 1,
+      displayName: 'Test User',
+      token: 'mock-token',
+    });
+
+    renderProvider();
+    await waitForLoggedOut();
+
+    // Before login: token is null → AppNavigator shows AuthNavigator
+    expect(capturedCtx!.token).toBeNull();
+
+    await capturedCtx!.login('testuser', 'pass123');
+
+    // After login: token must be set so AppNavigator switches to MainNavigator
+    await waitFor(() => {
+      expect(capturedCtx!.token).toBe('mock-token');
+      expect(capturedCtx!.isLoading).toBe(false);
+    });
+  });
+
+  it('login() saves token to storage so restored on next launch', async () => {
+    mockLogin.mockResolvedValueOnce({
+      id: 2,
+      displayName: 'User Two',
+      token: 'token-two',
+    });
+
+    renderProvider();
+    await waitForLoggedOut();
+
+    await capturedCtx!.login('user2', 'pass456');
+
+    expect(mockSaveToken).toHaveBeenCalledWith('token-two');
+    expect(mockSaveUserId).toHaveBeenCalledWith(2);
+    expect(mockSaveDisplayName).toHaveBeenCalledWith('User Two');
+    expect(mockSaveUsername).toHaveBeenCalledWith('user2');
   });
 });

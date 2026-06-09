@@ -1,9 +1,7 @@
 import { isAxiosError } from 'axios';
 
-export const getErrorMessage = (
-  err: unknown,
-  fallback: string,
-): string => (err instanceof Error ? err.message : fallback);
+export const getErrorMessage = (err: unknown, fallback: string): string =>
+  err instanceof Error ? err.message : fallback;
 
 interface AxiosErrorWithServerError {
   response?: {
@@ -32,6 +30,26 @@ export const getDownloadErrorMessage = (err: unknown): string => {
     if (axiosErr.response.status === 500) {
       return 'Server error — please try again later';
     }
+  }
+
+  // Handle ReactNativeBlobUtil / fetch errors (non-Axios)
+  if (err instanceof Error) {
+    const msg = err.message.toLowerCase();
+    if (
+      msg.includes('cert') ||
+      msg.includes('ssl') ||
+      msg.includes('handshake')
+    ) {
+      return 'SSL connection failed — check your network or certificate';
+    }
+    if (
+      msg.includes('network') ||
+      msg.includes('econnrefused') ||
+      msg.includes('timeout')
+    ) {
+      return 'Connection failed — check your network';
+    }
+    return err.message;
   }
 
   return 'Download failed';

@@ -1,11 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react';
-import {
-  FlatList,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MainStackParamList } from '../navigation/types';
@@ -17,12 +12,22 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import FloatingParticles from '../components/FloatingParticles';
 import Logo from '../components/Logo';
+import useKeepAwake from '../hooks/useKeepAwake';
 import useSearch from '../hooks/useSearch';
 import useScreenTitle from '../hooks/useScreenTitle';
 import { RECENT_SEARCHES_LIMIT } from '../constants/app';
-import { colors, commonStyles, spacing, borderRadius, typography } from '../styles/theme';
+import {
+  colors,
+  commonStyles,
+  spacing,
+  borderRadius,
+  typography,
+} from '../styles/theme';
 
-type SearchNavigationProp = NativeStackNavigationProp<MainStackParamList, 'Search'>;
+type SearchNavigationProp = NativeStackNavigationProp<
+  MainStackParamList,
+  'Search'
+>;
 
 const SearchResultsView: React.FC<{
   results: VideoItem[];
@@ -53,7 +58,7 @@ const SearchRecentView: React.FC<{
 }> = ({ recentSearches, onItemPress, title }) => (
   <View style={styles.recentContainer}>
     <Text style={styles.recentTitle}>{title}</Text>
-    {recentSearches.map((item) => (
+    {recentSearches.map(item => (
       <Text
         key={item.id}
         style={styles.recentItem}
@@ -65,7 +70,9 @@ const SearchRecentView: React.FC<{
   </View>
 );
 
-const SearchInitialEmptyView: React.FC<{ emptyText: string }> = ({ emptyText }) => (
+const SearchInitialEmptyView: React.FC<{ emptyText: string }> = ({
+  emptyText,
+}) => (
   <View style={styles.initialEmptyContainer}>
     <FloatingParticles count={6} />
     <Text style={styles.emptyEmoji}>🎵</Text>
@@ -81,12 +88,15 @@ const SearchScreen: React.FC = () => {
 
   useScreenTitle('search.title');
 
+  // Keep screen awake while this screen is visible
+  useKeepAwake(true);
+
   const [historyState, setHistoryState] = useState<{
     items: SearchHistoryItem[];
     loaded: boolean;
   }>(() => {
     getSearchHistory(RECENT_SEARCHES_LIMIT)
-      .then((items) => setHistoryState({ items, loaded: true }))
+      .then(items => setHistoryState({ items, loaded: true }))
       .catch(() => setHistoryState({ items: [], loaded: true }));
     return { items: [], loaded: false };
   });
@@ -136,7 +146,8 @@ const SearchScreen: React.FC = () => {
 
   const keyExtractor = useCallback((item: VideoItem) => item.videoId, []);
 
-  const showLogo = !isLoading && !error && results.length === 0 && lastQueryRef.current === '';
+  const showLogo =
+    !isLoading && !error && results.length === 0 && lastQueryRef.current === '';
 
   const hasQuery = lastQueryRef.current !== '';
 
@@ -175,11 +186,11 @@ const SearchScreen: React.FC = () => {
         ) : !historyLoading && recentSearches.length > 0 ? (
           <SearchRecentView
             recentSearches={recentSearches}
-            onItemPress={(text) => {
+            onItemPress={text => {
               setSearchBarText(text);
               handleSearch(text);
             }}
-            onSearch={(text) => {
+            onSearch={text => {
               handleSearch(text);
             }}
             title={t('search.recentSearches')}

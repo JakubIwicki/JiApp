@@ -16,27 +16,40 @@ Run these before proceeding. If any fail, tell the user what's missing.
 |-------|---------|
 | Backend running | `curl -sk https://{DEV_IP}:6703/api/v1/health` → expect `{"status":"healthy"}` |
 | Dev cert exists | `ls backend/certs/dev-cert.pfx` |
-| ADB sees device | `adb devices` — at least one `device` entry (not `offline`/`unauthorized`) |
+| ADB sees device | `timeout 30 adb devices -l` — at least one `device` entry (not `offline`/`unauthorized`). Always use `timeout 30` to prevent hangs when ADB daemon is unresponsive. |
 | Build script | `ls build-apk.sh` |
 
-### ADB Connection (WSL2)
+### ADB Connection (WSL2) — MANDATORY TCP MODE
 
-ADB in WSL2 cannot access USB directly. If the device is USB-connected to Windows, switch it to TCP mode first:
+**ALWAYS use TCP mode when running from WSL2.** ADB in WSL2 cannot access USB directly. The Windows ADB binary must NOT be used — always route through the WSL2 `adb` after switching the device to TCP mode. Every ADB command in this skill assumes you have completed these steps first.
+
+**Step A: Switch device to TCP mode** (via Windows ADB — the ONLY time it's used):
 
 ```bash
-# From Windows side (via WSL interop):
 /mnt/c/Users/jakub/AppData/Local/Android/Sdk/platform-tools/adb.exe tcpip 5555
-
-# Then connect from WSL2:
-adb connect <device_ip>:5555
 ```
 
-Get the device IP if unknown:
+**Step B: Get the device IP** (if unknown):
+
 ```bash
 /mnt/c/Users/jakub/AppData/Local/Android/Sdk/platform-tools/adb.exe shell "ip addr show wlan0 | grep 'inet '"
 ```
 
-When multiple devices appear in `adb devices`, use `-s <device_id>` with every command. Prefer the TCP-connected entry (ends with `:5555`).
+**Step C: Connect from WSL2:**
+
+```bash
+timeout 30 adb connect <device_ip>:5555
+```
+
+**Step D: Verify:**
+
+```bash
+timeout 30 adb devices -l
+```
+
+The device should appear as `<device_ip>:5555` with status `device`. Use this TCP identifier with `-s <device_ip>:5555` for all subsequent ADB commands. If `adb devices` shows the USB entry as well, ignore it — always use the TCP entry (ends with `:5555`).
+
+If the connection drops later, re-run Steps A and C.
 
 ## Deployment Steps
 
@@ -85,8 +98,17 @@ This bumps `versionCode`, builds the signed release APK, and copies it to `dist/
 
 ### Step 5: Install APK to Device
 
+The app package name is `com.jiappmobile`. First uninstall any existing version, then install:
+
 ```bash
+adb -s <device_id> uninstall com.jiappmobile
 adb -s <device_id> install -r dist/JiAppMobile-*-release.apk
+```
+
+If uninstall fails with `DELETE_FAILED_INTERNAL_ERROR` (common on Samsung devices), skip uninstall and use the downgrade flag:
+
+```bash
+adb -s <device_id> install -r -d dist/JiAppMobile-*-release.apk
 ```
 
 ### Step 6: Verify

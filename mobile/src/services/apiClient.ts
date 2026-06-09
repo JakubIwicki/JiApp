@@ -23,14 +23,14 @@ const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use(
-  async (config) => {
+  async config => {
     const token = await getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => Promise.reject(error),
+  error => Promise.reject(error),
 );
 
 interface RetryConfig extends InternalAxiosRequestConfig {
@@ -38,11 +38,18 @@ interface RetryConfig extends InternalAxiosRequestConfig {
 }
 
 apiClient.interceptors.response.use(
-  (response) => response,
+  response => response,
   async (error: AxiosError) => {
     const config = error.config as RetryConfig | undefined;
 
-    if (error.response?.status === 401 && config && !config._isRetry) {
+    // Don't intercept 401 for login/register — let the callers handle errors
+    if (
+      error.response?.status === 401 &&
+      config &&
+      !config._isRetry &&
+      !config.url?.includes('/auth/login') &&
+      !config.url?.includes('/auth/register')
+    ) {
       const credentials = await getCredentials();
 
       if (credentials) {
@@ -83,7 +90,11 @@ apiClient.interceptors.response.use(
 
     // Extract server error message for non-401 responses so downstream
     // error utils can read it without importing axios types
-    if (error.response?.status !== 401 && error.response?.data && typeof error.response.data === 'object') {
+    if (
+      error.response?.status !== 401 &&
+      error.response?.data &&
+      typeof error.response.data === 'object'
+    ) {
       const data = error.response.data as Record<string, unknown>;
       if (typeof data.error === 'string') {
         (error as any)._serverError = data.error;

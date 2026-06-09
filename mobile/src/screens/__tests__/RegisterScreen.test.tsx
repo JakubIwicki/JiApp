@@ -1,6 +1,24 @@
 import React from 'react';
 import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 
+// Mock useToast
+const mockShowSuccess = jest.fn();
+jest.mock('../../hooks/useToast', () => ({
+  __esModule: true,
+  default: () => ({
+    showSuccess: mockShowSuccess,
+    showError: jest.fn(),
+    showInfo: jest.fn(),
+    showWarning: jest.fn(),
+  }),
+}));
+
+// Mock useScreenTitle
+jest.mock('../../hooks/useScreenTitle', () => ({
+  __esModule: true,
+  default: jest.fn(),
+}));
+
 // Mock useAuth
 const mockRegister = jest.fn();
 jest.mock('../../hooks/useAuth', () => ({
@@ -85,8 +103,11 @@ describe('RegisterScreen', () => {
     const { getByPlaceholderText, getByTestId } = render(<RegisterScreen />);
 
     fireEvent.changeText(getByPlaceholderText('auth.username'), '  john  ');
-    fireEvent.changeText(getByPlaceholderText('auth.email'), '  john@test.com  ');
-    fireEvent.changeText(getByPlaceholderText('auth.password'), '  pass1234  ');
+    fireEvent.changeText(
+      getByPlaceholderText('auth.email'),
+      '  john@test.com  ',
+    );
+    fireEvent.changeText(getByPlaceholderText('auth.password'), '  Pass1234  ');
     fireEvent.changeText(
       getByPlaceholderText('auth.displayName'),
       '  John Doe  ',
@@ -98,7 +119,7 @@ describe('RegisterScreen', () => {
       expect(mockRegister).toHaveBeenCalledWith(
         'john',
         'john@test.com',
-        'pass1234',
+        'Pass1234',
         'John Doe',
       );
     });
@@ -110,11 +131,8 @@ describe('RegisterScreen', () => {
 
     fireEvent.changeText(getByPlaceholderText('auth.username'), 'john');
     fireEvent.changeText(getByPlaceholderText('auth.email'), 'john@test.com');
-    fireEvent.changeText(getByPlaceholderText('auth.password'), 'pass1234');
-    fireEvent.changeText(
-      getByPlaceholderText('auth.displayName'),
-      'John Doe',
-    );
+    fireEvent.changeText(getByPlaceholderText('auth.password'), 'Pass1234');
+    fireEvent.changeText(getByPlaceholderText('auth.displayName'), 'John Doe');
 
     fireEvent.press(getByTestId('button'));
 
@@ -131,11 +149,8 @@ describe('RegisterScreen', () => {
 
     fireEvent.changeText(getByPlaceholderText('auth.username'), 'john');
     fireEvent.changeText(getByPlaceholderText('auth.email'), 'john@test.com');
-    fireEvent.changeText(getByPlaceholderText('auth.password'), 'pass1234');
-    fireEvent.changeText(
-      getByPlaceholderText('auth.displayName'),
-      'John Doe',
-    );
+    fireEvent.changeText(getByPlaceholderText('auth.password'), 'Pass1234');
+    fireEvent.changeText(getByPlaceholderText('auth.displayName'), 'John Doe');
 
     fireEvent.press(getByTestId('button'));
 
@@ -150,7 +165,7 @@ describe('RegisterScreen', () => {
   it('can be unmounted without errors during async register', async () => {
     let resolvePromise!: (value: unknown) => void;
     mockRegister.mockReturnValue(
-      new Promise((resolve) => {
+      new Promise(resolve => {
         resolvePromise = resolve;
       }),
     );
@@ -165,11 +180,8 @@ describe('RegisterScreen', () => {
 
     fireEvent.changeText(getByPlaceholderText('auth.username'), 'john');
     fireEvent.changeText(getByPlaceholderText('auth.email'), 'john@test.com');
-    fireEvent.changeText(getByPlaceholderText('auth.password'), 'pass1234');
-    fireEvent.changeText(
-      getByPlaceholderText('auth.displayName'),
-      'John Doe',
-    );
+    fireEvent.changeText(getByPlaceholderText('auth.password'), 'Pass1234');
+    fireEvent.changeText(getByPlaceholderText('auth.displayName'), 'John Doe');
 
     fireEvent.press(getByTestId('button'));
 
@@ -182,7 +194,7 @@ describe('RegisterScreen', () => {
     await act(async () => {});
 
     const stateUpdateWarnings = consoleErrorSpy.mock.calls.filter(
-      (call) =>
+      call =>
         typeof call[0] === 'string' &&
         call[0].includes('state update on an unmounted component'),
     );

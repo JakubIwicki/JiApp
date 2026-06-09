@@ -18,6 +18,11 @@ jest.mock('../../hooks/usePreview', () => ({
   default: () => mockPreview,
 }));
 
+jest.mock('../../hooks/useKeepAwake', () => ({
+  __esModule: true,
+  default: jest.fn(),
+}));
+
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) => {
@@ -25,6 +30,7 @@ jest.mock('react-i18next', () => ({
         'preview.tapToListen': 'Tap to preview',
         'preview.loading': 'Loading preview...',
         'preview.playing': 'Now playing',
+        'preview.buffering': 'Buffering...',
         'preview.duration': '0:10',
       };
       return translations[key] || key;
@@ -66,11 +72,43 @@ describe('AudioPreviewPlayer', () => {
       isLoading: true,
     };
 
-    const { getByText } = render(
+    const { getByText } = render(<AudioPreviewPlayer videoId="abc123" />);
+
+    expect(getByText('Loading preview...')).toBeTruthy();
+  });
+
+  // ─── BUFFERING state ────────────────────────────────────────
+
+  it('renders buffering state when playing but elapsed is still 0', () => {
+    mockPreview = {
+      ...mockPreview,
+      isPlaying: true,
+      elapsed: 0,
+      progress: 0,
+    };
+
+    const { getByText, queryByText } = render(
       <AudioPreviewPlayer videoId="abc123" />,
     );
 
-    expect(getByText('Loading preview...')).toBeTruthy();
+    expect(getByText('Buffering...')).toBeTruthy();
+    expect(queryByText('Now playing')).toBeNull();
+    expect(getByText('0:10')).toBeTruthy();
+  });
+
+  it('calls stop() when pause button is pressed during buffering', () => {
+    mockPreview = {
+      ...mockPreview,
+      isPlaying: true,
+      elapsed: 0,
+      progress: 0,
+    };
+
+    const { getByTestId } = render(<AudioPreviewPlayer videoId="abc123" />);
+
+    fireEvent.press(getByTestId('preview-play-button'));
+
+    expect(mockPreview.stop).toHaveBeenCalled();
   });
 
   // ─── PLAYING state ──────────────────────────────────────────
@@ -91,22 +129,6 @@ describe('AudioPreviewPlayer', () => {
     expect(getByTestId('preview-progress-bar')).toBeTruthy();
     expect(getByTestId('preview-counter')).toBeTruthy();
     expect(getByText(/0:05s \/ 0:10/)).toBeTruthy();
-  });
-
-  it('shows 0:10s / 0:10 counter at start of playback (remaining = 10 - elapsed)', () => {
-    mockPreview = {
-      ...mockPreview,
-      isPlaying: true,
-      elapsed: 0,
-      progress: 0,
-    };
-
-    const { getByText } = render(
-      <AudioPreviewPlayer videoId="abc123" />,
-    );
-
-    // remaining = 10 - 0 = 10, so displayed as 0:10s / 0:10
-    expect(getByText(/0:10s \/ 0:10/)).toBeTruthy();
   });
 
   // ─── COMPLETE state ─────────────────────────────────────────
@@ -150,9 +172,7 @@ describe('AudioPreviewPlayer', () => {
   // ─── Interactions ───────────────────────────────────────────
 
   it('calls play() with videoId when play button is pressed in idle state', () => {
-    const { getByTestId } = render(
-      <AudioPreviewPlayer videoId="abc123" />,
-    );
+    const { getByTestId } = render(<AudioPreviewPlayer videoId="abc123" />);
 
     fireEvent.press(getByTestId('preview-play-button'));
 
@@ -167,9 +187,7 @@ describe('AudioPreviewPlayer', () => {
       progress: 0.5,
     };
 
-    const { getByTestId } = render(
-      <AudioPreviewPlayer videoId="abc123" />,
-    );
+    const { getByTestId } = render(<AudioPreviewPlayer videoId="abc123" />);
 
     fireEvent.press(getByTestId('preview-play-button'));
 
@@ -184,9 +202,7 @@ describe('AudioPreviewPlayer', () => {
       progress: 1,
     };
 
-    const { getByTestId } = render(
-      <AudioPreviewPlayer videoId="abc123" />,
-    );
+    const { getByTestId } = render(<AudioPreviewPlayer videoId="abc123" />);
 
     fireEvent.press(getByTestId('preview-play-button'));
 
@@ -196,9 +212,7 @@ describe('AudioPreviewPlayer', () => {
   // ─── Cleanup ────────────────────────────────────────────────
 
   it('calls stop() on unmount', () => {
-    const { unmount } = render(
-      <AudioPreviewPlayer videoId="abc123" />,
-    );
+    const { unmount } = render(<AudioPreviewPlayer videoId="abc123" />);
 
     unmount();
 

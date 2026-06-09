@@ -1,24 +1,29 @@
 import React, { useCallback, useReducer, useState } from 'react';
-import {
-  ScrollView,
-} from 'react-native';
+import { ScrollView } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MainStackParamList } from '../navigation/types';
 import type { DownloadHistoryItem } from '../types/api';
-import { getDownloadHistory, archiveDownload } from '../services/downloadService';
+import {
+  getDownloadHistory,
+  archiveDownload,
+} from '../services/downloadService';
 import RefreshableScrollView from '../components/RefreshableScrollView';
 import SearchBar from '../components/SearchBar';
 import HistoryItem from '../components/HistoryItem';
 import HistorySection from '../components/HistorySection';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
+import useKeepAwake from '../hooks/useKeepAwake';
 import useScreenTitle from '../hooks/useScreenTitle';
 import useToast from '../hooks/useToast';
 import { colors, commonStyles } from '../styles/theme';
 
-type DownloadsNavigationProp = NativeStackNavigationProp<MainStackParamList, 'Download'>;
+type DownloadsNavigationProp = NativeStackNavigationProp<
+  MainStackParamList,
+  'Download'
+>;
 
 interface DownloadsState {
   downloads: DownloadHistoryItem[];
@@ -33,7 +38,10 @@ type DownloadsAction =
   | { type: 'FETCH_ERROR'; error: string }
   | { type: 'REMOVE_DOWNLOAD'; id: number };
 
-function downloadsReducer(state: DownloadsState, action: DownloadsAction): DownloadsState {
+function downloadsReducer(
+  state: DownloadsState,
+  action: DownloadsAction,
+): DownloadsState {
   switch (action.type) {
     case 'FETCH_START':
       return {
@@ -43,11 +51,25 @@ function downloadsReducer(state: DownloadsState, action: DownloadsAction): Downl
         isRefreshing: action.pull ? true : false,
       };
     case 'FETCH_SUCCESS':
-      return { ...state, downloads: action.downloads, isLoading: false, isRefreshing: false, error: null };
+      return {
+        ...state,
+        downloads: action.downloads,
+        isLoading: false,
+        isRefreshing: false,
+        error: null,
+      };
     case 'FETCH_ERROR':
-      return { ...state, error: action.error, isLoading: false, isRefreshing: false };
+      return {
+        ...state,
+        error: action.error,
+        isLoading: false,
+        isRefreshing: false,
+      };
     case 'REMOVE_DOWNLOAD':
-      return { ...state, downloads: state.downloads.filter((d) => d.id !== action.id) };
+      return {
+        ...state,
+        downloads: state.downloads.filter(d => d.id !== action.id),
+      };
     default:
       return state;
   }
@@ -64,6 +86,10 @@ const DownloadsScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<DownloadsNavigationProp>();
   useScreenTitle('nav.downloads');
+
+  // Keep screen awake while this screen is visible
+  useKeepAwake(true);
+
   const { showSuccess, showError } = useToast();
 
   const [state, dispatch] = useReducer(downloadsReducer, initialDownloadsState);
@@ -139,7 +165,7 @@ const DownloadsScreen: React.FC = () => {
   );
 
   const filteredDownloads = filterQuery
-    ? state.downloads.filter((d) =>
+    ? state.downloads.filter(d =>
         d.videoTitle.toLowerCase().includes(filterQuery.toLowerCase()),
       )
     : state.downloads;

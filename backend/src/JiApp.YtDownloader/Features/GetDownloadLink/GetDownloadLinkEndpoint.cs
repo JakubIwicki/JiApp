@@ -1,3 +1,4 @@
+using System.Linq;
 using FluentValidation;
 using JiApp.Common.Abstractions;
 using JiApp.YtDownloader.Configuration;
@@ -27,10 +28,15 @@ public static class GetDownloadLinkEndpoint
                 var result = await handler.HandleAsync(request, httpContext.RequestAborted);
                 if (result is { IsSuccess: true, Value: not null })
                 {
+                    var scheme = httpContext.Request.Headers["X-Forwarded-Proto"].FirstOrDefault()
+                                 ?? httpContext.Request.Scheme;
+                    var host = httpContext.Request.Headers["X-Forwarded-Host"].FirstOrDefault()
+                               ?? httpContext.Request.Host.Value
+                               ?? "localhost";
                     var response = DownloadResponse.WithUrl(
                         result.Value.TempId,
-                        httpContext.Request.Scheme,
-                        httpContext.Request.Host.Value ?? "localhost");
+                        scheme,
+                        host);
                     return Results.Ok(response);
                 }
 

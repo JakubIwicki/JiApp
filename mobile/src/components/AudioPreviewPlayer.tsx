@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import usePreview from '../hooks/usePreview';
+import useKeepAwake from '../hooks/useKeepAwake';
 import { colors, spacing, borderRadius } from '../styles/theme';
 
 interface AudioPreviewPlayerProps {
@@ -16,15 +17,14 @@ interface AudioPreviewPlayerProps {
 
 const AudioPreviewPlayer = ({ videoId }: AudioPreviewPlayerProps) => {
   const { t } = useTranslation();
-  const {
-    isPlaying,
-    isLoading,
-    progress,
-    elapsed,
-    error,
-    play,
-    stop,
-  } = usePreview();
+  const { isPlaying, isLoading, progress, elapsed, error, play, stop } =
+    usePreview();
+
+  // Distinguish buffering (playback confirmed but no audio yet) from actual playing
+  const isBuffering = isPlaying && elapsed === 0;
+
+  // Keep screen awake during preview playback
+  useKeepAwake(isPlaying || isLoading);
 
   // Clean up when videoId changes or component unmounts
   useEffect(() => {
@@ -34,6 +34,7 @@ const AudioPreviewPlayer = ({ videoId }: AudioPreviewPlayerProps) => {
   }, [stop, videoId]);
 
   const handlePress = () => {
+    if (isLoading) return;
     if (isPlaying) {
       stop();
     } else {
@@ -52,7 +53,8 @@ const AudioPreviewPlayer = ({ videoId }: AudioPreviewPlayerProps) => {
         <Pressable
           style={({ pressed }) => [
             styles.playButton,
-            pressed && { opacity: 0.7 },
+            isLoading && { opacity: 0.5 },
+            pressed && !isLoading && { opacity: 0.7 },
           ]}
           onPress={handlePress}
           testID="preview-play-button"
@@ -62,10 +64,7 @@ const AudioPreviewPlayer = ({ videoId }: AudioPreviewPlayerProps) => {
           }
         >
           {isLoading ? (
-            <ActivityIndicator
-              size="small"
-              color={colors.textInverse}
-            />
+            <ActivityIndicator size="small" color={colors.textInverse} />
           ) : isPlaying ? (
             <Text style={styles.playIcon}>&#9208;</Text>
           ) : (
@@ -76,6 +75,11 @@ const AudioPreviewPlayer = ({ videoId }: AudioPreviewPlayerProps) => {
         <View style={styles.labelContainer}>
           {isLoading ? (
             <Text style={styles.label}>{t('preview.loading')}</Text>
+          ) : isBuffering ? (
+            <>
+              <Text style={styles.label}>{t('preview.buffering')}</Text>
+              <Text style={styles.duration}>{t('preview.duration')}</Text>
+            </>
           ) : isPlaying ? (
             <>
               <Text style={styles.label}>{t('preview.playing')}</Text>

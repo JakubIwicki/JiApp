@@ -26,7 +26,9 @@
     "emailRequired": "Email is required",
     "displayNameRequired": "Display name is required",
     "usernameTooShort": "Username must be at least 3 characters",
-    "passwordTooShort": "Password must be at least 4 characters",
+    "passwordTooShort": "Password must be at least 8 characters",
+    "passwordNoUppercase": "Password must contain at least one uppercase letter",
+    "passwordNoDigit": "Password must contain at least one digit",
     "invalidEmail": "Please enter a valid email address"
   },
   "nav": {
@@ -75,6 +77,7 @@
     "tapToListen": "Tap to preview",
     "loading": "Loading preview...",
     "playing": "Now playing",
+    "buffering": "Buffering...",
     "duration": "0:10",
     "error": "Preview unavailable"
   },

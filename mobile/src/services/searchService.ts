@@ -2,7 +2,7 @@ import apiClient from './apiClient';
 import { SearchResponse, SearchHistoryItem } from '../types/api';
 
 export const archiveSearchHistory = async (id: number): Promise<void> => {
-  await apiClient.patch(`/search/history/${id}/archive`);
+  await apiClient.patch(`/yt/search/history/${id}/archive`);
 };
 
 export const searchVideos = async (
@@ -11,7 +11,7 @@ export const searchVideos = async (
   signal?: AbortSignal,
 ): Promise<SearchResponse> => {
   const response = await apiClient.post<SearchResponse>(
-    '/search',
+    '/yt/search',
     { query, maxResults },
     { signal },
   );
@@ -26,7 +26,7 @@ export const getSearchHistory = async (
   limit?: number,
 ): Promise<SearchHistoryItem[]> => {
   const response = await apiClient.get<SearchHistoryResponse>(
-    '/search/history',
+    '/yt/search/history',
     { params: { limit } },
   );
   return response.data.items;

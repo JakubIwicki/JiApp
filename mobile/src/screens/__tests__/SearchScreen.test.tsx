@@ -19,6 +19,12 @@ jest.mock('../../hooks/useSearch', () => ({
   }),
 }));
 
+// Mock useKeepAwake
+jest.mock('../../hooks/useKeepAwake', () => ({
+  __esModule: true,
+  default: jest.fn(),
+}));
+
 // Mock react-i18next
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({

@@ -5,6 +5,8 @@ import type TrackPlayerModule from 'react-native-track-player';
 // Shared mutable state for mock TrackPlayer hooks
 let mockPlaybackState: { state: string | undefined } = { state: undefined };
 let mockProgress = { position: 0, duration: 0, buffered: 0 };
+let trackPlayerEventHandler: ((event: Record<string, unknown>) => void) | null =
+  null;
 
 jest.mock('react-native-track-player', () => {
   const State = {
@@ -36,9 +38,13 @@ jest.mock('react-native-track-player', () => {
       PlaybackState: 'playback-state',
       PlaybackActiveTrackChanged: 'playback-active-track-changed',
       PlaybackProgressUpdated: 'playback-progress-updated',
+      PlaybackError: 'playback-error',
     },
     usePlaybackState: jest.fn(() => mockPlaybackState),
     useProgress: jest.fn(() => mockProgress),
+    useTrackPlayerEvents: jest.fn((_events, handler) => {
+      trackPlayerEventHandler = handler;
+    }),
   };
 });
 
@@ -61,6 +67,7 @@ describe('usePreview', () => {
     // Reset mutable mock state
     mockPlaybackState = { state: undefined };
     mockProgress = { position: 0, duration: 0, buffered: 0 };
+    trackPlayerEventHandler = null;
   });
 
   // ─── Initial State ──────────────────────────────────────────────
@@ -99,40 +106,138 @@ describe('usePreview', () => {
       url: 'https://example.com/preview/abc123',
       headers: { Authorization: 'Bearer test-token' },
       title: 'Preview',
+      contentType: 'audio/mpeg',
     });
     expect(TrackPlayerMock.play).toHaveBeenCalled();
   });
 
   it('play() passes AbortSignal checkpoints and stops if aborted', async () => {
-    TrackPlayerMock.reset.mockImplementationOnce(async () => {
-      // Simulate the play being aborted mid-setup
+    // Make TrackPlayer.reset a delayed promise so the first call parks there
+    let resolveReset: () => void;
+    TrackPlayerMock.reset.mockImplementationOnce(() => {
+      return new Promise<void>(resolve => {
+        resolveReset = resolve;
+      });
     });
 
     const { result } = renderHook(() => usePreview());
 
-    // Start playing one video
+    // Start first play — don't await, so it parks at the delayed reset
     let firstPromise: Promise<void>;
     act(() => {
       firstPromise = result.current.play('abc123');
     });
 
-    // Calling play again before first completes should abort first
+    // Start second play — this aborts the first call's controller
     let secondPromise: Promise<void>;
     act(() => {
       secondPromise = result.current.play('def456');
     });
 
+    // Await the second play (uses the default mock, resolves immediately)
     await act(async () => {
-      await firstPromise;
       await secondPromise;
     });
 
-    // Both calls should have the right params for their respective videos
+    // The second play should have called TrackPlayer.add with 'def456'
     expect(TrackPlayerMock.add).toHaveBeenCalledTimes(1);
     expect(TrackPlayerMock.add).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'def456' }),
     );
     expect(TrackPlayerMock.play).toHaveBeenCalled();
+
+    // Now resolve the first call's reset
+    act(() => {
+      resolveReset();
+    });
+
+    // Await first promise so it runs its checkout checkpoints
+    await act(async () => {
+      await firstPromise;
+    });
+
+    // TrackPlayer.add should still have been called only once (by the second play)
+    // The superseded first call bailed at the abort checkpoint before calling add
+    expect(TrackPlayerMock.add).toHaveBeenCalledTimes(1);
+    expect(TrackPlayerMock.add).not.toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'abc123' }),
+    );
+  });
+
+  it('keeps isLoading=true until playback state confirms Playing', async () => {
+    mockPlaybackState = { state: 'none' };
+
+    const { result, rerender } = renderHook(() => usePreview());
+
+    await act(async () => {
+      await result.current.play('abc123');
+    });
+
+    // After play() resolves, isLoading should still be true because
+    // playback state is still None (not yet Playing)
+    expect(result.current.isLoading).toBe(true);
+
+    // Simulate TrackPlayer confirming playback via useTrackPlayerEvents callback
+    mockPlaybackState = { state: 'playing' };
+    act(() => {
+      trackPlayerEventHandler!({ state: 'playing' });
+      rerender(undefined);
+    });
+
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.isPlaying).toBe(true);
+  });
+
+  // ─── Replay ────────────────────────────────────────────────────────
+
+  it('play() works when called twice with the same videoId', async () => {
+    const { result } = renderHook(() => usePreview());
+
+    // First play
+    await act(async () => {
+      await result.current.play('abc123');
+    });
+
+    // Stop
+    await act(async () => {
+      await result.current.stop();
+    });
+
+    // Second play with same videoId
+    await act(async () => {
+      await result.current.play('abc123');
+    });
+
+    expect(TrackPlayerMock.add).toHaveBeenCalledTimes(2);
+    expect(TrackPlayerMock.play).toHaveBeenCalledTimes(2);
+    expect(result.current.error).toBeNull();
+  });
+
+  it('play() works with different videoIds sequentially', async () => {
+    const { result } = renderHook(() => usePreview());
+
+    await act(async () => {
+      await result.current.play('abc123');
+    });
+
+    await act(async () => {
+      await result.current.stop();
+    });
+
+    await act(async () => {
+      await result.current.play('def456');
+    });
+
+    expect(TrackPlayerMock.add).toHaveBeenCalledTimes(2);
+    expect(TrackPlayerMock.add).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ id: 'abc123' }),
+    );
+    expect(TrackPlayerMock.add).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ id: 'def456' }),
+    );
+    expect(result.current.error).toBeNull();
   });
 
   // ─── Error handling ──────────────────────────────────────────────
@@ -253,5 +358,94 @@ describe('usePreview', () => {
     unmount();
 
     expect(TrackPlayerMock.reset).toHaveBeenCalled();
+  });
+
+  // ─── Error surface from playbackState ───────────────────────────
+
+  it('surfaces error from playbackState when TrackPlayer state is Error', () => {
+    const { result } = renderHook(() => usePreview());
+
+    act(() => {
+      trackPlayerEventHandler!({
+        state: 'error',
+        error: { message: 'Network request failed' },
+      });
+    });
+
+    expect(result.current.error).toBe('Network request failed');
+  });
+
+  it('does not set error for non-Error playback states', () => {
+    mockPlaybackState = { state: 'paused' };
+
+    const { result } = renderHook(() => usePreview());
+
+    expect(result.current.error).toBeNull();
+  });
+
+  // ─── Buffering state treated as active ──────────────────────────
+
+  it('treats buffering state as isPlaying so UI does not show idle play button', () => {
+    mockPlaybackState = { state: 'buffering' };
+
+    const { result } = renderHook(() => usePreview());
+
+    expect(result.current.isPlaying).toBe(true);
+  });
+
+  it('does not set error when a superseded play throws a non-AbortError', async () => {
+    let rejectAdd: (err: Error) => void;
+    TrackPlayerMock.add.mockImplementationOnce(() => {
+      return new Promise<void>((_resolve, reject) => {
+        rejectAdd = reject;
+      });
+    });
+
+    const { result } = renderHook(() => usePreview());
+
+    // First play — parks at TrackPlayer.add()
+    let firstPromise: Promise<void>;
+    act(() => {
+      firstPromise = result.current.play('abc123');
+    });
+
+    // Yield microtask queue so the first play can advance past
+    // await TrackPlayer.reset() and await getPreviewHeaders() to reach add()
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    // Second play — aborts the first controller, completes normally
+    let secondPromise: Promise<void>;
+    act(() => {
+      secondPromise = result.current.play('def456');
+    });
+
+    await act(async () => {
+      await secondPromise;
+    });
+
+    // Reject the first call's deferred add with a non-AbortError
+    await act(async () => {
+      rejectAdd!(new Error('TrackPlayer internal error'));
+      await Promise.resolve();
+      await firstPromise;
+    });
+
+    // Error is suppressed because abortRef.current now points to
+    // the second controller, not the first one that threw
+    expect(result.current.error).toBeNull();
+
+    // isLoading stays true until playback state confirms Playing
+    expect(result.current.isLoading).toBe(true);
+
+    // Simulate playback state confirming Playing via useTrackPlayerEvents
+    mockPlaybackState = { state: 'playing' };
+    act(() => {
+      trackPlayerEventHandler!({ state: 'playing' });
+    });
+
+    expect(result.current.isLoading).toBe(false);
   });
 });

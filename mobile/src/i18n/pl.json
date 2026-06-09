@@ -26,7 +26,9 @@
     "emailRequired": "Email jest wymagany",
     "displayNameRequired": "Nazwa wyświetlana jest wymagana",
     "usernameTooShort": "Nazwa użytkownika musi mieć co najmniej 3 znaki",
-    "passwordTooShort": "Hasło musi mieć co najmniej 4 znaki",
+    "passwordTooShort": "Hasło musi mieć co najmniej 8 znaków",
+    "passwordNoUppercase": "Hasło musi zawierać co najmniej jedną wielką literę",
+    "passwordNoDigit": "Hasło musi zawierać co najmniej jedną cyfrę",
     "invalidEmail": "Wprowadź poprawny adres email"
   },
   "nav": {
@@ -75,6 +77,7 @@
     "tapToListen": "Dotknij, aby odsłuchać",
     "loading": "Ładowanie podglądu...",
     "playing": "Teraz gra",
+    "buffering": "Buforowanie...",
     "duration": "0:10",
     "error": "Podgląd niedostępny"
   },

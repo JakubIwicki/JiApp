@@ -38,7 +38,10 @@ describe('getDownloadErrorMessage', () => {
   it('returns server error message for 502 Bad Gateway (yt-dlp failure)', () => {
     const err = {
       isAxiosError: true,
-      response: { status: 502, data: { error: 'Failed to download video: Video unavailable' } },
+      response: {
+        status: 502,
+        data: { error: 'Failed to download video: Video unavailable' },
+      },
       _serverError: 'Failed to download video: Video unavailable',
     };
     expect(getDownloadErrorMessage(err)).toBe(
@@ -52,7 +55,9 @@ describe('getDownloadErrorMessage', () => {
       response: { status: 500, data: { error: 'Internal server error' } },
       _serverError: 'Internal server error',
     };
-    expect(getDownloadErrorMessage(err)).toBe('Server error — please try again later');
+    expect(getDownloadErrorMessage(err)).toBe(
+      'Server error — please try again later',
+    );
   });
 
   it('returns connection error for network failures (ERR_NETWORK)', () => {
@@ -62,7 +67,9 @@ describe('getDownloadErrorMessage', () => {
       response: undefined,
       message: 'Network Error',
     };
-    expect(getDownloadErrorMessage(err)).toBe('Connection failed — check your network');
+    expect(getDownloadErrorMessage(err)).toBe(
+      'Connection failed — check your network',
+    );
   });
 
   it('returns connection error for network failures (no response)', () => {
@@ -71,12 +78,14 @@ describe('getDownloadErrorMessage', () => {
       response: undefined,
       code: 'ECONNABORTED',
     };
-    expect(getDownloadErrorMessage(err)).toBe('Connection failed — check your network');
+    expect(getDownloadErrorMessage(err)).toBe(
+      'Connection failed — check your network',
+    );
   });
 
-  it('returns fallback for generic Error', () => {
+  it('returns the error message for generic Error instances', () => {
     const err = new Error('Something went wrong');
-    expect(getDownloadErrorMessage(err)).toBe('Download failed');
+    expect(getDownloadErrorMessage(err)).toBe('Something went wrong');
   });
 
   it('returns fallback for non-Error values', () => {
@@ -100,6 +109,8 @@ describe('getDownloadErrorMessage', () => {
       response: { status: 500, data: { error: 'Something broke' } },
       _serverError: 'Something broke',
     };
-    expect(getDownloadErrorMessage(err)).toBe('Server error — please try again later');
+    expect(getDownloadErrorMessage(err)).toBe(
+      'Server error — please try again later',
+    );
   });
 });

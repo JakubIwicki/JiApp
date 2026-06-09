@@ -21,6 +21,7 @@ const useDownload = (): UseDownloadResult => {
   const [error, setError] = useState<string | null>(null);
   const [localFilePath, setLocalFilePath] = useState<string | null>(null);
   const contentUriRef = useRef<string | null>(null);
+  const filePathRef = useRef<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -56,6 +57,7 @@ const useDownload = (): UseDownloadResult => {
       const file = await downloadFile(downloadUrl, video.title);
       setLocalFilePath(file.displayPath);
       contentUriRef.current = file.contentUri;
+      filePathRef.current = file.filePath;
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') {
         return;
@@ -67,9 +69,11 @@ const useDownload = (): UseDownloadResult => {
   }, []);
 
   const playInMusicPlayer = useCallback(async (chooserTitle: string) => {
-    const uri = contentUriRef.current;
-    if (!uri) return;
-    await openAudioFile(uri, chooserTitle);
+    // Use the cached file path (real file) instead of content:// URI,
+    // since Samsung Music and other players have trouble with content URIs.
+    const path = filePathRef.current || contentUriRef.current;
+    if (!path) return;
+    await openAudioFile(path, chooserTitle);
   }, []);
 
   const reset = useCallback(() => {
@@ -77,6 +81,7 @@ const useDownload = (): UseDownloadResult => {
     setError(null);
     setLocalFilePath(null);
     contentUriRef.current = null;
+    filePathRef.current = null;
   }, []);
 
   return {

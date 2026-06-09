@@ -1,6 +1,7 @@
 import React, { useCallback, useReducer } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import axios from 'axios';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '../navigation/types';
 import AuthLayout from '../components/AuthLayout';
@@ -13,6 +14,37 @@ type RegisterNavigationProp = NativeStackNavigationProp<
   AuthStackParamList,
   'Register'
 >;
+
+const PASSWORD_MIN_LENGTH = 8;
+
+/**
+ * Maps server validation error messages to form field names.
+ * Each message mentions one field (Password, Username, Email, DisplayName).
+ */
+function extractFieldErrors(
+  serverErrors: string[],
+): Partial<Record<string, string>> {
+  const fieldMap: Record<string, string> = {
+    password: 'password',
+    username: 'username',
+    email: 'email',
+    displayname: 'displayName',
+  };
+
+  const result: Partial<Record<string, string>> = {};
+
+  for (const msg of serverErrors) {
+    const lower = msg.toLowerCase();
+    for (const [key, field] of Object.entries(fieldMap)) {
+      if (lower.includes(key)) {
+        result[field] = msg;
+        break;
+      }
+    }
+  }
+
+  return result;
+}
 
 interface RegisterFormState {
   username: string;
@@ -28,8 +60,16 @@ interface RegisterFormState {
 }
 
 type RegisterFormAction =
-  | { type: 'SET_FIELD'; field: 'username' | 'email' | 'password' | 'displayName'; value: string }
-  | { type: 'SET_FIELD_ERROR'; field: 'username' | 'email' | 'password' | 'displayName'; error: string | undefined }
+  | {
+      type: 'SET_FIELD';
+      field: 'username' | 'email' | 'password' | 'displayName';
+      value: string;
+    }
+  | {
+      type: 'SET_FIELD_ERROR';
+      field: 'username' | 'email' | 'password' | 'displayName';
+      error: string | undefined;
+    }
   | { type: 'SET_API_ERROR'; error: string | undefined }
   | { type: 'SET_LOADING'; loading: boolean }
   | { type: 'CLEAR_ERRORS' };
@@ -82,38 +122,83 @@ const RegisterScreen: React.FC = () => {
 
   useScreenTitle('auth.registerTitle');
 
-  const [form, dispatch] = useReducer(registerFormReducer, initialRegisterFormState);
+  const [form, dispatch] = useReducer(
+    registerFormReducer,
+    initialRegisterFormState,
+  );
 
   const validate = useCallback((): boolean => {
     dispatch({ type: 'CLEAR_ERRORS' });
     let hasError = false;
 
     if (!form.username.trim()) {
-      dispatch({ type: 'SET_FIELD_ERROR', field: 'username', error: t('auth.usernameRequired') });
+      dispatch({
+        type: 'SET_FIELD_ERROR',
+        field: 'username',
+        error: t('auth.usernameRequired'),
+      });
       hasError = true;
     } else if (form.username.trim().length < 3) {
-      dispatch({ type: 'SET_FIELD_ERROR', field: 'username', error: t('auth.usernameTooShort') });
+      dispatch({
+        type: 'SET_FIELD_ERROR',
+        field: 'username',
+        error: t('auth.usernameTooShort'),
+      });
       hasError = true;
     }
 
     if (!form.email.trim()) {
-      dispatch({ type: 'SET_FIELD_ERROR', field: 'email', error: t('auth.emailRequired') });
+      dispatch({
+        type: 'SET_FIELD_ERROR',
+        field: 'email',
+        error: t('auth.emailRequired'),
+      });
       hasError = true;
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-      dispatch({ type: 'SET_FIELD_ERROR', field: 'email', error: t('auth.invalidEmail') });
+      dispatch({
+        type: 'SET_FIELD_ERROR',
+        field: 'email',
+        error: t('auth.invalidEmail'),
+      });
       hasError = true;
     }
 
     if (!form.password.trim()) {
-      dispatch({ type: 'SET_FIELD_ERROR', field: 'password', error: t('auth.passwordRequired') });
+      dispatch({
+        type: 'SET_FIELD_ERROR',
+        field: 'password',
+        error: t('auth.passwordRequired'),
+      });
       hasError = true;
-    } else if (form.password.trim().length < 4) {
-      dispatch({ type: 'SET_FIELD_ERROR', field: 'password', error: t('auth.passwordTooShort') });
+    } else if (form.password.trim().length < PASSWORD_MIN_LENGTH) {
+      dispatch({
+        type: 'SET_FIELD_ERROR',
+        field: 'password',
+        error: t('auth.passwordTooShort'),
+      });
+      hasError = true;
+    } else if (!/[A-Z]/.test(form.password)) {
+      dispatch({
+        type: 'SET_FIELD_ERROR',
+        field: 'password',
+        error: t('auth.passwordNoUppercase'),
+      });
+      hasError = true;
+    } else if (!/[0-9]/.test(form.password)) {
+      dispatch({
+        type: 'SET_FIELD_ERROR',
+        field: 'password',
+        error: t('auth.passwordNoDigit'),
+      });
       hasError = true;
     }
 
     if (!form.displayName.trim()) {
-      dispatch({ type: 'SET_FIELD_ERROR', field: 'displayName', error: t('auth.displayNameRequired') });
+      dispatch({
+        type: 'SET_FIELD_ERROR',
+        field: 'displayName',
+        error: t('auth.displayNameRequired'),
+      });
       hasError = true;
     }
 
@@ -133,7 +218,21 @@ const RegisterScreen: React.FC = () => {
       );
       showSuccess('toast.registerSuccess');
       navigation.navigate('Login');
-    } catch {
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err) && err.response?.status === 400) {
+        const serverErrors: string[] = err.response?.data?.errors?.errors ?? [];
+        if (serverErrors.length > 0) {
+          const fieldErrors = extractFieldErrors(serverErrors);
+          for (const [field, error] of Object.entries(fieldErrors)) {
+            dispatch({
+              type: 'SET_FIELD_ERROR',
+              field: field as 'username' | 'email' | 'password' | 'displayName',
+              error,
+            });
+          }
+          return;
+        }
+      }
       dispatch({ type: 'SET_API_ERROR', error: t('auth.registerFailed') });
     } finally {
       dispatch({ type: 'SET_LOADING', loading: false });
@@ -166,9 +265,13 @@ const RegisterScreen: React.FC = () => {
     >
       <FormInput
         value={form.username}
-        onChangeText={(text) => {
+        onChangeText={text => {
           dispatch({ type: 'SET_FIELD', field: 'username', value: text });
-          dispatch({ type: 'SET_FIELD_ERROR', field: 'username', error: undefined });
+          dispatch({
+            type: 'SET_FIELD_ERROR',
+            field: 'username',
+            error: undefined,
+          });
         }}
         placeholder={t('auth.username')}
         error={form.usernameError}
@@ -177,9 +280,13 @@ const RegisterScreen: React.FC = () => {
 
       <FormInput
         value={form.email}
-        onChangeText={(text) => {
+        onChangeText={text => {
           dispatch({ type: 'SET_FIELD', field: 'email', value: text });
-          dispatch({ type: 'SET_FIELD_ERROR', field: 'email', error: undefined });
+          dispatch({
+            type: 'SET_FIELD_ERROR',
+            field: 'email',
+            error: undefined,
+          });
         }}
         placeholder={t('auth.email')}
         error={form.emailError}
@@ -189,9 +296,13 @@ const RegisterScreen: React.FC = () => {
 
       <FormInput
         value={form.password}
-        onChangeText={(text) => {
+        onChangeText={text => {
           dispatch({ type: 'SET_FIELD', field: 'password', value: text });
-          dispatch({ type: 'SET_FIELD_ERROR', field: 'password', error: undefined });
+          dispatch({
+            type: 'SET_FIELD_ERROR',
+            field: 'password',
+            error: undefined,
+          });
         }}
         placeholder={t('auth.password')}
         secureTextEntry={true}
@@ -200,9 +311,13 @@ const RegisterScreen: React.FC = () => {
 
       <FormInput
         value={form.displayName}
-        onChangeText={(text) => {
+        onChangeText={text => {
           dispatch({ type: 'SET_FIELD', field: 'displayName', value: text });
-          dispatch({ type: 'SET_FIELD_ERROR', field: 'displayName', error: undefined });
+          dispatch({
+            type: 'SET_FIELD_ERROR',
+            field: 'displayName',
+            error: undefined,
+          });
         }}
         placeholder={t('auth.displayName')}
         error={form.displayNameError}

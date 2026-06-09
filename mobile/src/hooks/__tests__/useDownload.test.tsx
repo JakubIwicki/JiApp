@@ -112,16 +112,16 @@ describe('useDownload', () => {
       },
       expect.any(AbortSignal),
     );
-    expect(mockDownloadFile).toHaveBeenCalledWith(
-      mockDownloadUrl,
-      video.title,
-    );
+    expect(mockDownloadFile).toHaveBeenCalledWith(mockDownloadUrl, video.title);
   });
 
   it('download() sets error on API failure showing 502 yt-dlp error message', async () => {
     const apiError = {
       isAxiosError: true,
-      response: { status: 502, data: { error: 'Failed to download video: Video unavailable' } },
+      response: {
+        status: 502,
+        data: { error: 'Failed to download video: Video unavailable' },
+      },
       _serverError: 'Failed to download video: Video unavailable',
     };
     mockRequestDownloadLink.mockRejectedValue(apiError);
@@ -141,7 +141,9 @@ describe('useDownload', () => {
     });
 
     expect(result.current.isDownloading).toBe(false);
-    expect(result.current.error).toBe('YouTube download failed: Failed to download video: Video unavailable');
+    expect(result.current.error).toBe(
+      'YouTube download failed: Failed to download video: Video unavailable',
+    );
     expect(result.current.localFilePath).toBeNull();
     expect(mockDownloadFile).not.toHaveBeenCalled();
   });
@@ -197,7 +199,7 @@ describe('useDownload', () => {
     });
 
     expect(result.current.isDownloading).toBe(false);
-    expect(result.current.error).toBe('Download failed');
+    expect(result.current.error).toBe('File download failed');
     expect(result.current.localFilePath).toBeNull();
     expect(mockRequestDownloadLink).toHaveBeenCalled();
     expect(mockDownloadFile).toHaveBeenCalled();

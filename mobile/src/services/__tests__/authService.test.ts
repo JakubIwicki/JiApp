@@ -28,12 +28,21 @@ describe('login', () => {
     token: 'jwt-token-123',
   };
 
+  const mockApiRaw = {
+    accessToken: 'jwt-token-123',
+    userId: 1,
+    displayName: 'John Doe',
+  };
+
   it('calls /auth/login with credentials and returns login data', async () => {
-    mockPost.mockResolvedValueOnce({ data: mockLoginResponse });
+    mockPost.mockResolvedValueOnce({ data: mockApiRaw });
 
     const result = await login(username, password);
 
-    expect(mockPost).toHaveBeenCalledWith('/auth/login', { username, password });
+    expect(mockPost).toHaveBeenCalledWith('/auth/login', {
+      username,
+      password,
+    });
     expect(result).toEqual(mockLoginResponse);
   });
 
@@ -41,8 +50,13 @@ describe('login', () => {
     const error = new Error('Invalid credentials');
     mockPost.mockRejectedValueOnce(error);
 
-    await expect(login(username, password)).rejects.toThrow('Invalid credentials');
-    expect(mockPost).toHaveBeenCalledWith('/auth/login', { username, password });
+    await expect(login(username, password)).rejects.toThrow(
+      'Invalid credentials',
+    );
+    expect(mockPost).toHaveBeenCalledWith('/auth/login', {
+      username,
+      password,
+    });
   });
 });
 

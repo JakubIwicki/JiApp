@@ -4,9 +4,20 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
+  /** Mapped from API `accessToken` field */
+  token: string;
+  /** Mapped from API `userId` field */
   id: number;
   displayName: string;
-  token: string;
+}
+
+/** Raw shape of POST /auth/login response. */
+export interface LoginApiRaw {
+  userId: number;
+  displayName: string;
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
 }
 
 export interface RegisterRequest {

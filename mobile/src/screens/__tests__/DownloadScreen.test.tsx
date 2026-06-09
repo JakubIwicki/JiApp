@@ -1,6 +1,46 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 
+// Mock react-native-track-player (needed by usePreview → AudioPreviewPlayer)
+jest.mock('react-native-track-player', () => {
+  const State = {
+    None: 'none',
+    Ready: 'ready',
+    Playing: 'playing',
+    Paused: 'paused',
+    Stopped: 'stopped',
+    Loading: 'loading',
+    Buffering: 'buffering',
+    Error: 'error',
+    Ended: 'ended',
+  };
+  return {
+    __esModule: true,
+    default: {
+      reset: jest.fn(() => Promise.resolve()),
+      add: jest.fn(() => Promise.resolve()),
+      play: jest.fn(() => Promise.resolve()),
+      pause: jest.fn(() => Promise.resolve()),
+    },
+    State,
+    Event: {
+      PlaybackState: 'playback-state',
+      PlaybackActiveTrackChanged: 'playback-active-track-changed',
+      PlaybackProgressUpdated: 'playback-progress-updated',
+      PlaybackError: 'playback-error',
+    },
+    usePlaybackState: jest.fn(() => ({ state: undefined })),
+    useProgress: jest.fn(() => ({ position: 0, duration: 0, buffered: 0 })),
+    useTrackPlayerEvents: jest.fn(),
+  };
+});
+
+// Mock useKeepAwake
+jest.mock('../../hooks/useKeepAwake', () => ({
+  __esModule: true,
+  default: jest.fn(),
+}));
+
 // Mock useDownload
 const mockDownload = jest.fn();
 const mockReset = jest.fn();
@@ -90,7 +130,9 @@ describe('DownloadScreen', () => {
 
     expect(getByText('download.success')).toBeTruthy();
     expect(getByText('download.fileSaved')).toBeTruthy();
-    expect(getByText('/storage/emulated/0/Download/TestVideo.mp3')).toBeTruthy();
+    expect(
+      getByText('/storage/emulated/0/Download/TestVideo.mp3'),
+    ).toBeTruthy();
   });
 
   it('shows success actions (back to search and view history) after download', () => {

@@ -8,11 +8,11 @@
 
 Get-NetFirewallRule -DisplayName "JiApp*" | Remove-NetFirewallRule
 
-5000, 5001, 5002, 5003, 5004 | ForEach-Object {
+6700, 6701, 6702, 6703, 6704 | ForEach-Object {
     New-NetFirewallRule -DisplayName "JiApp Port $_" -Direction Inbound -LocalPort $_ -Protocol TCP -Action Allow -Profile Any
     Write-Host "Port $_ : open" -ForegroundColor Green
 }
 
 Write-Host ""
-Write-Host "Done. Test: https://localhost:5000/health" -ForegroundColor Cyan
+Write-Host "Done. Test: https://localhost:6700/health" -ForegroundColor Cyan
 Read-Host "Press Enter to exit"

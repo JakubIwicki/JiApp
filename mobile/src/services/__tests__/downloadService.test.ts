@@ -76,15 +76,19 @@ import {
   openAudioFile,
 } from '../downloadService';
 import ReactNativeBlobUtil from 'react-native-blob-util';
-import type { DownloadRequest, DownloadResponse, DownloadHistoryItem } from '../../types/api';
+import type {
+  DownloadRequest,
+  DownloadResponse,
+  DownloadHistoryItem,
+} from '../../types/api';
 
 const mockPost = apiClient.post as jest.Mock;
 const mockGet = apiClient.get as jest.Mock;
 const mockPatch = apiClient.patch as jest.Mock;
 const mockGetToken = getToken as jest.Mock;
 const mockConfig = ReactNativeBlobUtil.config as jest.Mock;
-const mockCopyToMediaStore =
-  ReactNativeBlobUtil.MediaCollection.copyToMediaStore as jest.Mock;
+const mockCopyToMediaStore = ReactNativeBlobUtil.MediaCollection
+  .copyToMediaStore as jest.Mock;
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -103,13 +107,13 @@ describe('requestDownloadLink', () => {
     downloadUrl: 'https://example.com/downloads/song.mp3',
   };
 
-  it('calls /downloads/mp3 with request and returns download URL', async () => {
+  it('calls /yt/downloads/mp3 with request and returns download URL', async () => {
     mockPost.mockResolvedValueOnce({ data: mockDownloadResponse });
 
     const result = await requestDownloadLink(downloadRequest);
 
     expect(mockPost).toHaveBeenCalledWith(
-      '/downloads/mp3',
+      '/yt/downloads/mp3',
       downloadRequest,
       { signal: undefined },
     );
@@ -123,7 +127,7 @@ describe('requestDownloadLink', () => {
     await requestDownloadLink(downloadRequest, abortController.signal);
 
     expect(mockPost).toHaveBeenCalledWith(
-      '/downloads/mp3',
+      '/yt/downloads/mp3',
       downloadRequest,
       { signal: abortController.signal },
     );
@@ -154,12 +158,12 @@ describe('getDownloadHistory', () => {
     },
   ];
 
-  it('calls /downloads/history and returns items', async () => {
+  it('calls /yt/downloads/history and returns items', async () => {
     mockGet.mockResolvedValueOnce({ data: { items: mockHistoryItems } });
 
     const result = await getDownloadHistory();
 
-    expect(mockGet).toHaveBeenCalledWith('/downloads/history', {
+    expect(mockGet).toHaveBeenCalledWith('/yt/downloads/history', {
       params: { limit: undefined },
     });
     expect(result).toEqual(mockHistoryItems);
@@ -170,7 +174,7 @@ describe('getDownloadHistory', () => {
 
     await getDownloadHistory(5);
 
-    expect(mockGet).toHaveBeenCalledWith('/downloads/history', {
+    expect(mockGet).toHaveBeenCalledWith('/yt/downloads/history', {
       params: { limit: 5 },
     });
   });
@@ -186,12 +190,12 @@ describe('getDownloadHistory', () => {
 // --- archiveDownload ---
 
 describe('archiveDownload', () => {
-  it('calls PATCH /downloads/history/:id/archive', async () => {
+  it('calls PATCH /yt/downloads/history/:id/archive', async () => {
     mockPatch.mockResolvedValueOnce({});
 
     await archiveDownload(42);
 
-    expect(mockPatch).toHaveBeenCalledWith('/downloads/history/42/archive');
+    expect(mockPatch).toHaveBeenCalledWith('/yt/downloads/history/42/archive');
   });
 
   it('throws when archiving fails', async () => {
@@ -219,11 +223,9 @@ describe('downloadFile', () => {
     // Should configure download with auth header
     expect(mockConfig).toHaveBeenCalledWith({ fileCache: true });
     const configResult = mockConfig.mock.results[0]?.value;
-    expect(configResult.fetch).toHaveBeenCalledWith(
-      'GET',
-      downloadUrl,
-      { Authorization: 'Bearer jwt-token-123' },
-    );
+    expect(configResult.fetch).toHaveBeenCalledWith('GET', downloadUrl, {
+      Authorization: 'Bearer jwt-token-123',
+    });
 
     // Should copy to MediaStore
     expect(mockCopyToMediaStore).toHaveBeenCalledWith(
@@ -249,11 +251,7 @@ describe('downloadFile', () => {
 
     expect(mockConfig).toHaveBeenCalledWith({ fileCache: true });
     const configResult = mockConfig.mock.results[0]?.value;
-    expect(configResult.fetch).toHaveBeenCalledWith(
-      'GET',
-      downloadUrl,
-      {},
-    );
+    expect(configResult.fetch).toHaveBeenCalledWith('GET', downloadUrl, {});
   });
 
   it('throws when download fails', async () => {

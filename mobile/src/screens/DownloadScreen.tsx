@@ -1,11 +1,5 @@
 import React, { useCallback } from 'react';
-import {
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -18,10 +12,20 @@ import SuccessCheckmark from '../components/SuccessCheckmark';
 import FloatingParticles from '../components/FloatingParticles';
 import AudioPreviewPlayer from '../components/AudioPreviewPlayer';
 import useDownload from '../hooks/useDownload';
+import useKeepAwake from '../hooks/useKeepAwake';
 import useScreenTitle from '../hooks/useScreenTitle';
-import { colors, commonStyles, spacing, typography, borderRadius } from '../styles/theme';
+import {
+  colors,
+  commonStyles,
+  spacing,
+  typography,
+  borderRadius,
+} from '../styles/theme';
 
-type DownloadNavigationProp = NativeStackNavigationProp<MainStackParamList & MainTabParamList, 'Download'>;
+type DownloadNavigationProp = NativeStackNavigationProp<
+  MainStackParamList & MainTabParamList,
+  'Download'
+>;
 type DownloadRouteProp = RouteProp<MainStackParamList, 'Download'>;
 
 const DownloadPendingView: React.FC<{
@@ -78,15 +82,13 @@ const DownloadSuccessView: React.FC<{
       {localFilePath}
     </Text>
     <View style={styles.successButtons}>
-      <View style={styles.buttonRow}>
-        <View style={styles.successButtonWrapper}>
-          <Button title={goBackLabel} onPress={onGoBack} variant="outline" />
-        </View>
-        <View style={styles.successButtonWrapper}>
-          <Button title={viewHistoryLabel} onPress={onViewHistory} />
-        </View>
-      </View>
       <Button title={openInPlayerLabel} onPress={onPlay} />
+      <Button
+        title={viewHistoryLabel}
+        onPress={onViewHistory}
+        variant="outline"
+      />
+      <Button title={goBackLabel} onPress={onGoBack} variant="outline" />
     </View>
   </View>
 );
@@ -97,10 +99,7 @@ const DownloadErrorView: React.FC<{
   failedLabel: string;
 }> = ({ error, onRetry, failedLabel }) => (
   <View style={commonStyles.centerContent}>
-    <ErrorMessage
-      message={failedLabel + ': ' + error}
-      onRetry={onRetry}
-    />
+    <ErrorMessage message={failedLabel + ': ' + error} onRetry={onRetry} />
   </View>
 );
 
@@ -112,7 +111,11 @@ const DownloadScreen: React.FC = () => {
 
   useScreenTitle('download.title');
 
-  const { isDownloading, error, localFilePath, download, playInMusicPlayer } = useDownload();
+  const { isDownloading, error, localFilePath, download, playInMusicPlayer } =
+    useDownload();
+
+  // Keep screen awake during download
+  useKeepAwake(isDownloading);
 
   const handleDownload = useCallback(() => {
     download({

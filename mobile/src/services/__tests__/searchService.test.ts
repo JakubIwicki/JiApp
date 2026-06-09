@@ -8,7 +8,11 @@ jest.mock('../apiClient', () => ({
 }));
 
 import apiClient from '../apiClient';
-import { searchVideos, getSearchHistory, archiveSearchHistory } from '../searchService';
+import {
+  searchVideos,
+  getSearchHistory,
+  archiveSearchHistory,
+} from '../searchService';
 import type { SearchResponse, SearchHistoryItem } from '../../types/api';
 
 const mockPost = apiClient.post as jest.Mock;
@@ -36,13 +40,13 @@ describe('searchVideos', () => {
     ],
   };
 
-  it('calls /search with query and returns results', async () => {
+  it('calls /yt/search with query and returns results', async () => {
     mockPost.mockResolvedValueOnce({ data: mockSearchResponse });
 
     const result = await searchVideos(query);
 
     expect(mockPost).toHaveBeenCalledWith(
-      '/search',
+      '/yt/search',
       { query, maxResults: undefined },
       { signal: undefined },
     );
@@ -56,7 +60,7 @@ describe('searchVideos', () => {
     await searchVideos(query, 5, abortController.signal);
 
     expect(mockPost).toHaveBeenCalledWith(
-      '/search',
+      '/yt/search',
       { query, maxResults: 5 },
       { signal: abortController.signal },
     );
@@ -74,16 +78,26 @@ describe('searchVideos', () => {
 
 describe('getSearchHistory', () => {
   const mockHistoryItems: SearchHistoryItem[] = [
-    { id: 1, searchText: 'never gonna give you up', searchedAt: '2026-01-01T00:00:00.000Z' },
-    { id: 2, searchText: 'gangnam style', searchedAt: '2026-01-02T00:00:00.000Z' },
+    {
+      id: 1,
+      searchText: 'never gonna give you up',
+      searchedAt: '2026-01-01T00:00:00.000Z',
+    },
+    {
+      id: 2,
+      searchText: 'gangnam style',
+      searchedAt: '2026-01-02T00:00:00.000Z',
+    },
   ];
 
-  it('calls /search/history and returns items', async () => {
+  it('calls /yt/search/history and returns items', async () => {
     mockGet.mockResolvedValueOnce({ data: { items: mockHistoryItems } });
 
     const result = await getSearchHistory();
 
-    expect(mockGet).toHaveBeenCalledWith('/search/history', { params: { limit: undefined } });
+    expect(mockGet).toHaveBeenCalledWith('/yt/search/history', {
+      params: { limit: undefined },
+    });
     expect(result).toEqual(mockHistoryItems);
   });
 
@@ -92,7 +106,9 @@ describe('getSearchHistory', () => {
 
     await getSearchHistory(10);
 
-    expect(mockGet).toHaveBeenCalledWith('/search/history', { params: { limit: 10 } });
+    expect(mockGet).toHaveBeenCalledWith('/yt/search/history', {
+      params: { limit: 10 },
+    });
   });
 
   it('throws when fetching history fails', async () => {
@@ -106,12 +122,12 @@ describe('getSearchHistory', () => {
 // --- archiveSearchHistory ---
 
 describe('archiveSearchHistory', () => {
-  it('calls PATCH /search/history/:id/archive', async () => {
+  it('calls PATCH /yt/search/history/:id/archive', async () => {
     mockPatch.mockResolvedValueOnce({});
 
     await archiveSearchHistory(42);
 
-    expect(mockPatch).toHaveBeenCalledWith('/search/history/42/archive');
+    expect(mockPatch).toHaveBeenCalledWith('/yt/search/history/42/archive');
   });
 
   it('throws when archiving fails', async () => {

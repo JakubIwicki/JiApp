@@ -1,8 +1,10 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import TrackPlayer, {
   State,
+  Event,
   usePlaybackState,
   useProgress,
+  useTrackPlayerEvents,
 } from 'react-native-track-player';
 import { getPreviewUrl, getPreviewHeaders } from '../services/previewService';
 
@@ -26,7 +28,8 @@ const usePreview = (): UsePreviewResult => {
   const playbackState = usePlaybackState();
   const { position, duration } = useProgress(250);
 
-  const isPlaying = playbackState.state === State.Playing;
+  const state = playbackState.state;
+  const isPlaying = state === State.Playing || state === State.Buffering;
 
   // Derived values capped at 10 seconds
   const elapsed = Math.min(position, PREVIEW_MAX_DURATION);
@@ -42,6 +45,17 @@ const usePreview = (): UsePreviewResult => {
       TrackPlayer.pause();
     }
   }, [position, isPlaying]);
+
+  // Clear loading on Playing / Buffering; surface TrackPlayer errors
+  useTrackPlayerEvents([Event.PlaybackState], event => {
+    if (event.state === State.Playing || event.state === State.Buffering) {
+      setIsLoading(false);
+    }
+    if (event.state === State.Error && 'error' in event && event.error) {
+      setError(event.error.message);
+      setIsLoading(false);
+    }
+  });
 
   // Cleanup on unmount
   useEffect(() => {
@@ -84,6 +98,7 @@ const usePreview = (): UsePreviewResult => {
         url: getPreviewUrl(videoId),
         headers,
         title: 'Preview',
+        contentType: 'audio/mpeg',
       });
       const abortedAfterAdd = controller.signal.aborted;
       if (abortedAfterAdd) {
@@ -93,16 +108,18 @@ const usePreview = (): UsePreviewResult => {
       await TrackPlayer.play();
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') {
+        if (abortRef.current === controller) {
+          setIsLoading(false);
+        }
         return;
       }
-      setError(
-        err instanceof Error ? err.message : 'Preview failed',
-      );
-    } finally {
-      if (!controller.signal.aborted) {
+      if (abortRef.current === controller) {
+        setError(err instanceof Error ? err.message : 'Preview failed');
         setIsLoading(false);
       }
     }
+    // isLoading stays true until playback state confirms Playing
+    // preventing UI flicker between play() completing and actual playback starting
   }, []);
 
   const stop = useCallback(async () => {
