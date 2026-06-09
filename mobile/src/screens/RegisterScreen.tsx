@@ -31,12 +31,12 @@ function extractFieldErrors(
     displayname: 'displayName',
   };
 
+  const entries = Object.entries(fieldMap);
   const result: Partial<Record<string, string>> = {};
 
   for (const msg of serverErrors) {
-    const lower = msg.toLowerCase();
-    for (const [key, field] of Object.entries(fieldMap)) {
-      if (lower.includes(key)) {
+    for (const [key, field] of entries) {
+      if (msg.toLowerCase().includes(key)) {
         result[field] = msg;
         break;
       }
