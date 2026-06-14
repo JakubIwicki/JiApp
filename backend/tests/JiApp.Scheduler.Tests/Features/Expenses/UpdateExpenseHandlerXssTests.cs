@@ -6,66 +6,81 @@ using Microsoft.Data.Sqlite;
 
 namespace JiApp.Scheduler.Tests.Features.Expenses;
 
-public sealed class UpdateExpenseHandlerXssTests : IDisposable
+public sealed class UpdateExpenseHandlerXssTests
 {
-    private readonly Board _board;
-    private readonly SqliteConnection _connection;
-    private readonly Mock<ICurrentUserService> _currentUser;
-    private readonly SchedulerDbContext _db;
-
-    public UpdateExpenseHandlerXssTests()
+    private sealed class Fixture : IDisposable
     {
-        _connection = new SqliteConnection("DataSource=:memory:");
-        _connection.Open();
+        private readonly SqliteConnection _connection;
+        private readonly SchedulerDbContext _db;
+        private readonly Mock<ICurrentUserService> _currentUser;
 
-        var options = new DbContextOptionsBuilder<SchedulerDbContext>()
-            .UseSqlite(_connection)
-            .Options;
+        public Fixture()
+        {
+            _connection = new SqliteConnection("DataSource=:memory:");
+            _connection.Open();
+            var options = new DbContextOptionsBuilder<SchedulerDbContext>()
+                .UseSqlite(_connection)
+                .Options;
+            _db = new SchedulerDbContext(options);
+            _db.Database.EnsureCreated();
+            _currentUser = new Mock<ICurrentUserService>();
+            _currentUser.Setup(x => x.UserId).Returns(1L);
+        }
 
-        _db = new SchedulerDbContext(options);
-        _db.Database.EnsureCreated();
+        public SchedulerDbContext Db => _db;
+        public ICurrentUserService CurrentUser => _currentUser.Object;
 
-        _currentUser = new Mock<ICurrentUserService>();
-        _currentUser.Setup(x => x.UserId).Returns(1L);
+        public Fixture WithBoard(string name = "Board", List<long>? memberUserIds = null)
+        {
+            var board = new Board { Name = name, MemberUserIds = memberUserIds ?? [1L] };
+            _db.Boards.Add(board);
+            _db.SaveChanges();
+            _db.ChangeTracker.Clear();
+            return this;
+        }
 
-        _board = new Board { Name = "Board", MemberUserIds = [1L] };
-        _db.Boards.Add(_board);
-        _db.SaveChanges();
-        _db.ChangeTracker.Clear();
-    }
+        public Fixture WithExpense(Board board, DateOnly date, string category, decimal amount, string? note = null)
+        {
+            var expense = new Expense
+            {
+                BoardId = board.Id,
+                Date = date,
+                Category = Enum.Parse<ExpenseCategory>(category),
+                Amount = new Price(amount),
+                Note = note
+            };
+            _db.Attach(board);
+            _db.Expenses.Add(expense);
+            _db.SaveChanges();
+            _db.ChangeTracker.Clear();
+            return this;
+        }
 
-    public void Dispose()
-    {
-        _db.Dispose();
-        _connection.Close();
+        public UpdateExpenseHandler Sut => new(_db, _currentUser.Object);
+
+        public void Dispose()
+        {
+            _db.Dispose();
+            _connection.Close();
+        }
     }
 
     [Fact]
     public async Task HandleAsync_WithXssCategory_ErrorMessageDoesNotReflectInput()
     {
-        _db.Attach(_board);
-        var expense = new Expense
-        {
-            BoardId = _board.Id,
-            Date = DateOnly.FromDateTime(DateTime.UtcNow),
-            Category = ExpenseCategory.Fuel,
-            Amount = new Price(50),
-            Note = null
-        };
-        _db.Expenses.Add(expense);
-        await _db.SaveChangesAsync();
-        _db.ChangeTracker.Clear();
+        using var fixture = new Fixture().WithBoard();
+        var board = fixture.Db.Boards.Single();
+        fixture.WithExpense(board, DateOnly.FromDateTime(DateTime.UtcNow), "Fuel", 50);
+        var expense = fixture.Db.Expenses.Single();
+        var sut = fixture.Sut;
 
-        _db.Attach(_board);
-
-        var handler = new UpdateExpenseHandler(_db, _currentUser.Object);
         var request = new UpdateExpenseRequest(
             DateOnly.FromDateTime(DateTime.UtcNow),
             "<script>alert('xss')</script>",
             new PriceRequest(100),
             null);
 
-        var result = await handler.HandleAsync(expense.Id, request, CancellationToken.None);
+        var result = await sut.HandleAsync(expense.Id, request, CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().NotContain("<script>");

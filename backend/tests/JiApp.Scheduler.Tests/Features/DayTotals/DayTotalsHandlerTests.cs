@@ -5,89 +5,109 @@ using Microsoft.Data.Sqlite;
 
 namespace JiApp.Scheduler.Tests.Features.DayTotals;
 
-public sealed class DayTotalsHandlerTests : IDisposable
+public sealed class DayTotalsHandlerTests
 {
-    private readonly Board _board;
-    private readonly Client _client;
-    private readonly SqliteConnection _connection;
-    private readonly Mock<ICurrentUserService> _currentUser;
-    private readonly DateOnly _date;
-    private readonly SchedulerDbContext _db;
-    private readonly Service _service;
-
-    public DayTotalsHandlerTests()
+    private sealed class Fixture : IDisposable
     {
-        _connection = new SqliteConnection("DataSource=:memory:");
-        _connection.Open();
+        private readonly SqliteConnection _connection;
+        private readonly SchedulerDbContext _db;
+        private readonly Mock<ICurrentUserService> _currentUser;
+        private readonly DateOnly _date;
+        private readonly Board _board;
+        private readonly Client _client;
+        private readonly Service _service;
 
-        var options = new DbContextOptionsBuilder<SchedulerDbContext>()
-            .UseSqlite(_connection)
-            .Options;
-
-        _db = new SchedulerDbContext(options);
-        _db.Database.EnsureCreated();
-
-        _currentUser = new Mock<ICurrentUserService>();
-        _currentUser.Setup(x => x.UserId).Returns(1L);
-
-        _date = DateOnly.FromDateTime(DateTime.UtcNow);
-
-        _board = new Board { Name = "Test Board", MemberUserIds = [1L] };
-        _client = new Client { Name = "Alice", Board = _board };
-        _service = new Service
+        public Fixture()
         {
-            Name = "Haircut",
-            Category = ServiceCategory.MensHaircut,
-            BaseDuration = 30,
-            BasePrice = new Price(100)
-        };
+            _connection = new SqliteConnection("DataSource=:memory:");
+            _connection.Open();
+            var options = new DbContextOptionsBuilder<SchedulerDbContext>()
+                .UseSqlite(_connection)
+                .Options;
+            _db = new SchedulerDbContext(options);
+            _db.Database.EnsureCreated();
+            _currentUser = new Mock<ICurrentUserService>();
+            _currentUser.Setup(x => x.UserId).Returns(1L);
+            _date = DateOnly.FromDateTime(DateTime.UtcNow);
 
-        _db.Boards.Add(_board);
-        _db.Clients.Add(_client);
-        _service.Board = _board;
-        _db.Services.Add(_service);
-        _db.SaveChanges();
-        _db.ChangeTracker.Clear();
-    }
+            _board = new Board { Name = "Test Board", MemberUserIds = [1L] };
+            _client = new Client { Name = "Alice", Board = _board };
+            _service = new Service
+            {
+                Name = "Haircut",
+                Category = ServiceCategory.MensHaircut,
+                BaseDuration = 30,
+                BasePrice = new Price(100)
+            };
 
-    public void Dispose()
-    {
-        _db.Dispose();
-        _connection.Close();
+            _db.Boards.Add(_board);
+            _db.Clients.Add(_client);
+            _service.Board = _board;
+            _db.Services.Add(_service);
+            _db.SaveChanges();
+            _db.ChangeTracker.Clear();
+        }
+
+        public SchedulerDbContext Db => _db;
+        public ICurrentUserService CurrentUser => _currentUser.Object;
+        public Board Board => _board;
+        public Client Client => _client;
+        public Service Service => _service;
+        public DateOnly Date => _date;
+
+        public Fixture WithAppointment(Action<Appointment>? configure = null)
+        {
+            var appointment = new Appointment
+            {
+                BoardId = _board.Id, ClientId = _client.Id, ServiceId = _service.Id,
+                Date = _date, StartTime = new TimeOnly(10, 0), EndTime = new TimeOnly(11, 0),
+                Price = new Price(200), Location = "Room 1",
+                CreatedBy = 1L
+            };
+            configure?.Invoke(appointment);
+            _db.Attach(_board);
+            _db.Attach(_client);
+            _db.Attach(_service);
+            _db.Appointments.Add(appointment);
+            _db.SaveChanges();
+            _db.ChangeTracker.Clear();
+            return this;
+        }
+
+        public Fixture WithExpense(string category, decimal amount)
+        {
+            var expense = new Expense
+            {
+                BoardId = _board.Id, Date = _date,
+                Category = Enum.Parse<ExpenseCategory>(category),
+                Amount = new Price(amount)
+            };
+            _db.Attach(_board);
+            _db.Expenses.Add(expense);
+            _db.SaveChanges();
+            _db.ChangeTracker.Clear();
+            return this;
+        }
+
+        public DayTotalsHandler Sut => new(_db, _currentUser.Object);
+
+        public void Dispose()
+        {
+            _db.Dispose();
+            _connection.Close();
+        }
     }
 
     [Fact]
     public async Task DayTotals_WithRevenueAndExpenses_ReturnsCorrectNet()
     {
-        _db.Attach(_board);
-        _db.Attach(_client);
-        _db.Attach(_service);
+        using var fixture = new Fixture()
+            .WithAppointment()
+            .WithExpense("Fuel", 50)
+            .WithExpense("Food", 30);
+        var sut = fixture.Sut;
 
-        var appointment = new Appointment
-        {
-            BoardId = _board.Id, ClientId = _client.Id, ServiceId = _service.Id,
-            Date = _date, StartTime = new TimeOnly(10, 0), EndTime = new TimeOnly(11, 0),
-            Price = new Price(200), Location = "Room 1",
-            CreatedBy = 1L
-        };
-        _db.Appointments.Add(appointment);
-
-        _db.Expenses.AddRange(
-            new Expense
-            {
-                BoardId = _board.Id, Date = _date, Category = ExpenseCategory.Fuel,
-                Amount = new Price(50)
-            },
-            new Expense
-            {
-                BoardId = _board.Id, Date = _date, Category = ExpenseCategory.Food,
-                Amount = new Price(30)
-            });
-        await _db.SaveChangesAsync();
-        _db.ChangeTracker.Clear();
-
-        var handler = new DayTotalsHandler(_db, _currentUser.Object);
-        var result = await handler.HandleAsync(new DayTotalsRequest(_board.Id, _date), CancellationToken.None);
+        var result = await sut.HandleAsync(new DayTotalsRequest(fixture.Board.Id, fixture.Date), CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Revenue.Should().Be(200);
@@ -98,24 +118,11 @@ public sealed class DayTotalsHandlerTests : IDisposable
     [Fact]
     public async Task DayTotals_WithCancelledAppointment_ExcludesFromRevenue()
     {
-        _db.Attach(_board);
-        _db.Attach(_client);
-        _db.Attach(_service);
+        using var fixture = new Fixture()
+            .WithAppointment(a => { a.TryTransitionTo(AppointmentStatus.Cancelled, out _); });
+        var sut = fixture.Sut;
 
-        var cancelledAppointment = new Appointment
-        {
-            BoardId = _board.Id, ClientId = _client.Id, ServiceId = _service.Id,
-            Date = _date, StartTime = new TimeOnly(10, 0), EndTime = new TimeOnly(11, 0),
-            Price = new Price(200), Location = "Room 1",
-            CreatedBy = 1L
-        };
-        cancelledAppointment.TryTransitionTo(AppointmentStatus.Cancelled, out _);
-        _db.Appointments.Add(cancelledAppointment);
-        await _db.SaveChangesAsync();
-        _db.ChangeTracker.Clear();
-
-        var handler = new DayTotalsHandler(_db, _currentUser.Object);
-        var result = await handler.HandleAsync(new DayTotalsRequest(_board.Id, _date), CancellationToken.None);
+        var result = await sut.HandleAsync(new DayTotalsRequest(fixture.Board.Id, fixture.Date), CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Revenue.Should().Be(0);
@@ -126,18 +133,11 @@ public sealed class DayTotalsHandlerTests : IDisposable
     [Fact]
     public async Task DayTotals_WithExpensesOnly_ReturnsNegativeNet()
     {
-        _db.Attach(_board);
+        using var fixture = new Fixture()
+            .WithExpense("Supplies", 100);
+        var sut = fixture.Sut;
 
-        _db.Expenses.Add(new Expense
-        {
-            BoardId = _board.Id, Date = _date, Category = ExpenseCategory.Supplies,
-            Amount = new Price(100)
-        });
-        await _db.SaveChangesAsync();
-        _db.ChangeTracker.Clear();
-
-        var handler = new DayTotalsHandler(_db, _currentUser.Object);
-        var result = await handler.HandleAsync(new DayTotalsRequest(_board.Id, _date), CancellationToken.None);
+        var result = await sut.HandleAsync(new DayTotalsRequest(fixture.Board.Id, fixture.Date), CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Revenue.Should().Be(0);
