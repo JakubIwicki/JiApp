@@ -10,49 +10,80 @@ using Microsoft.Data.Sqlite;
 
 namespace JiApp.Scheduler.Tests.Features.Expenses;
 
-public sealed class ExpenseHandlerTests : IDisposable
+public sealed class ExpenseHandlerTests
 {
-    private readonly Board _board;
-    private readonly SqliteConnection _connection;
-    private readonly Mock<ICurrentUserService> _currentUser;
-    private readonly SchedulerDbContext _db;
-
-    public ExpenseHandlerTests()
+    private sealed class Fixture : IDisposable
     {
-        _connection = new SqliteConnection("DataSource=:memory:");
-        _connection.Open();
+        private readonly SqliteConnection _connection;
+        private readonly SchedulerDbContext _db;
+        private readonly Mock<ICurrentUserService> _currentUser;
 
-        var options = new DbContextOptionsBuilder<SchedulerDbContext>()
-            .UseSqlite(_connection)
-            .Options;
+        public Fixture()
+        {
+            _connection = new SqliteConnection("DataSource=:memory:");
+            _connection.Open();
+            var options = new DbContextOptionsBuilder<SchedulerDbContext>()
+                .UseSqlite(_connection)
+                .Options;
+            _db = new SchedulerDbContext(options);
+            _db.Database.EnsureCreated();
+            _currentUser = new Mock<ICurrentUserService>();
+            _currentUser.Setup(x => x.UserId).Returns(1L);
+        }
 
-        _db = new SchedulerDbContext(options);
-        _db.Database.EnsureCreated();
+        public SchedulerDbContext Db => _db;
+        public ICurrentUserService CurrentUser => _currentUser.Object;
 
-        _currentUser = new Mock<ICurrentUserService>();
-        _currentUser.Setup(x => x.UserId).Returns(1L);
+        public Fixture WithBoard(string name = "Board", List<long>? memberUserIds = null)
+        {
+            var board = new Board { Name = name, MemberUserIds = memberUserIds ?? [1L] };
+            _db.Boards.Add(board);
+            _db.SaveChanges();
+            _db.ChangeTracker.Clear();
+            return this;
+        }
 
-        _board = new Board { Name = "Board", MemberUserIds = [1L] };
-        _db.Boards.Add(_board);
-        _db.SaveChanges();
-        _db.ChangeTracker.Clear();
-    }
+        public Fixture WithExpense(Board board, DateOnly date, string category, decimal amount, string? note = null)
+        {
+            var expense = new Expense
+            {
+                BoardId = board.Id,
+                Date = date,
+                Category = Enum.Parse<ExpenseCategory>(category),
+                Amount = new Price(amount),
+                Note = note
+            };
+            _db.Attach(board);
+            _db.Expenses.Add(expense);
+            _db.SaveChanges();
+            _db.ChangeTracker.Clear();
+            return this;
+        }
 
-    public void Dispose()
-    {
-        _db.Dispose();
-        _connection.Close();
+        public CreateExpenseHandler CreateExpenseSut => new(_db, _currentUser.Object);
+        public GetExpenseHandler GetExpenseSut => new(_db, _currentUser.Object);
+        public ListExpensesHandler ListExpensesSut => new(_db, _currentUser.Object);
+        public UpdateExpenseHandler UpdateExpenseSut => new(_db, _currentUser.Object);
+        public DeleteExpenseHandler DeleteExpenseSut => new(_db, _currentUser.Object);
+
+        public void Dispose()
+        {
+            _db.Dispose();
+            _connection.Close();
+        }
     }
 
     [Fact]
     public async Task CreateExpense_WithValidData_ReturnsExpenseId()
     {
-        var handler = new CreateExpenseHandler(_db, _currentUser.Object);
+        using var fixture = new Fixture().WithBoard();
+        var board = fixture.Db.Boards.Single();
+        var sut = fixture.CreateExpenseSut;
         var request = new CreateExpenseRequest(
-            _board.Id, new DateOnly(2026, 5, 30),
+            board.Id, new DateOnly(2026, 5, 30),
             "Fuel", new PriceRequest(50), "Gas station");
 
-        var result = await handler.HandleAsync(request, CancellationToken.None);
+        var result = await sut.HandleAsync(request, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().BeGreaterThan(0);
@@ -61,12 +92,13 @@ public sealed class ExpenseHandlerTests : IDisposable
     [Fact]
     public async Task CreateExpense_WithInvalidBoardId_ReturnsFailure()
     {
-        var handler = new CreateExpenseHandler(_db, _currentUser.Object);
+        using var fixture = new Fixture();
+        var sut = fixture.CreateExpenseSut;
         var request = new CreateExpenseRequest(
             999L, new DateOnly(2026, 5, 30),
             "Fuel", new PriceRequest(50), null);
 
-        var result = await handler.HandleAsync(request, CancellationToken.None);
+        var result = await sut.HandleAsync(request, CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Board not found");
@@ -75,12 +107,14 @@ public sealed class ExpenseHandlerTests : IDisposable
     [Fact]
     public async Task CreateExpense_WithInvalidCategory_ReturnsFailure()
     {
-        var handler = new CreateExpenseHandler(_db, _currentUser.Object);
+        using var fixture = new Fixture().WithBoard();
+        var board = fixture.Db.Boards.Single();
+        var sut = fixture.CreateExpenseSut;
         var request = new CreateExpenseRequest(
-            _board.Id, new DateOnly(2026, 5, 30),
+            board.Id, new DateOnly(2026, 5, 30),
             "InvalidCategory", new PriceRequest(50), null);
 
-        var result = await handler.HandleAsync(request, CancellationToken.None);
+        var result = await sut.HandleAsync(request, CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Invalid expense category: InvalidCategory");
@@ -89,21 +123,12 @@ public sealed class ExpenseHandlerTests : IDisposable
     [Fact]
     public async Task GetExpense_WithValidId_ReturnsExpense()
     {
-        _db.Attach(_board);
-        var expense = new Expense
-        {
-            BoardId = _board.Id,
-            Date = new DateOnly(2026, 5, 30),
-            Category = ExpenseCategory.Fuel,
-            Amount = new Price(75),
-            Note = "Tank"
-        };
-        _db.Expenses.Add(expense);
-        await _db.SaveChangesAsync();
-        _db.ChangeTracker.Clear();
-
-        var handler = new GetExpenseHandler(_db, _currentUser.Object);
-        var result = await handler.HandleAsync(expense.Id, CancellationToken.None);
+        using var fixture = new Fixture().WithBoard();
+        var board = fixture.Db.Boards.Single();
+        fixture.WithExpense(board, new DateOnly(2026, 5, 30), "Fuel", 75, "Tank");
+        var expense = fixture.Db.Expenses.Single();
+        var sut = fixture.GetExpenseSut;
+        var result = await sut.HandleAsync(expense.Id, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Category.Should().Be("Fuel");
@@ -114,8 +139,9 @@ public sealed class ExpenseHandlerTests : IDisposable
     [Fact]
     public async Task GetExpense_WithInvalidId_ReturnsFailure()
     {
-        var handler = new GetExpenseHandler(_db, _currentUser.Object);
-        var result = await handler.HandleAsync(999L, CancellationToken.None);
+        using var fixture = new Fixture();
+        var sut = fixture.GetExpenseSut;
+        var result = await sut.HandleAsync(999L, CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
     }
@@ -123,23 +149,12 @@ public sealed class ExpenseHandlerTests : IDisposable
     [Fact]
     public async Task ListExpenses_ByBoardAndDate_ReturnsFiltered()
     {
-        _db.Attach(_board);
-        _db.Expenses.AddRange(
-            new Expense
-            {
-                BoardId = _board.Id, Date = new DateOnly(2026, 5, 30),
-                Category = ExpenseCategory.Fuel, Amount = new Price(50)
-            },
-            new Expense
-            {
-                BoardId = _board.Id, Date = new DateOnly(2026, 5, 31),
-                Category = ExpenseCategory.Food, Amount = new Price(30)
-            });
-        await _db.SaveChangesAsync();
-        _db.ChangeTracker.Clear();
-
-        var handler = new ListExpensesHandler(_db, _currentUser.Object);
-        var result = await handler.HandleAsync(_board.Id, new DateOnly(2026, 5, 30), CancellationToken.None);
+        using var fixture = new Fixture().WithBoard();
+        var board = fixture.Db.Boards.Single();
+        fixture.WithExpense(board, new DateOnly(2026, 5, 30), "Fuel", 50);
+        fixture.WithExpense(board, new DateOnly(2026, 5, 31), "Food", 30);
+        var sut = fixture.ListExpensesSut;
+        var result = await sut.HandleAsync(board.Id, new DateOnly(2026, 5, 30), CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().ContainSingle(e => e.Category == "Fuel");
@@ -148,23 +163,12 @@ public sealed class ExpenseHandlerTests : IDisposable
     [Fact]
     public async Task ListExpenses_WithoutDate_ReturnsAllForBoard()
     {
-        _db.Attach(_board);
-        _db.Expenses.AddRange(
-            new Expense
-            {
-                BoardId = _board.Id, Date = new DateOnly(2026, 5, 30),
-                Category = ExpenseCategory.Fuel, Amount = new Price(50)
-            },
-            new Expense
-            {
-                BoardId = _board.Id, Date = new DateOnly(2026, 5, 31),
-                Category = ExpenseCategory.Food, Amount = new Price(30)
-            });
-        await _db.SaveChangesAsync();
-        _db.ChangeTracker.Clear();
-
-        var handler = new ListExpensesHandler(_db, _currentUser.Object);
-        var result = await handler.HandleAsync(_board.Id, null, CancellationToken.None);
+        using var fixture = new Fixture().WithBoard();
+        var board = fixture.Db.Boards.Single();
+        fixture.WithExpense(board, new DateOnly(2026, 5, 30), "Fuel", 50);
+        fixture.WithExpense(board, new DateOnly(2026, 5, 31), "Food", 30);
+        var sut = fixture.ListExpensesSut;
+        var result = await sut.HandleAsync(board.Id, null, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().HaveCount(2);
@@ -173,27 +177,18 @@ public sealed class ExpenseHandlerTests : IDisposable
     [Fact]
     public async Task UpdateExpense_WithValidData_Updates()
     {
-        _db.Attach(_board);
-        var expense = new Expense
-        {
-            BoardId = _board.Id,
-            Date = new DateOnly(2026, 5, 30),
-            Category = ExpenseCategory.Fuel,
-            Amount = new Price(50),
-            Note = "Old note"
-        };
-        _db.Expenses.Add(expense);
-        await _db.SaveChangesAsync();
-        _db.ChangeTracker.Clear();
-
-        var handler = new UpdateExpenseHandler(_db, _currentUser.Object);
+        using var fixture = new Fixture().WithBoard();
+        var board = fixture.Db.Boards.Single();
+        fixture.WithExpense(board, new DateOnly(2026, 5, 30), "Fuel", 50, "Old note");
+        var expense = fixture.Db.Expenses.Single();
+        var sut = fixture.UpdateExpenseSut;
         var request = new UpdateExpenseRequest(
             new DateOnly(2026, 5, 31), "Food", new PriceRequest(80), "Updated note");
 
-        var result = await handler.HandleAsync(expense.Id, request, CancellationToken.None);
+        var result = await sut.HandleAsync(expense.Id, request, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        var updated = await _db.Expenses.FindAsync(expense.Id);
+        var updated = await fixture.Db.Expenses.FindAsync(expense.Id);
         updated!.Category.Should().Be(ExpenseCategory.Food);
         updated.Amount.Amount.Should().Be(80);
         updated.Note.Should().Be("Updated note");
@@ -203,11 +198,12 @@ public sealed class ExpenseHandlerTests : IDisposable
     [Fact]
     public async Task UpdateExpense_WithInvalidId_ReturnsFailure()
     {
-        var handler = new UpdateExpenseHandler(_db, _currentUser.Object);
+        using var fixture = new Fixture();
+        var sut = fixture.UpdateExpenseSut;
         var request = new UpdateExpenseRequest(
             new DateOnly(2026, 5, 31), "Fuel", new PriceRequest(50), null);
 
-        var result = await handler.HandleAsync(999L, request, CancellationToken.None);
+        var result = await sut.HandleAsync(999L, request, CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Expense not found");
@@ -216,31 +212,24 @@ public sealed class ExpenseHandlerTests : IDisposable
     [Fact]
     public async Task DeleteExpense_WithValidId_Deletes()
     {
-        _db.Attach(_board);
-        var expense = new Expense
-        {
-            BoardId = _board.Id,
-            Date = new DateOnly(2026, 5, 30),
-            Category = ExpenseCategory.Fuel,
-            Amount = new Price(50)
-        };
-        _db.Expenses.Add(expense);
-        await _db.SaveChangesAsync();
-        _db.ChangeTracker.Clear();
-
-        var handler = new DeleteExpenseHandler(_db, _currentUser.Object);
-        var result = await handler.HandleAsync(expense.Id, CancellationToken.None);
+        using var fixture = new Fixture().WithBoard();
+        var board = fixture.Db.Boards.Single();
+        fixture.WithExpense(board, new DateOnly(2026, 5, 30), "Fuel", 50);
+        var expense = fixture.Db.Expenses.Single();
+        var sut = fixture.DeleteExpenseSut;
+        var result = await sut.HandleAsync(expense.Id, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        var deleted = await _db.Expenses.FindAsync(expense.Id);
+        var deleted = await fixture.Db.Expenses.FindAsync(expense.Id);
         deleted.Should().BeNull();
     }
 
     [Fact]
     public async Task DeleteExpense_WithInvalidId_ReturnsFailure()
     {
-        var handler = new DeleteExpenseHandler(_db, _currentUser.Object);
-        var result = await handler.HandleAsync(999L, CancellationToken.None);
+        using var fixture = new Fixture();
+        var sut = fixture.DeleteExpenseSut;
+        var result = await sut.HandleAsync(999L, CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
     }
@@ -248,12 +237,14 @@ public sealed class ExpenseHandlerTests : IDisposable
     [Fact]
     public async Task CreateExpense_WithInvalidCategory_ReturnsValidationErrorCategory()
     {
-        var handler = new CreateExpenseHandler(_db, _currentUser.Object);
+        using var fixture = new Fixture().WithBoard();
+        var board = fixture.Db.Boards.Single();
+        var sut = fixture.CreateExpenseSut;
         var request = new CreateExpenseRequest(
-            _board.Id, new DateOnly(2026, 5, 30),
+            board.Id, new DateOnly(2026, 5, 30),
             "InvalidCategory", new PriceRequest(50), null);
 
-        var result = await handler.HandleAsync(request, CancellationToken.None);
+        var result = await sut.HandleAsync(request, CancellationToken.None);
 
         result.ErrorCategory.Should().Be(ResultCategories.Validation);
     }
@@ -261,23 +252,15 @@ public sealed class ExpenseHandlerTests : IDisposable
     [Fact]
     public async Task UpdateExpense_WithInvalidCategory_ReturnsValidationErrorCategory()
     {
-        _db.Attach(_board);
-        var expense = new Expense
-        {
-            BoardId = _board.Id,
-            Date = new DateOnly(2026, 5, 30),
-            Category = ExpenseCategory.Fuel,
-            Amount = new Price(50)
-        };
-        _db.Expenses.Add(expense);
-        await _db.SaveChangesAsync();
-        _db.ChangeTracker.Clear();
-
-        var handler = new UpdateExpenseHandler(_db, _currentUser.Object);
+        using var fixture = new Fixture().WithBoard();
+        var board = fixture.Db.Boards.Single();
+        fixture.WithExpense(board, new DateOnly(2026, 5, 30), "Fuel", 50);
+        var expense = fixture.Db.Expenses.Single();
+        var sut = fixture.UpdateExpenseSut;
         var request = new UpdateExpenseRequest(
             new DateOnly(2026, 5, 31), "InvalidCategory", new PriceRequest(80), null);
 
-        var result = await handler.HandleAsync(expense.Id, request, CancellationToken.None);
+        var result = await sut.HandleAsync(expense.Id, request, CancellationToken.None);
 
         result.ErrorCategory.Should().Be(ResultCategories.Validation);
     }
@@ -285,8 +268,9 @@ public sealed class ExpenseHandlerTests : IDisposable
     [Fact]
     public async Task ListExpenses_WithInvalidBoard_ReturnsNotFoundErrorCategory()
     {
-        var handler = new ListExpensesHandler(_db, _currentUser.Object);
-        var result = await handler.HandleAsync(999L, null, CancellationToken.None);
+        using var fixture = new Fixture();
+        var sut = fixture.ListExpensesSut;
+        var result = await sut.HandleAsync(999L, null, CancellationToken.None);
 
         result.ErrorCategory.Should().Be(ResultCategories.NotFound);
     }
@@ -294,12 +278,10 @@ public sealed class ExpenseHandlerTests : IDisposable
     [Fact]
     public async Task ListExpenses_ByNonMember_ReturnsAccessDeniedErrorCategory()
     {
-        var otherBoard = new Board { Name = "Other", MemberUserIds = [2L] };
-        _db.Boards.Add(otherBoard);
-        await _db.SaveChangesAsync();
-
-        var handler = new ListExpensesHandler(_db, _currentUser.Object);
-        var result = await handler.HandleAsync(otherBoard.Id, null, CancellationToken.None);
+        using var fixture = new Fixture().WithBoard(name: "Other", memberUserIds: [2L]);
+        var otherBoard = fixture.Db.Boards.Single();
+        var sut = fixture.ListExpensesSut;
+        var result = await sut.HandleAsync(otherBoard.Id, null, CancellationToken.None);
 
         result.ErrorCategory.Should().Be(ResultCategories.AccessDenied);
     }
