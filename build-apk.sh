@@ -73,6 +73,47 @@ else
     error "Copy mobile/.env.example to mobile/.env and set JIAPP_API_URL"
     exit 1
 fi
+# ── Network security config — inject device IP ──────────────────────────
+NETWORK_SECURITY_CONFIG="$ANDROID_DIR/app/src/main/res/xml/network_security_config.xml"
+DEVICE_HOST=$(echo "$JIAPP_API_URL" | sed -E 's|^https?://([^:/]+).*|\1|')
+
+# Always clear previously injected domain (if any), then add current one if needed
+sed -i '/<!-- DEVICE_IP_BEGIN -->/,/<!-- DEVICE_IP_END -->/{ /<!-- DEVICE_IP_BEGIN -->/!{ /<!-- DEVICE_IP_END -->/!d; }; }' \
+    "$NETWORK_SECURITY_CONFIG"
+
+if [ -n "$DEVICE_HOST" ] && [ "$DEVICE_HOST" != "10.0.2.2" ] && [ "$DEVICE_HOST" != "localhost" ]; then
+    sed -i "s|<!-- DEVICE_IP_BEGIN -->|&\n        <domain includeSubdomains=\"false\">$DEVICE_HOST</domain>|" \
+        "$NETWORK_SECURITY_CONFIG"
+    success "Injected $DEVICE_HOST into network_security_config.xml"
+else
+    info "Using emulator/localhost — no extra domain needed in network_security_config.xml"
+fi
+
+# ── CA cert for Android network security ─────────────────────────────────
+CA_CERT="$ANDROID_DIR/app/src/main/res/raw/jiapp_dev_ca"
+PFX_FILE="$SCRIPT_DIR/backend/certs/dev-cert.pfx"
+if [ ! -f "$CA_CERT" ]; then
+    info "CA cert not found — attempting to extract from dev-cert.pfx..."
+    if [ -f "$PFX_FILE" ]; then
+        # Try to source backend .env for a custom PFX password, then fall back to dev default
+        PFX_PASS="JiAppDev2026!"
+        if [ -f "$SCRIPT_DIR/backend/.env" ]; then
+            BACKEND_PASS=$(grep -oP 'DEV_CERT_PASSWORD=\K.*' "$SCRIPT_DIR/backend/.env" 2>/dev/null || true)
+            [ -n "$BACKEND_PASS" ] && PFX_PASS="$BACKEND_PASS"
+        fi
+        if openssl pkcs12 -in "$PFX_FILE" -nokeys -passin "pass:$PFX_PASS" 2>/dev/null \
+            | openssl x509 -outform DER -out "$CA_CERT" 2>/dev/null; then
+            success "CA cert extracted to res/raw/jiapp_dev_ca"
+        else
+            warn "Failed to extract CA cert — HTTPS to dev server may not work"
+            warn "Run manually: openssl pkcs12 -in backend/certs/dev-cert.pfx -nokeys \\"
+            warn "    | openssl x509 -outform DER -out $CA_CERT"
+        fi
+    else
+        warn "dev-cert.pfx not found — run backend/start-dev.sh first to create it"
+        warn "Without the CA cert, HTTPS to the dev server may fail on physical devices"
+    fi
+fi
 echo ""
 
 # ── Prerequisites ────────────────────────────────────────────────────────
