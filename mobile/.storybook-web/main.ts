@@ -3,6 +3,7 @@ import { fileURLToPath } from 'url';
 import { StorybookConfig } from '@storybook/react-vite';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
+const projectDir = path.resolve(dirname, '..');
 const mocksDir = path.resolve(dirname, '../src/__mocks__');
 const servicesDir = path.resolve(dirname, '../src/services');
 
@@ -32,10 +33,7 @@ const config: StorybookConfig = {
         mocksDir,
         'react-native-blob-util.ts',
       ),
-      'react-native-localize': path.join(
-        mocksDir,
-        'react-native-localize.ts',
-      ),
+      'react-native-localize': path.join(mocksDir, 'react-native-localize.ts'),
       '@react-native-async-storage/async-storage': path.join(
         mocksDir,
         '@react-native-async-storage/async-storage.ts',
@@ -45,11 +43,15 @@ const config: StorybookConfig = {
       // which has native-only code that can't run on web.
       '@react-navigation/native': path.join(mocksDir, 'react-navigation.tsx'),
       '@react-navigation/stack': path.join(mocksDir, 'react-navigation.tsx'),
-      '@react-navigation/bottom-tabs': path.join(mocksDir, 'react-navigation.tsx'),
+      '@react-navigation/bottom-tabs': path.join(
+        mocksDir,
+        'react-navigation.tsx',
+      ),
       // react-native-svg's Fabric native components import codegenNativeComponent
       // which doesn't exist in react-native-web. The mock below renders real DOM
       // <svg> elements instead — icons are visible, Fabric imports are avoided.
-      'react-native-svg': path.join(mocksDir, 'react-native-svg.tsx'),    };
+      'react-native-svg': path.join(mocksDir, 'react-native-svg.tsx'),
+    };
 
     // Plugin: redirect real service imports to __mocks__/ (not apiClient or storageService)
     viteConfig.plugins = viteConfig.plugins ?? [];
@@ -59,6 +61,8 @@ const config: StorybookConfig = {
       resolveId(source, importer) {
         if (!importer) return null;
         const resolved = path.resolve(path.dirname(importer), source);
+        // Guard: reject paths that escape the project directory
+        if (!resolved.startsWith(projectDir + path.sep)) return null;
         if (
           resolved.startsWith(servicesDir) &&
           !resolved.includes('__mocks__') &&
@@ -66,8 +70,11 @@ const config: StorybookConfig = {
           !resolved.includes('storageService')
         ) {
           const ext = path.extname(resolved) || '.ts';
-          const parsed = path.parse(resolved);
-          return path.join(parsed.dir, '__mocks__', parsed.name + ext);
+          return path.resolve(
+            servicesDir,
+            '__mocks__',
+            path.basename(resolved, ext) + ext,
+          );
         }
         return null;
       },
