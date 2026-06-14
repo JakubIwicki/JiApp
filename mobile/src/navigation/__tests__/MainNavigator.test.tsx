@@ -47,6 +47,15 @@ jest.mock('../../screens/SettingsScreen', () => {
   };
 });
 
+jest.mock('../../screens/DownloadsScreen', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: () => React.createElement(Text, null, 'DownloadsScreen'),
+  };
+});
+
 // Helper component that exposes navigation ref for programmatic navigation
 const testMetrics = {
   insets: { top: 0, bottom: 0, left: 0, right: 0 },
@@ -157,5 +166,49 @@ describe('MainNavigator', () => {
 
     // Content of Downloads tab may vary; just verify the tab label renders
     expect(getAllByText('Downloads').length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('renders DownloadsScreen in DownloadsTab', async () => {
+    let navRef: NavigationContainerRef<any> | null = null;
+    const { findByText } = render(
+      <NavigatorWithRef
+        onReady={ref => {
+          navRef = ref;
+        }}
+      />,
+    );
+
+    await waitFor(() => expect(navRef).not.toBeNull());
+    act(() => {
+      navRef!.navigate('DownloadsTab');
+    });
+
+    expect(await findByText('DownloadsScreen')).toBeTruthy();
+  });
+
+  it('navigates from Search to Download with video params', async () => {
+    let navRef: NavigationContainerRef<any> | null = null;
+    const { findByText } = render(
+      <NavigatorWithRef
+        onReady={ref => {
+          navRef = ref;
+        }}
+      />,
+    );
+
+    await waitFor(() => expect(navRef).not.toBeNull());
+
+    act(() => {
+      navRef!.navigate('Download', {
+        videoId: 'test-123',
+        title: 'Test Video',
+        description: 'Test description',
+        imageUrl: 'https://example.com/thumb.jpg',
+        videoUrl: 'https://example.com/video.mp4',
+        channelTitle: 'Test Channel',
+      });
+    });
+
+    expect(await findByText('DownloadScreen')).toBeTruthy();
   });
 });

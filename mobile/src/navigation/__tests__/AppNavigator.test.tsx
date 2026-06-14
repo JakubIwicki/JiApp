@@ -85,7 +85,6 @@ jest.mock('react-native-svg', () => {
     Rect: MockShape,
   };
 });
-
 // Mock storageService
 let mockGetTokenImpl: () => Promise<string | null> = () =>
   Promise.resolve(null);
@@ -132,19 +131,34 @@ jest.mock('../../components/WelcomeOverlay', () => {
   };
 });
 
+// Collects onTimeout so the test can invoke it
+let capturedOnTimeout: (() => void) | null = null;
+
 jest.mock('../../components/ConnectionFailureOverlay', () => {
   const React = require('react');
   const { Text } = require('react-native');
   return {
     __esModule: true,
-    default: ({ visible }: { visible: boolean; onTimeout: () => void }) =>
-      visible
+    default: ({
+      visible,
+      onTimeout,
+    }: {
+      visible: boolean;
+      onTimeout: () => void;
+    }) => {
+      React.useEffect(() => {
+        if (visible && onTimeout) {
+          capturedOnTimeout = onTimeout;
+        }
+      }, [visible, onTimeout]);
+      return visible
         ? React.createElement(
             Text,
             { testID: 'connection-overlay-mock' },
             'ConnectionFailureOverlay',
           )
-        : null,
+        : null;
+    },
   };
 });
 
@@ -160,6 +174,7 @@ describe('AppNavigator', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
+    capturedOnTimeout = null;
     // Default: no token
     mockGetTokenImpl = () => Promise.resolve(null);
   });
@@ -272,5 +287,28 @@ describe('AppNavigator', () => {
       jest.advanceTimersByTime(6000);
       expect(queryByText('ConnectionFailureOverlay')).toBeNull();
     });
+  });
+
+  it('provides onTimeout callback to connection failure overlay', async () => {
+    // getToken never resolves, keeping isLoading=true past watchdog
+    mockGetTokenImpl = () => new Promise(() => {});
+
+    const { getByTestId } = renderWithProviders(<AppNavigator />);
+
+    // Advance past 5s watchdog to trigger connectionFailed
+    await act(async () => {
+      jest.advanceTimersByTime(5000);
+    });
+
+    // Flush useEffects so the overlay mock captures onTimeout
+    await act(async () => {});
+
+    // The overlay renders and receives a callable onTimeout callback
+    expect(getByTestId('connection-overlay-mock')).toBeTruthy();
+    expect(capturedOnTimeout).not.toBeNull();
+    expect(typeof capturedOnTimeout).toBe('function');
+
+    // Invoking the callback does not throw (wiring is correct)
+    expect(() => capturedOnTimeout!()).not.toThrow();
   });
 });

@@ -8,10 +8,14 @@ import RootNavigator from '../RootNavigator';
 
 // --- storageService mock (selected_module persistence) ---
 let mockSelectedModule: ModuleId | null = null;
+let mockPendingModule = false;
 const mockSaveSelectedModule = jest.fn();
 
 jest.mock('../../services/storageService', () => ({
-  getSelectedModule: () => Promise.resolve(mockSelectedModule),
+  getSelectedModule: () =>
+    mockPendingModule
+      ? new Promise<ModuleId | null>(() => {})
+      : Promise.resolve(mockSelectedModule),
   saveSelectedModule: (...args: unknown[]) => {
     mockSaveSelectedModule(...args);
     return Promise.resolve();
@@ -100,6 +104,7 @@ describe('RootNavigator', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockSelectedModule = null;
+    mockPendingModule = false;
   });
 
   it('skips the picker and lands directly in the only granted module', async () => {
@@ -167,5 +172,32 @@ describe('RootNavigator', () => {
       expect(mockSaveSelectedModule).toHaveBeenCalledWith('YtDownloader');
     });
     expect(await findByText('YtDownloaderModule')).toBeTruthy();
+  });
+
+  it('shows loading spinner while resolving module', () => {
+    mockPendingModule = true;
+
+    const { getByTestId } = renderRoot(['YtDownloader', 'Scheduler']);
+    expect(getByTestId('root-resolving')).toBeTruthy();
+  });
+
+  it('shows module picker when no modules are granted', async () => {
+    const { findByTestId } = renderRoot([]);
+    expect(await findByTestId('module-selection-screen')).toBeTruthy();
+  });
+
+  it('persists and navigates to Scheduler from the picker', async () => {
+    const { findByTestId, getByTestId, findByText } = renderRoot([
+      'YtDownloader',
+      'Scheduler',
+    ]);
+    await findByTestId('module-selection-screen');
+
+    fireEvent.press(getByTestId('module-card-Scheduler'));
+
+    await waitFor(() => {
+      expect(mockSaveSelectedModule).toHaveBeenCalledWith('Scheduler');
+    });
+    expect(await findByText('SchedulerModule')).toBeTruthy();
   });
 });

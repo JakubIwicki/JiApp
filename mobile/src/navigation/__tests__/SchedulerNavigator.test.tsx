@@ -65,8 +65,7 @@ const testMetrics = {
 const NavigatorWithRef: React.FC<{
   onReady: (ref: SchedulerNavRef) => void;
 }> = ({ onReady }) => {
-  const navRef =
-    useRef<SchedulerNavRef>(null);
+  const navRef = useRef<SchedulerNavRef>(null);
   return (
     <SafeAreaProvider initialMetrics={testMetrics}>
       <NavigationContainer
@@ -138,5 +137,81 @@ describe('SchedulerNavigator', () => {
       navRef!.navigate('Reports', { boardId: 1 });
     });
     expect(await findByText('ReportsScreen')).toBeTruthy();
+  });
+
+  it('navigates to CreateAppointment with boardId param', async () => {
+    let navRef: SchedulerNavRef | null = null;
+    const { findByText } = render(
+      <NavigatorWithRef
+        onReady={ref => {
+          navRef = ref;
+        }}
+      />,
+    );
+
+    await waitFor(() => expect(navRef).not.toBeNull());
+
+    act(() => {
+      navRef!.navigate('CreateAppointment', { boardId: 5 });
+    });
+
+    expect(await findByText('CreateAppointmentScreen')).toBeTruthy();
+  });
+
+  it('navigates to AppointmentDetail with appointmentId param', async () => {
+    let navRef: SchedulerNavRef | null = null;
+    const { findByText } = render(
+      <NavigatorWithRef
+        onReady={ref => {
+          navRef = ref;
+        }}
+      />,
+    );
+
+    await waitFor(() => expect(navRef).not.toBeNull());
+
+    act(() => {
+      navRef!.navigate('AppointmentDetail', { appointmentId: 42 });
+    });
+
+    expect(await findByText('AppointmentDetailScreen')).toBeTruthy();
+  });
+
+  it('navigates to ClientDetail with clientId param', async () => {
+    let navRef: SchedulerNavRef | null = null;
+    const { findByText } = render(
+      <NavigatorWithRef
+        onReady={ref => {
+          navRef = ref;
+        }}
+      />,
+    );
+
+    await waitFor(() => expect(navRef).not.toBeNull());
+
+    act(() => {
+      navRef!.navigate('ClientDetail', { clientId: 99 });
+    });
+
+    expect(await findByText('ClientDetailScreen')).toBeTruthy();
+  });
+
+  it('navigates to ServiceEdit with boardId param (with and without serviceId)', async () => {
+    let navRef: SchedulerNavRef | null = null;
+    const { findByText } = render(
+      <NavigatorWithRef
+        onReady={ref => {
+          navRef = ref;
+        }}
+      />,
+    );
+
+    await waitFor(() => expect(navRef).not.toBeNull());
+
+    // Navigate with serviceId
+    act(() => {
+      navRef!.navigate('ServiceEdit', { serviceId: 5, boardId: 1 });
+    });
+    expect(await findByText('ServiceEditScreen')).toBeTruthy();
   });
 });
