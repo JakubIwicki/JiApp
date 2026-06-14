@@ -18,6 +18,9 @@ public interface IYoutubeClient
     Task<IReadOnlyList<YoutubeVideo>> SearchVideosAsync(string query, int maxResults = 10,
         CancellationToken cancellationToken = default);
 
+    Task<YoutubeVideo?> GetVideoByIdAsync(string videoId,
+        CancellationToken cancellationToken = default);
+
     Task<YoutubeClientResponse> DownloadVideoAsync(string videoId, string outputPath,
         CancellationToken cancellationToken = default);
 
@@ -51,18 +54,43 @@ public sealed class YoutubeClient(
 
         var response = await searchRequest.ExecuteAsync(cancellationToken);
 
-        var results = response.Items
+        return response.Items
             .Where(item => item is { Id.Kind: "youtube#video", Snippet: not null })
-            .Select(item => new YoutubeVideo(
-                VideoId: item.Id.VideoId,
-                Title: WebUtility.HtmlDecode(item.Snippet.Title),
-                Description: WebUtility.HtmlDecode(item.Snippet.Description),
-                ImageUrl: item.Snippet.Thumbnails.Default__.Url,
-                ChannelTitle: WebUtility.HtmlDecode(item.Snippet.ChannelTitle)))
-            .ToList();
-
-        return results.AsReadOnly();
+            .Select(MapToYoutubeVideo)
+            .ToList()
+            .AsReadOnly();
     }
+
+    public async Task<YoutubeVideo?> GetVideoByIdAsync(string videoId,
+        CancellationToken cancellationToken = default)
+    {
+        var listRequest = _youTubeService.Videos.List("snippet");
+        listRequest.Id = videoId;
+        listRequest.MaxResults = 1;
+
+        var response = await listRequest.ExecuteAsync(cancellationToken);
+
+        return response.Items
+            .Where(item => item.Snippet is not null)
+            .Select(MapToYoutubeVideo)
+            .FirstOrDefault();
+    }
+
+    private static YoutubeVideo MapToYoutubeVideo(Google.Apis.YouTube.v3.Data.Video video) =>
+        new(
+            VideoId: video.Id ?? string.Empty,
+            Title: WebUtility.HtmlDecode(video.Snippet?.Title ?? string.Empty),
+            Description: WebUtility.HtmlDecode(video.Snippet?.Description ?? string.Empty),
+            ImageUrl: video.Snippet?.Thumbnails?.Default__?.Url ?? string.Empty,
+            ChannelTitle: WebUtility.HtmlDecode(video.Snippet?.ChannelTitle ?? string.Empty));
+
+    private static YoutubeVideo MapToYoutubeVideo(Google.Apis.YouTube.v3.Data.SearchResult item) =>
+        new(
+            VideoId: item.Id.VideoId ?? string.Empty,
+            Title: WebUtility.HtmlDecode(item.Snippet?.Title ?? string.Empty),
+            Description: WebUtility.HtmlDecode(item.Snippet?.Description ?? string.Empty),
+            ImageUrl: item.Snippet?.Thumbnails?.Default__?.Url ?? string.Empty,
+            ChannelTitle: WebUtility.HtmlDecode(item.Snippet?.ChannelTitle ?? string.Empty));
 
     public async Task<YoutubeClientResponse> DownloadVideoAsync(string videoId, string outputPath,
         CancellationToken cancellationToken = default)

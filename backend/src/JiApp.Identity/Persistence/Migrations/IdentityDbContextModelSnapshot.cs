@@ -85,6 +85,31 @@ namespace JiApp.Identity.Persistence.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("JiApp.Common.Models.UserModuleGrant", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("GrantedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ModuleName")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "ModuleName")
+                        .IsUnique();
+
+                    b.ToTable("UserModuleGrants", (string)null);
+                });
+
             modelBuilder.Entity("JiApp.Identity.Models.RefreshToken", b =>
                 {
                     b.Property<long>("Id")
@@ -242,6 +267,15 @@ namespace JiApp.Identity.Persistence.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("JiApp.Common.Models.UserModuleGrant", b =>
+                {
+                    b.HasOne("JiApp.Common.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("JiApp.Identity.Models.RefreshToken", b =>

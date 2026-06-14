@@ -241,6 +241,7 @@ describe('downloadFile', () => {
     expect(result).toEqual({
       contentUri: 'content://media/external/audio/100',
       displayPath: 'Download/Never Gonna Give You Up.mp3',
+      filePath: expect.any(String),
     });
   });
 
@@ -276,7 +277,6 @@ describe('openAudioFile', () => {
     expect(ReactNativeBlobUtil.android.actionViewIntent).toHaveBeenCalledWith(
       '/path/to/file.mp3',
       'audio/mpeg',
-      'Open with',
     );
     expect(result).toBe(true);
   });

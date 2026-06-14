@@ -3,6 +3,7 @@ import {
   LoginApiRaw,
   LoginRequest,
   LoginResponse,
+  MeApiRaw,
   RegisterRequest,
 } from '../types/api';
 
@@ -17,6 +18,7 @@ export const login = async (
     token: response.data.accessToken,
     id: response.data.userId,
     displayName: response.data.displayName,
+    modules: response.data.modules ?? [],
   };
 };
 
@@ -36,8 +38,13 @@ export const register = async (
 };
 
 export const checkToken = async (token: string): Promise<LoginResponse> => {
-  const response = await apiClient.get<LoginResponse>('/auth/me', {
+  const response = await apiClient.get<MeApiRaw>('/auth/me', {
     headers: { Authorization: `Bearer ${token}` },
   });
-  return response.data;
+  return {
+    token,
+    id: response.data.id,
+    displayName: response.data.displayName ?? '',
+    modules: response.data.modules ?? [],
+  };
 };

@@ -1,6 +1,7 @@
 {
   "devDependencies": {
-    "patch-package": "^8.0.1"
+    "patch-package": "^8.0.1",
+    "ts-jest": "^29.4.11"
   },
   "dependencies": {
     "react-native-keep-awake": "^4.0.0"

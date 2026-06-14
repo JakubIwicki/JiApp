@@ -116,6 +116,8 @@ public class Startup(IdentitySettings settings)
 
         services.AddScoped<ICurrentUserService, CurrentUserService>();
 
+        services.AddScoped<IUserModuleGrantService, UserModuleGrantService>();
+
         services.AddHttpContextAccessor();
 
         services.AddScoped<RegisterHandler>();

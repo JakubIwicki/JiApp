@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, waitFor } from '@testing-library/react-native';
+import { render, waitFor, act } from '@testing-library/react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from '../AppNavigator';
@@ -59,6 +59,32 @@ jest.mock('../../screens/SettingsScreen', () => {
   };
 });
 
+jest.mock('../SchedulerNavigator', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: () => React.createElement(Text, null, 'SchedulerModule'),
+  };
+});
+
+jest.mock('react-native-svg', () => {
+  const React = require('react');
+  const MockSvg = ({ children, testID, ...props }: Record<string, unknown>) =>
+    React.createElement('View', { testID, ...props }, children);
+  const MockShape = (props: Record<string, unknown>) =>
+    React.createElement('View', props);
+  return {
+    __esModule: true,
+    default: MockSvg,
+    Svg: MockSvg,
+    Circle: MockShape,
+    Line: MockShape,
+    Path: MockShape,
+    Polyline: MockShape,
+    Rect: MockShape,
+  };
+});
 // Mock storageService
 let mockGetTokenImpl: () => Promise<string | null> = () =>
   Promise.resolve(null);
@@ -77,10 +103,13 @@ jest.mock('../../services/storageService', () => ({
   getUsername: jest.fn(() => Promise.resolve(null)),
   clearUsername: jest.fn(() => Promise.resolve()),
   clearCredentials: jest.fn(() => Promise.resolve()),
+  clearSelectedModule: jest.fn(() => Promise.resolve()),
   getUserId: jest.fn(() => Promise.resolve(null)),
   getDisplayName: jest.fn(() => Promise.resolve(null)),
   saveCredentials: jest.fn(() => Promise.resolve()),
   getCredentials: jest.fn(() => Promise.resolve(null)),
+  getSelectedModule: jest.fn(() => Promise.resolve(null)),
+  saveSelectedModule: jest.fn(() => Promise.resolve()),
 }));
 
 jest.mock('../../services/authService', () => ({
@@ -89,11 +118,69 @@ jest.mock('../../services/authService', () => ({
   checkToken: () => mockCheckTokenImpl(),
 }));
 
+jest.mock('../../components/WelcomeOverlay', () => {
+  const React = require('react');
+  return {
+    __esModule: true,
+    default: ({ onComplete }: { onComplete: () => void }) => {
+      React.useEffect(() => {
+        onComplete();
+      }, [onComplete]);
+      return null;
+    },
+  };
+});
+
+// Collects onTimeout so the test can invoke it
+let capturedOnTimeout: (() => void) | null = null;
+
+jest.mock('../../components/ConnectionFailureOverlay', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({
+      visible,
+      onTimeout,
+    }: {
+      visible: boolean;
+      onTimeout: () => void;
+    }) => {
+      React.useEffect(() => {
+        if (visible && onTimeout) {
+          capturedOnTimeout = onTimeout;
+        }
+      }, [visible, onTimeout]);
+      return visible
+        ? React.createElement(
+            Text,
+            { testID: 'connection-overlay-mock' },
+            'ConnectionFailureOverlay',
+          )
+        : null;
+    },
+  };
+});
+
+jest.mock('react-native', () => {
+  const rn = jest.requireActual('react-native');
+  rn.BackHandler = {
+    exitApp: jest.fn(),
+  };
+  return rn;
+});
+
 describe('AppNavigator', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useFakeTimers();
+    capturedOnTimeout = null;
     // Default: no token
     mockGetTokenImpl = () => Promise.resolve(null);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   const testMetrics = {
@@ -121,17 +208,33 @@ describe('AppNavigator', () => {
     expect(await findByTestId('loading-screen')).toBeTruthy();
   });
 
-  it('renders MainNavigator (SearchScreen) when token present', async () => {
+  it('renders MainNavigator (SearchScreen) when token present and single module granted', async () => {
+    // A user granted only YtDownloader auto-skips the picker into MainNavigator
     mockGetTokenImpl = () => Promise.resolve('valid-token');
     mockCheckTokenImpl = () =>
       Promise.resolve({
         id: 1,
         displayName: 'Test User',
         token: 'valid-token',
+        modules: ['YtDownloader'],
       });
 
     const { findByText } = renderWithProviders(<AppNavigator />);
     expect(await findByText('SearchScreen')).toBeTruthy();
+  });
+
+  it('renders the module picker when token present and multiple modules granted', async () => {
+    mockGetTokenImpl = () => Promise.resolve('valid-token');
+    mockCheckTokenImpl = () =>
+      Promise.resolve({
+        id: 1,
+        displayName: 'Test User',
+        token: 'valid-token',
+        modules: ['YtDownloader', 'Scheduler'],
+      });
+
+    const { findByTestId } = renderWithProviders(<AppNavigator />);
+    expect(await findByTestId('module-selection-screen')).toBeTruthy();
   });
 
   it('navigates from LoginScreen to MainNavigator after login sets token', async () => {
@@ -140,13 +243,72 @@ describe('AppNavigator', () => {
     // Start on login screen (no token)
     expect(await findByText('LoginScreen')).toBeTruthy();
 
-    // Simulate: token becomes available via AuthContext (login succeeded)
-    // The AuthProvider hydrates from storage on mount, so we need to
-    // trigger the RESTORE_TOKEN path by having getToken return a token.
-    // Re-render won't help since AuthProvider already mounted.
-    // Instead, verify the transition is ONLY driven by token being truthy
-    // in AppContent (the AuthNavigator vs MainNavigator switch at line 21).
-    // This test documents that the switch happens correctly when token exists.
     expect(queryByText('SearchScreen')).toBeNull();
+  });
+
+  describe('connection watchdog', () => {
+    it('does not show connection failure overlay when loading resolves quickly', async () => {
+      mockGetTokenImpl = () => Promise.resolve(null);
+
+      const { queryByText } = renderWithProviders(<AppNavigator />);
+
+      // Wait for auth to settle (getToken resolves with null -> LOGOUT -> isLoading=false)
+      await waitFor(() => {});
+
+      // Now advance past watchdog timeout — the timer should have been cleared
+      jest.advanceTimersByTime(6000);
+
+      expect(queryByText('ConnectionFailureOverlay')).toBeNull();
+    });
+
+    it('shows connection failure overlay when isLoading stays true for 5s', async () => {
+      // getToken never resolves, keeping isLoading=true
+      mockGetTokenImpl = () => new Promise(() => {});
+
+      const { getByTestId } = renderWithProviders(<AppNavigator />);
+
+      // Advance past 5s watchdog to trigger the setConnectionFailed state update
+      await act(async () => {
+        jest.advanceTimersByTime(5000);
+      });
+
+      expect(getByTestId('connection-overlay-mock')).toBeTruthy();
+    });
+
+    it('does not show overlay if loading completes before watchdog timeout', async () => {
+      mockGetTokenImpl = () => Promise.resolve(null);
+
+      const { queryByText } = renderWithProviders(<AppNavigator />);
+
+      // Advance slightly, then let auth resolve
+      jest.advanceTimersByTime(100);
+      await waitFor(() => {});
+
+      jest.advanceTimersByTime(6000);
+      expect(queryByText('ConnectionFailureOverlay')).toBeNull();
+    });
+  });
+
+  it('provides onTimeout callback to connection failure overlay', async () => {
+    // getToken never resolves, keeping isLoading=true past watchdog
+    mockGetTokenImpl = () => new Promise(() => {});
+
+    const { getByTestId } = renderWithProviders(<AppNavigator />);
+
+    // Advance past 5s watchdog to trigger connectionFailed
+    await act(async () => {
+      jest.advanceTimersByTime(5000);
+    });
+
+    // Flush useEffects so the overlay mock captures onTimeout
+    await act(async () => {});
+
+    // The overlay renders and receives a callable onTimeout callback
+    expect(getByTestId('connection-overlay-mock')).toBeTruthy();
+    expect(capturedOnTimeout).not.toBeNull();
+    expect(typeof capturedOnTimeout).toBe('function');
+
+    // Invoking the callback does not throw (wiring is correct)
+    expect(() => capturedOnTimeout!()).not.toThrow();
   });
 });

@@ -6,4 +6,5 @@ public sealed record LoginResponse(
     string? DisplayName,
     string AccessToken,
     string RefreshToken,
-    int ExpiresIn);
+    int ExpiresIn,
+    IReadOnlyList<string> Modules);

@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using FluentValidation;
+using JiApp.Common;
 using JiApp.Common.Abstractions;
 using JiApp.Common.Middleware;
 using JiApp.Common.Services;
@@ -95,7 +96,9 @@ public class Startup(SchedulerSettings settings)
                 };
             });
 
-        services.AddAuthorization();
+        services.AddAuthorizationBuilder()
+            .AddPolicy("module:Scheduler", policy =>
+                policy.RequireClaim("module", Modules.Scheduler));
 
         services.AddCors(options =>
         {
@@ -215,9 +218,10 @@ public class Startup(SchedulerSettings settings)
         app.UseAuthentication();
         app.UseAuthorization();
 
-        var scheduler = app.MapGroup("/api/v1/scheduler");
+        var scheduler = app.MapGroup("/api/v1/scheduler")
+            .RequireAuthorization("module:Scheduler");
 
-        scheduler.MapGet("/health", async (SchedulerDbContext db) =>
+        app.MapGet("/api/v1/scheduler/health", async (SchedulerDbContext db) =>
             {
                 var dbOk = await db.Database.CanConnectAsync();
                 return dbOk

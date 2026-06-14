@@ -9,6 +9,8 @@ export interface LoginResponse {
   /** Mapped from API `userId` field */
   id: number;
   displayName: string;
+  /** Module ids the user is granted (e.g. ["YtDownloader","Scheduler"]). */
+  modules: string[];
 }
 
 /** Raw shape of POST /auth/login response. */
@@ -18,6 +20,15 @@ export interface LoginApiRaw {
   accessToken: string;
   refreshToken: string;
   expiresIn: number;
+  modules?: string[];
+}
+
+/** Raw shape of GET /auth/me response. */
+export interface MeApiRaw {
+  id: number;
+  displayName?: string;
+  username?: string;
+  modules?: string[];
 }
 
 export interface RegisterRequest {

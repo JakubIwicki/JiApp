@@ -2,7 +2,7 @@
 name: "Plan"
 description: "High-precision technical architect and execution gatekeeper. Strict requirement to formalize all technical strategies using the writing-plans engine before proceeding."
 model: opus
-color: purple
+color: cyan
 skills: ["writing-plans", "dependency-isolation", "architectural-mapping", "risk-mitigation"]
 tools: [writing_plans, graphify_search]
 ---

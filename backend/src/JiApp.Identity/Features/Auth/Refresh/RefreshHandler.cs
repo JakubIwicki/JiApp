@@ -13,6 +13,7 @@ public sealed class RefreshHandler(
     IRefreshTokenService refreshTokenService,
     UserManager<User> userManager,
     IJwtTokenService jwtTokenService,
+    IUserModuleGrantService grantService,
     IdentitySettings settings,
     ILogger<RefreshHandler> logger)
 {
@@ -57,7 +58,8 @@ public sealed class RefreshHandler(
 
         logger.RefreshTokenRevoked(storedToken.Id);
 
-        var accessToken = jwtTokenService.GenerateToken(user.Id, user.UserName!);
+        var modules = await grantService.GetModulesAsync(user.Id);
+        var accessToken = jwtTokenService.GenerateToken(user.Id, user.UserName!, modules);
         var newRefreshToken = await refreshTokenService.CreateAsync(user.Id);
         var expiresIn = settings.GetAccessTokenExpireMinutes() * 60;
 

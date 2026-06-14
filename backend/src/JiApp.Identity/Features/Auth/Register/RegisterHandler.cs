@@ -2,6 +2,7 @@ using System.Linq;
 using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Identity.Logging;
+using JiApp.Identity.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,7 @@ namespace JiApp.Identity.Features.Auth.Register;
 
 public sealed class RegisterHandler(
     UserManager<User> userManager,
+    IUserModuleGrantService grantService,
     ILogger<RegisterHandler> logger)
 {
     public async Task<Result<RegisterResponse>> HandleAsync(RegisterRequest request)
@@ -47,6 +49,20 @@ public sealed class RegisterHandler(
             var errors = string.Join(", ", createResult.Errors.Select(e => e.Description));
             logger.RegistrationFailed(request.Username, errors);
             return Result<RegisterResponse>.Failure(errors);
+        }
+
+        try
+        {
+            await grantService.GrantAllAsync(user.Id);
+        }
+        catch (Exception ex)
+        {
+            logger.GrantAllocationFailed(user.Id, ex);
+            // Compensate: delete the user so registration stays atomic.
+            // The caller sees a failure and can retry; no orphaned user
+            // exists without module grants.
+            await userManager.DeleteAsync(user);
+            return Result<RegisterResponse>.Failure("Registration failed");
         }
 
         logger.RegistrationCompleted(request.Username);

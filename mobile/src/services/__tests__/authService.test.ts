@@ -26,12 +26,14 @@ describe('login', () => {
     id: 1,
     displayName: 'John Doe',
     token: 'jwt-token-123',
+    modules: ['YtDownloader', 'Scheduler'],
   };
 
   const mockApiRaw = {
     accessToken: 'jwt-token-123',
     userId: 1,
     displayName: 'John Doe',
+    modules: ['YtDownloader', 'Scheduler'],
   };
 
   it('calls /auth/login with credentials and returns login data', async () => {
@@ -44,6 +46,20 @@ describe('login', () => {
       password,
     });
     expect(result).toEqual(mockLoginResponse);
+  });
+
+  it('defaults modules to an empty array when absent from the response', async () => {
+    mockPost.mockResolvedValueOnce({
+      data: {
+        accessToken: 'jwt-token-123',
+        userId: 1,
+        displayName: 'John Doe',
+      },
+    });
+
+    const result = await login(username, password);
+
+    expect(result.modules).toEqual([]);
   });
 
   it('throws when login fails', async () => {
@@ -107,6 +123,7 @@ describe('checkToken', () => {
       id: 1,
       displayName: 'John Doe',
       token,
+      modules: ['YtDownloader', 'Scheduler'],
     };
     mockGet.mockResolvedValueOnce({ data: mockResponse });
 
@@ -116,6 +133,16 @@ describe('checkToken', () => {
       headers: { Authorization: `Bearer ${token}` },
     });
     expect(result).toEqual(mockResponse);
+  });
+
+  it('defaults modules to an empty array when absent from /auth/me', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: { id: 1, displayName: 'John Doe', token },
+    });
+
+    const result = await checkToken(token);
+
+    expect(result.modules).toEqual([]);
   });
 
   it('throws when token check fails', async () => {
