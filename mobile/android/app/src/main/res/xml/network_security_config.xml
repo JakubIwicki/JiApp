@@ -1,6 +1,7 @@
 <!--
-  Dev cert trust for emulator (10.0.2.2) and physical devices (LAN IP).
-  Sync with mobile/.env JIAPP_API_URL when IP changes.
+  Dev cert trust for emulator (10.0.2.2).
+  For physical device development, build-apk.sh injects your LAN IP
+  from mobile/.env into the domain list below.
 -->
 <network-security-config>
     <base-config>
@@ -10,7 +11,8 @@
     </base-config>
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="false">10.0.2.2</domain>
-        <domain includeSubdomains="false">192.168.100.105</domain>
+        <!-- DEVICE_IP_BEGIN -->
+        <!-- DEVICE_IP_END -->
         <trust-anchors>
             <certificates src="@raw/jiapp_dev_ca" />
         </trust-anchors>
