@@ -45,3 +45,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build Docker images
         run: docker compose -f backend/docker-compose.yml build
+        env:
+          # Build-time only: compose interpolates these at parse time, but the
+          # values are runtime config (not baked into images). CI has no .env.
+          POSTGRES_PASSWORD: ci
+          JWT_KEY: ci
+          YOUTUBE_API_KEY: ci
+          DEV_IP: 127.0.0.1
