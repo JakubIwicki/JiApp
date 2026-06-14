@@ -26,8 +26,8 @@ export interface LoginApiRaw {
 /** Raw shape of GET /auth/me response. */
 export interface MeApiRaw {
   id: number;
-  displayName: string;
-  token: string;
+  displayName?: string;
+  username?: string;
   modules?: string[];
 }
 

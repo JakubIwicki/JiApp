@@ -123,7 +123,9 @@
     "scheduler": {
       "name": "Wizyty",
       "description": "Grafik weekendowy i klienci"
-    }
+    },
+    "emptyTitle": "Brak dostępnych modułów",
+    "emptyMessage": "Twoje konto nie ma jeszcze dostępu do żadnych modułów. Skontaktuj się z administratorem."
   },
   "boardManagement": {
     "title": "Tablice",

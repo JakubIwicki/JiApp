@@ -264,6 +264,13 @@ const ModuleSelectionScreen: React.FC<ModuleSelectionScreenProps> = ({
           />
         ))}
       </View>
+
+      {grantedMeta.length === 0 && (
+        <View style={styles.emptyState} testID="module-selection-empty">
+          <Text style={styles.emptyTitle}>{t('modules.emptyTitle')}</Text>
+          <Text style={styles.emptyMessage}>{t('modules.emptyMessage')}</Text>
+        </View>
+      )}
     </ScrollView>
   );
 };
@@ -322,6 +329,21 @@ const styles = StyleSheet.create({
   cardDescription: {
     ...typography.bodySmall,
     color: colors.textSecondary,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: spacing.xxl,
+  },
+  emptyTitle: {
+    ...typography.heading,
+    color: colors.textSecondary,
+    marginBottom: spacing.sm,
+  },
+  emptyMessage: {
+    ...typography.bodySmall,
+    color: colors.textTertiary,
+    textAlign: 'center',
+    paddingHorizontal: spacing.xl,
   },
 });
 

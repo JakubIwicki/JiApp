@@ -51,7 +51,19 @@ public sealed class RegisterHandler(
             return Result<RegisterResponse>.Failure(errors);
         }
 
-        await grantService.GrantAllAsync(user.Id);
+        try
+        {
+            await grantService.GrantAllAsync(user.Id);
+        }
+        catch (Exception ex)
+        {
+            logger.GrantAllocationFailed(user.Id, ex);
+            // Compensate: delete the user so registration stays atomic.
+            // The caller sees a failure and can retry; no orphaned user
+            // exists without module grants.
+            await userManager.DeleteAsync(user);
+            return Result<RegisterResponse>.Failure("Registration failed");
+        }
 
         logger.RegistrationCompleted(request.Username);
         return Result<RegisterResponse>.Success(new RegisterResponse(user.Id));

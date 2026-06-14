@@ -42,9 +42,9 @@ export const checkToken = async (token: string): Promise<LoginResponse> => {
     headers: { Authorization: `Bearer ${token}` },
   });
   return {
-    token: response.data.token,
+    token,
     id: response.data.id,
-    displayName: response.data.displayName,
+    displayName: response.data.displayName ?? '',
     modules: response.data.modules ?? [],
   };
 };

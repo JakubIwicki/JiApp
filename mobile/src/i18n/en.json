@@ -123,7 +123,9 @@
     "scheduler": {
       "name": "Appointments",
       "description": "Weekend grid and clients"
-    }
+    },
+    "emptyTitle": "No modules available",
+    "emptyMessage": "Your account doesn't have access to any modules yet. Please contact your administrator."
   },
   "boardManagement": {
     "title": "Boards",

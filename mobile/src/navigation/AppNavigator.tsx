@@ -74,17 +74,9 @@ const AppContent: React.FC = () => {
     );
   }
 
-  const showingOverlay = showWelcome || showFarewell;
-
   return (
     <>
-      {showingOverlay ? (
-        <View style={styles.loadingContainer} />
-      ) : token ? (
-        <RootNavigator />
-      ) : (
-        <AuthNavigator />
-      )}
+      {token ? <RootNavigator /> : <AuthNavigator />}
       {showWelcome && (
         <WelcomeOverlay
           type="welcome"
