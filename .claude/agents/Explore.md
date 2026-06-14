@@ -2,6 +2,7 @@
 name: Explore
 description: Graph-first codebase exploration agent.
 model: sonnet
+color: blue
 tools: [graphify_search, Read, Grep, Glob, LS]
 ---
 

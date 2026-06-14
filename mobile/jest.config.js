@@ -1,8 +1,36 @@
+const path = require('path');
+
 module.exports = {
-  preset: '@react-native/jest-preset',
   setupFilesAfterEnv: ['./jest.setup.ts'],
   testPathIgnorePatterns: ['storybook-test.spec.ts'],
   transformIgnorePatterns: [
-    'node_modules/(?!(react-native|@react-native|@react-native-community|@react-navigation|react-native-track-player|react-native-reanimated)/)',
+    'node_modules/(?!(react-native|@react-native|@react-native-community|@react-navigation|react-native-track-player|react-native-reanimated|@react-native-async-storage|@sayem314)/)',
+  ],
+  transform: {
+    '^.+\\.(ts|tsx)$': 'babel-jest',
+    '^.+\\.(js|jsx)$': 'babel-jest',
+    '^.+\\.(bmp|gif|jpg|jpeg|mp4|png|psd|svg|webp)$': path.resolve(
+      __dirname,
+      'node_modules/@react-native/jest-preset/jest/assetFileTransformer.js',
+    ),
+  },
+  moduleNameMapper: {
+    '^react-native($|/.*)': `${path.dirname(
+      require.resolve('react-native'),
+    )}/$1`,
+  },
+  haste: {
+    defaultPlatform: 'ios',
+    platforms: ['android', 'ios', 'native'],
+  },
+  testEnvironment: path.resolve(
+    __dirname,
+    'node_modules/@react-native/jest-preset/jest/react-native-env.js',
+  ),
+  setupFiles: [
+    path.resolve(
+      __dirname,
+      'node_modules/@react-native/jest-preset/jest/setup.js',
+    ),
   ],
 };

@@ -126,3 +126,14 @@ jest.mock('react-native-localize', () => ({
   removeEventListener: jest.fn(),
 }));
 
+
+// Mock @sayem314/react-native-keep-awake (native module imports cause cascade)
+jest.mock('@sayem314/react-native-keep-awake', () => ({
+  __esModule: true,
+  activateKeepAwake: jest.fn(),
+  deactivateKeepAwake: jest.fn(),
+  default: {
+    activateKeepAwake: jest.fn(),
+    deactivateKeepAwake: jest.fn(),
+  },
+}));
