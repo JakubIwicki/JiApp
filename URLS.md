@@ -127,9 +127,13 @@ All origins accepted. Same policy on all services.
 
 **JWT Config:** Issuer=`JiApp-Identity`, Audience=`jiapp-gateway`
 
+**Module permissions:** `login` and `me` responses include a `modules` array (e.g. `["YtDownloader","Scheduler"]`), and the access token carries one `module` claim per granted module. `register` grants ALL modules to the new user. Grants are stored in the `UserModuleGrants` table (migration `AddUserModuleGrants`). Canonical module ids: `YtDownloader`, `Scheduler`.
+
 ---
 
 ## 4. YtDownloader Service (port 6702) — prefix `/api/v1/yt`
+
+> Authorization: every `/api/v1/yt/**` endpoint (except `/health`) requires the `module` claim with value `YtDownloader`. A valid JWT lacking this claim is rejected with **403**.
 
 ### API Endpoints
 
@@ -168,6 +172,8 @@ All origins accepted. Same policy on all services.
 ---
 
 ## 6. Scheduler Service (port 6704) — prefix `/api/v1/scheduler`
+
+> Authorization: every `/api/v1/scheduler/**` endpoint (except `/health`) requires the `module` claim with value `Scheduler`. A valid JWT lacking this claim is rejected with **403**.
 
 #### Boards
 

@@ -2,6 +2,7 @@ using System.Linq;
 using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Identity.Logging;
+using JiApp.Identity.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,7 @@ namespace JiApp.Identity.Features.Auth.Register;
 
 public sealed class RegisterHandler(
     UserManager<User> userManager,
+    IUserModuleGrantService grantService,
     ILogger<RegisterHandler> logger)
 {
     public async Task<Result<RegisterResponse>> HandleAsync(RegisterRequest request)
@@ -48,6 +50,8 @@ public sealed class RegisterHandler(
             logger.RegistrationFailed(request.Username, errors);
             return Result<RegisterResponse>.Failure(errors);
         }
+
+        await grantService.GrantAllAsync(user.Id);
 
         logger.RegistrationCompleted(request.Username);
         return Result<RegisterResponse>.Success(new RegisterResponse(user.Id));

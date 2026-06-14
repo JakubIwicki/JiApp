@@ -2,6 +2,7 @@ using System.Globalization;
 using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Identity.Logging;
+using JiApp.Identity.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 
@@ -10,6 +11,7 @@ namespace JiApp.Identity.Features.Auth.Me;
 public sealed class MeHandler(
     UserManager<User> userManager,
     ICurrentUserService currentUser,
+    IUserModuleGrantService grantService,
     ILogger<MeHandler> logger)
 {
     public async Task<Result<MeResponse>> HandleAsync()
@@ -26,6 +28,8 @@ public sealed class MeHandler(
             return Result<MeResponse>.Failure("User not found");
         }
 
-        return Result<MeResponse>.Success(new MeResponse(user.Id, user.DisplayName, username));
+        var modules = await grantService.GetModulesAsync(userId);
+
+        return Result<MeResponse>.Success(new MeResponse(user.Id, user.DisplayName, username, modules));
     }
 }

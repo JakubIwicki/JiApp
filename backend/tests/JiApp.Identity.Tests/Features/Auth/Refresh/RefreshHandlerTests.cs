@@ -16,6 +16,7 @@ public class RefreshHandlerTests
     private readonly Mock<IRefreshTokenService> _refreshTokenServiceMock;
     private readonly Mock<UserManager<User>> _userManagerMock;
     private readonly Mock<IJwtTokenService> _jwtTokenServiceMock;
+    private readonly Mock<IUserModuleGrantService> _grantServiceMock;
     private readonly Mock<IDbContextTransaction> _transactionMock;
     private readonly IdentitySettings _settings;
     private readonly User _testUser;
@@ -35,6 +36,7 @@ public class RefreshHandlerTests
         _refreshTokenServiceMock = new Mock<IRefreshTokenService>();
         _userManagerMock = CreateUserManagerMock();
         _jwtTokenServiceMock = new Mock<IJwtTokenService>();
+        _grantServiceMock = new Mock<IUserModuleGrantService>();
         _transactionMock = new Mock<IDbContextTransaction>();
 
         _refreshTokenServiceMock
@@ -52,6 +54,7 @@ public class RefreshHandlerTests
             _refreshTokenServiceMock.Object,
             _userManagerMock.Object,
             _jwtTokenServiceMock.Object,
+            _grantServiceMock.Object,
             _settings,
             logger);
     }
@@ -64,7 +67,8 @@ public class RefreshHandlerTests
             .ReturnsAsync(storedToken);
         _userManagerMock.Setup(x => x.FindByIdAsync("1"))
             .ReturnsAsync(_testUser);
-        _jwtTokenServiceMock.Setup(x => x.GenerateToken(_testUser.Id, _testUser.UserName!))
+        _jwtTokenServiceMock.Setup(x => x.GenerateToken(
+                _testUser.Id, _testUser.UserName!, It.IsAny<IEnumerable<string>>()))
             .Returns("new-access-token");
         _refreshTokenServiceMock.Setup(x => x.RevokeAsync(10))
             .ReturnsAsync(true);
@@ -88,7 +92,8 @@ public class RefreshHandlerTests
             .ReturnsAsync(storedToken);
         _userManagerMock.Setup(x => x.FindByIdAsync("1"))
             .ReturnsAsync(_testUser);
-        _jwtTokenServiceMock.Setup(x => x.GenerateToken(_testUser.Id, _testUser.UserName!))
+        _jwtTokenServiceMock.Setup(x => x.GenerateToken(
+                _testUser.Id, _testUser.UserName!, It.IsAny<IEnumerable<string>>()))
             .Returns("new-access-token");
         _refreshTokenServiceMock.Setup(x => x.RevokeAsync(10))
             .ReturnsAsync(true);

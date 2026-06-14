@@ -2,6 +2,7 @@ using System.Globalization;
 using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Identity.Features.Auth.Me;
+using JiApp.Identity.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -12,6 +13,7 @@ public class MeHandlerTests
 {
     private readonly Mock<UserManager<User>> _userManagerMock;
     private readonly Mock<ICurrentUserService> _currentUserMock;
+    private readonly Mock<IUserModuleGrantService> _grantServiceMock;
     private readonly User _testUser;
     private readonly MeHandler _sut;
 
@@ -29,9 +31,11 @@ public class MeHandlerTests
 
         _userManagerMock = CreateUserManagerMock();
         _currentUserMock = new Mock<ICurrentUserService>();
+        _grantServiceMock = new Mock<IUserModuleGrantService>();
         var logger = Mock.Of<ILogger<MeHandler>>();
 
-        _sut = new MeHandler(_userManagerMock.Object, _currentUserMock.Object, logger);
+        _sut = new MeHandler(
+            _userManagerMock.Object, _currentUserMock.Object, _grantServiceMock.Object, logger);
     }
 
     [Fact]
@@ -41,6 +45,8 @@ public class MeHandlerTests
         _currentUserMock.Setup(x => x.Username).Returns("testuser");
         _userManagerMock.Setup(x => x.FindByIdAsync("1"))
             .ReturnsAsync(_testUser);
+        _grantServiceMock.Setup(x => x.GetModulesAsync(1))
+            .ReturnsAsync(["YtDownloader", "Scheduler"]);
 
         var result = await _sut.HandleAsync();
 
@@ -49,6 +55,7 @@ public class MeHandlerTests
         result.Value!.Id.Should().Be(_testUser.Id);
         result.Value.DisplayName.Should().Be(_testUser.DisplayName);
         result.Value.Username.Should().Be("testuser");
+        result.Value.Modules.Should().BeEquivalentTo("YtDownloader", "Scheduler");
     }
 
     [Fact]

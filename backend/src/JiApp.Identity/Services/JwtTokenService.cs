@@ -8,7 +8,7 @@ namespace JiApp.Identity.Services;
 
 public interface IJwtTokenService
 {
-    string GenerateToken(long userId, string username);
+    string GenerateToken(long userId, string username, IEnumerable<string> modules);
     bool IsTokenValid(string token);
     string GetUsernameFromToken(string token);
     long GetUserIdFromToken(string token);
@@ -43,22 +43,24 @@ public sealed class JwtTokenService(
         return CreateValidationParameters(key, issuer, audience);
     }
 
-    public string GenerateToken(long userId, string username)
+    public string GenerateToken(long userId, string username, IEnumerable<string> modules)
     {
         var keyBytes = Encoding.UTF8.GetBytes(key);
         var signingKey = new SymmetricSecurityKey(keyBytes);
         var credentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
 
         var now = DateTime.UtcNow;
-        var claims = new[]
+        var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.NameIdentifier, userId.ToString(CultureInfo.InvariantCulture)),
-            new Claim(ClaimTypes.Name, username),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new Claim(JwtRegisteredClaimNames.Iat,
+            new(ClaimTypes.NameIdentifier, userId.ToString(CultureInfo.InvariantCulture)),
+            new(ClaimTypes.Name, username),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new(JwtRegisteredClaimNames.Iat,
                 new DateTimeOffset(now).ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture),
                 ClaimValueTypes.Integer64),
         };
+
+        claims.AddRange(modules.Select(module => new Claim("module", module)));
 
         var token = new JwtSecurityToken(
             issuer: issuer,

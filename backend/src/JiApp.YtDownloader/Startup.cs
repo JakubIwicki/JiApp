@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using FluentValidation;
+using JiApp.Common;
 using JiApp.Common.Abstractions;
 using JiApp.Common.Middleware;
 using JiApp.Common.Services;
@@ -78,7 +79,9 @@ public class Startup(Settings settings)
                 };
             });
 
-        services.AddAuthorization();
+        services.AddAuthorizationBuilder()
+            .AddPolicy("module:YtDownloader", policy =>
+                policy.RequireClaim("module", Modules.YtDownloader));
 
         services.AddCors(options =>
         {
@@ -163,7 +166,8 @@ public class Startup(Settings settings)
         app.UseAuthentication();
         app.UseAuthorization();
 
-        var yt = app.MapGroup("/api/v1/yt");
+        var yt = app.MapGroup("/api/v1/yt")
+            .RequireAuthorization("module:YtDownloader");
 
         yt.MapSearchVideos();
         yt.MapSearchHistory();
@@ -175,7 +179,7 @@ public class Startup(Settings settings)
         yt.MapGetHistory();
         yt.MapStreamPreview();
 
-        yt.MapGet("/health", async (YtDbContext db) =>
+        app.MapGet("/api/v1/yt/health", async (YtDbContext db) =>
             {
                 var dbOk = await db.Database.CanConnectAsync();
                 return dbOk

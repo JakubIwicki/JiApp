@@ -17,6 +17,7 @@ public class LoginHandlerTests
     private readonly Mock<SignInManager<User>> _signInManagerMock;
     private readonly Mock<IJwtTokenService> _jwtTokenServiceMock;
     private readonly Mock<IRefreshTokenService> _refreshTokenServiceMock;
+    private readonly Mock<IUserModuleGrantService> _grantServiceMock;
     private readonly Mock<IPasswordHasher<User>> _passwordHasherMock;
     private readonly IdentitySettings _settings;
     private readonly User _testUser;
@@ -38,12 +39,17 @@ public class LoginHandlerTests
         _signInManagerMock = CreateSignInManagerMock(_userManagerMock.Object);
 
         _jwtTokenServiceMock = new Mock<IJwtTokenService>();
-        _jwtTokenServiceMock.Setup(x => x.GenerateToken(_testUser.Id, _testUser.UserName!))
+        _jwtTokenServiceMock.Setup(x => x.GenerateToken(
+                _testUser.Id, _testUser.UserName!, It.IsAny<IEnumerable<string>>()))
             .Returns("access-token");
 
         _refreshTokenServiceMock = new Mock<IRefreshTokenService>();
         _refreshTokenServiceMock.Setup(x => x.CreateAsync(_testUser.Id))
             .ReturnsAsync(new RefreshToken { Token = "refresh-token", Id = 10 });
+
+        _grantServiceMock = new Mock<IUserModuleGrantService>();
+        _grantServiceMock.Setup(x => x.GetModulesAsync(_testUser.Id))
+            .ReturnsAsync(["YtDownloader", "Scheduler"]);
 
         _passwordHasherMock = new Mock<IPasswordHasher<User>>();
         _passwordHasherMock.Setup(x => x.HashPassword(It.IsAny<User>(), It.IsAny<string>()))
@@ -63,6 +69,7 @@ public class LoginHandlerTests
             _userManagerMock.Object,
             _jwtTokenServiceMock.Object,
             _refreshTokenServiceMock.Object,
+            _grantServiceMock.Object,
             _passwordHasherMock.Object,
             _settings,
             logger);
@@ -84,6 +91,24 @@ public class LoginHandlerTests
         result.Value.AccessToken.Should().Be("access-token");
         result.Value.RefreshToken.Should().Be("refresh-token");
         result.Value.ExpiresIn.Should().Be(900); // 15 min * 60
+        result.Value.Modules.Should().BeEquivalentTo("YtDownloader", "Scheduler");
+    }
+
+    [Fact]
+    public async Task HandleAsync_passes_granted_modules_into_access_token()
+    {
+        _userManagerMock.Setup(x => x.FindByNameAsync("testuser"))
+            .ReturnsAsync(_testUser);
+        _signInManagerMock.Setup(x => x.CheckPasswordSignInAsync(_testUser, "correct-password", true))
+            .ReturnsAsync(SignInResult.Success);
+
+        await _sut.HandleAsync(new LoginRequest("testuser", "correct-password"));
+
+        _jwtTokenServiceMock.Verify(x => x.GenerateToken(
+            _testUser.Id,
+            _testUser.UserName!,
+            It.Is<IEnumerable<string>>(m => m.SequenceEqual(new[] { "YtDownloader", "Scheduler" }))),
+            Times.Once);
     }
 
     [Fact]
