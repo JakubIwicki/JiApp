@@ -25,6 +25,7 @@ const mockSaveUsername = jest.fn();
 const mockGetUsername = jest.fn();
 const mockClearUsername = jest.fn();
 const mockClearCredentials = jest.fn();
+const mockClearSelectedModule = jest.fn();
 
 jest.mock('../../services/storageService', () => ({
   getToken: (...args: unknown[]) => mockGetToken(...args),
@@ -38,6 +39,7 @@ jest.mock('../../services/storageService', () => ({
   getUsername: (...args: unknown[]) => mockGetUsername(...args),
   clearUsername: (...args: unknown[]) => mockClearUsername(...args),
   clearCredentials: (...args: unknown[]) => mockClearCredentials(...args),
+  clearSelectedModule: (...args: unknown[]) => mockClearSelectedModule(...args),
   getUserId: jest.fn(() => Promise.resolve(null)),
   getDisplayName: jest.fn(() => Promise.resolve(null)),
   saveCredentials: jest.fn(),
@@ -120,14 +122,64 @@ describe('AuthContext', () => {
       expect(capturedCtx!.token).toBe('mock-token');
     });
 
-    // Then logout
+    // Then logout (shows farewell first)
     await capturedCtx!.logout();
+    await waitFor(() => {
+      expect(capturedCtx!.showFarewell).toBe(true);
+    });
+    // Complete the farewell → storage cleared and LOGOUT dispatched
+    await capturedCtx!.dismissFarewell();
     await waitFor(() => {
       expect(capturedCtx!.token).toBeNull();
       expect(capturedCtx!.userId).toBeNull();
       expect(capturedCtx!.displayName).toBeNull();
       expect(capturedCtx!.username).toBeNull();
     });
+  });
+
+  it('LOGIN populates availableModules from the login response', async () => {
+    mockLogin.mockResolvedValueOnce({
+      id: 1,
+      displayName: 'Test User',
+      token: 'mock-token',
+      modules: ['YtDownloader', 'Scheduler'],
+    });
+
+    renderProvider();
+    await waitForLoggedOut();
+
+    await capturedCtx!.login('testuser', 'pass123');
+
+    await waitFor(() => {
+      expect(capturedCtx!.availableModules).toEqual([
+        'YtDownloader',
+        'Scheduler',
+      ]);
+    });
+  });
+
+  it('RESTORE_TOKEN populates availableModules from /auth/me', async () => {
+    mockGetToken.mockResolvedValue('saved-token');
+    mockGetUsername.mockResolvedValue('testuser');
+    mockCheckToken.mockResolvedValue({
+      id: 42,
+      displayName: 'Restored User',
+      token: 'saved-token',
+      modules: ['Scheduler'],
+    });
+
+    renderProvider();
+
+    await waitFor(() => {
+      expect(capturedCtx!.availableModules).toEqual(['Scheduler']);
+    });
+  });
+
+  it('availableModules defaults to an empty array when logged out', async () => {
+    renderProvider();
+    await waitForLoggedOut();
+
+    expect(capturedCtx!.availableModules).toEqual([]);
   });
 
   it('RESTORE_TOKEN hydrates state including username', async () => {
@@ -282,12 +334,14 @@ describe('AuthContext', () => {
     await waitForLoggedOut();
 
     await capturedCtx!.logout();
+    await capturedCtx!.dismissFarewell();
 
     expect(mockClearToken).toHaveBeenCalled();
     expect(mockClearUserId).toHaveBeenCalled();
     expect(mockClearDisplayName).toHaveBeenCalled();
     expect(mockClearUsername).toHaveBeenCalled();
     expect(mockClearCredentials).toHaveBeenCalled();
+    expect(mockClearSelectedModule).toHaveBeenCalled();
   });
 
   it('login() sets token synchronously enough that AppNavigator can switch', async () => {

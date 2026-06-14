@@ -14,7 +14,10 @@ const mockAuthValue = {
   userId: null,
   displayName: null,
   username: null,
+  availableModules: [],
   isLoading: false,
+  showWelcome: false,
+  showFarewell: false,
   login: async () => {},
   register: async (
     username: string,
@@ -26,13 +29,15 @@ const mockAuthValue = {
   },
   logout: async () => {},
   checkToken: async () => {},
+  dismissWelcome: () => {},
+  dismissFarewell: () => {},
 };
 
 const meta: Meta<typeof RegisterScreen> = {
   title: 'Screens/RegisterScreen',
   component: RegisterScreen,
   decorators: [
-    (Story) => (
+    Story => (
       <AuthContext.Provider value={mockAuthValue}>
         <NavigationContainer>
           <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -52,7 +57,7 @@ export const Default: Story = {};
 
 export const WithError: Story = {
   decorators: [
-    (Story) => {
+    Story => {
       authService.setAuthMode('error');
       return <Story />;
     },

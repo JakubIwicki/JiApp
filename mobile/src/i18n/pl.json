@@ -31,6 +31,12 @@
     "passwordNoDigit": "Hasło musi zawierać co najmniej jedną cyfrę",
     "invalidEmail": "Wprowadź poprawny adres email"
   },
+  "welcome": {
+    "welcomeBack": "Witaj ponownie,",
+    "greeting": "Cześć!",
+    "subtitle": "Zaczynajmy",
+    "farewell": "Do zobaczenia!"
+  },
   "nav": {
     "search": "Szukaj",
     "downloads": "Pobrane",
@@ -99,5 +105,42 @@
     "version": "Wersja",
     "languagePolish": "Polski",
     "languageEnglish": "English"
+  },
+  "connectionError": {
+    "title": "Nie można połączyć się z serwerem",
+    "message": "Skontaktuj się z administratorem.",
+    "closeApp": "Zamknij aplikację"
+  },
+  "modules": {
+    "greeting": "Witaj ponownie, {{name}}",
+    "greetingFallback": "Witaj ponownie",
+    "subtitle": "Dokąd chcesz przejść?",
+    "switch": "Zmień moduł",
+    "ytDownloader": {
+      "name": "Pobieranie z YouTube",
+      "description": "Szukaj i zapisuj filmy"
+    },
+    "scheduler": {
+      "name": "Wizyty",
+      "description": "Grafik weekendowy i klienci"
+    }
+  },
+  "boardManagement": {
+    "title": "Tablice",
+    "empty": "Brak tablic",
+    "create": "Utwórz tablicę",
+    "createPlaceholder": "Nazwa tablicy",
+    "delete": "Usuń",
+    "deleteConfirm": "Usunąć \"{{name}}\"? Spowoduje to trwałe usunięcie wszystkich wizyt, klientów, usług i wydatków na tej tablicy.",
+    "members": "Członkowie",
+    "memberCount": "{{count}} członek",
+    "memberCount_plural": "{{count}} członków",
+    "addMember": "Dodaj członka",
+    "memberIdPlaceholder": "ID użytkownika",
+    "remove": "Usuń",
+    "loadError": "Nie udało się załadować tablic",
+    "createError": "Nie udało się utworzyć tablicy",
+    "deleteError": "Nie udało się usunąć tablicy",
+    "memberError": "Nie udało się zaktualizować członków"
   }
 }

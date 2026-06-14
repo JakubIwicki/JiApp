@@ -18,6 +18,9 @@ import {
   clearCredentials,
   saveLanguage,
   getLanguage,
+  saveSelectedModule,
+  getSelectedModule,
+  clearSelectedModule,
 } from '../storageService';
 
 const TOKEN_KEY = 'auth_token';
@@ -26,6 +29,7 @@ const DISPLAY_NAME_KEY = 'auth_display_name';
 const USERNAME_KEY = 'auth_username';
 const CREDENTIALS_KEY = 'saved_credentials';
 const LANGUAGE_KEY = 'app_language';
+const SELECTED_MODULE_KEY = 'selected_module';
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -74,10 +78,7 @@ describe('clearToken', () => {
 describe('saveUserId', () => {
   it('saves user id to encrypted storage as string', async () => {
     await saveUserId(42);
-    expect(EncryptedStorage.setItem).toHaveBeenCalledWith(
-      USER_ID_KEY,
-      '42',
-    );
+    expect(EncryptedStorage.setItem).toHaveBeenCalledWith(USER_ID_KEY, '42');
   });
 });
 
@@ -181,7 +182,11 @@ describe('clearUsername', () => {
 
 describe('saveCredentials', () => {
   it('saves credentials as JSON to encrypted storage', async () => {
-    const credentials = { username: 'johndoe', password: 's3cret', validUntil: '2026-06-01T00:00:00.000Z' };
+    const credentials = {
+      username: 'johndoe',
+      password: 's3cret',
+      validUntil: '2026-06-01T00:00:00.000Z',
+    };
     await saveCredentials(credentials);
     expect(EncryptedStorage.setItem).toHaveBeenCalledWith(
       CREDENTIALS_KEY,
@@ -193,7 +198,11 @@ describe('saveCredentials', () => {
 describe('getCredentials', () => {
   it('returns parsed credentials when saved and not expired', async () => {
     const futureDate = new Date(Date.now() + 86400000).toISOString();
-    const credentials = { username: 'johndoe', password: 's3cret', validUntil: futureDate };
+    const credentials = {
+      username: 'johndoe',
+      password: 's3cret',
+      validUntil: futureDate,
+    };
     (EncryptedStorage.getItem as jest.Mock).mockResolvedValueOnce(
       JSON.stringify(credentials),
     );
@@ -212,7 +221,11 @@ describe('getCredentials', () => {
 
   it('returns null and removes expired credentials', async () => {
     const expiredDate = new Date(Date.now() - 86400000).toISOString();
-    const credentials = { username: 'johndoe', password: 's3cret', validUntil: expiredDate };
+    const credentials = {
+      username: 'johndoe',
+      password: 's3cret',
+      validUntil: expiredDate,
+    };
     (EncryptedStorage.getItem as jest.Mock).mockResolvedValueOnce(
       JSON.stringify(credentials),
     );
@@ -253,5 +266,41 @@ describe('getLanguage', () => {
 
     const result = await getLanguage();
     expect(result).toBeNull();
+  });
+});
+
+// --- Selected Module ---
+
+describe('saveSelectedModule', () => {
+  it('saves the selected module to async storage', async () => {
+    await saveSelectedModule('Scheduler');
+    expect(AsyncStorage.setItem).toHaveBeenCalledWith(
+      SELECTED_MODULE_KEY,
+      'Scheduler',
+    );
+  });
+});
+
+describe('getSelectedModule', () => {
+  it('returns the selected module when saved', async () => {
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce('YtDownloader');
+
+    const result = await getSelectedModule();
+    expect(result).toBe('YtDownloader');
+    expect(AsyncStorage.getItem).toHaveBeenCalledWith(SELECTED_MODULE_KEY);
+  });
+
+  it('returns null when no module is saved', async () => {
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(null);
+
+    const result = await getSelectedModule();
+    expect(result).toBeNull();
+  });
+});
+
+describe('clearSelectedModule', () => {
+  it('removes the selected module from async storage', async () => {
+    await clearSelectedModule();
+    expect(AsyncStorage.removeItem).toHaveBeenCalledWith(SELECTED_MODULE_KEY);
   });
 });

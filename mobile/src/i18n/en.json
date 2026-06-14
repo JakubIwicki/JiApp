@@ -31,6 +31,12 @@
     "passwordNoDigit": "Password must contain at least one digit",
     "invalidEmail": "Please enter a valid email address"
   },
+  "welcome": {
+    "welcomeBack": "Welcome back,",
+    "greeting": "Hello!",
+    "subtitle": "Let's get started",
+    "farewell": "See you soon!"
+  },
   "nav": {
     "search": "Search",
     "downloads": "Downloads",
@@ -99,5 +105,42 @@
     "version": "Version",
     "languagePolish": "Polish",
     "languageEnglish": "English"
+  },
+  "connectionError": {
+    "title": "Cannot connect to server",
+    "message": "Please contact your administrator.",
+    "closeApp": "Close App"
+  },
+  "modules": {
+    "greeting": "Welcome back, {{name}}",
+    "greetingFallback": "Welcome back",
+    "subtitle": "Where would you like to go?",
+    "switch": "Switch module",
+    "ytDownloader": {
+      "name": "YouTube Downloader",
+      "description": "Search and save videos"
+    },
+    "scheduler": {
+      "name": "Appointments",
+      "description": "Weekend grid and clients"
+    }
+  },
+  "boardManagement": {
+    "title": "Boards",
+    "empty": "No boards yet",
+    "create": "Create board",
+    "createPlaceholder": "Board name",
+    "delete": "Delete",
+    "deleteConfirm": "Delete \"{{name}}\"? This permanently removes all appointments, clients, services, and expenses in this board.",
+    "members": "Members",
+    "memberCount": "{{count}} member",
+    "memberCount_plural": "{{count}} members",
+    "addMember": "Add member",
+    "memberIdPlaceholder": "User ID",
+    "remove": "Remove",
+    "loadError": "Failed to load boards",
+    "createError": "Failed to create board",
+    "deleteError": "Failed to delete board",
+    "memberError": "Failed to update members"
   }
 }

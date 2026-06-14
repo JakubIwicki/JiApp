@@ -67,7 +67,7 @@ function boardReducer(state: BoardState, action: BoardAction): BoardState {
     case 'REMOVE_BOARD':
       return {
         ...state,
-        boards: state.boards.filter((b) => b.id !== action.boardId),
+        boards: state.boards.filter(b => b.id !== action.boardId),
       };
     default:
       return state;
@@ -83,7 +83,12 @@ export const BoardContext = createContext<BoardContextValue>({
   error: null,
   switchBoard: async () => {},
   loadBoards: async () => {},
-  createBoard: async () => ({ id: 0, name: '', memberUserIds: [], createdAt: '' }),
+  createBoard: async () => ({
+    id: 0,
+    name: '',
+    memberUserIds: [],
+    createdAt: '',
+  }),
   deleteBoard: async () => {},
   addMember: async () => {},
   removeMember: async () => {},
@@ -91,7 +96,7 @@ export const BoardContext = createContext<BoardContextValue>({
 
 // ─── Provider ──────────────────────────────────────────────────────────────────
 
-const BoardProvider: React.FC<{ children: React.ReactNode }> = ({
+export const BoardProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [state, dispatch] = useReducer(boardReducer, initialState);
@@ -105,7 +110,7 @@ const BoardProvider: React.FC<{ children: React.ReactNode }> = ({
       const persistedId = await storageService.getSelectedBoardId();
       let selectedBoardId: number | null = null;
 
-      if (persistedId !== null && boards.some((b) => b.id === persistedId)) {
+      if (persistedId !== null && boards.some(b => b.id === persistedId)) {
         selectedBoardId = persistedId;
       } else if (boards.length > 0) {
         selectedBoardId = boards[0].id;
@@ -113,8 +118,7 @@ const BoardProvider: React.FC<{ children: React.ReactNode }> = ({
 
       dispatch({ type: 'SET_BOARDS', boards, selectedBoardId });
     } catch (e) {
-      const message =
-        e instanceof Error ? e.message : 'Failed to load boards';
+      const message = e instanceof Error ? e.message : 'Failed to load boards';
       dispatch({ type: 'SET_ERROR', error: message });
     }
   }, []);
@@ -134,7 +138,7 @@ const BoardProvider: React.FC<{ children: React.ReactNode }> = ({
         boardService.createBoard(name),
         boardService.listBoards(),
       ]);
-      const newBoard = boards.find((b) => b.id === result.id);
+      const newBoard = boards.find(b => b.id === result.id);
       if (!newBoard) {
         throw new Error('Board created but not found in list');
       }
@@ -152,7 +156,7 @@ const BoardProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // If the deleted board was selected, switch to the first remaining board
       if (state.selectedBoardId === id) {
-        const remaining = state.boards.filter((b) => b.id !== id);
+        const remaining = state.boards.filter(b => b.id !== id);
         if (remaining.length > 0) {
           await switchBoard(remaining[0].id);
         } else {
@@ -164,18 +168,29 @@ const BoardProvider: React.FC<{ children: React.ReactNode }> = ({
     [state.selectedBoardId, state.boards, switchBoard],
   );
 
-  const addMember = useCallback(async (boardId: number, userId: number) => {
-    await boardService.addBoardMember(boardId, userId);
-    // Reload to get updated member list
-    const boards = await boardService.listBoards();
-    dispatch({ type: 'SET_BOARDS', boards, selectedBoardId: state.selectedBoardId });
-  }, [state.selectedBoardId]);
+  const addMember = useCallback(
+    async (boardId: number, userId: number) => {
+      await boardService.addBoardMember(boardId, userId);
+      // Reload to get updated member list
+      const boards = await boardService.listBoards();
+      dispatch({
+        type: 'SET_BOARDS',
+        boards,
+        selectedBoardId: state.selectedBoardId,
+      });
+    },
+    [state.selectedBoardId],
+  );
 
   const removeMember = useCallback(
     async (boardId: number, userId: number) => {
       await boardService.removeBoardMember(boardId, userId);
       const boards = await boardService.listBoards();
-      dispatch({ type: 'SET_BOARDS', boards, selectedBoardId: state.selectedBoardId });
+      dispatch({
+        type: 'SET_BOARDS',
+        boards,
+        selectedBoardId: state.selectedBoardId,
+      });
     },
     [state.selectedBoardId],
   );

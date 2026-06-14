@@ -20,9 +20,13 @@ jest.mock('react-i18next', () => ({
 }));
 
 // Mock @react-navigation/native useNavigation
+const mockNavigate = jest.fn();
+const mockGetParent = jest.fn(() => ({ navigate: mockNavigate }));
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({
     setOptions: jest.fn(),
+    navigate: mockNavigate,
+    getParent: mockGetParent,
   }),
 }));
 
@@ -32,6 +36,7 @@ jest.mock('../../components/LanguagePicker', () => {
   return () => <View testID="language-picker" />;
 });
 
+import { fireEvent } from '@testing-library/react-native';
 import SettingsScreen from '../SettingsScreen';
 
 describe('SettingsScreen', () => {
@@ -61,5 +66,17 @@ describe('SettingsScreen', () => {
   it('shows logout button', () => {
     const { getByTestId } = render(<SettingsScreen />);
     expect(getByTestId('logout-button')).toBeTruthy();
+  });
+
+  it('navigates to the module picker on the root stack when switching modules', () => {
+    const { getByTestId } = render(<SettingsScreen />);
+
+    // Precondition: not navigated yet
+    expect(mockNavigate).not.toHaveBeenCalledWith('ModuleSelection');
+
+    fireEvent.press(getByTestId('switch-module-button'));
+
+    expect(mockGetParent).toHaveBeenCalled();
+    expect(mockNavigate).toHaveBeenCalledWith('ModuleSelection');
   });
 });

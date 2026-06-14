@@ -1,19 +1,36 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useNavigation } from '@react-navigation/native';
 import useAuth from '../hooks/useAuth';
 import useScreenTitle from '../hooks/useScreenTitle';
 import useToast from '../hooks/useToast';
 import LanguagePicker from '../components/LanguagePicker';
 import { APP_VERSION } from '../constants/app';
-import { colors, commonStyles, typography, spacing } from '../styles/theme';
+import {
+  borderRadius,
+  colors,
+  commonStyles,
+  typography,
+  spacing,
+} from '../styles/theme';
+import type { RootStackParamList } from '../navigation/types';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 const SettingsScreen: React.FC = () => {
   const { t } = useTranslation();
+  const navigation = useNavigation();
   const { displayName, username, logout } = useAuth();
   const { showSuccess } = useToast();
 
   useScreenTitle('settings.title');
+
+  const handleSwitchModule = useCallback(() => {
+    // The module picker lives on the root stack, above the tab navigator.
+    const rootNavigation =
+      navigation.getParent<NativeStackNavigationProp<RootStackParamList>>();
+    rootNavigation?.navigate('ModuleSelection');
+  }, [navigation]);
 
   return (
     <ScrollView
@@ -42,9 +59,27 @@ const SettingsScreen: React.FC = () => {
         </View>
       </View>
 
+      <View style={styles.switchSection}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.switchButton,
+            pressed && { opacity: 0.7 },
+          ]}
+          onPress={handleSwitchModule}
+          testID="switch-module-button"
+          accessibilityRole="button"
+          accessibilityLabel={t('modules.switch')}
+        >
+          <Text style={styles.switchText}>{t('modules.switch')}</Text>
+        </Pressable>
+      </View>
+
       <View style={styles.logoutSection}>
         <Pressable
-          style={({ pressed }) => [styles.logoutButton, pressed && { opacity: 0.7 }]}
+          style={({ pressed }) => [
+            styles.logoutButton,
+            pressed && { opacity: 0.7 },
+          ]}
           onPress={() => {
             showSuccess('toast.loggedOff');
             logout();
@@ -74,6 +109,25 @@ const styles = StyleSheet.create({
   infoValue: {
     ...typography.body,
     color: colors.textSecondary,
+  },
+  switchSection: {
+    marginTop: spacing.lg,
+    paddingHorizontal: spacing.lg,
+  },
+  switchButton: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    paddingVertical: 14,
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  switchText: {
+    fontSize: 16,
+    color: colors.primary,
+    fontWeight: '600',
   },
   logoutSection: {
     marginVertical: spacing.lg,

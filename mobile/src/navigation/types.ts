@@ -1,6 +1,15 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
 import type { VideoItem } from '../types/api';
 
+/** Canonical module identifiers — must match the backend exactly. */
+export type ModuleId = 'YtDownloader' | 'Scheduler';
+
+export type RootStackParamList = {
+  ModuleSelection: undefined;
+  YtDownloader: undefined;
+  Scheduler: undefined;
+};
+
 export type AuthStackParamList = {
   Login: undefined;
   Register: undefined;

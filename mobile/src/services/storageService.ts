@@ -1,5 +1,6 @@
 import EncryptedStorage from 'react-native-encrypted-storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { ModuleId } from '../navigation/types';
 
 const TOKEN_KEY = 'auth_token';
 const USER_ID_KEY = 'auth_user_id';
@@ -8,6 +9,8 @@ const USERNAME_KEY = 'auth_username';
 const CREDENTIALS_KEY = 'saved_credentials';
 const LANGUAGE_KEY = 'app_language';
 const SELECTED_BOARD_KEY = 'selected_board_id';
+const SELECTED_MODULE_KEY = 'selected_module';
+const WELCOME_SEEN_KEY = 'jiapp_welcome_seen';
 
 interface SavedCredentials {
   username: string;
@@ -77,10 +80,7 @@ export const clearUsername = async (): Promise<void> => {
 export const saveCredentials = async (
   credentials: SavedCredentials,
 ): Promise<void> => {
-  await EncryptedStorage.setItem(
-    CREDENTIALS_KEY,
-    JSON.stringify(credentials),
-  );
+  await EncryptedStorage.setItem(CREDENTIALS_KEY, JSON.stringify(credentials));
 };
 
 export const getCredentials = async (): Promise<SavedCredentials | null> => {
@@ -125,4 +125,30 @@ export const saveSelectedBoardId = async (id: number): Promise<void> => {
 
 export const clearSelectedBoardId = async (): Promise<void> => {
   await AsyncStorage.removeItem(SELECTED_BOARD_KEY);
+};
+
+// --- Selected Module ---
+
+export const saveSelectedModule = async (moduleId: ModuleId): Promise<void> => {
+  await AsyncStorage.setItem(SELECTED_MODULE_KEY, moduleId);
+};
+
+export const getSelectedModule = async (): Promise<ModuleId | null> => {
+  const value = await AsyncStorage.getItem(SELECTED_MODULE_KEY);
+  return value as ModuleId | null;
+};
+
+export const clearSelectedModule = async (): Promise<void> => {
+  await AsyncStorage.removeItem(SELECTED_MODULE_KEY);
+};
+
+// --- Welcome Overlay ---
+
+export const markWelcomeSeen = async (): Promise<void> => {
+  await AsyncStorage.setItem(WELCOME_SEEN_KEY, '1');
+};
+
+export const hasSeenWelcome = async (): Promise<boolean> => {
+  const value = await AsyncStorage.getItem(WELCOME_SEEN_KEY);
+  return value === '1';
 };

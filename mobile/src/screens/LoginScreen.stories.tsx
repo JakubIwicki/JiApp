@@ -14,20 +14,25 @@ const mockAuthValue = {
   userId: null,
   displayName: null,
   username: null,
+  availableModules: [],
   isLoading: false,
+  showWelcome: false,
+  showFarewell: false,
   login: async (username: string, password: string) => {
     await authService.login(username, password);
   },
   register: async () => {},
   logout: async () => {},
   checkToken: async () => {},
+  dismissWelcome: () => {},
+  dismissFarewell: () => {},
 };
 
 const meta: Meta<typeof LoginScreen> = {
   title: 'Screens/LoginScreen',
   component: LoginScreen,
   decorators: [
-    (Story) => (
+    Story => (
       <AuthContext.Provider value={mockAuthValue}>
         <NavigationContainer>
           <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -47,7 +52,7 @@ export const Default: Story = {};
 
 export const WithError: Story = {
   decorators: [
-    (Story) => {
+    Story => {
       authService.setAuthMode('error');
       return <Story />;
     },
