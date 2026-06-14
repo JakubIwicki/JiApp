@@ -69,10 +69,11 @@ const config: StorybookConfig = {
           !resolved.includes('apiClient') &&
           !resolved.includes('storageService')
         ) {
+          const ext = path.extname(resolved) || '.ts';
           return path.resolve(
             servicesDir,
             '__mocks__',
-            path.basename(resolved),
+            path.basename(resolved, ext) + ext,
           );
         }
         return null;
