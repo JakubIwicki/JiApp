@@ -35,7 +35,7 @@ public class ModuleAuthorizationPolicyTests
             return result.Succeeded;
         }
 
-        public static ClaimsPrincipal AuthenticatedUserWithClaims(params Claim[] claims)
+        public static ClaimsPrincipal UserWithClaims(params Claim[] claims)
         {
             var identity = new ClaimsIdentity(claims, authenticationType: "TestAuth");
             return new ClaimsPrincipal(identity);
@@ -43,49 +43,40 @@ public class ModuleAuthorizationPolicyTests
     }
 
     [Fact]
-    public async Task Policy_denies_authenticated_user_without_module_claim()
+    public async Task Policy_DeniesAuthenticatedUser_WithoutModuleClaim()
     {
-        // Arrange
         var fixture = new Fixture();
-        var user = Fixture.AuthenticatedUserWithClaims(
+        var user = Fixture.UserWithClaims(
             new Claim(ClaimTypes.NameIdentifier, "42"));
 
-        // Act
         var authorized = await fixture.IsAuthorizedAsync(user);
 
-        // Assert — a valid token lacking the module claim yields 403
         authorized.Should().BeFalse();
     }
 
     [Fact]
-    public async Task Policy_denies_user_holding_only_other_module_claim()
+    public async Task Policy_DeniesUser_HoldingOnlyOtherModuleClaim()
     {
-        // Arrange
         var fixture = new Fixture();
-        var user = Fixture.AuthenticatedUserWithClaims(
+        var user = Fixture.UserWithClaims(
             new Claim(ClaimTypes.NameIdentifier, "42"),
             new Claim("module", Modules.Scheduler));
 
-        // Act
         var authorized = await fixture.IsAuthorizedAsync(user);
 
-        // Assert
         authorized.Should().BeFalse();
     }
 
     [Fact]
-    public async Task Policy_allows_user_holding_ytdownloader_module_claim()
+    public async Task Policy_AllowsUser_HoldingYtdownloaderModuleClaim()
     {
-        // Arrange
         var fixture = new Fixture();
-        var user = Fixture.AuthenticatedUserWithClaims(
+        var user = Fixture.UserWithClaims(
             new Claim(ClaimTypes.NameIdentifier, "42"),
             new Claim("module", Modules.YtDownloader));
 
-        // Act
         var authorized = await fixture.IsAuthorizedAsync(user);
 
-        // Assert
         authorized.Should().BeTrue();
     }
 }

@@ -11,104 +11,9 @@ namespace JiApp.Identity.Tests.Features.Auth.Register;
 
 public class RegisterHandlerTests
 {
-    private readonly Mock<UserManager<User>> _userManagerMock;
-    private readonly Mock<IUserModuleGrantService> _grantServiceMock;
-    private readonly RegisterHandler _sut;
-
-    public RegisterHandlerTests()
+    private sealed class Fixture
     {
-        _userManagerMock = CreateUserManagerMock();
-        _grantServiceMock = new Mock<IUserModuleGrantService>();
-        var logger = Mock.Of<ILogger<RegisterHandler>>();
-        _sut = new RegisterHandler(_userManagerMock.Object, _grantServiceMock.Object, logger);
-    }
-
-    [Fact]
-    public async Task HandleAsync_returns_success_for_valid_registration()
-    {
-        _userManagerMock.Setup(x => x.CreateAsync(It.IsAny<User>(), "Password1"))
-            .ReturnsAsync(IdentityResult.Success);
-
-        var result = await _sut.HandleAsync(
-            new RegisterRequest("newuser", "new@test.com", "Password1", "New User"));
-
-        result.IsSuccess.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task HandleAsync_grants_all_modules_on_successful_registration()
-    {
-        const long createdUserId = 7;
-        _userManagerMock.Setup(x => x.CreateAsync(It.IsAny<User>(), "Password1"))
-            .Callback<User, string>((user, _) => user.Id = createdUserId)
-            .ReturnsAsync(IdentityResult.Success);
-
-        await _sut.HandleAsync(
-            new RegisterRequest("newuser", "new@test.com", "Password1", "New User"));
-
-        _grantServiceMock.Verify(x => x.GrantAllAsync(createdUserId), Times.Once);
-    }
-
-    [Fact]
-    public async Task HandleAsync_does_not_grant_modules_when_registration_fails()
-    {
-        _userManagerMock.Setup(x => x.CreateAsync(It.IsAny<User>(), "weak"))
-            .ReturnsAsync(IdentityResult.Failed(
-                new IdentityError { Description = "Passwords must have at least one uppercase ('A'-'Z')." }));
-
-        await _sut.HandleAsync(
-            new RegisterRequest("newuser", "new@test.com", "weak", "New User"));
-
-        _grantServiceMock.Verify(x => x.GrantAllAsync(It.IsAny<long>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task HandleAsync_returns_generic_failure_on_unique_constraint_violation()
-    {
-        var innerEx = new SqliteException("UNIQUE constraint failed", 19); // SQLITE_CONSTRAINT
-        _userManagerMock.Setup(x => x.CreateAsync(It.IsAny<User>(), It.IsAny<string>()))
-            .ThrowsAsync(new DbUpdateException("An error occurred while saving the entity changes", innerEx));
-
-        var result = await _sut.HandleAsync(
-            new RegisterRequest("existinguser", "existing@test.com", "Password1", "New User"));
-
-        result.IsSuccess.Should().BeFalse();
-        result.Error.Should().Be("Registration failed");
-    }
-
-    [Fact]
-    public async Task HandleAsync_returns_failure_when_create_fails()
-    {
-        _userManagerMock.Setup(x => x.CreateAsync(It.IsAny<User>(), "weak"))
-            .ReturnsAsync(IdentityResult.Failed(
-                new IdentityError { Description = "Passwords must have at least one uppercase ('A'-'Z')." }));
-
-        var result = await _sut.HandleAsync(
-            new RegisterRequest("newuser", "new@test.com", "weak", "New User"));
-
-        result.IsSuccess.Should().BeFalse();
-        result.Error.Should().Contain("uppercase");
-    }
-
-    [Fact]
-    public async Task HandleAsync_returns_failure_with_all_errors_when_create_fails_multiple()
-    {
-        _userManagerMock.Setup(x => x.CreateAsync(It.IsAny<User>(), "weak"))
-            .ReturnsAsync(IdentityResult.Failed(
-                new IdentityError { Description = "Passwords must have at least one uppercase ('A'-'Z')." },
-                new IdentityError { Description = "Passwords must have at least one digit ('0'-'9')." }));
-
-        var result = await _sut.HandleAsync(
-            new RegisterRequest("newuser", "new@test.com", "weak", "New User"));
-
-        result.IsSuccess.Should().BeFalse();
-        result.Error.Should().Contain("uppercase");
-        result.Error.Should().Contain("digit");
-    }
-
-    private static Mock<UserManager<User>> CreateUserManagerMock()
-    {
-        return new Mock<UserManager<User>>(
+        public Mock<UserManager<User>> UserManagerMock { get; } = new(
             Mock.Of<IUserStore<User>>(),
             Mock.Of<Microsoft.Extensions.Options.IOptions<IdentityOptions>>(),
             Mock.Of<IPasswordHasher<User>>(),
@@ -118,5 +23,151 @@ public class RegisterHandlerTests
             Mock.Of<IdentityErrorDescriber>(),
             Mock.Of<IServiceProvider>(),
             Mock.Of<ILogger<UserManager<User>>>());
+
+        public Mock<IUserModuleGrantService> GrantServiceMock { get; } = new();
+
+        public Fixture WithSuccessfulCreate(long userId = 7)
+        {
+            UserManagerMock
+                .Setup(x => x.CreateAsync(It.IsAny<User>(), "Password1"))
+                .Callback<User, string>((user, _) => user.Id = userId)
+                .ReturnsAsync(IdentityResult.Success);
+            return this;
+        }
+
+        public Fixture WithFailingCreate(string errorDescription)
+        {
+            UserManagerMock
+                .Setup(x => x.CreateAsync(It.IsAny<User>(), "weak"))
+                .ReturnsAsync(IdentityResult.Failed(
+                    new IdentityError { Description = errorDescription }));
+            return this;
+        }
+
+        public Fixture WithCreateFailingMultiple()
+        {
+            UserManagerMock
+                .Setup(x => x.CreateAsync(It.IsAny<User>(), "weak"))
+                .ReturnsAsync(IdentityResult.Failed(
+                    new IdentityError { Description = "Passwords must have at least one uppercase ('A'-'Z')." },
+                    new IdentityError { Description = "Passwords must have at least one digit ('0'-'9')." }));
+            return this;
+        }
+
+        public Fixture WithUniqueConstraintViolation()
+        {
+            var innerEx = new SqliteException("UNIQUE constraint failed", 19);
+            UserManagerMock
+                .Setup(x => x.CreateAsync(It.IsAny<User>(), It.IsAny<string>()))
+                .ThrowsAsync(new DbUpdateException("An error occurred while saving the entity changes", innerEx));
+            return this;
+        }
+
+        public Fixture WithFailingGrantAllocation(long userId)
+        {
+            GrantServiceMock
+                .Setup(x => x.GrantAllAsync(userId))
+                .ThrowsAsync(new InvalidOperationException("DB unavailable"));
+            return this;
+        }
+
+        public RegisterHandler Build() =>
+            new(UserManagerMock.Object, GrantServiceMock.Object, Mock.Of<ILogger<RegisterHandler>>());
+    }
+
+    [Fact]
+    public async Task HandleAsync_ReturnsSuccess_ForValidRegistration()
+    {
+        var fixture = new Fixture().WithSuccessfulCreate();
+        var sut = fixture.Build();
+
+        var result = await sut.HandleAsync(
+            new RegisterRequest("newuser", "new@test.com", "Password1", "New User"));
+
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task HandleAsync_GrantsAllModules_OnSuccessfulRegistration()
+    {
+        const long createdUserId = 7;
+        var fixture = new Fixture().WithSuccessfulCreate(createdUserId);
+        var sut = fixture.Build();
+
+        await sut.HandleAsync(
+            new RegisterRequest("newuser", "new@test.com", "Password1", "New User"));
+
+        fixture.GrantServiceMock.Verify(x => x.GrantAllAsync(createdUserId), Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleAsync_DoesNotGrantModules_WhenRegistrationFails()
+    {
+        var fixture = new Fixture().WithFailingCreate("Passwords must have at least one uppercase ('A'-'Z').");
+        var sut = fixture.Build();
+
+        await sut.HandleAsync(
+            new RegisterRequest("newuser", "new@test.com", "weak", "New User"));
+
+        fixture.GrantServiceMock.Verify(x => x.GrantAllAsync(It.IsAny<long>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task HandleAsync_ReturnsGenericFailure_OnUniqueConstraintViolation()
+    {
+        var fixture = new Fixture().WithUniqueConstraintViolation();
+        var sut = fixture.Build();
+
+        var result = await sut.HandleAsync(
+            new RegisterRequest("existinguser", "existing@test.com", "Password1", "New User"));
+
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be("Registration failed");
+    }
+
+    [Fact]
+    public async Task HandleAsync_ReturnsFailure_WhenCreateFails()
+    {
+        var fixture = new Fixture().WithFailingCreate("Passwords must have at least one uppercase ('A'-'Z').");
+        var sut = fixture.Build();
+
+        var result = await sut.HandleAsync(
+            new RegisterRequest("newuser", "new@test.com", "weak", "New User"));
+
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Contain("uppercase");
+    }
+
+    [Fact]
+    public async Task HandleAsync_ReturnsFailureWithAllErrors_WhenCreateFailsMultiple()
+    {
+        var fixture = new Fixture().WithCreateFailingMultiple();
+        var sut = fixture.Build();
+
+        var result = await sut.HandleAsync(
+            new RegisterRequest("newuser", "new@test.com", "weak", "New User"));
+
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Contain("uppercase");
+        result.Error.Should().Contain("digit");
+    }
+
+    [Fact]
+    public async Task HandleAsync_CompensatesUserDeletion_WhenGrantAllocationFails()
+    {
+        const long createdUserId = 9;
+        var fixture = new Fixture()
+            .WithSuccessfulCreate(createdUserId)
+            .WithFailingGrantAllocation(createdUserId);
+        var sut = fixture.Build();
+
+        var result = await sut.HandleAsync(
+            new RegisterRequest("newuser", "new@test.com", "Password1", "New User"));
+
+        fixture.UserManagerMock.Verify(
+            x => x.DeleteAsync(It.Is<User>(u => u.Id == createdUserId)),
+            Times.Once);
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be("Registration failed");
     }
 }
