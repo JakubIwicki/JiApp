@@ -1,12 +1,8 @@
 import React, { useCallback, useEffect, useReducer } from 'react';
-import {
-  StyleSheet,
-  Switch,
-  Text,
-  View,
-} from 'react-native';
+import { StyleSheet, Switch, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import axios from 'axios';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '../navigation/types';
 import AuthLayout from '../components/AuthLayout';
@@ -17,7 +13,10 @@ import useToast from '../hooks/useToast';
 import * as storageService from '../services/storageService';
 import { colors, spacing } from '../styles/theme';
 
-type LoginNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'Login'>;
+type LoginNavigationProp = NativeStackNavigationProp<
+  AuthStackParamList,
+  'Login'
+>;
 
 interface LoginFormState {
   username: string;
@@ -32,7 +31,11 @@ interface LoginFormState {
 type LoginFormAction =
   | { type: 'SET_FIELD'; field: 'username' | 'password'; value: string }
   | { type: 'SET_REMEMBER_ME'; value: boolean }
-  | { type: 'SET_FIELD_ERROR'; field: 'username' | 'password'; error: string | undefined }
+  | {
+      type: 'SET_FIELD_ERROR';
+      field: 'username' | 'password';
+      error: string | undefined;
+    }
   | { type: 'SET_API_ERROR'; error: string | undefined }
   | { type: 'SET_LOADING'; loading: boolean }
   | { type: 'LOAD_CREDENTIALS'; username: string; password: string }
@@ -64,7 +67,12 @@ function loginFormReducer(
     case 'SET_LOADING':
       return { ...state, isLoading: action.loading };
     case 'LOAD_CREDENTIALS':
-      return { ...state, username: action.username, password: action.password, rememberMe: true };
+      return {
+        ...state,
+        username: action.username,
+        password: action.password,
+        rememberMe: true,
+      };
     case 'CLEAR_ERRORS':
       return {
         ...state,
@@ -89,11 +97,18 @@ const LoginScreen: React.FC = () => {
 
   // Initialize saved credentials on mount
   useEffect(() => {
-    storageService.getCredentials().then((credentials) => {
-      if (credentials) {
-        dispatch({ type: 'LOAD_CREDENTIALS', username: credentials.username, password: credentials.password });
-      }
-    }).catch(() => {});
+    storageService
+      .getCredentials()
+      .then(credentials => {
+        if (credentials) {
+          dispatch({
+            type: 'LOAD_CREDENTIALS',
+            username: credentials.username,
+            password: credentials.password,
+          });
+        }
+      })
+      .catch(() => {});
   }, []); // mount only
 
   const handleLogin = useCallback(async () => {
@@ -102,12 +117,20 @@ const LoginScreen: React.FC = () => {
     let hasError = false;
 
     if (!form.username.trim()) {
-      dispatch({ type: 'SET_FIELD_ERROR', field: 'username', error: t('auth.usernameRequired') });
+      dispatch({
+        type: 'SET_FIELD_ERROR',
+        field: 'username',
+        error: t('auth.usernameRequired'),
+      });
       hasError = true;
     }
 
     if (!form.password.trim()) {
-      dispatch({ type: 'SET_FIELD_ERROR', field: 'password', error: t('auth.passwordRequired') });
+      dispatch({
+        type: 'SET_FIELD_ERROR',
+        field: 'password',
+        error: t('auth.passwordRequired'),
+      });
       hasError = true;
     }
 
@@ -130,8 +153,29 @@ const LoginScreen: React.FC = () => {
       } else {
         await storageService.clearCredentials();
       }
-    } catch {
-      dispatch({ type: 'SET_API_ERROR', error: t('auth.invalidCredentials') });
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        if (err.response?.status === 401) {
+          dispatch({
+            type: 'SET_API_ERROR',
+            error: t('auth.invalidCredentials'),
+          });
+        } else if (err.response?.data?.error) {
+          dispatch({ type: 'SET_API_ERROR', error: err.response.data.error });
+        } else if (err.code === 'ERR_NETWORK' || !err.response) {
+          dispatch({ type: 'SET_API_ERROR', error: t('auth.networkError') });
+        } else {
+          dispatch({
+            type: 'SET_API_ERROR',
+            error: t('auth.invalidCredentials'),
+          });
+        }
+      } else {
+        dispatch({
+          type: 'SET_API_ERROR',
+          error: t('auth.invalidCredentials'),
+        });
+      }
     } finally {
       dispatch({ type: 'SET_LOADING', loading: false });
     }
@@ -153,9 +197,13 @@ const LoginScreen: React.FC = () => {
     >
       <FormInput
         value={form.username}
-        onChangeText={(text) => {
+        onChangeText={text => {
           dispatch({ type: 'SET_FIELD', field: 'username', value: text });
-          dispatch({ type: 'SET_FIELD_ERROR', field: 'username', error: undefined });
+          dispatch({
+            type: 'SET_FIELD_ERROR',
+            field: 'username',
+            error: undefined,
+          });
         }}
         placeholder={t('auth.username')}
         error={form.usernameError}
@@ -164,9 +212,13 @@ const LoginScreen: React.FC = () => {
 
       <FormInput
         value={form.password}
-        onChangeText={(text) => {
+        onChangeText={text => {
           dispatch({ type: 'SET_FIELD', field: 'password', value: text });
-          dispatch({ type: 'SET_FIELD_ERROR', field: 'password', error: undefined });
+          dispatch({
+            type: 'SET_FIELD_ERROR',
+            field: 'password',
+            error: undefined,
+          });
         }}
         placeholder={t('auth.password')}
         secureTextEntry={true}
@@ -176,7 +228,7 @@ const LoginScreen: React.FC = () => {
       <View style={styles.rememberMeRow}>
         <Switch
           value={form.rememberMe}
-          onValueChange={(value) => dispatch({ type: 'SET_REMEMBER_ME', value })}
+          onValueChange={value => dispatch({ type: 'SET_REMEMBER_ME', value })}
           testID="remember-me-switch"
           trackColor={{ false: colors.primaryLight, true: colors.primary }}
         />

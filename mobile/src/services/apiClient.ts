@@ -61,10 +61,10 @@ apiClient.interceptors.response.use(
             { headers: { 'Content-Type': 'application/json' } },
           );
 
-          const { token, id, displayName } = loginResponse.data;
+          const { accessToken, userId, displayName } = loginResponse.data;
           await Promise.all([
-            saveToken(token),
-            saveUserId(id),
+            saveToken(accessToken),
+            saveUserId(userId),
             saveDisplayName(displayName),
             saveUsername(credentials.username),
           ]);
@@ -88,13 +88,9 @@ apiClient.interceptors.response.use(
       ]);
     }
 
-    // Extract server error message for non-401 responses so downstream
-    // error utils can read it without importing axios types
-    if (
-      error.response?.status !== 401 &&
-      error.response?.data &&
-      typeof error.response.data === 'object'
-    ) {
+    // Extract server error message so downstream error utils can read
+    // it without importing axios types
+    if (error.response?.data && typeof error.response.data === 'object') {
       const data = error.response.data as Record<string, unknown>;
       if (typeof data.error === 'string') {
         (error as any)._serverError = data.error;

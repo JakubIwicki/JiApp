@@ -29,7 +29,8 @@
     "passwordTooShort": "Hasło musi mieć co najmniej 8 znaków",
     "passwordNoUppercase": "Hasło musi zawierać co najmniej jedną wielką literę",
     "passwordNoDigit": "Hasło musi zawierać co najmniej jedną cyfrę",
-    "invalidEmail": "Wprowadź poprawny adres email"
+    "invalidEmail": "Wprowadź poprawny adres email",
+    "networkError": "Nie można połączyć się z serwerem. Sprawdź połączenie."
   },
   "welcome": {
     "welcomeBack": "Witaj ponownie,",

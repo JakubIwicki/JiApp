@@ -29,7 +29,8 @@
     "passwordTooShort": "Password must be at least 8 characters",
     "passwordNoUppercase": "Password must contain at least one uppercase letter",
     "passwordNoDigit": "Password must contain at least one digit",
-    "invalidEmail": "Please enter a valid email address"
+    "invalidEmail": "Please enter a valid email address",
+    "networkError": "Unable to connect to server. Check your connection."
   },
   "welcome": {
     "welcomeBack": "Welcome back,",
