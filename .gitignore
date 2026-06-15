@@ -90,10 +90,6 @@ docs/
 backend/.inspect-results/
 backend/inspect-file.sh
 
-# Legacy monolith scripts
-run-api.sh
-stop-api.sh
-
 # Test artifacts
 mobile/test-results/
 
