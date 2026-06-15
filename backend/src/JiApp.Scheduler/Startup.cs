@@ -98,7 +98,7 @@ public class Startup(SchedulerSettings settings)
 
         services.AddAuthorizationBuilder()
             .AddPolicy("module:Scheduler", policy =>
-                policy.RequireClaim("module", Modules.Scheduler));
+                policy.RequireClaim("module", Modules.Scheduler, Modules.FullAccess));
 
         services.AddCors(options =>
         {

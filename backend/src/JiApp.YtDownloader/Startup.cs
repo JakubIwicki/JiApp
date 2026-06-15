@@ -81,7 +81,7 @@ public class Startup(Settings settings)
 
         services.AddAuthorizationBuilder()
             .AddPolicy("module:YtDownloader", policy =>
-                policy.RequireClaim("module", Modules.YtDownloader));
+                policy.RequireClaim("module", Modules.YtDownloader, Modules.FullAccess));
 
         services.AddCors(options =>
         {
