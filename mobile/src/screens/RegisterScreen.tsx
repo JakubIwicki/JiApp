@@ -220,9 +220,12 @@ const RegisterScreen: React.FC = () => {
       navigation.navigate('Login');
     } catch (err: unknown) {
       if (axios.isAxiosError(err) && err.response?.status === 400) {
-        const serverErrors: string[] = err.response?.data?.errors?.errors ?? [];
-        if (serverErrors.length > 0) {
-          const fieldErrors = extractFieldErrors(serverErrors);
+        const serverError: string | undefined = err.response?.data?.error;
+        const validationErrors: string[] =
+          err.response?.data?.errors?.errors ?? [];
+
+        if (validationErrors.length > 0) {
+          const fieldErrors = extractFieldErrors(validationErrors);
           for (const [field, error] of Object.entries(fieldErrors)) {
             dispatch({
               type: 'SET_FIELD_ERROR',
@@ -230,6 +233,11 @@ const RegisterScreen: React.FC = () => {
               error,
             });
           }
+          return;
+        }
+
+        if (serverError) {
+          dispatch({ type: 'SET_API_ERROR', error: serverError });
           return;
         }
       }
