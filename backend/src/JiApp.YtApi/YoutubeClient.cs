@@ -109,8 +109,10 @@ public sealed class YoutubeClient(
             AudioFormat = AudioConversionFormat.Mp3,
             ExtractorArgs = "youtube:player_client=android_vr",
             Output = outputTemplate,
-            CookiesFromBrowser = cookiesFromBrowser,
-            Cookies = cookiesFile,
+            // Precedence: cookiesFromBrowser wins over cookiesFile (matching ResolveAudioUrlAsync).
+            // When both are set, only pass --cookies-from-browser to avoid conflicting flags.
+            CookiesFromBrowser = !string.IsNullOrEmpty(cookiesFromBrowser) ? cookiesFromBrowser : null,
+            Cookies = string.IsNullOrEmpty(cookiesFromBrowser) ? cookiesFile : null,
         };
         await _youtubeDlLock.WaitAsync(cancellationToken);
         try
