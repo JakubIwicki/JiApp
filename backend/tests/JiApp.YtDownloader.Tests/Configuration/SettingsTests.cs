@@ -75,4 +75,62 @@ public class SettingsTests
 
         act.Should().NotThrow();
     }
+
+    [Fact]
+    public void YoutubeSettings_CookiesFile_defaults_to_null()
+    {
+        var youtube = new Settings.YoutubeSettings();
+
+        youtube.CookiesFile.Should().BeNull();
+    }
+
+    [Fact]
+    public void YoutubeSettings_CookiesFromBrowser_defaults_to_null()
+    {
+        var youtube = new Settings.YoutubeSettings();
+
+        youtube.CookiesFromBrowser.Should().BeNull();
+    }
+
+    [Fact]
+    public void YoutubeSettings_cookie_properties_can_be_configured()
+    {
+        var youtube = new Settings.YoutubeSettings
+        {
+            CookiesFile = "/app/cookies.txt",
+            CookiesFromBrowser = "firefox",
+        };
+
+        youtube.CookiesFile.Should().Be("/app/cookies.txt");
+        youtube.CookiesFromBrowser.Should().Be("firefox");
+    }
+
+    [Fact]
+    public void Validate_passes_when_cookie_properties_are_not_set()
+    {
+        var settings = new Settings
+        {
+            ConnectionString = "Data Source=test.db",
+            App = new Settings.AppSettings
+            {
+                BaseDirectory = "/tmp",
+                PreviewDurationSeconds = 10,
+            },
+            Jwt = new Settings.JwtSettings
+            {
+                Key = "test-key", Issuer = "test-issuer", Audience = "test-audience",
+            },
+            Youtube = new Settings.YoutubeSettings
+            {
+                ApiKey = "test-key",
+                YtDlpPath = "yt-dlp",
+                FfmpegPath = "ffmpeg",
+                // CookiesFile and CookiesFromBrowser left null — should still pass
+            },
+        };
+
+        Action act = () => settings.Validate();
+
+        act.Should().NotThrow();
+    }
 }

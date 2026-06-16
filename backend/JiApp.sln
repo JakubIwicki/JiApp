@@ -29,6 +29,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JiApp.Scheduler", "src\JiAp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JiApp.Scheduler.Tests", "tests\JiApp.Scheduler.Tests\JiApp.Scheduler.Tests.csproj", "{8579AD84-4CD7-49D3-9F16-BD2718CA4B82}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JiApp.Gateway.Tests", "tests\JiApp.Gateway.Tests\JiApp.Gateway.Tests.csproj", "{6F2330C0-372C-4A95-B739-8AA9D6DAC6EF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -171,6 +173,18 @@ Global
 		{8579AD84-4CD7-49D3-9F16-BD2718CA4B82}.Release|x64.Build.0 = Release|Any CPU
 		{8579AD84-4CD7-49D3-9F16-BD2718CA4B82}.Release|x86.ActiveCfg = Release|Any CPU
 		{8579AD84-4CD7-49D3-9F16-BD2718CA4B82}.Release|x86.Build.0 = Release|Any CPU
+		{6F2330C0-372C-4A95-B739-8AA9D6DAC6EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F2330C0-372C-4A95-B739-8AA9D6DAC6EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F2330C0-372C-4A95-B739-8AA9D6DAC6EF}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6F2330C0-372C-4A95-B739-8AA9D6DAC6EF}.Debug|x64.Build.0 = Debug|Any CPU
+		{6F2330C0-372C-4A95-B739-8AA9D6DAC6EF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6F2330C0-372C-4A95-B739-8AA9D6DAC6EF}.Debug|x86.Build.0 = Debug|Any CPU
+		{6F2330C0-372C-4A95-B739-8AA9D6DAC6EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F2330C0-372C-4A95-B739-8AA9D6DAC6EF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6F2330C0-372C-4A95-B739-8AA9D6DAC6EF}.Release|x64.ActiveCfg = Release|Any CPU
+		{6F2330C0-372C-4A95-B739-8AA9D6DAC6EF}.Release|x64.Build.0 = Release|Any CPU
+		{6F2330C0-372C-4A95-B739-8AA9D6DAC6EF}.Release|x86.ActiveCfg = Release|Any CPU
+		{6F2330C0-372C-4A95-B739-8AA9D6DAC6EF}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -187,5 +201,6 @@ Global
 		{1FAB0249-41C4-457F-BA36-DCE4A7348489} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{F427E050-8AF4-4020-AE0C-847200817256} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{8579AD84-4CD7-49D3-9F16-BD2718CA4B82} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{6F2330C0-372C-4A95-B739-8AA9D6DAC6EF} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 EndGlobal

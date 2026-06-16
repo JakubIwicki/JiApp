@@ -8,7 +8,9 @@ public sealed class CreateClientValidator : AbstractValidator<CreateClientReques
     public CreateClientValidator()
     {
         RuleFor(x => x.BoardId).GreaterThan(0);
-        RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(200)
+            .Must(name => !name.Contains('<') && !name.Contains('>'))
+            .WithMessage("Name must not contain HTML tags.");
         RuleFor(x => x.Phone)
             .MaximumLength(50)
             .Matches(ClientValidationConstants.PhoneRegexPattern).When(x => !string.IsNullOrEmpty(x.Phone));

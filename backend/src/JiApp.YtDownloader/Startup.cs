@@ -104,7 +104,9 @@ public class Startup(Settings settings)
             new YoutubeClient(
                 settings.Youtube!.ApiKey!,
                 settings.Youtube!.YtDlpPath!,
-                settings.Youtube!.FfmpegPath!));
+                settings.Youtube!.FfmpegPath!,
+                settings.Youtube!.CookiesFile,
+                settings.Youtube!.CookiesFromBrowser));
 
         services.AddSingleton(settings);
         services.AddMemoryCache(options =>

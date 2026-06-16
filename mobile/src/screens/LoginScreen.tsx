@@ -158,7 +158,10 @@ const LoginScreen: React.FC = () => {
         if (err.response?.status === 401) {
           dispatch({
             type: 'SET_API_ERROR',
-            error: t('auth.invalidCredentials'),
+            error:
+              (err as any)._serverError ||
+              err.response?.data?.error ||
+              t('auth.invalidCredentials'),
           });
         } else if (err.response?.data?.error) {
           dispatch({ type: 'SET_API_ERROR', error: err.response.data.error });

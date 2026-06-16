@@ -4,7 +4,9 @@ namespace JiApp.YtDownloader.Tests;
 
 public class YoutubeClientValidationTests
 {
-    private static YoutubeClient CreateClient() => new("fake-key", "yt-dlp", "ffmpeg");
+    private static YoutubeClient CreateClient(
+        string? cookiesFile = null, string? cookiesFromBrowser = null) =>
+        new("fake-key", "yt-dlp", "ffmpeg", cookiesFile, cookiesFromBrowser);
 
     [Theory]
     [InlineData("")]
@@ -49,5 +51,42 @@ public class YoutubeClientValidationTests
             // Any non-ArgumentException exception is fine — it means yt-dlp
             // was called, which is the correct behavior after validation passes.
         }
+    }
+
+    [Fact]
+    public async Task ResolveAudioUrlAsync_passes_cookies_from_browser_to_yt_dlp()
+    {
+        var client = CreateClient(cookiesFromBrowser: "madeupbrowser");
+
+        var act = async () => await client.ResolveAudioUrlAsync("dQw4w9WgXcQ");
+
+        (await act.Should().ThrowExactlyAsync<InvalidOperationException>())
+            .And.Message.Should().Contain("unsupported browser");
+    }
+
+    [Fact]
+    public async Task ResolveAudioUrlAsync_passes_cookies_file_to_yt_dlp()
+    {
+        var client = CreateClient(cookiesFile: "/nonexistent/cookies.txt");
+
+        var act = async () => await client.ResolveAudioUrlAsync("dQw4w9WgXcQ");
+
+        var ex = await act.Should().ThrowExactlyAsync<InvalidOperationException>();
+        ex.And.Message.Should().Contain("cookies");
+    }
+
+    [Fact]
+    public async Task ResolveAudioUrlAsync_cookies_from_browser_takes_precedence_over_file()
+    {
+        var client = CreateClient(
+            cookiesFile: "/nonexistent/cookies.txt",
+            cookiesFromBrowser: "madeupbrowser");
+
+        var act = async () => await client.ResolveAudioUrlAsync("dQw4w9WgXcQ");
+
+        // When both are set, cookiesFromBrowser wins → expect "unsupported browser" error,
+        // NOT the "FileNotFoundError" from trying to use the file path.
+        (await act.Should().ThrowExactlyAsync<InvalidOperationException>())
+            .And.Message.Should().Contain("unsupported browser");
     }
 }

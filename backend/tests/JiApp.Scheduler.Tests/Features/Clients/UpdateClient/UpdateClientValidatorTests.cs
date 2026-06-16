@@ -75,4 +75,14 @@ public sealed class UpdateClientValidatorTests
 
         result.IsValid.Should().BeFalse();
     }
+
+    [Fact]
+    public void Validate_WithHtmlTagInName_ReturnsError()
+    {
+        var request = new UpdateClientRequest("<script>alert('xss')</script>", null, null);
+
+        var result = _sut.Validate(request);
+
+        result.IsValid.Should().BeFalse();
+    }
 }

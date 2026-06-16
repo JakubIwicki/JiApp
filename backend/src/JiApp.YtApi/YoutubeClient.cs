@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,7 +31,9 @@ public interface IYoutubeClient
 public sealed class YoutubeClient(
     string apiKey,
     string ytDlpPath,
-    string ffmpegPath) : IYoutubeClient, IDisposable
+    string ffmpegPath,
+    string? cookiesFile = null,
+    string? cookiesFromBrowser = null) : IYoutubeClient, IDisposable
 {
     private readonly YouTubeService _youTubeService = new(new Google.Apis.Services.BaseClientService.Initializer
     {
@@ -106,7 +109,9 @@ public sealed class YoutubeClient(
             ExtractAudio = true,
             AudioFormat = AudioConversionFormat.Mp3,
             ExtractorArgs = "youtube:player_client=android_vr",
-            Output = outputTemplate
+            Output = outputTemplate,
+            CookiesFromBrowser = cookiesFromBrowser,
+            Cookies = cookiesFile,
         };
         await _youtubeDlLock.WaitAsync(cancellationToken);
         try
@@ -150,10 +155,17 @@ public sealed class YoutubeClient(
 
         // Run yt-dlp directly — YoutubeDLSharp's RunWithOptions doesn't capture
         // stdout when Print = "urls" is used, so result.Data ends up empty.
+        var sb = new StringBuilder("--no-playlist --extract-audio --audio-format mp3");
+        if (!string.IsNullOrEmpty(cookiesFromBrowser))
+            sb.Append(" --cookies-from-browser ").Append(cookiesFromBrowser);
+        else if (!string.IsNullOrEmpty(cookiesFile))
+            sb.Append(" --cookies \"").Append(cookiesFile).Append('"');
+        sb.Append(" --get-url \"").Append(videoUrl).Append('"');
+
         var startInfo = new ProcessStartInfo
         {
             FileName = ytDlpPath,
-            Arguments = $"--no-playlist --extract-audio --audio-format mp3 --get-url \"{videoUrl}\"",
+            Arguments = sb.ToString(),
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,

@@ -7,7 +7,9 @@ public sealed class UpdateClientValidator : AbstractValidator<UpdateClientReques
 {
     public UpdateClientValidator()
     {
-        RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(200)
+            .Must(name => !name.Contains('<') && !name.Contains('>'))
+            .WithMessage("Name must not contain HTML tags.");
         RuleFor(x => x.Phone)
             .MaximumLength(50)
             .Matches(ClientValidationConstants.PhoneRegexPattern).When(x => !string.IsNullOrEmpty(x.Phone));

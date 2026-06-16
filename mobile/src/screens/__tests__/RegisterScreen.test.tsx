@@ -162,6 +162,59 @@ describe('RegisterScreen', () => {
     expect(getByText('auth.goToLogin')).toBeTruthy();
   });
 
+  it('displays the server error message when registration fails with data.error', async () => {
+    mockRegister.mockRejectedValueOnce({
+      isAxiosError: true,
+      response: { status: 400, data: { error: 'Username is already taken.' } },
+    });
+    const { getByPlaceholderText, getByTestId, findByText } = render(
+      <RegisterScreen />,
+    );
+
+    fireEvent.changeText(getByPlaceholderText('auth.username'), 'existinguser');
+    fireEvent.changeText(getByPlaceholderText('auth.email'), 'john@test.com');
+    fireEvent.changeText(getByPlaceholderText('auth.password'), 'Pass1234');
+    fireEvent.changeText(getByPlaceholderText('auth.displayName'), 'John Doe');
+
+    fireEvent.press(getByTestId('button'));
+
+    expect(await findByText('Username is already taken.')).toBeTruthy();
+  });
+
+  it('displays field-level errors from ValidationProblemDetails response', async () => {
+    mockRegister.mockRejectedValueOnce({
+      isAxiosError: true,
+      response: {
+        status: 400,
+        data: {
+          errors: {
+            errors: [
+              'Password must have at least one uppercase letter',
+              'Username must be between 3 and 50 characters',
+            ],
+          },
+        },
+      },
+    });
+    const { getByPlaceholderText, getByTestId, findByText } = render(
+      <RegisterScreen />,
+    );
+
+    fireEvent.changeText(getByPlaceholderText('auth.username'), 'existinguser');
+    fireEvent.changeText(getByPlaceholderText('auth.email'), 'john@test.com');
+    fireEvent.changeText(getByPlaceholderText('auth.password'), 'ValidPass1');
+    fireEvent.changeText(getByPlaceholderText('auth.displayName'), 'John Doe');
+
+    fireEvent.press(getByTestId('button'));
+
+    expect(
+      await findByText('Password must have at least one uppercase letter'),
+    ).toBeTruthy();
+    expect(
+      await findByText('Username must be between 3 and 50 characters'),
+    ).toBeTruthy();
+  });
+
   it('can be unmounted without errors during async register', async () => {
     let resolvePromise!: (value: unknown) => void;
     mockRegister.mockReturnValue(

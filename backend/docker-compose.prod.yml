@@ -47,6 +47,8 @@ services:
       Jwt__Issuer: ${JWT_ISSUER:-JiApp-Identity}
       Jwt__Audience: ${JWT_AUDIENCE:-jiapp-gateway}
       Youtube__ApiKey: ${YOUTUBE_API_KEY:?required}
+      Youtube__CookiesFile: ${YOUTUBE_COOKIES_FILE:-}
+      Youtube__CookiesFromBrowser: ${YOUTUBE_COOKIES_FROM_BROWSER:-}
     depends_on:
       postgres:
         condition: service_healthy
