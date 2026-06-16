@@ -9,11 +9,14 @@ public sealed class UpdateExpenseValidator : AbstractValidator<UpdateExpenseRequ
 
     public UpdateExpenseValidator()
     {
-        RuleFor(x => x.Amount.Amount).GreaterThan(0).WithMessage("Amount must be greater than 0");
-        RuleFor(x => x.Amount.Currency)
+        RuleFor(x => x.Amount!.Amount).GreaterThan(0)
+            .When(x => x.Amount is not null)
+            .WithMessage("Amount must be greater than 0");
+        RuleFor(x => x.Amount!.Currency)
             .MaximumLength(3)
             .Must(c => AllowedCurrencies.Contains(c))
-            .WithMessage($"Currency must be one of: {string.Join(", ", AllowedCurrencies)}");
+            .WithMessage($"Currency must be one of: {string.Join(", ", AllowedCurrencies)}")
+            .When(x => x.Amount is not null);
         RuleFor(x => x.Category)
             .Must(c => Enum.TryParse<ExpenseCategory>(c, true, out _))
             .WithMessage("Invalid expense category. Must be one of: Fuel, Hotel, Parking, Supplies, Food, Other");

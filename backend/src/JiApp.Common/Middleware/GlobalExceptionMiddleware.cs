@@ -2,6 +2,7 @@ using System.Text.Json;
 using JiApp.Common.Abstractions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -15,6 +16,18 @@ public sealed class GlobalExceptionMiddleware(ILogger<GlobalExceptionMiddleware>
         try
         {
             await next(context);
+        }
+        catch (BadHttpRequestException ex)
+        {
+            // Missing required query/route parameter, invalid body, etc. → 400
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            context.Response.ContentType = "application/json";
+
+            var response = env.IsDevelopment()
+                ? new ApiErrorResponse(ex.Message)
+                : new ApiErrorResponse("Invalid request");
+
+            await JsonSerializer.SerializeAsync(context.Response.Body, response, ApiErrorResponse.JsonOptions);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {

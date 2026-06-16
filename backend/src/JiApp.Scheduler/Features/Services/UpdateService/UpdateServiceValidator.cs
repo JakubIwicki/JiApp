@@ -11,6 +11,8 @@ public sealed class UpdateServiceValidator : AbstractValidator<UpdateServiceRequ
         RuleFor(x => x.Category).NotEmpty().MaximumLength(50)
             .Must(Validators.BeValidServiceCategory).WithMessage("Invalid service category");
         RuleFor(x => x.BaseDuration).GreaterThan(0);
-        RuleFor(x => x.BasePrice.Amount).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.BasePrice!.Amount).GreaterThanOrEqualTo(0)
+            .When(x => x.BasePrice is not null)
+            .WithMessage("Base price amount must be non-negative");
     }
 }
