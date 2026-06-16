@@ -49,7 +49,7 @@ public sealed class GatewaySettings
         {
             "Login", "Register", "Refresh", "Logout", "Health", "DownloadFile",
             "SearchVideos", "SearchHistory", "DownloadHistory", "GetHistory",
-            "Me", "GetDownloadLink", "Preview", "Scheduler", "Throw"
+            "Me", "GetDownloadLink", "Preview", "Scheduler"
         };
 
         foreach (var policy in expectedPolicies)

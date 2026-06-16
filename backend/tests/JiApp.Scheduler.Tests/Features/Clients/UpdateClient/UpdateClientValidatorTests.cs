@@ -85,4 +85,14 @@ public sealed class UpdateClientValidatorTests
 
         result.IsValid.Should().BeFalse();
     }
+
+    [Fact]
+    public void Validate_WithHtmlTagsInNotes_ReturnsError()
+    {
+        var request = new UpdateClientRequest("John Doe", null, "<script>alert('xss')</script>");
+
+        var result = _sut.Validate(request);
+
+        result.IsValid.Should().BeFalse();
+    }
 }

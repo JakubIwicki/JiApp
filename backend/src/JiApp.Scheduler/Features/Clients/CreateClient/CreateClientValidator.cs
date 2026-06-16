@@ -14,6 +14,8 @@ public sealed class CreateClientValidator : AbstractValidator<CreateClientReques
         RuleFor(x => x.Phone)
             .MaximumLength(50)
             .Matches(ClientValidationConstants.PhoneRegexPattern).When(x => !string.IsNullOrEmpty(x.Phone));
-        RuleFor(x => x.Notes).MaximumLength(1000).When(x => x.Notes is not null);
+        RuleFor(x => x.Notes).MaximumLength(1000)
+            .Must(notes => notes == null || (!notes.Contains('<') && !notes.Contains('>')))
+            .WithMessage("Notes must not contain HTML tags.");
     }
 }
