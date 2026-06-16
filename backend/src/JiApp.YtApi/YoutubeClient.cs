@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -155,22 +154,29 @@ public sealed class YoutubeClient(
 
         // Run yt-dlp directly — YoutubeDLSharp's RunWithOptions doesn't capture
         // stdout when Print = "urls" is used, so result.Data ends up empty.
-        var sb = new StringBuilder("--no-playlist --extract-audio --audio-format mp3");
-        if (!string.IsNullOrEmpty(cookiesFromBrowser))
-            sb.Append(" --cookies-from-browser ").Append(cookiesFromBrowser);
-        else if (!string.IsNullOrEmpty(cookiesFile))
-            sb.Append(" --cookies \"").Append(cookiesFile).Append('"');
-        sb.Append(" --get-url \"").Append(videoUrl).Append('"');
-
-        var startInfo = new ProcessStartInfo
+        var startInfo = new ProcessStartInfo(ytDlpPath)
         {
-            FileName = ytDlpPath,
-            Arguments = sb.ToString(),
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true,
         };
+        startInfo.ArgumentList.Add("--no-playlist");
+        startInfo.ArgumentList.Add("--extract-audio");
+        startInfo.ArgumentList.Add("--audio-format");
+        startInfo.ArgumentList.Add("mp3");
+        if (!string.IsNullOrEmpty(cookiesFromBrowser))
+        {
+            startInfo.ArgumentList.Add("--cookies-from-browser");
+            startInfo.ArgumentList.Add(cookiesFromBrowser);
+        }
+        else if (!string.IsNullOrEmpty(cookiesFile))
+        {
+            startInfo.ArgumentList.Add("--cookies");
+            startInfo.ArgumentList.Add(cookiesFile);
+        }
+        startInfo.ArgumentList.Add("--get-url");
+        startInfo.ArgumentList.Add(videoUrl);
 
         using var process = Process.Start(startInfo)
                             ?? throw new InvalidOperationException("Failed to start yt-dlp process.");
