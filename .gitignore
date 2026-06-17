@@ -71,6 +71,13 @@ backend/certs/dev-cert.pfx
 mobile/android/app/src/main/res/raw/jiapp_dev_ca
 mobile/android/app/src/main/res/raw/ca_cert_dev.der
 
+# Production certificates (private keys MUST NOT be committed)
+backend/certs/prod/jiapp-ca.key
+backend/certs/prod/jiapp-ca.srl
+backend/certs/prod/jiapp-server.key
+backend/certs/prod/jiapp-server.csr
+backend/certs/prod/server.pfx
+
 # Runtime logs
 backend/.api-debug.log
 
