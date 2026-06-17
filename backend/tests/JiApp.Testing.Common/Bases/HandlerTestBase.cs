@@ -1,7 +1,7 @@
+using JiApp.Scheduler.Persistence;
 using JiApp.Testing.Common.Data;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using JiApp.Scheduler.Persistence;
 
 namespace JiApp.Testing.Common.Bases;
 
@@ -11,6 +11,7 @@ public abstract class HandlerTestBase : IDisposable
     private readonly SchedulerDbContext _dbContext;
 
     protected TestDb Db { get; }
+    protected ISchedulerDbContext DbContext => _dbContext;
 
     protected HandlerTestBase()
     {
