@@ -33,8 +33,8 @@ public class YoutubeClientValidationTests
     {
         var client = CreateClient();
 
-        // Note: this will still fail because yt-dlp isn't installed, but it should
-        // NOT be an ArgumentException — the validation guard must pass it through.
+        // This may fail (network / yt-dlp error), but it must NOT be an
+        // ArgumentException — the validation guard must pass valid IDs through.
         var act = async () => await client.ResolveAudioUrlAsync(plausibleVideoId);
 
         // The validation guard must pass valid IDs through — no ArgumentException expected.
@@ -67,25 +67,28 @@ public class YoutubeClientValidationTests
     [Fact]
     public async Task ResolveAudioUrlAsync_passes_cookies_file_to_yt_dlp()
     {
-        var client = CreateClient(cookiesFile: "/nonexistent/cookies.txt");
+        // Use a directory as the cookies "file" — yt-dlp fails immediately
+        // (before any network call) with "Is a directory", which proves the
+        // --cookies flag was passed with the given path.
+        var client = CreateClient(cookiesFile: "/tmp");
 
         var act = async () => await client.ResolveAudioUrlAsync("dQw4w9WgXcQ");
 
         var ex = await act.Should().ThrowExactlyAsync<InvalidOperationException>();
-        ex.And.Message.Should().Contain("cookies");
+        ex.And.Message.Should().Contain("Is a directory");
     }
 
     [Fact]
     public async Task ResolveAudioUrlAsync_cookies_from_browser_takes_precedence_over_file()
     {
         var client = CreateClient(
-            cookiesFile: "/nonexistent/cookies.txt",
+            cookiesFile: "/tmp",
             cookiesFromBrowser: "madeupbrowser");
 
         var act = async () => await client.ResolveAudioUrlAsync("dQw4w9WgXcQ");
 
         // When both are set, cookiesFromBrowser wins → expect "unsupported browser" error,
-        // NOT the "FileNotFoundError" from trying to use the file path.
+        // NOT the "Is a directory" error from trying to use the file path.
         (await act.Should().ThrowExactlyAsync<InvalidOperationException>())
             .And.Message.Should().Contain("unsupported browser");
     }
