@@ -10,7 +10,7 @@
 
 | Phase | Status | Started | Completed | Notes |
 |-------|--------|---------|-----------|-------|
-| Phase 1: AWS Infrastructure | ⏳ Not started | — | — | |
+| Phase 1: AWS Infrastructure | ✅ Done — IaC ready | 2026-06-17 | — | CloudFormation + setup script written, needs `aws configure` + `./setup.sh` |
 | Phase 2: Application Changes | ⏳ Not started | — | — | |
 | Phase 3: EC2 Bootstrap | ⏳ Not started | — | — | |
 | Phase 4: CI/CD Pipeline | ⏳ Not started | — | — | |
@@ -38,6 +38,14 @@ Status: ⏳ Not started | 🔄 In progress | ✅ Done | ❌ Blocked
   - `deployment_plan/DEPLOYMENT_PLAN.md` — full plan
   - `deployment_plan/CLOUDFLARE_TUNNEL.md` — future TLS alternative
   - `deployment_plan/process.md` — this file
+
+### 2026-06-17 — Phase 1 Implementation
+
+- Wrote `deployment_plan/phase1/cloudformation.yml` — S3 (2 buckets), ECR (5 repos with lifecycle), IAM (3 roles: EC2, Lambda, GitHub OIDC), security group
+- Wrote `deployment_plan/phase1/lambda/starter.py` — Python 3.12 Lambda, idempotent start check
+- Wrote `deployment_plan/phase1/setup.sh` — orchestrates CloudFormation deploy → EC2 launch → Elastic IP → Lambda + API Gateway
+- **Status:** IaC ready. User needs to `aws configure` then `./setup.sh`.
+- **Outputs:** EC2_INSTANCE_ID, Elastic IP, API Gateway URL, GitHub Role ARN
 
 ---
 

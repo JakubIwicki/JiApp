@@ -1,0 +1,264 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: JiApp core infrastructure — S3, ECR, IAM roles, security group
+Parameters:
+  GitHubOrg:
+    Type: String
+    Default: JakubIwicki
+    Description: GitHub organization or user name
+  GitHubRepo:
+    Type: String
+    Default: JiApp
+    Description: GitHub repository name
+
+Resources:
+  # ── S3 Buckets ──────────────────────────────────────────
+
+  BackupsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub jiapp-backups-${AWS::AccountId}
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireBackupsAfter30Days
+            Status: Enabled
+            ExpirationInDays: 30
+
+  DeployConfigBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub jiapp-deploy-config-${AWS::AccountId}
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  # ── ECR Repositories ────────────────────────────────────
+
+  EcrGateway:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: jiapp/gateway
+      ImageTagMutability: IMMUTABLE
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          { "rules": [{ "rulePriority": 1, "description": "Keep last 5 images", "selection": { "tagStatus": "tagged", "tagPrefixList": [""], "countType": "imageCountMoreThan", "countNumber": 5 }, "action": { "type": "expire" } }] }
+
+  EcrIdentity:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: jiapp/identity
+      ImageTagMutability: IMMUTABLE
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          { "rules": [{ "rulePriority": 1, "description": "Keep last 5 images", "selection": { "tagStatus": "tagged", "tagPrefixList": [""], "countType": "imageCountMoreThan", "countNumber": 5 }, "action": { "type": "expire" } }] }
+
+  EcrYtDownloader:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: jiapp/ytdownloader
+      ImageTagMutability: IMMUTABLE
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          { "rules": [{ "rulePriority": 1, "description": "Keep last 5 images", "selection": { "tagStatus": "tagged", "tagPrefixList": [""], "countType": "imageCountMoreThan", "countNumber": 5 }, "action": { "type": "expire" } }] }
+
+  EcrImageTools:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: jiapp/imagetools
+      ImageTagMutability: IMMUTABLE
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          { "rules": [{ "rulePriority": 1, "description": "Keep last 5 images", "selection": { "tagStatus": "tagged", "tagPrefixList": [""], "countType": "imageCountMoreThan", "countNumber": 5 }, "action": { "type": "expire" } }] }
+
+  EcrScheduler:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: jiapp/scheduler
+      ImageTagMutability: IMMUTABLE
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          { "rules": [{ "rulePriority": 1, "description": "Keep last 5 images", "selection": { "tagStatus": "tagged", "tagPrefixList": [""], "countType": "imageCountMoreThan", "countNumber": 5 }, "action": { "type": "expire" } }] }
+
+  # ── Security Group ──────────────────────────────────────
+
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: jiapp-sg
+      GroupDescription: JiApp EC2 security group — Gateway HTTPS + outbound ECR/S3/YouTube
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 6700
+          ToPort: 6700
+          CidrIp: 0.0.0.0/0
+          Description: Gateway HTTPS
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: ECR, S3, YouTube API
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: yt-dlp downloads
+
+  # ── IAM: EC2 Instance Role ──────────────────────────────
+
+  Ec2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: jiapp-ec2-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: jiapp-ec2-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecr:GetAuthorizationToken
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                Resource:
+                  - !Sub arn:aws:s3:::jiapp-backups-${AWS::AccountId}/*
+                  - !Sub arn:aws:s3:::jiapp-deploy-config-${AWS::AccountId}/*
+              - Effect: Allow
+                Action:
+                  - ec2:StopInstances
+                Resource: !Sub arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:instance/*
+              - Effect: Deny
+                Action:
+                  - ec2:TerminateInstances
+                Resource: !Sub arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:instance/*
+
+  Ec2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: jiapp-ec2-profile
+      Roles:
+        - !Ref Ec2Role
+
+  # ── IAM: Lambda Starter Role ────────────────────────────
+
+  LambdaStarterRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: jiapp-starter-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: jiapp-starter-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:StartInstances
+                  - ec2:DescribeInstances
+                Resource: !Sub arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:instance/*
+
+  # ── IAM: GitHub Actions OIDC Role ───────────────────────
+
+  GitHubOidcProvider:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList:
+        - sts.amazonaws.com
+      ThumbprintList:
+        - 6938fd4d98bab03faadb97b34396831e3780aea1
+
+  GitHubDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: github-actions-deploy
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Ref GitHubOidcProvider
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringLike:
+                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubOrg}/${GitHubRepo}:*
+      Policies:
+        - PolicyName: github-deploy-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecr:GetAuthorizationToken
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                  - ecr:CompleteLayerUpload
+                  - ecr:InitiateLayerUpload
+                  - ecr:PutImage
+                  - ecr:UploadLayerPart
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - ssm:SendCommand
+                  - ssm:GetCommandInvocation
+                Resource:
+                  - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:document/AWS-RunShellScript
+                  - !Sub arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:instance/*
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                Resource: !Sub arn:aws:s3:::jiapp-deploy-config-${AWS::AccountId}/*
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeInstances
+                Resource: '*'
+
+Outputs:
+  EcrGatewayUri:
+    Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/jiapp/gateway
+  EcrIdentityUri:
+    Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/jiapp/identity
+  EcrYtDownloaderUri:
+    Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/jiapp/ytdownloader
+  EcrImageToolsUri:
+    Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/jiapp/imagetools
+  EcrSchedulerUri:
+    Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/jiapp/scheduler
+  SecurityGroupId:
+    Value: !Ref SecurityGroup
+  Ec2InstanceProfileArn:
+    Value: !GetAtt Ec2InstanceProfile.Arn
+  LambdaStarterRoleArn:
+    Value: !GetAtt LambdaStarterRole.Arn
+  GitHubDeployRoleArn:
+    Value: !GetAtt GitHubDeployRole.Arn
