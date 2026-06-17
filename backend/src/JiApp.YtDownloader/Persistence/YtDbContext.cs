@@ -7,6 +7,7 @@ public sealed class YtDbContext(DbContextOptions<YtDbContext> options) : DbConte
 {
     public DbSet<YoutubeSearchHistory> YoutubeSearchHistory => Set<YoutubeSearchHistory>();
     public DbSet<YoutubeDownloadHistory> YoutubeDownloadHistory => Set<YoutubeDownloadHistory>();
+    public DbSet<AssistantDailyUsage> AssistantDailyUsage => Set<AssistantDailyUsage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

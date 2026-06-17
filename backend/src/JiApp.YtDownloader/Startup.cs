@@ -98,6 +98,7 @@ public class Startup(Settings settings)
         // Repositories
         services.AddScoped<ISearchHistoryRepository, SearchHistoryRepository>();
         services.AddScoped<IDownloadHistoryRepository, DownloadHistoryRepository>();
+        services.AddScoped<IAssistantUsageRepository, AssistantUsageRepository>();
         // Services
         services.AddSingleton<ITempFileStore, TempFileStore>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
