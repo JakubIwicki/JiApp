@@ -3,7 +3,6 @@ using System.Text.Json;
 using JiApp.Gateway.Tests.Integration;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace JiApp.Gateway.Tests.Integration;
@@ -94,19 +93,10 @@ public class GatewayIntegrationTests : IClassFixture<GatewayWebApplicationFactor
         // The dashboard calls downstream health endpoints; since those are not
         // running, checks will report UNREACHABLE. The response must NOT leak
         // exception message details.
-        // appsettings.Development.json is gitignored (secrets), so Jwt:Key must
-        // be configured here for CI.
         using var devFactory = new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
             {
                 builder.UseEnvironment("Development");
-                builder.ConfigureAppConfiguration((_, config) =>
-                {
-                    config.AddInMemoryCollection(new Dictionary<string, string?>
-                    {
-                        ["Jwt:Key"] = "test-key-at-least-32-characters!!",
-                    });
-                });
             });
         var client = devFactory.CreateClient();
         var response = await client.GetAsync("/health/dashboard");
