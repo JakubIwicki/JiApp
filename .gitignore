@@ -101,5 +101,8 @@ backend/inspect-file.sh
 # Test artifacts
 mobile/test-results/
 
+# Worktrees
+.worktrees/
+
 # Media
 *.mp3
