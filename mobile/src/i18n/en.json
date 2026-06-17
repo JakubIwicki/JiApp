@@ -107,6 +107,14 @@
     "languagePolish": "Polish",
     "languageEnglish": "English"
   },
+  "wake": {
+    "title": "Waking server...",
+    "message": "This may take up to 2 minutes",
+    "unavailable": "Server unavailable",
+    "unavailableMessage": "Server unavailable. This may take 1–2 minutes.",
+    "retry": "Retry",
+    "closeApp": "Close app"
+  },
   "connectionError": {
     "title": "Cannot connect to server",
     "message": "Please contact your administrator.",
