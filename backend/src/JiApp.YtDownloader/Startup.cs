@@ -6,6 +6,7 @@ using JiApp.Common.Abstractions;
 using JiApp.Common.Middleware;
 using JiApp.Common.Services;
 using JiApp.YtApi;
+using JiApp.YtDownloader.Agent;
 using JiApp.YtDownloader.Configuration;
 using JiApp.YtDownloader.Features.ArchiveDownload;
 using JiApp.YtDownloader.Features.ArchiveSearch;
@@ -135,6 +136,7 @@ public class Startup(Settings settings)
         services.AddScoped<ArchiveDownloadHandler>();
         services.AddScoped<GetHistoryHandler>();
         services.AddScoped<StreamPreviewHandler>();
+        services.AddScoped<YtAgentToolService>();
 
         // Background services
         services.AddHostedService<TempFileCleanupService>();
