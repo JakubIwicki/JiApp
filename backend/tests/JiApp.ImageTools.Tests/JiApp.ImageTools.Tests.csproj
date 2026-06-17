@@ -22,6 +22,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\JiApp.ImageTools\JiApp.ImageTools.csproj"/>
+        <ProjectReference Include="..\JiApp.Testing.Common\JiApp.Testing.Common.csproj"/>
     </ItemGroup>
 
 </Project>

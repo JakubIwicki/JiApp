@@ -21,6 +21,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\JiApp.Gateway\JiApp.Gateway.csproj"/>
+        <ProjectReference Include="..\JiApp.Testing.Common\JiApp.Testing.Common.csproj"/>
     </ItemGroup>
 
 </Project>
