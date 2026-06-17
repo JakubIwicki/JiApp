@@ -74,5 +74,7 @@ public sealed class Settings
         public string? ApiKey { get; set; }
         public string? YtDlpPath { get; set; }
         public string? FfmpegPath { get; set; }
+        public string? CookiesFile { get; set; }
+        public string? CookiesFromBrowser { get; set; }
     }
 }

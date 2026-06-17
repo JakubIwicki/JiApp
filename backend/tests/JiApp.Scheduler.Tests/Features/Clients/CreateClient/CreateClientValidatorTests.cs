@@ -75,4 +75,24 @@ public sealed class CreateClientValidatorTests
 
         result.IsValid.Should().BeFalse();
     }
+
+    [Fact]
+    public void Validate_WithHtmlTagInName_ReturnsError()
+    {
+        var request = new CreateClientRequest(1L, "<script>alert('xss')</script>", null, null);
+
+        var result = _sut.Validate(request);
+
+        result.IsValid.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Validate_WithHtmlTagsInNotes_ReturnsError()
+    {
+        var request = new CreateClientRequest(1L, "John Doe", null, "<script>alert('xss')</script>");
+
+        var result = _sut.Validate(request);
+
+        result.IsValid.Should().BeFalse();
+    }
 }

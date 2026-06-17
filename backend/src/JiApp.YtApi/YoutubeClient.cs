@@ -30,7 +30,9 @@ public interface IYoutubeClient
 public sealed class YoutubeClient(
     string apiKey,
     string ytDlpPath,
-    string ffmpegPath) : IYoutubeClient, IDisposable
+    string ffmpegPath,
+    string? cookiesFile = null,
+    string? cookiesFromBrowser = null) : IYoutubeClient, IDisposable
 {
     private readonly YouTubeService _youTubeService = new(new Google.Apis.Services.BaseClientService.Initializer
     {
@@ -106,7 +108,11 @@ public sealed class YoutubeClient(
             ExtractAudio = true,
             AudioFormat = AudioConversionFormat.Mp3,
             ExtractorArgs = "youtube:player_client=android_vr",
-            Output = outputTemplate
+            Output = outputTemplate,
+            // Precedence: cookiesFromBrowser wins over cookiesFile (matching ResolveAudioUrlAsync).
+            // When both are set, only pass --cookies-from-browser to avoid conflicting flags.
+            CookiesFromBrowser = !string.IsNullOrEmpty(cookiesFromBrowser) ? cookiesFromBrowser : null,
+            Cookies = string.IsNullOrEmpty(cookiesFromBrowser) ? cookiesFile : null,
         };
         await _youtubeDlLock.WaitAsync(cancellationToken);
         try
@@ -150,15 +156,29 @@ public sealed class YoutubeClient(
 
         // Run yt-dlp directly — YoutubeDLSharp's RunWithOptions doesn't capture
         // stdout when Print = "urls" is used, so result.Data ends up empty.
-        var startInfo = new ProcessStartInfo
+        var startInfo = new ProcessStartInfo(ytDlpPath)
         {
-            FileName = ytDlpPath,
-            Arguments = $"--no-playlist --extract-audio --audio-format mp3 --get-url \"{videoUrl}\"",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true,
         };
+        startInfo.ArgumentList.Add("--no-playlist");
+        startInfo.ArgumentList.Add("--extract-audio");
+        startInfo.ArgumentList.Add("--audio-format");
+        startInfo.ArgumentList.Add("mp3");
+        if (!string.IsNullOrEmpty(cookiesFromBrowser))
+        {
+            startInfo.ArgumentList.Add("--cookies-from-browser");
+            startInfo.ArgumentList.Add(cookiesFromBrowser);
+        }
+        else if (!string.IsNullOrEmpty(cookiesFile))
+        {
+            startInfo.ArgumentList.Add("--cookies");
+            startInfo.ArgumentList.Add(cookiesFile);
+        }
+        startInfo.ArgumentList.Add("--get-url");
+        startInfo.ArgumentList.Add(videoUrl);
 
         using var process = Process.Start(startInfo)
                             ?? throw new InvalidOperationException("Failed to start yt-dlp process.");

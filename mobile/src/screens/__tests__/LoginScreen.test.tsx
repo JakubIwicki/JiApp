@@ -45,7 +45,9 @@ describe('LoginScreen', () => {
   });
 
   it('renders login form with username, password, remember me, and login button', () => {
-    const { getByPlaceholderText, getAllByText, getByText } = render(<LoginScreen />);
+    const { getByPlaceholderText, getAllByText, getByText } = render(
+      <LoginScreen />,
+    );
     expect(getByPlaceholderText('auth.username')).toBeTruthy();
     expect(getByPlaceholderText('auth.password')).toBeTruthy();
     // Title and button both show 'auth.login'
@@ -96,6 +98,44 @@ describe('LoginScreen', () => {
     expect(mockNavigate).toHaveBeenCalledWith('Register');
   });
 
+  it('displays the server error message when login fails with _serverError on 401', async () => {
+    mockLogin.mockRejectedValueOnce({
+      isAxiosError: true,
+      response: {
+        status: 401,
+        data: { error: 'Account is locked. Try again in 15 minutes.' },
+      },
+      _serverError: 'Account is locked. Try again in 15 minutes.',
+    });
+    const { getByPlaceholderText, getByTestId, findByText } = render(
+      <LoginScreen />,
+    );
+
+    fireEvent.changeText(getByPlaceholderText('auth.username'), 'testuser');
+    fireEvent.changeText(getByPlaceholderText('auth.password'), 'wrong');
+    fireEvent.press(getByTestId('button'));
+
+    expect(
+      await findByText('Account is locked. Try again in 15 minutes.'),
+    ).toBeTruthy();
+  });
+
+  it('displays server error from response.data.error on non-401 failures', async () => {
+    mockLogin.mockRejectedValueOnce({
+      isAxiosError: true,
+      response: { status: 500, data: { error: 'Internal server error' } },
+    });
+    const { getByPlaceholderText, getByTestId, findByText } = render(
+      <LoginScreen />,
+    );
+
+    fireEvent.changeText(getByPlaceholderText('auth.username'), 'testuser');
+    fireEvent.changeText(getByPlaceholderText('auth.password'), 'wrong');
+    fireEvent.press(getByTestId('button'));
+
+    expect(await findByText('Internal server error')).toBeTruthy();
+  });
+
   it('can be unmounted without errors during async load', async () => {
     // Verify that unmounting before async load completes does not throw
     const { unmount } = render(<LoginScreen />);
@@ -107,7 +147,7 @@ describe('LoginScreen', () => {
   it('can be unmounted without errors during async login', async () => {
     let resolvePromise!: (value: unknown) => void;
     mockLogin.mockReturnValue(
-      new Promise((resolve) => {
+      new Promise(resolve => {
         resolvePromise = resolve;
       }),
     );
@@ -135,7 +175,7 @@ describe('LoginScreen', () => {
     await act(async () => {});
 
     const stateUpdateWarnings = consoleErrorSpy.mock.calls.filter(
-      (call) =>
+      call =>
         typeof call[0] === 'string' &&
         call[0].includes('state update on an unmounted component'),
     );

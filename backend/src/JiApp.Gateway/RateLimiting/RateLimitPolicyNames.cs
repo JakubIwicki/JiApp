@@ -29,4 +29,7 @@ public static class RateLimitPolicyNames
 
     // Scheduler
     public const string SchedulerPolicy = "SchedulerPolicy";
+
+    // Dev-only (error testing)
+    public const string ThrowPolicy = "ThrowPolicy";
 }

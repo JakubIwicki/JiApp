@@ -14,6 +14,12 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+      - name: Install yt-dlp
+        run: |
+          mkdir -p ~/.local/bin
+          curl -fsSL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o ~/.local/bin/yt-dlp
+          chmod +x ~/.local/bin/yt-dlp
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Build
         run: dotnet build backend/JiApp.sln
       - name: Test

@@ -16,6 +16,8 @@ RUN apt-get update && apt-get install -y python3 python3-pip ffmpeg && \
 RUN pip3 install --break-system-packages yt-dlp
 WORKDIR /app
 COPY --from=publish /app/publish .
+# To authenticate YouTube requests, mount a Netscape-format cookie file
+# at /app/cookies.txt and set Youtube__CookiesFile=/app/cookies.txt
 ENV Youtube__YtDlpPath=yt-dlp
 ENV Youtube__FfmpegPath=ffmpeg
 ENTRYPOINT ["dotnet", "JiApp.YtDownloader.dll"]

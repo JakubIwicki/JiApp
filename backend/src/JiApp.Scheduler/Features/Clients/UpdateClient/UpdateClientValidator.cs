@@ -7,10 +7,14 @@ public sealed class UpdateClientValidator : AbstractValidator<UpdateClientReques
 {
     public UpdateClientValidator()
     {
-        RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(200)
+            .Must(name => !name.Contains('<') && !name.Contains('>'))
+            .WithMessage("Name must not contain HTML tags.");
         RuleFor(x => x.Phone)
             .MaximumLength(50)
             .Matches(ClientValidationConstants.PhoneRegexPattern).When(x => !string.IsNullOrEmpty(x.Phone));
-        RuleFor(x => x.Notes).MaximumLength(1000).When(x => x.Notes is not null);
+        RuleFor(x => x.Notes).MaximumLength(1000)
+            .Must(notes => notes == null || (!notes.Contains('<') && !notes.Contains('>')))
+            .WithMessage("Notes must not contain HTML tags.");
     }
 }

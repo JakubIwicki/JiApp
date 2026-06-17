@@ -13,11 +13,7 @@ describe('FormInput', () => {
   it('calls onChangeText on text input', () => {
     const onChangeText = jest.fn();
     const { getByPlaceholderText } = render(
-      <FormInput
-        value=""
-        onChangeText={onChangeText}
-        placeholder="Username"
-      />,
+      <FormInput value="" onChangeText={onChangeText} placeholder="Username" />,
     );
     fireEvent.changeText(getByPlaceholderText('Username'), 'john');
     expect(onChangeText).toHaveBeenCalledWith('john');
@@ -76,6 +72,30 @@ describe('FormInput', () => {
     );
     const input = getByPlaceholderText('Password');
     expect(input.props.secureTextEntry).toBe(true);
+  });
+
+  it('removes error text when error prop changes from a value to undefined', () => {
+    const { rerender, getByText, queryByText } = render(
+      <FormInput
+        value=""
+        onChangeText={jest.fn()}
+        placeholder="Password"
+        error="Password too short"
+      />,
+    );
+
+    expect(getByText('Password too short')).toBeTruthy();
+
+    rerender(
+      <FormInput
+        value=""
+        onChangeText={jest.fn()}
+        placeholder="Password"
+        error={undefined}
+      />,
+    );
+
+    expect(queryByText('Password too short')).toBeNull();
   });
 
   it('uses wabi-sabi placeholder color', () => {

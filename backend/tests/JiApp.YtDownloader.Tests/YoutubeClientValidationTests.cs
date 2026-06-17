@@ -4,7 +4,9 @@ namespace JiApp.YtDownloader.Tests;
 
 public class YoutubeClientValidationTests
 {
-    private static YoutubeClient CreateClient() => new("fake-key", "yt-dlp", "ffmpeg");
+    private static YoutubeClient CreateClient(
+        string? cookiesFile = null, string? cookiesFromBrowser = null) =>
+        new("fake-key", "yt-dlp", "ffmpeg", cookiesFile, cookiesFromBrowser);
 
     [Theory]
     [InlineData("")]
@@ -31,8 +33,8 @@ public class YoutubeClientValidationTests
     {
         var client = CreateClient();
 
-        // Note: this will still fail because yt-dlp isn't installed, but it should
-        // NOT be an ArgumentException — the validation guard must pass it through.
+        // This may fail (network / yt-dlp error), but it must NOT be an
+        // ArgumentException — the validation guard must pass valid IDs through.
         var act = async () => await client.ResolveAudioUrlAsync(plausibleVideoId);
 
         // The validation guard must pass valid IDs through — no ArgumentException expected.
@@ -49,5 +51,45 @@ public class YoutubeClientValidationTests
             // Any non-ArgumentException exception is fine — it means yt-dlp
             // was called, which is the correct behavior after validation passes.
         }
+    }
+
+    [Fact]
+    public async Task ResolveAudioUrlAsync_passes_cookies_from_browser_to_yt_dlp()
+    {
+        var client = CreateClient(cookiesFromBrowser: "madeupbrowser");
+
+        var act = async () => await client.ResolveAudioUrlAsync("dQw4w9WgXcQ");
+
+        (await act.Should().ThrowExactlyAsync<InvalidOperationException>())
+            .And.Message.Should().Contain("unsupported browser");
+    }
+
+    [Fact]
+    public async Task ResolveAudioUrlAsync_passes_cookies_file_to_yt_dlp()
+    {
+        // Use a directory as the cookies "file" — yt-dlp fails immediately
+        // (before any network call) with "Is a directory", which proves the
+        // --cookies flag was passed with the given path.
+        var client = CreateClient(cookiesFile: "/tmp");
+
+        var act = async () => await client.ResolveAudioUrlAsync("dQw4w9WgXcQ");
+
+        var ex = await act.Should().ThrowExactlyAsync<InvalidOperationException>();
+        ex.And.Message.Should().Contain("Is a directory");
+    }
+
+    [Fact]
+    public async Task ResolveAudioUrlAsync_cookies_from_browser_takes_precedence_over_file()
+    {
+        var client = CreateClient(
+            cookiesFile: "/tmp",
+            cookiesFromBrowser: "madeupbrowser");
+
+        var act = async () => await client.ResolveAudioUrlAsync("dQw4w9WgXcQ");
+
+        // When both are set, cookiesFromBrowser wins → expect "unsupported browser" error,
+        // NOT the "Is a directory" error from trying to use the file path.
+        (await act.Should().ThrowExactlyAsync<InvalidOperationException>())
+            .And.Message.Should().Contain("unsupported browser");
     }
 }

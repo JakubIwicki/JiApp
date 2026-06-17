@@ -71,7 +71,7 @@ apiClient.interceptors.response.use(
 
           // Retry the original request with the new token
           config._isRetry = true;
-          config.headers.Authorization = `Bearer ${token}`;
+          config.headers.Authorization = `Bearer ${accessToken}`;
           return apiClient.request(config);
         } catch {
           // Re-login failed — wipe everything

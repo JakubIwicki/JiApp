@@ -28,8 +28,8 @@ import '../apiClient';
 
 // Capture the error handler at module load time (before any clearAllMocks)
 const mockInstance = (axios.create as jest.Mock).mock.results[0].value;
-const errorHandler = (mockInstance.interceptors.response.use as jest.Mock)
-  .mock.calls[0][1];
+const errorHandler = (mockInstance.interceptors.response.use as jest.Mock).mock
+  .calls[0][1];
 
 describe('apiClient 401 response interceptor', () => {
   beforeEach(() => {
@@ -75,7 +75,10 @@ describe('apiClient 401 response interceptor', () => {
   it('attaches _serverError from response body for 5xx errors', async () => {
     const error502 = {
       isAxiosError: true,
-      response: { status: 502, data: { error: 'Failed to download video: Video unavailable' } },
+      response: {
+        status: 502,
+        data: { error: 'Failed to download video: Video unavailable' },
+      },
     };
 
     await expect(errorHandler(error502)).rejects.toMatchObject({
@@ -91,21 +94,27 @@ describe('apiClient 401 response interceptor', () => {
       response: { status: 500, data: { details: 'No error property' } },
     };
 
-    const result = await expect(errorHandler(error500)).rejects.not.toMatchObject({
+    const result = await expect(
+      errorHandler(error500),
+    ).rejects.not.toMatchObject({
       _serverError: expect.any(String),
     });
 
     expect(storageService.clearToken).not.toHaveBeenCalled();
   });
 
-  it('does not attach _serverError on 401 errors', async () => {
+  it('attaches _serverError on 401 errors (so login/register can display server messages)', async () => {
     const error401 = {
       isAxiosError: true,
-      response: { status: 401, data: { error: 'Unauthorized' } },
+      response: {
+        status: 401,
+        data: { error: 'Invalid credentials' },
+        config: {},
+      },
     };
 
-    await expect(errorHandler(error401)).rejects.not.toMatchObject({
-      _serverError: expect.any(String),
+    await expect(errorHandler(error401)).rejects.toMatchObject({
+      _serverError: 'Invalid credentials',
     });
   });
 });
