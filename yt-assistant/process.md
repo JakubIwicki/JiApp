@@ -45,6 +45,19 @@ Two user-requested additions, folded into DESIGN.md + PLAN.md:
 3. **Per-user daily message quota** (decision #6, DESIGN.md §6 "Usage quota"). User-requested token-abuse guard: **default 30 messages/user/day, configurable** via `Assistant:DailyMessageLimitPerUser`. Must be **DB-backed** (new `AssistantDailyUsage` entity + unique `(UserId, UsageDateUtc)` index + migration in `YtDbContext`; `IAssistantUsageRepository.TryConsumeAsync`) because the EC2 stops ~95% of the time and an in-memory counter would reset on every cold start. Enforced as a pre-check at the chat endpoint → localized **429** with no DeepSeek call when exceeded. Rationale captured: a per-*conversation* cap wouldn't prevent abuse (just start a new chat); only a per-user/day quota actually bounds spend. Complements the existing per-request history cap (H2) and iteration cap. Quota test added.
 
 ### Implementation started (2026-06-17)
-Switched from `feat/aws-deployment-plan` back to `feat/yt-deepseek-assistant`; invoked subagent-driven-development. Began grounding in YtDownloader backend (csproj, Startup, Program, Settings) before dispatching the Phase A implementer. Then paused to fold in the quota requirement above.
+Switched from `feat/aws-deployment-plan` back to `feat/yt-deepseek-assistant`; invoked subagent-driven-development (fresh csharp-coder per task, TDD). Grounded in the YtDownloader backend (csproj, Startup, Program, Settings, the SearchVideos slice, repos, `Result<T>`, `ICurrentUserService`) before dispatching.
+
+**Key design resolution (critic H5):** the existing handlers resolve the user via `ICurrentUserService` → `IHttpContextAccessor` (throws if absent), which is fragile inside an LLM tool loop. But the repositories already expose `GetByUserIdAsync(userId, …)`. So `YtAgentToolService` takes explicit `userId` and uses the repo seam — no `HttpContext` in the loop.
+
+**Backend tasks completed (committed locally, branch `feat/yt-deepseek-assistant`):**
+- **A1** `c4165ed` — `Agent/YtAgentToolService` (search / list-search-history / list-download-history / build-download-offer; explicit `userId`; `DownloadOffer` record) + DI + 13 unit tests. No new packages.
+- **B1+B3** `113c527` — `DeepSeek` + `Assistant` config sections (key empty, supplied via `DeepSeek__ApiKey` env; `Assistant:DailyMessageLimitPerUser` default 30; `Validate()` stays lenient so the service boots without a key) + `Features/Assistant/SystemPrompt.Build(language)` versioned constant with all guardrails and pl-default language directive + 32 tests.
+- **B2** `27f8258` — DB-backed per-user daily quota: `AssistantDailyUsage` entity + unique `(UserId, UsageDateUtc)` index + EF config + SQLite migration (matched the existing SQLite-only design-time scheme) + `IAssistantUsageRepository.TryConsumeAsync` (read-modify-write, UTC day, provider-aware unique-constraint race handling) + 5 tests.
+
+Test suite: **89 passing**, solution builds clean. Canonical agent tool names fixed as `search_youtube`, `list_search_history`, `list_download_history`, `offer_download`.
+
+**⚠️ Deployment note for Task E:** YtDownloader has **no** startup `Migrate()`/`EnsureCreated()` (only Identity/Scheduler migrate on boot). The new `AssistantDailyUsage` table must be provisioned in prod the same way the existing Yt tables are. Confirm during Phase E.
+
+**Paused at user request after B2.** Next: **B4** (orchestrator + SSE chat endpoint) — the integration crux that pulls in `Microsoft.Extensions.AI` + `Microsoft.Extensions.AI.OpenAI`, wires DeepSeek's OpenAI-compatible `IChatClient` + `UseFunctionInvocation()` over `YtAgentToolService`, the quota pre-check, and the SSE event stream. It can be built + unit-tested with a fake `IChatClient` (no real DeepSeek key needed until end-to-end verification in Phase E/F). Then A2 (MCP server), B5 (gateway), then mobile (C/D), E, F. Remaining backend tasks tracked on the task board (#2, #6, #7) and `PLAN.md`.
 
 <!-- Add new dated entries below as implementation proceeds. -->
