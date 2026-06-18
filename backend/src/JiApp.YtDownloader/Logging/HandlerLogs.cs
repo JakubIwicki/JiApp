@@ -36,4 +36,8 @@ internal static partial class HandlerLogs
     [LoggerMessage(EventId = 25, Level = LogLevel.Warning,
         Message = "yt-dlp download failed for video {VideoId}: {Errors}")]
     public static partial void YoutubeDlDownloadFailed(this ILogger logger, string videoId, string errors);
+
+    [LoggerMessage(EventId = 30, Level = LogLevel.Error,
+        Message = "Assistant chat stream failed for user {UserId}")]
+    public static partial void AssistantChatStreamFailed(this ILogger logger, Exception exception, long userId);
 }
