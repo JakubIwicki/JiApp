@@ -6,19 +6,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TabIcon from '../components/TabIcon';
 import TabBarButton from '../components/TabBarButton';
 import SearchScreen from '../screens/SearchScreen';
+import ChatScreen from '../screens/ChatScreen';
 import DownloadScreen from '../screens/DownloadScreen';
 import DownloadsScreen from '../screens/DownloadsScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import SettingsScreen from '../screens/SettingsScreen';
-import {
-  colors,
-  tabBar,
-} from '../styles/theme';
+import { colors, tabBar } from '../styles/theme';
 import type {
   MainTabParamList,
   MainStackParamList,
   HistoryStackParamList,
   SettingsStackParamList,
+  ChatStackParamList,
 } from './types';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -27,6 +26,7 @@ const SearchStack = createNativeStackNavigator<MainStackParamList>();
 const HistoryStack = createNativeStackNavigator<HistoryStackParamList>();
 const SettingsStack = createNativeStackNavigator<SettingsStackParamList>();
 const DownloadsStack = createNativeStackNavigator<MainStackParamList>();
+const ChatStack = createNativeStackNavigator<ChatStackParamList>();
 
 const stackScreenOptions = {
   headerStyle: {
@@ -52,6 +52,13 @@ const HistoryStackScreen: React.FC = () => (
   </HistoryStack.Navigator>
 );
 
+const ChatStackScreen: React.FC = () => (
+  <ChatStack.Navigator screenOptions={stackScreenOptions}>
+    <ChatStack.Screen name="Chat" component={ChatScreen} />
+    <ChatStack.Screen name="Download" component={DownloadScreen} />
+  </ChatStack.Navigator>
+);
+
 const DownloadsStackScreen: React.FC = () => (
   <DownloadsStack.Navigator screenOptions={stackScreenOptions}>
     <DownloadsStack.Screen name="DownloadsMain" component={DownloadsScreen} />
@@ -72,7 +79,7 @@ const MainNavigator: React.FC = () => {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarButton: (props) => <TabBarButton {...props} />,
+        tabBarButton: props => <TabBarButton {...props} />,
         tabBarActiveTintColor: tabBar.activeColor,
         tabBarInactiveTintColor: tabBar.inactiveColor,
         tabBarStyle: {
@@ -95,6 +102,16 @@ const MainNavigator: React.FC = () => {
           tabBarLabel: t('nav.search'),
           tabBarIcon: ({ color, size }) => (
             <TabIcon name="search" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="AssistantTab"
+        component={ChatStackScreen}
+        options={{
+          tabBarLabel: t('nav.assistant'),
+          tabBarIcon: ({ color, size }) => (
+            <TabIcon name="assistant" color={color} size={size} />
           ),
         }}
       />
