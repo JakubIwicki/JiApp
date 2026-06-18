@@ -2,9 +2,15 @@ namespace JiApp.Scheduler.Tests.Domain;
 
 public sealed class AppointmentTests
 {
+    private sealed class Fixture
+    {
+        public static Fixture Init() => new();
+    }
+
     [Fact]
     public void Appointment_HasDefaultValues()
     {
+        Fixture.Init();
         var appointment = new Appointment();
 
         appointment.Id.Should().Be(0L);

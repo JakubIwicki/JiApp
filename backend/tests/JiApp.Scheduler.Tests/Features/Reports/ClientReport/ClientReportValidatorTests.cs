@@ -4,14 +4,20 @@ namespace JiApp.Scheduler.Tests.Features.Reports.ClientReport;
 
 public sealed class ClientReportValidatorTests
 {
-    private readonly ClientReportValidator _sut = new();
+    private sealed class Fixture
+    {
+        public ClientReportValidator Sut => new();
+
+        public static Fixture Init() => new();
+    }
 
     [Fact]
     public void Validate_WithValidRequest_IsValid()
     {
+        var fixture = Fixture.Init();
         var request = new ClientReportRequest(1, "frequency");
 
-        var result = _sut.Validate(request);
+        var result = fixture.Sut.Validate(request);
 
         result.IsValid.Should().BeTrue();
     }
@@ -19,9 +25,10 @@ public sealed class ClientReportValidatorTests
     [Fact]
     public void Validate_WithBoardIdZero_ReturnsError()
     {
+        var fixture = Fixture.Init();
         var request = new ClientReportRequest(0, "frequency");
 
-        var result = _sut.Validate(request);
+        var result = fixture.Sut.Validate(request);
 
         result.IsValid.Should().BeFalse();
     }
@@ -29,9 +36,10 @@ public sealed class ClientReportValidatorTests
     [Fact]
     public void Validate_WithEmptySortBy_ReturnsError()
     {
+        var fixture = Fixture.Init();
         var request = new ClientReportRequest(1, "");
 
-        var result = _sut.Validate(request);
+        var result = fixture.Sut.Validate(request);
 
         result.IsValid.Should().BeFalse();
     }
@@ -39,9 +47,10 @@ public sealed class ClientReportValidatorTests
     [Fact]
     public void Validate_WithTooLongSortBy_ReturnsError()
     {
+        var fixture = Fixture.Init();
         var request = new ClientReportRequest(1, new string('x', 51));
 
-        var result = _sut.Validate(request);
+        var result = fixture.Sut.Validate(request);
 
         result.IsValid.Should().BeFalse();
     }
@@ -49,9 +58,10 @@ public sealed class ClientReportValidatorTests
     [Fact]
     public void Validate_WithInvalidSortBy_ReturnsError()
     {
+        var fixture = Fixture.Init();
         var request = new ClientReportRequest(1, "invalid");
 
-        var result = _sut.Validate(request);
+        var result = fixture.Sut.Validate(request);
 
         result.IsValid.Should().BeFalse();
     }

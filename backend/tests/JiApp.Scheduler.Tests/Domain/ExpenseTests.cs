@@ -2,9 +2,15 @@ namespace JiApp.Scheduler.Tests.Domain;
 
 public sealed class ExpenseTests
 {
+    private sealed class Fixture
+    {
+        public static Fixture Init() => new();
+    }
+
     [Fact]
     public void Expense_HasDefaultValues()
     {
+        Fixture.Init();
         var expense = new Expense();
 
         expense.Id.Should().Be(0L);

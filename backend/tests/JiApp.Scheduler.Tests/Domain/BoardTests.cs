@@ -2,9 +2,15 @@ namespace JiApp.Scheduler.Tests.Domain;
 
 public sealed class BoardTests
 {
+    private sealed class Fixture
+    {
+        public static Fixture Init() => new();
+    }
+
     [Fact]
     public void Board_WithValidData_HasCorrectDefaults()
     {
+        Fixture.Init();
         var board = new Board
         {
             Name = "Test Board",

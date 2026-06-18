@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace JiApp.Scheduler.Tests.Authorization;
 
-public class ModuleAuthorizationPolicyTests
+public sealed class ModuleAuthorizationPolicyTests
 {
     private const string PolicyName = "module:Scheduler";
 
@@ -29,6 +29,8 @@ public class ModuleAuthorizationPolicyTests
             _policy = policyProvider.GetPolicyAsync(PolicyName).GetAwaiter().GetResult()!;
         }
 
+        public static Fixture Init() => new();
+
         public async Task<bool> IsAuthorizedAsync(ClaimsPrincipal user)
         {
             var result = await _authorizationService.AuthorizeAsync(user, resource: null, _policy);
@@ -45,7 +47,7 @@ public class ModuleAuthorizationPolicyTests
     [Fact]
     public async Task Policy_DeniesAuthenticatedUser_WithoutModuleClaim()
     {
-        var fixture = new Fixture();
+        var fixture = Fixture.Init();
         var user = Fixture.UserWithClaims(
             new Claim(ClaimTypes.NameIdentifier, "42"));
 
@@ -57,7 +59,7 @@ public class ModuleAuthorizationPolicyTests
     [Fact]
     public async Task Policy_DeniesUser_HoldingOnlyOtherModuleClaim()
     {
-        var fixture = new Fixture();
+        var fixture = Fixture.Init();
         var user = Fixture.UserWithClaims(
             new Claim(ClaimTypes.NameIdentifier, "42"),
             new Claim("module", Modules.YtDownloader));
@@ -70,7 +72,7 @@ public class ModuleAuthorizationPolicyTests
     [Fact]
     public async Task Policy_AllowsUser_HoldingSchedulerModuleClaim()
     {
-        var fixture = new Fixture();
+        var fixture = Fixture.Init();
         var user = Fixture.UserWithClaims(
             new Claim(ClaimTypes.NameIdentifier, "42"),
             new Claim("module", Modules.Scheduler));

@@ -2,33 +2,28 @@ using JiApp.Common.Abstractions;
 using JiApp.Common.Services;
 using JiApp.Scheduler.Features.Common;
 using JiApp.Scheduler.Features.Expenses.UpdateExpense;
-using Microsoft.Data.Sqlite;
 
 namespace JiApp.Scheduler.Tests.Features.Expenses;
 
-public sealed class UpdateExpenseHandlerXssTests
+public sealed class UpdateExpenseHandlerXssTests : HandlerTestBase
 {
-    private sealed class Fixture : IDisposable
+    private sealed class Fixture
     {
-        private readonly SqliteConnection _connection;
+        private readonly ISchedulerDbContext _dbContext;
         private readonly SchedulerDbContext _db;
-        private readonly Mock<ICurrentUserService> _currentUser;
+        private readonly ICurrentUserService _currentUser;
 
-        public Fixture()
+        private Fixture(ISchedulerDbContext dbContext, TestDb testDb)
         {
-            _connection = new SqliteConnection("DataSource=:memory:");
-            _connection.Open();
-            var options = new DbContextOptionsBuilder<SchedulerDbContext>()
-                .UseSqlite(_connection)
-                .Options;
-            _db = new SchedulerDbContext(options);
-            _db.Database.EnsureCreated();
-            _currentUser = new Mock<ICurrentUserService>();
-            _currentUser.Setup(x => x.UserId).Returns(1L);
+            _dbContext = dbContext;
+            _db = (SchedulerDbContext)dbContext;
+            _currentUser = MockCurrentUserService.GetSuccessful().Mock.Object;
         }
 
         public SchedulerDbContext Db => _db;
-        public ICurrentUserService CurrentUser => _currentUser.Object;
+        public UpdateExpenseHandler Sut => new(_dbContext, _currentUser);
+
+        public static Fixture Init(ISchedulerDbContext dbContext, TestDb testDb) => new(dbContext, testDb);
 
         public Fixture WithBoard(string name = "Board", List<long>? memberUserIds = null)
         {
@@ -49,26 +44,17 @@ public sealed class UpdateExpenseHandlerXssTests
                 Amount = new Price(amount),
                 Note = note
             };
-            _db.Attach(board);
             _db.Expenses.Add(expense);
             _db.SaveChanges();
             _db.ChangeTracker.Clear();
             return this;
-        }
-
-        public UpdateExpenseHandler Sut => new(_db, _currentUser.Object);
-
-        public void Dispose()
-        {
-            _db.Dispose();
-            _connection.Close();
         }
     }
 
     [Fact]
     public async Task HandleAsync_WithXssCategory_ErrorMessageDoesNotReflectInput()
     {
-        using var fixture = new Fixture().WithBoard();
+        var fixture = Fixture.Init(DbContext, Db).WithBoard();
         var board = fixture.Db.Boards.Single();
         fixture.WithExpense(board, DateOnly.FromDateTime(DateTime.UtcNow), "Fuel", 50);
         var expense = fixture.Db.Expenses.Single();
