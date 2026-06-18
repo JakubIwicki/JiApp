@@ -80,6 +80,10 @@ backend/certs/prod/jiapp-server.csr
 backend/certs/prod/jiapp-server.crt
 backend/certs/prod/server.pfx
 
+# Local Claude / MCP config (machine-specific, never commit)
+.mcp.json
+.claude/CLAUDE.local.md
+
 # Runtime logs
 backend/.api-debug.log
 
