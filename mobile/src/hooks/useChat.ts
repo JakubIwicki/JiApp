@@ -99,7 +99,7 @@ const useChat = (): UseChatResult => {
       const title = offer.title ?? offer.videoId;
 
       // Run the existing download flow outside the SSE stream
-      void (async () => {
+      (async () => {
         try {
           const { downloadUrl } = await requestDownloadLink({
             videoId: offer.videoId,
@@ -144,7 +144,7 @@ const useChat = (): UseChatResult => {
           };
           setMessages(prev => [...prev, note]);
         }
-      })();
+      })().catch(() => {});
     },
     [messages],
   );
