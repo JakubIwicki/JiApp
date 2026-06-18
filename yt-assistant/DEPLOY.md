@@ -59,7 +59,9 @@ CREATE INDEX IF NOT EXISTS "IX_AssistantDailyUsage_UserId"
 ## 4. RAM safety
 
 The concurrent assistant SSE stream cap is **1** (process-wide `SemaphoreSlim`).  
-A second concurrent request receives **503** ("busy, try again") without consuming quota.
+A second concurrent request receives **503** ("busy, try again") without consuming quota.  
+
+**The cap is process-local** — the "1 concurrent stream" guarantee holds only for a single backend instance. Do NOT scale the YtDownloader service to 2+ replicas without replacing the gate with a distributed limiter, or RAM protection degrades to 1-per-replica.
 
 Optionally set a GC heap hard limit during load-testing (Phase F):
 ```bash
@@ -83,3 +85,7 @@ Reference the `deploy-ji-app-aws` skill/workflow for the full deploy sequence:
 - The assistant chat endpoint is at `POST /api/v1/yt/assistant/chat` (SSE, JWT-gated).
 - The MCP tools endpoint is at `http://ytdownloader:6702/mcp` (internal-network only, NOT Gateway-routed).
 - Both require the `module:YtDownloader` JWT claim.
+
+### Daily quota consumed before DeepSeek call
+
+The daily message quota (30/user/day) is consumed at the pre-check, before the DeepSeek call is made. A turn that fails with a timeout or stream error still counts against the user's daily limit. This is intentional (fail-safe for cost control), so "I got an error but lost a message" is expected behaviour, not a bug.

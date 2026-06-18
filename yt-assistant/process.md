@@ -86,4 +86,15 @@ The explicit "MCP server inside JiApp" deliverable. Independent of the chat path
 
 **Deferred (auditor W1 → task #12, Phase F):** the unit tests mock `ICurrentUserService`, so the userId-in-MCP-scope path is proven by reasoning, not by test. The approved plan already designates a live `/mcp` smoke test (MCP inspector + real JWT) for Phase F — W1 is folded there: assert an authenticated `tools/call` resolves the caller's userId (seeded history row) and that an unauthenticated call → 401. Chosen over building a brittle TestServer+MCP-client harness now (no existing YtDownloader WAF/appsettings.Test.json).
 
+---
+
+### Mobile + deploy-config complete (2026-06-18)
+
+- **C (mobile chat room)** — Wabi-Sabi assistant tab: chat/ components (asymmetric ChatBubble, animated tool-step pills, VideoCard-reuse results, download-offer card, SearchBar-style input, inverted FlatList), ChatScreen with calm empty state + inline error, full en/pl i18n, Storybook + Jest. chatService.ts (react-native-sse, Zod-validates every SSE event, re-auth+reconnect on 401), useChat.ts streaming assembly. Commits 47d76f6 (slice 1: SSE client + hook) + 81d21ea (slice 2: UI). 521 mobile tests.
+- **D (confirm flow + history capping)** — useChat.confirmDownload runs the EXISTING REST download outside the SSE loop; per-offer status idle→downloading→done|error; localized synthetic result note appended so the model reasons from truth next turn; mapToApiMessages caps to 14 msgs, strips video/tool payloads, drops unconfirmed offers. Commit bb9e56d. 528 mobile tests.
+- **E (deploy config + RAM safety)** — AssistantStreamGate (SemaphoreSlim(1,1)) caps concurrent SSE streams to 1 → localized 503-busy without burning quota, released in finally (verified on client-abort + exceptions). docker-compose.prod.yml wires DeepSeek__ApiKey/Model + DOTNET_GCHeapHardLimit (optional, empty defaults). URLS.md + yt-assistant/DEPLOY.md (incl. corrected EF DDL for AssistantDailyUsage). Commits 8174f78, cff956b (no-void cleanup).
+- **All coding delegated to DeepSeek** (react-native-coder / csharp-coder), audited on Opus; the user enforced "Opus audits, DeepSeek codes."
+- **Final smart-auditor (holistic): APPROVE.** Abuse/cost boundary holds (DB quota before any DeepSeek call; stream gate always released; tool loop + 60s timeout bounded), prompt-injection contained (offer→download is outside the LLM loop, no action-executing tool), auth on both /assistant/chat and /mcp with server-derived userId, mobile Zod schemas EXACTLY match backend SSE emissions, no key/JWT leakage. Two operator nitpicks documented in DEPLOY.md (quota charged at pre-check; gate is single-instance).
+- **Remaining (operator / Phase F live verification — needs AWS env + real key):** set DEEPSEEK_API_KEY via SSM, provision the AssistantDailyUsage table, open SG egress 443 to api.deepseek.com, deploy, then load-test on the real t4g.nano (tune YT_GC_HEAP_LIMIT, no OOM) and run the live /mcp smoke test (auth tools/call resolves caller userId; unauth → 401). See DEPLOY.md.
+
 <!-- Add new dated entries below as implementation proceeds. -->

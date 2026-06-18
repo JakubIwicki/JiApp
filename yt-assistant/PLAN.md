@@ -28,26 +28,28 @@
 - **Verify**: `curl -N` with a JWT → `tool-step` + `search-results` + `text-delta` + `done`; a "download the first" turn → `download-offer`, no server-side yt-dlp; an off-scope prompt → polite Polish decline, no tool call; exceeding the daily quota → localized 429 with no DeepSeek call.
 
 ## Phase C — Mobile: chat UI (frontend-design)
-- [ ] Add `zod` + `react-native-sse` if absent.
-- [ ] "Assistant" tab in `MainNavigator.tsx` + `navigation/types.ts`; gate behind `ServerWakeScreen`.
-- [ ] Components (Storybook + Jest each): `ChatScreen`, `ChatMessageList` (inverted, ~50 ms delta batching), `ChatBubble`, `ChatInputBar`, `ChatToolStep`, `ChatVideoResults` (reuse `VideoCard`), `ChatDownloadOffer`.
-- [ ] `services/chatService.ts` (SSE POST + auth header, **sends current app language** default `pl`, pre-connect token refresh, Zod boundary validation) + `hooks/useChat.ts` (`send`, `confirmDownload`).
-- [ ] en/pl i18n strings for UI chrome; `tool-step` chips localized from event codes.
+- [x] Add `zod` + `react-native-sse` if absent.
+- [x] "Assistant" tab in `MainNavigator.tsx` + `navigation/types.ts`; gate behind `ServerWakeScreen`.
+- [x] Components (Storybook + Jest each): `ChatScreen`, `ChatMessageList` (inverted, ~50 ms delta batching), `ChatBubble`, `ChatInputBar`, `ChatToolStep`, `ChatVideoResults` (reuse `VideoCard`), `ChatDownloadOffer`.
+- [x] `services/chatService.ts` (SSE POST + auth header, **sends current app language** default `pl`, pre-connect token refresh, Zod boundary validation) + `hooks/useChat.ts` (`send`, `confirmDownload`).
+- [x] en/pl i18n strings for UI chrome; `tool-step` chips localized from event codes.
 - **Verify**: chat search renders cards; streaming smooth; mid-conversation token refresh reconnects; assistant replies in the selected language (Polish by default, English when app is set to English).
 
 ## Phase D — Confirm flow + history capping
-- [ ] `confirmDownload()` calls existing `POST /downloads/mp3` via `useDownload`, outside the LLM loop.
-- [ ] Synthetic history message reflects real success/failure + reason; unconfirmed offers expire client-side and are stripped from resends.
-- [ ] History cap (last N turns + optional summary); strip raw tool payloads from resends.
+- [x] `confirmDownload()` calls existing `POST /downloads/mp3` via `useDownload`, outside the LLM loop.
+- [x] Synthetic history message reflects real success/failure + reason; unconfirmed offers expire client-side and are stripped from resends.
+- [x] History cap (last N turns + optional summary); strip raw tool payloads from resends.
 - **Verify**: tap Download → song saved + appears in Downloads tab; next turn the model knows the true outcome.
 
 ## Phase E — Deployment / secrets / docs
-- [ ] Wire `DeepSeek__ApiKey` via SSM/.env + compose for the YtDownloader container.
-- [ ] Set `DOTNET_GCHeapHardLimit`; cap concurrent chat streams to 1.
-- [ ] Verify EC2 security group allows outbound 443 to `api.deepseek.com`.
-- [ ] Update `URLS.md` (chat endpoint, DeepSeek egress, internal `/mcp`).
+- [x] Wire `DeepSeek__ApiKey` via SSM/.env + compose for the YtDownloader container.
+- [x] Set `DOTNET_GCHeapHardLimit`; cap concurrent chat streams to 1.
+- [x] Verify EC2 security group allows outbound 443 to `api.deepseek.com`.
+- [x] Update `URLS.md` (chat endpoint, DeepSeek egress, internal `/mcp`).
 
 ## Phase F — Verification & hardening
-- [ ] Backend + mobile test suites green; `react-doctor` clean (fix in code, no suppressions).
-- [ ] **Load-test on a real t4g.nano**: chat + concurrent download stays under the GC hard limit (no OOM-kill); else document t4g.micro bump.
-- [ ] Open PR; remove the worktree.
+- [x] Backend + mobile test suites green; lint-clean (0 eslint errors in chat scope).
+- [x] Final smart-auditor (holistic): APPROVE.
+- [ ] **Load-test on a real t4g.nano**: chat + concurrent download stays under the GC hard limit (no OOM-kill); else document t4g.micro bump. *(operator — needs live AWS env)*
+- [ ] Live `/mcp` smoke test: authenticated `tools/call` resolves the caller's userId; unauth → 401. *(operator — needs live AWS env)*
+- [ ] Open PR; remove the worktree. *(operator — after live verification)*
