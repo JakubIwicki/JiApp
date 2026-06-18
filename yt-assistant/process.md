@@ -71,4 +71,19 @@ Test suite: **89 passing**, solution builds clean. Canonical agent tool names fi
 
 **Backend status: COMPLETE for the chat path** (A1, B1, B2, B3, B4, B5). Full suite green (127 with key / 47+4-skipped without). Remaining: **A2** (the MCP `/mcp` server deliverable — independent of the chat path), then mobile **C/D** (frontend-design), **E** (deploy/secrets/URLS.md — incl. ensuring the `AssistantDailyUsage` table is provisioned in prod), **F** (load-test on t4g.nano + final audit + finish branch).
 
+### A2 — MCP server `/mcp` (2026-06-18)
+
+The explicit "MCP server inside JiApp" deliverable. Independent of the chat path; reuses the same `YtAgentToolService` as the single source of truth. Coding delegated to **DeepSeek v4-pro** (csharp-coder persona) via `deepseek_code`; reviewed + built + audited on Opus.
+
+- Package `ModelContextProtocol.AspNetCore` **1.4.0** added to `JiApp.YtDownloader.csproj` (resolved/restored on Opus; brings `.Core` + the `[McpServerTool]` attributes transitively).
+- `Mcp/YtMcpTools.cs` — `[McpServerToolType] public sealed class` (NOT static — `WithTools<T>()` needs a non-static type arg) with 4 `[McpServerTool]` static methods named from `AssistantToolNames` (`search_youtube`, `list_search_history`, `list_download_history`, `offer_download`), each with host-facing `[Description]`s. Thin delegation to `YtAgentToolService`; `userId` from injected `ICurrentUserService`; `Result<T>` failures rethrown as tool errors. `offer_download` only builds a `DownloadOffer` record — performs no download.
+- `Startup.cs` — `AddMcpServer().WithHttpTransport().WithTools<YtMcpTools>()`; `app.MapMcp("/mcp").RequireAuthorization("module:YtDownloader")` mapped **outside** `/api/v1/yt` and after `UseAuthorization()`. The public YARP Gateway only proxies `/api/v1/yt/**`, so `/mcp` is unreachable through the public Gateway — internal-network + JWT only. **No Gateway route added** (critic C2 honored).
+- Tests `Mcp/YtMcpToolsTests.cs` — 2 (search delegation maps videos; `offer_download` returns an offer with strict-mock `VerifyNoOtherCalls()` proving no download/network).
+
+**Audit fixes on review:** (1) DeepSeek wrote the tool class `static` → `CS0718: static types cannot be used as type arguments` on `WithTools<YtMcpTools>()`; changed to `sealed`. (2) Reverted DeepSeek's cosmetic full-csproj reformatting to a 1-line diff; (3) fixed `using` ordering in Startup and dropped a dead `using ModelContextProtocol;` (`AddMcpServer`/`MapMcp` resolve via the already-imported DI/Builder namespaces). **Safety:** DeepSeek's tool ran `git add -N`, which marked the pre-existing untracked `backend/certs/` (private keys!), `.mcp.json`, `.claude/CLAUDE.local.md` as intent-to-add; cleared with `git reset`. Those are NOT gitignored — local-only, must never be committed (public repo).
+
+**Verification:** `dotnet build` clean; full `JiApp.YtDownloader.Tests` suite **129 passing** (127 prior + 2 MCP; live DeepSeek integration tests ran with the env key). **`smart-auditor` verdict: APPROVE** — gateway isolation, auth enforcement, DDD/no-leakage, and surgical scope all PASS; userId-in-MCP-scope is PASS by reasoning (SDK `ScopeRequests` defaults `true`, so each tool-call message gets a request-scoped `IHttpContextAccessor` carrying the JWT principal).
+
+**Deferred (auditor W1 → task #12, Phase F):** the unit tests mock `ICurrentUserService`, so the userId-in-MCP-scope path is proven by reasoning, not by test. The approved plan already designates a live `/mcp` smoke test (MCP inspector + real JWT) for Phase F — W1 is folded there: assert an authenticated `tools/call` resolves the caller's userId (seeded history row) and that an unauthenticated call → 401. Chosen over building a brittle TestServer+MCP-client harness now (no existing YtDownloader WAF/appsettings.Test.json).
+
 <!-- Add new dated entries below as implementation proceeds. -->

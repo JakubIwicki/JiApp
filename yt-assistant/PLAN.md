@@ -9,11 +9,11 @@
 - [ ] Update [process.md](./process.md) as each phase completes (dispatch `process-tracker` if useful).
 
 ## Phase A — Backend: shared tools + MCP server
-- [ ] Add NuGet packages to `JiApp.YtDownloader.csproj` (pinned): `ModelContextProtocol`, `ModelContextProtocol.AspNetCore`, `Microsoft.Extensions.AI`, `Microsoft.Extensions.AI.OpenAI`.
-- [ ] `Agent/YtAgentToolService.cs` — `SearchAsync`, `ListSearchHistoryAsync`, `ListDownloadHistoryAsync`, `BuildDownloadOffer` (offer only, no yt-dlp), all taking explicit `userId`; reuse FluentValidation validators; structured errors, no throws.
-- [ ] `Mcp/YtMcpTools.cs` (`[McpServerToolType]`/`[McpServerTool]`) delegating to the service; `AddMcpServer().WithHttpTransport().WithTools<YtMcpTools>()` + `MapMcp("/mcp")` on an internal/loopback listener + JWT; **no Gateway route**.
-- [ ] Tests: each tool calls the right handler with the captured `userId`; `BuildDownloadOffer` runs no download.
-- **Verify**: MCP client / inspector connects to internal `/mcp` with a JWT, lists tools, `search_youtube` returns results; `/mcp` unreachable through the public Gateway.
+- [x] Add NuGet packages to `JiApp.YtDownloader.csproj` (pinned): `ModelContextProtocol.AspNetCore` **1.4.0** (brings `.Core`/attributes transitively), `Microsoft.Extensions.AI`, `Microsoft.Extensions.AI.OpenAI`.
+- [x] `Agent/YtAgentToolService.cs` — `SearchAsync`, `ListSearchHistoryAsync`, `ListDownloadHistoryAsync`, `BuildDownloadOffer` (offer only, no yt-dlp), all taking explicit `userId`; reuse FluentValidation validators; structured errors, no throws. *(A1)*
+- [x] `Mcp/YtMcpTools.cs` (`[McpServerToolType]`/`[McpServerTool]`) delegating to the service; `AddMcpServer().WithHttpTransport().WithTools<YtMcpTools>()` + `MapMcp("/mcp")` + JWT; mapped **outside** `/api/v1/yt` so the public Gateway can't reach it — internal-network only; **no Gateway route**.
+- [x] Tests: each tool delegates with the caller's `userId`; `BuildDownloadOffer` runs no download. (smart-auditor: APPROVE.)
+- **Verify** *(deferred to Phase F / task #12)*: MCP client / inspector connects to internal `/mcp` with a JWT, lists tools, `search_youtube` returns results; `/mcp` unreachable through the public Gateway. Includes auditor W1 (authenticated `tools/call` resolves the caller's userId; unauth → 401).
 
 ## Phase B — Backend: orchestrator + SSE
 - [ ] `DeepSeek` config section + `Assistant` config section (`Settings.cs` + `appsettings.json`): `DeepSeek` (key via env `DeepSeek__ApiKey`, BaseUrl, Model, MaxIterations, RequestTimeoutSeconds) and `Assistant:DailyMessageLimitPerUser` (default **30**).

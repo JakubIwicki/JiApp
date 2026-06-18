@@ -18,6 +18,7 @@ using JiApp.YtDownloader.Features.GetHistory;
 using JiApp.YtDownloader.Features.SearchHistory;
 using JiApp.YtDownloader.Features.SearchVideos;
 using JiApp.YtDownloader.Features.StreamPreview;
+using JiApp.YtDownloader.Mcp;
 using JiApp.YtDownloader.Persistence;
 using JiApp.YtDownloader.Repositories;
 using JiApp.YtDownloader.Services;
@@ -146,6 +147,9 @@ public class Startup(Settings settings)
         services.AddScoped<AssistantChatHandler>();
         services.AddScoped<AssistantChatOrchestrator>();
 
+        // MCP server (internal-only, JWT-gated) exposing the YtDownloader agent tools
+        services.AddMcpServer().WithHttpTransport().WithTools<YtMcpTools>();
+
         // Background services
         services.AddHostedService<TempFileCleanupService>();
     }
@@ -177,6 +181,11 @@ public class Startup(Settings settings)
         app.UseCors();
         app.UseAuthentication();
         app.UseAuthorization();
+
+        // Mapped outside /api/v1/yt — the public Gateway (YARP) only proxies
+        // /api/v1/yt/**, so /mcp is unreachable through the public Gateway
+        // (internal-network + JWT only). No Gateway route is added for /mcp.
+        app.MapMcp("/mcp").RequireAuthorization("module:YtDownloader");
 
         var yt = app.MapGroup("/api/v1/yt")
             .RequireAuthorization("module:YtDownloader");
