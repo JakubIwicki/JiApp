@@ -9,26 +9,45 @@ using Moq;
 
 namespace JiApp.YtDownloader.Tests.Features.SearchVideos;
 
-public class SearchVideosHandlerTests
+public sealed class SearchVideosHandlerTests
 {
-    private sealed class FakeCurrentUser : ICurrentUserService
+    private sealed class Fixture
     {
-        public long UserId => 42L;
-        public string Username => "test-user";
-    }
+        public Mock<IYoutubeClient> YoutubeClientMock { get; } = new();
+        public Mock<ISearchHistoryRepository> HistoryRepoMock { get; } = new();
+        public IMemoryCache Cache { get; } = new MemoryCache(new MemoryCacheOptions());
+        public SearchVideosHandler Sut { get; }
 
-    private static SearchVideosHandler CreateHandler(
-        Mock<IYoutubeClient>? youtubeClient = null,
-        Mock<ISearchHistoryRepository>? historyRepo = null,
-        IMemoryCache? cache = null)
-    {
-        var yt = youtubeClient ?? new Mock<IYoutubeClient>();
-        var repo = historyRepo ?? new Mock<ISearchHistoryRepository>();
-        var user = new FakeCurrentUser();
-        var memCache = cache ?? new MemoryCache(new MemoryCacheOptions());
-        var logger = Mock.Of<ILogger<SearchVideosHandler>>();
+        public Fixture()
+        {
+            var user = Mock.Of<ICurrentUserService>(x => x.UserId == 42L && x.Username == "test-user");
+            Sut = new SearchVideosHandler(
+                YoutubeClientMock.Object, HistoryRepoMock.Object, user, Cache, Mock.Of<ILogger<SearchVideosHandler>>());
+        }
 
-        return new SearchVideosHandler(yt.Object, repo.Object, user, memCache, logger);
+        public Fixture WithSearchResults(params YoutubeVideo[] videos)
+        {
+            YoutubeClientMock
+                .Setup(c => c.SearchVideosAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(videos);
+            return this;
+        }
+
+        public Fixture WithSearchThrows(Exception exception)
+        {
+            YoutubeClientMock
+                .Setup(c => c.SearchVideosAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(exception);
+            return this;
+        }
+
+        public Fixture WithVideoById(string videoId, YoutubeVideo? video)
+        {
+            YoutubeClientMock
+                .Setup(c => c.GetVideoByIdAsync(videoId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(video);
+            return this;
+        }
     }
 
     private static YoutubeVideo CreateVideo(string videoId = "dQw4w9WgXcQ") =>
@@ -39,53 +58,31 @@ public class SearchVideosHandlerTests
             ImageUrl: $"https://i.ytimg.com/vi/{videoId}/default.jpg",
             ChannelTitle: "Rick Astley");
 
-    // ── Cancellation ───────────────────────────────────────────────────────
-
     [Fact]
-    public async Task HandleAsync_propagates_CancellationToken_to_YoutubeClient()
+    public async Task HandleAsync_PropagatesCancellationToken_ToYoutubeClient()
     {
-        // Arrange
-        var youtubeClient = new Mock<IYoutubeClient>();
-        youtubeClient
-            .Setup(c => c.SearchVideosAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
+        var fixture = new Fixture().WithSearchResults();
 
-        var handler = CreateHandler(youtubeClient: youtubeClient);
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var token = cts.Token;
 
-        // Act
-        await handler.HandleAsync(new SearchVideosRequest("test", null), token);
+        await fixture.Sut.HandleAsync(new SearchVideosRequest("test", null), token);
 
-        // Assert
-        youtubeClient.Verify(
-            c => c.SearchVideosAsync("test", It.IsAny<int>(), token),
-            Times.Once);
+        fixture.YoutubeClientMock.Verify(
+            c => c.SearchVideosAsync("test", It.IsAny<int>(), token), Times.Once);
     }
 
-    // ── Error handling ─────────────────────────────────────────────────────
-
     [Fact]
-    public async Task HandleAsync_returns_sanitized_error_on_GoogleApiException()
+    public async Task HandleAsync_ReturnsSanitizedError_OnGoogleApiException()
     {
-        // Arrange
-        var youtubeClient = new Mock<IYoutubeClient>();
-        youtubeClient
-            .Setup(c => c.SearchVideosAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new GoogleApiException("youtube", "sensitive API key details"));
+        var fixture = new Fixture().WithSearchThrows(new GoogleApiException("youtube", "sensitive API key details"));
 
-        var handler = CreateHandler(youtubeClient: youtubeClient);
+        var result = await fixture.Sut.HandleAsync(new SearchVideosRequest("test", null));
 
-        // Act
-        var result = await handler.HandleAsync(new SearchVideosRequest("test", null));
-
-        // Assert
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().NotContain("sensitive API key details");
         result.Error.Should().Contain("Failed to search videos");
     }
-
-    // ── YouTube URL detection ──────────────────────────────────────────────
 
     public static TheoryData<string, string> YoutubeUrlCases =>
         new()
@@ -99,107 +96,60 @@ public class SearchVideosHandlerTests
 
     [Theory]
     [MemberData(nameof(YoutubeUrlCases))]
-    public async Task HandleAsync_youtube_url_calls_GetVideoByIdAsync(
-        string url, string videoId)
+    public async Task HandleAsync_YouTubeUrl_CallsGetVideoByIdAsync(string url, string videoId)
     {
-        // Arrange
-        var youtubeClient = new Mock<IYoutubeClient>();
-        youtubeClient
-            .Setup(c => c.GetVideoByIdAsync(videoId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(CreateVideo(videoId));
+        var fixture = new Fixture().WithVideoById(videoId, CreateVideo(videoId));
 
-        var handler = CreateHandler(youtubeClient: youtubeClient);
+        var result = await fixture.Sut.HandleAsync(new SearchVideosRequest(url, null));
 
-        // Act
-        var result = await handler.HandleAsync(new SearchVideosRequest(url, null));
-
-        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value!.Results.Should().ContainSingle().Which.VideoId.Should().Be(videoId);
-        youtubeClient.Verify(c => c.GetVideoByIdAsync(videoId, It.IsAny<CancellationToken>()), Times.Once);
-        youtubeClient.Verify(
-            c => c.SearchVideosAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()),
-            Times.Never);
+        fixture.YoutubeClientMock.Verify(c => c.GetVideoByIdAsync(videoId, It.IsAny<CancellationToken>()), Times.Once);
+        fixture.YoutubeClientMock.Verify(
+            c => c.SearchVideosAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    public async Task HandleAsync_youtube_url_not_found_returns_empty()
+    public async Task HandleAsync_YouTubeUrl_NotFoundReturnsEmpty()
     {
-        // Arrange
         const string nonexistentId = "nonexistent1";
-        var youtubeClient = new Mock<IYoutubeClient>();
-        youtubeClient
-            .Setup(c => c.GetVideoByIdAsync(nonexistentId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((YoutubeVideo?)null);
+        var fixture = new Fixture().WithVideoById(nonexistentId, null);
 
-        var handler = CreateHandler(youtubeClient: youtubeClient);
-
-        // Act
-        var result = await handler.HandleAsync(
+        var result = await fixture.Sut.HandleAsync(
             new SearchVideosRequest($"https://www.youtube.com/watch?v={nonexistentId}", null));
 
-        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value!.Results.Should().BeEmpty();
     }
 
-    // ── Plain text search ──────────────────────────────────────────────────
-
     [Fact]
-    public async Task HandleAsync_plain_text_query_calls_SearchVideosAsync()
+    public async Task HandleAsync_PlainTextQuery_CallsSearchVideosAsync()
     {
-        // Arrange
-        var youtubeClient = new Mock<IYoutubeClient>();
-        youtubeClient
-            .Setup(c => c.SearchVideosAsync(
-                "never gonna give you up", It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new[] { CreateVideo() });
+        var fixture = new Fixture().WithSearchResults(CreateVideo());
 
-        var handler = CreateHandler(youtubeClient: youtubeClient);
+        var result = await fixture.Sut.HandleAsync(new SearchVideosRequest("never gonna give you up", null));
 
-        // Act
-        var result = await handler.HandleAsync(
-            new SearchVideosRequest("never gonna give you up", null));
-
-        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value!.Results.Should().ContainSingle();
-        youtubeClient.Verify(
-            c => c.GetVideoByIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
-            Times.Never);
-        youtubeClient.Verify(
-            c => c.SearchVideosAsync(
-                "never gonna give you up", It.IsAny<int>(), It.IsAny<CancellationToken>()),
-            Times.Once);
+        fixture.YoutubeClientMock.Verify(
+            c => c.GetVideoByIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        fixture.YoutubeClientMock.Verify(
+            c => c.SearchVideosAsync("never gonna give you up", It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task HandleAsync_plain_text_query_is_cached()
+    public async Task HandleAsync_PlainTextQuery_IsCached()
     {
-        // Arrange
-        var youtubeClient = new Mock<IYoutubeClient>();
-        youtubeClient
-            .Setup(c => c.SearchVideosAsync(
-                "rick astley", It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new[] { CreateVideo() });
+        var fixture = new Fixture().WithSearchResults(CreateVideo());
 
-        var handler = CreateHandler(youtubeClient: youtubeClient);
+        var first = await fixture.Sut.HandleAsync(new SearchVideosRequest("rick astley", null));
+        var second = await fixture.Sut.HandleAsync(new SearchVideosRequest("rick astley", null));
 
-        // Act
-        var first = await handler.HandleAsync(new SearchVideosRequest("rick astley", null));
-        var second = await handler.HandleAsync(new SearchVideosRequest("rick astley", null));
-
-        // Assert
         first.IsSuccess.Should().BeTrue();
         second.IsSuccess.Should().BeTrue();
         first.Value!.Results.Should().ContainSingle();
         second.Value!.Results.Should().ContainSingle();
-
-        // SearchVideosAsync should only have been called once — the second
-        // call hits the in-memory cache.
-        youtubeClient.Verify(
-            c => c.SearchVideosAsync(
-                "rick astley", It.IsAny<int>(), It.IsAny<CancellationToken>()),
-            Times.Once);
+        fixture.YoutubeClientMock.Verify(
+            c => c.SearchVideosAsync("rick astley", It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

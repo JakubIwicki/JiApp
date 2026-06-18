@@ -7,10 +7,32 @@ using Moq;
 
 namespace JiApp.YtDownloader.Tests.Features.StreamPreview;
 
-public class StreamPreviewHandlerTests
+public sealed class StreamPreviewHandlerTests
 {
+    private sealed class Fixture
+    {
+        public Mock<IYoutubeClient> YoutubeClientMock { get; } = new();
+        public IMemoryCache Cache { get; } = new MemoryCache(new MemoryCacheOptions());
+
+        public StreamPreviewHandler Sut { get; }
+
+        public Fixture()
+        {
+            Sut = new StreamPreviewHandler(
+                YoutubeClientMock.Object, Cache, Mock.Of<ILogger<StreamPreviewHandler>>(), new Settings { App = new Settings.AppSettings() });
+        }
+
+        public Fixture WithResolveThrows(Exception exception)
+        {
+            YoutubeClientMock
+                .Setup(c => c.ResolveAudioUrlAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(exception);
+            return this;
+        }
+    }
+
     [Fact]
-    public void BuildFfmpegArguments_includes_configured_preview_duration()
+    public void BuildFfmpegArguments_IncludesConfiguredPreviewDuration()
     {
         var args = StreamPreviewHandler.BuildFfmpegArguments(
             "https://example.com/audio.mp3", previewDurationSeconds: 30);
@@ -19,7 +41,7 @@ public class StreamPreviewHandlerTests
     }
 
     [Fact]
-    public void BuildFfmpegArguments_includes_audio_url()
+    public void BuildFfmpegArguments_IncludesAudioUrl()
     {
         var args = StreamPreviewHandler.BuildFfmpegArguments(
             "https://example.com/audio.mp3", previewDurationSeconds: 10);
@@ -28,7 +50,7 @@ public class StreamPreviewHandlerTests
     }
 
     [Fact]
-    public void BuildFfmpegArguments_includes_mp3_output_format()
+    public void BuildFfmpegArguments_IncludesMp3OutputFormat()
     {
         var args = StreamPreviewHandler.BuildFfmpegArguments(
             "https://example.com/audio.mp3", previewDurationSeconds: 10);
@@ -37,7 +59,7 @@ public class StreamPreviewHandlerTests
     }
 
     [Fact]
-    public void BuildFfmpegArguments_uses_default_10_seconds_when_not_configured()
+    public void BuildFfmpegArguments_UsesDefault10Seconds_WhenNotConfigured()
     {
         var args = StreamPreviewHandler.BuildFfmpegArguments(
             "https://example.com/audio.mp3", previewDurationSeconds: 10);
@@ -48,19 +70,9 @@ public class StreamPreviewHandlerTests
     [Fact]
     public async Task HandleAsync_WhenYoutubeClientThrows_ReturnsFailure()
     {
-        var youtubeClient = new Mock<IYoutubeClient>();
-        youtubeClient
-            .Setup(c => c.ResolveAudioUrlAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("Test exception"));
+        var fixture = new Fixture().WithResolveThrows(new InvalidOperationException("Test exception"));
 
-        var cache = new MemoryCache(new MemoryCacheOptions());
-        var logger = new Mock<ILogger<StreamPreviewHandler>>().Object;
-        var settings = new Settings { App = new Settings.AppSettings() };
-
-        var handler = new StreamPreviewHandler(
-            youtubeClient.Object, cache, logger, settings);
-
-        var result = await handler.HandleAsync("test-video-id");
+        var result = await fixture.Sut.HandleAsync("test-video-id");
 
         result.Should().Be(StreamPreviewResult.ResolveFailed);
     }
@@ -68,25 +80,15 @@ public class StreamPreviewHandlerTests
     [Fact]
     public async Task HandleAsync_WhenCancelled_ReturnsFailure()
     {
-        var youtubeClient = new Mock<IYoutubeClient>();
-        youtubeClient
-            .Setup(c => c.ResolveAudioUrlAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new OperationCanceledException());
+        var fixture = new Fixture().WithResolveThrows(new OperationCanceledException());
 
-        var cache = new MemoryCache(new MemoryCacheOptions());
-        var logger = new Mock<ILogger<StreamPreviewHandler>>().Object;
-        var settings = new Settings { App = new Settings.AppSettings() };
-
-        var handler = new StreamPreviewHandler(
-            youtubeClient.Object, cache, logger, settings);
-
-        var result = await handler.HandleAsync("test-video-id");
+        var result = await fixture.Sut.HandleAsync("test-video-id");
 
         result.Should().Be(StreamPreviewResult.ResolveFailed);
     }
 
     [Fact]
-    public void BuildFfmpegArguments_includes_loglevel_quiet()
+    public void BuildFfmpegArguments_IncludesLoglevelQuiet()
     {
         var args = StreamPreviewHandler.BuildFfmpegArguments(
             "https://example.com/audio.mp3", previewDurationSeconds: 10);

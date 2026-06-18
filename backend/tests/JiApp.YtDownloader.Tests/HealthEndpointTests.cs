@@ -2,7 +2,7 @@ using JiApp.Common.Abstractions;
 
 namespace JiApp.YtDownloader.Tests;
 
-public class HealthEndpointTests
+public sealed class HealthEndpointTests
 {
     [Fact]
     public void Test_project_references_resolve()

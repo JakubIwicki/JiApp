@@ -4,8 +4,43 @@ namespace JiApp.Gateway.Tests.Configuration;
 
 public sealed class GatewaySettingsTests
 {
+    private sealed class Fixture
+    {
+        public static Fixture Init() => new();
+
+        public static GatewaySettings.JwtSettings ValidJwt => new()
+        {
+            Key = "test-key-min-32-chars-!!!!!!!!!!!!!!!!",
+            Issuer = "test-issuer",
+            Audience = "test-audience"
+        };
+
+        public static GatewaySettings.RateLimitPolicyConfig ValidPolicy => new()
+        {
+            PermitLimit = 10,
+            WindowInSeconds = 60,
+            QueueLimit = 0,
+            SegmentsPerWindow = 1
+        };
+
+        public static Dictionary<string, GatewaySettings.RateLimitPolicyConfig> ValidPolicies
+        {
+            get
+            {
+                var policies = new[]
+                {
+                    "Login", "Register", "Refresh", "Logout", "Health", "DownloadFile",
+                    "SearchVideos", "SearchHistory", "DownloadHistory", "GetHistory",
+                    "Me", "GetDownloadLink", "Preview", "Scheduler"
+                };
+
+                return policies.ToDictionary(p => p, _ => ValidPolicy);
+            }
+        }
+    }
+
     [Fact]
-    public void Validate_throws_when_Jwt_is_null()
+    public void Validate_Throws_WhenJwtIsNull()
     {
         var sut = new GatewaySettings();
 
@@ -16,7 +51,7 @@ public sealed class GatewaySettingsTests
     }
 
     [Fact]
-    public void Validate_throws_when_Jwt_Key_is_empty()
+    public void Validate_Throws_WhenJwtKeyIsEmpty()
     {
         var sut = new GatewaySettings
         {
@@ -26,7 +61,7 @@ public sealed class GatewaySettingsTests
                 Issuer = "test-issuer",
                 Audience = "test-audience"
             },
-            RateLimiting = CreateValidPolicies()
+            RateLimiting = Fixture.ValidPolicies
         };
 
         var act = () => sut.Validate();
@@ -36,7 +71,7 @@ public sealed class GatewaySettingsTests
     }
 
     [Fact]
-    public void Validate_throws_when_Jwt_Issuer_is_empty()
+    public void Validate_Throws_WhenJwtIssuerIsEmpty()
     {
         var sut = new GatewaySettings
         {
@@ -46,7 +81,7 @@ public sealed class GatewaySettingsTests
                 Issuer = string.Empty,
                 Audience = "test-audience"
             },
-            RateLimiting = CreateValidPolicies()
+            RateLimiting = Fixture.ValidPolicies
         };
 
         var act = () => sut.Validate();
@@ -56,7 +91,7 @@ public sealed class GatewaySettingsTests
     }
 
     [Fact]
-    public void Validate_throws_when_Jwt_Audience_is_empty()
+    public void Validate_Throws_WhenJwtAudienceIsEmpty()
     {
         var sut = new GatewaySettings
         {
@@ -66,7 +101,7 @@ public sealed class GatewaySettingsTests
                 Issuer = "test-issuer",
                 Audience = string.Empty
             },
-            RateLimiting = CreateValidPolicies()
+            RateLimiting = Fixture.ValidPolicies
         };
 
         var act = () => sut.Validate();
@@ -76,7 +111,7 @@ public sealed class GatewaySettingsTests
     }
 
     [Fact]
-    public void Validate_throws_when_RateLimiting_is_null()
+    public void Validate_Throws_WhenRateLimitingIsNull()
     {
         var sut = new GatewaySettings
         {
@@ -95,7 +130,7 @@ public sealed class GatewaySettingsTests
     }
 
     [Fact]
-    public void Validate_throws_when_RateLimiting_is_empty()
+    public void Validate_Throws_WhenRateLimitingIsEmpty()
     {
         var sut = new GatewaySettings
         {
@@ -115,15 +150,15 @@ public sealed class GatewaySettingsTests
     }
 
     [Fact]
-    public void Validate_throws_when_policy_is_missing()
+    public void Validate_Throws_WhenPolicyIsMissing()
     {
         var sut = new GatewaySettings
         {
-            Jwt = CreateValidJwt(),
+            Jwt = Fixture.ValidJwt,
             RateLimiting = new Dictionary<string, GatewaySettings.RateLimitPolicyConfig>
             {
-                ["Login"] = CreateValidPolicy(),
-                ["Register"] = CreateValidPolicy()
+                ["Login"] = Fixture.ValidPolicy,
+                ["Register"] = Fixture.ValidPolicy
             }
         };
 
@@ -145,12 +180,12 @@ public sealed class GatewaySettingsTests
     }
 
     [Fact]
-    public void Validate_passes_when_all_configured()
+    public void Validate_Passes_WhenAllConfigured()
     {
         var sut = new GatewaySettings
         {
-            Jwt = CreateValidJwt(),
-            RateLimiting = CreateValidPolicies()
+            Jwt = Fixture.ValidJwt,
+            RateLimiting = Fixture.ValidPolicies
         };
 
         var act = () => sut.Validate();
@@ -159,7 +194,7 @@ public sealed class GatewaySettingsTests
     }
 
     [Fact]
-    public void Validate_collects_all_Jwt_errors_simultaneously()
+    public void Validate_CollectsAllJwtErrors_Simultaneously()
     {
         var sut = new GatewaySettings
         {
@@ -169,7 +204,7 @@ public sealed class GatewaySettingsTests
                 Issuer = string.Empty,
                 Audience = string.Empty
             },
-            RateLimiting = CreateValidPolicies()
+            RateLimiting = Fixture.ValidPolicies
         };
 
         var act = () => sut.Validate();
@@ -178,32 +213,5 @@ public sealed class GatewaySettingsTests
             .WithMessage("*Jwt:Key is not configured.*")
             .WithMessage("*Jwt:Issuer is not configured.*")
             .WithMessage("*Jwt:Audience is not configured.*");
-    }
-
-    private static GatewaySettings.JwtSettings CreateValidJwt() => new()
-    {
-        Key = "test-key-min-32-chars-!!!!!!!!!!!!!!!!",
-        Issuer = "test-issuer",
-        Audience = "test-audience"
-    };
-
-    private static GatewaySettings.RateLimitPolicyConfig CreateValidPolicy() => new()
-    {
-        PermitLimit = 10,
-        WindowInSeconds = 60,
-        QueueLimit = 0,
-        SegmentsPerWindow = 1
-    };
-
-    private static Dictionary<string, GatewaySettings.RateLimitPolicyConfig> CreateValidPolicies()
-    {
-        var policies = new[]
-        {
-            "Login", "Register", "Refresh", "Logout", "Health", "DownloadFile",
-            "SearchVideos", "SearchHistory", "DownloadHistory", "GetHistory",
-            "Me", "GetDownloadLink", "Preview", "Scheduler"
-        };
-
-        return policies.ToDictionary(p => p, _ => CreateValidPolicy());
     }
 }

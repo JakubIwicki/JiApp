@@ -9,47 +9,44 @@ using Moq;
 
 namespace JiApp.YtDownloader.Tests.Features.GetDownloadLink;
 
-public class GetDownloadLinkHandlerTests
+public sealed class GetDownloadLinkHandlerTests
 {
-    private sealed class FakeCurrentUser : ICurrentUserService
+    private sealed class Fixture
     {
-        public long UserId => 42L;
-        public string Username => "test-user";
-    }
+        public Mock<IYoutubeClient> YoutubeClientMock { get; } = new();
+        public Mock<ITempFileStore> TempFileStoreMock { get; } = new();
+        public Mock<IDownloadHistoryRepository> HistoryRepoMock { get; } = new();
+        public GetDownloadLinkHandler Sut { get; }
 
-    private static GetDownloadLinkHandler CreateHandler(
-        Mock<IYoutubeClient>? youtubeClient = null,
-        Mock<ITempFileStore>? tempFileStore = null,
-        Mock<IDownloadHistoryRepository>? historyRepo = null,
-        Settings? settings = null)
-    {
-        var yt = youtubeClient ?? new Mock<IYoutubeClient>();
-        var store = tempFileStore ?? new Mock<ITempFileStore>();
-        var repo = historyRepo ?? new Mock<IDownloadHistoryRepository>();
-        var user = new FakeCurrentUser();
-        var s = settings ?? new Settings
+        public Fixture()
         {
-            App = new Settings.AppSettings { BaseDirectory = "/tmp" },
-            Youtube = new Settings.YoutubeSettings()
-        };
-        var logger = Mock.Of<ILogger<GetDownloadLinkHandler>>();
+            var user = Mock.Of<ICurrentUserService>(x => x.UserId == 42L && x.Username == "test-user");
+            var settings = new Settings
+            {
+                App = new Settings.AppSettings { BaseDirectory = "/tmp" },
+                Youtube = new Settings.YoutubeSettings()
+            };
+            Sut = new GetDownloadLinkHandler(
+                YoutubeClientMock.Object, TempFileStoreMock.Object, HistoryRepoMock.Object, user, settings, Mock.Of<ILogger<GetDownloadLinkHandler>>());
+        }
 
-        return new GetDownloadLinkHandler(yt.Object, store.Object, repo.Object, user, s, logger);
+        public Fixture WithDownloadThrows(Exception exception)
+        {
+            YoutubeClientMock
+                .Setup(c => c.DownloadVideoAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(exception);
+            return this;
+        }
     }
 
     [Fact]
-    public async Task HandleAsync_returns_sanitized_error_on_exception()
+    public async Task HandleAsync_ReturnsSanitizedError_OnException()
     {
-        var youtubeClient = new Mock<IYoutubeClient>();
-        youtubeClient
-            .Setup(c => c.DownloadVideoAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("sensitive yt-dlp error details"));
-
-        var handler = CreateHandler(youtubeClient: youtubeClient);
+        var fixture = new Fixture().WithDownloadThrows(new InvalidOperationException("sensitive yt-dlp error details"));
 
         var request = new DownloadRequest("dQw4w9WgXcQ", "https://youtube.com/watch?v=dQw4w9WgXcQ",
             "Title", "Description", "https://example.com/img.jpg");
-        var result = await handler.HandleAsync(request);
+        var result = await fixture.Sut.HandleAsync(request);
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().NotContain("sensitive yt-dlp error details");

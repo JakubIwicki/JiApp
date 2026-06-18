@@ -9,47 +9,46 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace JiApp.ImageTools.Tests;
 
-public class StartupTests
+public sealed class StartupTests
 {
-    /// <summary>
-    /// Creates a test server using WebHostBuilder (avoids default file-watched config
-    /// that causes WSL inotify issues). Wire up is equivalent to Startup.Configure.
-    /// </summary>
-    private static IWebHost CreateTestHost()
+    private sealed class Fixture
     {
-        return new WebHostBuilder()
-            .UseTestServer()
-            .ConfigureServices(services =>
-            {
-                var settings = new Configuration.ImageToolsSettings();
-                var startup = new Startup(settings);
-                startup.ConfigureServices(services);
-            })
-            .Configure(app =>
-            {
-                app.UseRouting();
-                app.UseEndpoints(endpoints =>
-                {
-                    var tools = endpoints.MapGroup("/api/v1/imagetools");
-                    tools.MapGet("/health", () =>
-                        Results.Ok(new { status = "healthy", timestamp = DateTimeOffset.UtcNow }));
-                    tools.MapGet("/ping", () =>
-                        Results.Ok(new { module = "image-tools", status = "ok" }));
-                });
-            })
-            .Start();
-    }
+        public HttpClient Client { get; }
 
-    private static HttpClient CreateClient()
-    {
-        var host = CreateTestHost();
-        return host.GetTestClient();
+        public Fixture()
+        {
+            var host = new WebHostBuilder()
+                .UseTestServer()
+                .ConfigureServices(services =>
+                {
+                    var settings = new ImageToolsSettings();
+                    var startup = new Startup(settings);
+                    startup.ConfigureServices(services);
+                })
+                .Configure(app =>
+                {
+                    app.UseRouting();
+                    app.UseEndpoints(endpoints =>
+                    {
+                        var tools = endpoints.MapGroup("/api/v1/imagetools");
+                        tools.MapGet("/health", () =>
+                            Results.Ok(new { status = "healthy", timestamp = DateTimeOffset.UtcNow }));
+                        tools.MapGet("/ping", () =>
+                            Results.Ok(new { module = "image-tools", status = "ok" }));
+                    });
+                })
+                .Start();
+            Client = host.GetTestClient();
+        }
+
+        public static Fixture Init() => new();
     }
 
     [Fact]
-    public async Task Health_endpoint_returns_200()
+    public async Task HealthEndpoint_Returns200()
     {
-        using var client = CreateClient();
+        var fixture = Fixture.Init();
+        using var client = fixture.Client;
 
         var response = await client.GetAsync("/api/v1/imagetools/health");
 
@@ -60,9 +59,10 @@ public class StartupTests
     }
 
     [Fact]
-    public async Task Ping_endpoint_returns_200()
+    public async Task PingEndpoint_Returns200()
     {
-        using var client = CreateClient();
+        var fixture = Fixture.Init();
+        using var client = fixture.Client;
 
         var response = await client.GetAsync("/api/v1/imagetools/ping");
 

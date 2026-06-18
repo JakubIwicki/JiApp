@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace JiApp.YtDownloader.Tests.Authorization;
 
-public class ModuleAuthorizationPolicyTests
+public sealed class ModuleAuthorizationPolicyTests
 {
     private const string PolicyName = "module:YtDownloader";
 
@@ -40,12 +40,14 @@ public class ModuleAuthorizationPolicyTests
             var identity = new ClaimsIdentity(claims, authenticationType: "TestAuth");
             return new ClaimsPrincipal(identity);
         }
+
+        public static Fixture Init() => new();
     }
 
     [Fact]
     public async Task Policy_DeniesAuthenticatedUser_WithoutModuleClaim()
     {
-        var fixture = new Fixture();
+        var fixture = Fixture.Init();
         var user = Fixture.UserWithClaims(
             new Claim(ClaimTypes.NameIdentifier, "42"));
 
@@ -57,7 +59,7 @@ public class ModuleAuthorizationPolicyTests
     [Fact]
     public async Task Policy_DeniesUser_HoldingOnlyOtherModuleClaim()
     {
-        var fixture = new Fixture();
+        var fixture = Fixture.Init();
         var user = Fixture.UserWithClaims(
             new Claim(ClaimTypes.NameIdentifier, "42"),
             new Claim("module", Modules.Scheduler));
@@ -70,7 +72,7 @@ public class ModuleAuthorizationPolicyTests
     [Fact]
     public async Task Policy_AllowsUser_HoldingYtdownloaderModuleClaim()
     {
-        var fixture = new Fixture();
+        var fixture = Fixture.Init();
         var user = Fixture.UserWithClaims(
             new Claim(ClaimTypes.NameIdentifier, "42"),
             new Claim("module", Modules.YtDownloader));

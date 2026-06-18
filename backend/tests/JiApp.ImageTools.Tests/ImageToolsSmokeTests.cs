@@ -1,6 +1,6 @@
 namespace JiApp.ImageTools.Tests;
 
-public class ImageToolsSmokeTests
+public sealed class ImageToolsSmokeTests
 {
     [Fact]
     public void Test_project_is_loadable()

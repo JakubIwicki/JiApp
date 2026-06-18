@@ -1,9 +1,9 @@
 namespace JiApp.ImageTools.Tests;
 
-public class ImageToolsSettingsTests
+public sealed class ImageToolsSettingsTests
 {
     [Fact]
-    public void Validate_does_not_throw_when_no_settings_configured()
+    public void Validate_DoesNotThrow_WhenNoSettingsConfigured()
     {
         var sut = new ImageToolsSettings();
 
