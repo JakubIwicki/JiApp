@@ -44,7 +44,7 @@ const ChatEmptyState: React.FC<{
 const ChatScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<ChatNavigationProp>();
-  const { messages, isStreaming, error, send } = useChat();
+  const { messages, isStreaming, error, send, confirmDownload } = useChat();
 
   useScreenTitle('chat.title');
 
@@ -55,10 +55,12 @@ const ChatScreen: React.FC = () => {
     [navigation],
   );
 
-  // TODO(Phase D): wire to real download
-  const handleConfirmDownload = useCallback(() => {
-    // no-op placeholder — real download logic comes in Phase D
-  }, []);
+  const handleConfirmDownload = useCallback(
+    (messageId: string) => {
+      confirmDownload(messageId);
+    },
+    [confirmDownload],
+  );
 
   const handleExamplePress = useCallback(
     (text: string) => {

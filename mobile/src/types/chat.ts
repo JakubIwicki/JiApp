@@ -62,6 +62,8 @@ export interface DownloadOfferData {
   readonly imageUrl: string | null;
 }
 
+export type OfferStatus = 'idle' | 'downloading' | 'done' | 'error';
+
 export interface ChatMessage {
   readonly id: string;
   readonly role: ChatRole;
@@ -70,4 +72,5 @@ export interface ChatMessage {
   readonly offer?: DownloadOfferData;
   readonly toolSteps?: ToolStep[];
   readonly pending?: boolean;
+  readonly offerStatus?: OfferStatus;
 }

@@ -1,14 +1,20 @@
 import { useState, useCallback, useRef } from 'react';
+import i18next from '../i18n';
 import { openChatStream } from '../services/chatService';
+import { requestDownloadLink, downloadFile } from '../services/downloadService';
 import { getErrorMessage } from '../utils/errorUtils';
-import type { ChatMessage } from '../types/chat';
+import type { ChatMessage, OfferStatus } from '../types/chat';
 import type {
   ChatStreamHandle,
   ChatStreamMessage,
 } from '../services/chatService';
 
-// ── Ephemeral message id counter ───────────────────────────────────────────
+// ── Constants ──────────────────────────────────────────────────────────────
 
+/** Maximum number of messages sent to the backend per turn. */
+const CHAT_HISTORY_CAP = 14;
+
+/** Ephemeral message id counter */
 let nextId = 0;
 
 // ── Hook result type ───────────────────────────────────────────────────────
@@ -19,6 +25,40 @@ interface UseChatResult {
   readonly error: string | null;
   readonly send: (text: string) => void;
   readonly clear: () => void;
+  readonly confirmDownload: (messageId: string) => void;
+}
+
+// ── API-message mapping helpers ────────────────────────────────────────────
+
+/**
+ * Map client-held ChatMessages to the compact format sent to the backend.
+ * Applies: history cap (last N messages), strips video/tool payloads
+ * (only plain text is sent), and excludes assistant turns whose offer was
+ * never confirmed (stale-offer expiry).
+ */
+function mapToApiMessages(messages: ChatMessage[]): ChatStreamMessage[] {
+  return messages
+    .slice(-CHAT_HISTORY_CAP)
+    .filter(m => {
+      // Exclude assistant messages with an unconfirmed offer
+      if (
+        m.role === 'assistant' &&
+        m.offer &&
+        m.offerStatus !== 'done' &&
+        m.offerStatus !== 'error'
+      ) {
+        return false;
+      }
+      // Drop empty assistant turns (no prose content)
+      if (m.role === 'assistant' && m.text.trim().length === 0) {
+        return false;
+      }
+      return true;
+    })
+    .map(m => ({
+      role: m.role as 'user' | 'assistant',
+      content: m.text,
+    }));
 }
 
 // ── Hook ───────────────────────────────────────────────────────────────────
@@ -28,6 +68,7 @@ const useChat = (): UseChatResult => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const streamRef = useRef<ChatStreamHandle | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const clear = useCallback(() => {
     streamRef.current?.close();
@@ -37,10 +78,84 @@ const useChat = (): UseChatResult => {
     setError(null);
   }, [streamRef]);
 
+  // ── confirmDownload (runs through REST, NOT the SSE stream) ─────────────────
+
+  const confirmDownload = useCallback(
+    (messageId: string) => {
+      // Mark the offer as downloading
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === messageId && m.offer
+            ? { ...m, offerStatus: 'downloading' as OfferStatus }
+            : m,
+        ),
+      );
+
+      // Capture the offer data before the async work
+      const message = messages.find(m => m.id === messageId);
+      const offer = message?.offer;
+      if (!offer) return;
+
+      const title = offer.title ?? offer.videoId;
+
+      // Run the existing download flow outside the SSE stream
+      void (async () => {
+        try {
+          const { downloadUrl } = await requestDownloadLink({
+            videoId: offer.videoId,
+            videoUrl: offer.videoUrl,
+            title: offer.title ?? undefined,
+            imageUrl: offer.imageUrl ?? undefined,
+          });
+
+          await downloadFile(downloadUrl, title);
+
+          // Success
+          setMessages(prev =>
+            prev.map(m =>
+              m.id === messageId
+                ? { ...m, offerStatus: 'done' as OfferStatus }
+                : m,
+            ),
+          );
+
+          // Append a synthetic note so the model can reason from the result
+          const note: ChatMessage = {
+            id: `msg-${nextId++}`,
+            role: 'user',
+            text: i18next.t('chat.downloadNote.success', { title }),
+          };
+          setMessages(prev => [...prev, note]);
+        } catch (err) {
+          // Failure
+          setMessages(prev =>
+            prev.map(m =>
+              m.id === messageId
+                ? { ...m, offerStatus: 'error' as OfferStatus }
+                : m,
+            ),
+          );
+
+          const reason = err instanceof Error ? err.message : 'Download failed';
+          const note: ChatMessage = {
+            id: `msg-${nextId++}`,
+            role: 'user',
+            text: i18next.t('chat.downloadNote.failed', { reason }),
+          };
+          setMessages(prev => [...prev, note]);
+        }
+      })();
+    },
+    [messages],
+  );
+
+  // ── send (SSE chat stream) ───────────────────────────────────────────────
+
   const send = useCallback(
     (text: string) => {
       // Cancel any in-flight stream
       streamRef.current?.close();
+      abortRef.current?.abort();
 
       const userMsg: ChatMessage = {
         id: `msg-${nextId++}`,
@@ -61,16 +176,8 @@ const useChat = (): UseChatResult => {
       setIsStreaming(true);
       setError(null);
 
-      // Build API message history (prior turns + the new user message).
-      // Drop empty assistant turns (e.g. a search turn that returned only
-      // results with no prose) — resending blank assistant content adds no
-      // context and the backend is stateless, reconstructing from this list.
-      const apiMessages: ChatStreamMessage[] = [...messages, userMsg]
-        .filter(m => m.role === 'user' || m.text.trim().length > 0)
-        .map(m => ({
-          role: m.role as 'user' | 'assistant',
-          content: m.text,
-        }));
+      // Build API message history with cap, offer-expiry, and payload stripping
+      const apiMessages = mapToApiMessages([...messages, userMsg]);
 
       const inFlightId = assistantId;
 
@@ -128,6 +235,7 @@ const useChat = (): UseChatResult => {
               title: event.title,
               imageUrl: event.imageUrl,
             },
+            offerStatus: 'idle' as OfferStatus,
           }));
         },
 
@@ -154,7 +262,7 @@ const useChat = (): UseChatResult => {
     [messages, streamRef],
   );
 
-  return { messages, isStreaming, error, send, clear };
+  return { messages, isStreaming, error, send, clear, confirmDownload };
 };
 
 export default useChat;

@@ -11,8 +11,7 @@ import type { VideoItem } from '../../types/api';
 interface ChatMessageListProps {
   readonly messages: ChatMessage[];
   readonly onSelectVideo?: (video: VideoItem) => void;
-  readonly onConfirmDownload?: () => void;
-  readonly downloadStatus?: 'idle' | 'downloading' | 'done' | 'error';
+  readonly onConfirmDownload?: (messageId: string) => void;
   readonly ListEmptyComponent?: React.ReactElement;
 }
 
@@ -20,7 +19,6 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
   messages,
   onSelectVideo,
   onConfirmDownload,
-  downloadStatus = 'idle',
   ListEmptyComponent,
 }) => {
   const keyExtractor = useCallback((item: ChatMessage) => item.id, []);
@@ -44,13 +42,15 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
         {item.offer && (
           <ChatDownloadOffer
             offer={item.offer}
-            status={downloadStatus}
-            onConfirm={onConfirmDownload ?? (() => {})}
+            status={item.offerStatus ?? 'idle'}
+            onConfirm={
+              onConfirmDownload ? () => onConfirmDownload(item.id) : () => {}
+            }
           />
         )}
       </View>
     ),
-    [onSelectVideo, onConfirmDownload, downloadStatus],
+    [onSelectVideo, onConfirmDownload],
   );
 
   return (
