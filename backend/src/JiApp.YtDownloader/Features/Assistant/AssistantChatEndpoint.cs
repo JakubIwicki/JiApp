@@ -26,6 +26,7 @@ public static class AssistantChatEndpoint
                 IValidator<AssistantChatRequest> validator,
                 AssistantChatHandler handler,
                 AssistantChatOrchestrator orchestrator,
+                AssistantStreamGate streamGate,
                 ICurrentUserService currentUser,
                 Settings settings,
                 HttpContext httpContext) =>
@@ -47,7 +48,18 @@ public static class AssistantChatEndpoint
                 if (preCheck == AssistantChatPreCheck.NotConfigured)
                     return NotConfigured(language);
 
-                await StreamSseAsync(httpContext, orchestrator, request.Messages, language, userId);
+                if (!streamGate.TryEnter())
+                    return Busy(language);
+
+                try
+                {
+                    await StreamSseAsync(httpContext, orchestrator, request.Messages, language, userId);
+                }
+                finally
+                {
+                    streamGate.Release();
+                }
+
                 return Results.Empty;
             })
             .WithTags(SwaggerConstants.Tags.Assistant)
@@ -81,6 +93,17 @@ public static class AssistantChatEndpoint
         var message = language == EnglishLanguage
             ? "The assistant is temporarily unavailable."
             : "Asystent jest chwilowo niedostępny.";
+        return Results.Json(
+            new ApiErrorResponse(Error: message),
+            ApiErrorResponse.JsonOptions,
+            statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+
+    private static IResult Busy(string language)
+    {
+        var message = language == EnglishLanguage
+            ? "The assistant is busy with another request. Please try again in a moment."
+            : "Asystent jest zajęty innym zapytaniem. Spróbuj ponownie za chwilę.";
         return Results.Json(
             new ApiErrorResponse(Error: message),
             ApiErrorResponse.JsonOptions,

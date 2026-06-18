@@ -144,6 +144,7 @@ public class Startup(Settings settings)
 
         // Assistant chat (DeepSeek)
         services.AddSingleton<IAssistantChatClientProvider, DeepSeekChatClientProvider>();
+        services.AddSingleton<AssistantStreamGate>();
         services.AddScoped<AssistantChatHandler>();
         services.AddScoped<AssistantChatOrchestrator>();
 
