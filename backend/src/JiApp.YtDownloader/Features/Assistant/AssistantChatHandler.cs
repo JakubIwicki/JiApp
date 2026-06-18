@@ -15,11 +15,11 @@ public sealed class AssistantChatHandler(
 {
     public async Task<AssistantChatPreCheck> PreCheckAsync(long userId, int dailyLimit, CancellationToken ct)
     {
-        if (!await usage.TryConsumeAsync(userId, dailyLimit, ct))
-            return AssistantChatPreCheck.QuotaExceeded;
+        if (!chatClientProvider.IsConfigured)
+            return AssistantChatPreCheck.NotConfigured;
 
-        return chatClientProvider.IsConfigured
+        return await usage.TryConsumeAsync(userId, dailyLimit, ct)
             ? AssistantChatPreCheck.Ok
-            : AssistantChatPreCheck.NotConfigured;
+            : AssistantChatPreCheck.QuotaExceeded;
     }
 }

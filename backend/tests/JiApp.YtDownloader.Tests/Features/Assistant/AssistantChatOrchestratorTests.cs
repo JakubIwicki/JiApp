@@ -1,5 +1,6 @@
 using JiApp.YtApi;
 using JiApp.YtDownloader.Agent;
+using JiApp.YtDownloader.Configuration;
 using JiApp.YtDownloader.Features.Assistant;
 using JiApp.YtDownloader.Features.SearchVideos;
 using JiApp.YtDownloader.Repositories;
@@ -20,6 +21,8 @@ public class AssistantChatOrchestratorTests
     {
         private readonly List<ChatResponseUpdate> _updates = [];
         private Exception? _throwOnStream;
+        private TimeSpan _streamDelay = TimeSpan.Zero;
+        private int _requestTimeoutSeconds = 60;
 
         public FakeChatClient? ChatClient { get; private set; }
 
@@ -50,11 +53,23 @@ public class AssistantChatOrchestratorTests
             return this;
         }
 
+        public Fixture WithStreamDelay(TimeSpan delay)
+        {
+            _streamDelay = delay;
+            return this;
+        }
+
+        public Fixture WithRequestTimeoutSeconds(int seconds)
+        {
+            _requestTimeoutSeconds = seconds;
+            return this;
+        }
+
         public AssistantChatOrchestrator Build()
         {
             ChatClient = _throwOnStream is not null
                 ? FakeChatClient.Throwing(_throwOnStream)
-                : new FakeChatClient(_updates);
+                : new FakeChatClient(_updates, _streamDelay);
 
             var provider = new Mock<IAssistantChatClientProvider>();
             provider.SetupGet(p => p.IsConfigured).Returns(true);
@@ -67,9 +82,18 @@ public class AssistantChatOrchestratorTests
                 new MemoryCache(new MemoryCacheOptions()),
                 NullLogger<YtAgentToolService>.Instance);
 
+            var settings = new Settings
+            {
+                DeepSeek = new Settings.DeepSeekSettings
+                {
+                    RequestTimeoutSeconds = _requestTimeoutSeconds
+                }
+            };
+
             return new AssistantChatOrchestrator(
                 provider.Object,
                 toolService,
+                settings,
                 NullLogger<AssistantChatOrchestrator>.Instance);
         }
     }
@@ -171,6 +195,52 @@ public class AssistantChatOrchestratorTests
     }
 
     [Fact]
+    public async Task StreamAsync_search_youtube_json_element_result_emits_search_results()
+    {
+        using var cts = new CancellationTokenSource(TestTimeout);
+        const string callId = "call-json-1";
+        IReadOnlyList<VideoItem> videos =
+        [
+            new VideoItem("vid1", "Lofi beats", "desc", "img", "url", "channel")
+        ];
+
+        var orchestrator = new Fixture()
+            .WithUpdate(new FunctionCallContent(callId, AssistantToolNames.SearchYoutube,
+                new Dictionary<string, object?> { ["query"] = "lofi" }!))
+            .WithUpdate(new FunctionResultContent(callId, SerializeToJsonElement(videos)))
+            .Build();
+
+        var events = await CollectAsync(orchestrator, SingleUserMessage(), "en", cts.Token);
+
+        var searchEvent = events.Should()
+            .ContainSingle(e => e.Event == AssistantSseEventNames.SearchResults).Subject;
+        SerializeData(searchEvent.Data).Should().Contain("vid1").And.Contain("Lofi beats");
+        events.Last().Event.Should().Be(AssistantSseEventNames.Done);
+    }
+
+    [Fact]
+    public async Task StreamAsync_offer_download_json_element_result_emits_download_offer()
+    {
+        using var cts = new CancellationTokenSource(TestTimeout);
+        const string callId = "call-json-2";
+        var offer = new DownloadOffer("vid9", "https://youtu.be/vid9", "A song", "img9");
+
+        var orchestrator = new Fixture()
+            .WithUpdate(new FunctionCallContent(callId, AssistantToolNames.OfferDownload,
+                new Dictionary<string, object?> { ["videoId"] = "vid9" }!))
+            .WithUpdate(new FunctionResultContent(callId, SerializeToJsonElement(offer)))
+            .Build();
+
+        var events = await CollectAsync(orchestrator, SingleUserMessage(), "en", cts.Token);
+
+        var offerEvent = events.Should()
+            .ContainSingle(e => e.Event == AssistantSseEventNames.DownloadOffer).Subject;
+        var dict = ToDictionary(offerEvent.Data);
+        dict["videoId"].Should().Be("vid9");
+        dict["videoUrl"].Should().Be("https://youtu.be/vid9");
+    }
+
+    [Fact]
     public async Task StreamAsync_offer_download_emits_download_offer_event_without_downloading()
     {
         using var cts = new CancellationTokenSource(TestTimeout);
@@ -193,7 +263,25 @@ public class AssistantChatOrchestratorTests
     }
 
     [Fact]
-    public async Task StreamAsync_finish_reason_tool_calls_signals_max_iterations()
+    public async Task StreamAsync_finish_reason_tool_calls_after_tool_invoked_signals_max_iterations()
+    {
+        using var cts = new CancellationTokenSource(TestTimeout);
+        const string callId = "call-max";
+        var orchestrator = new Fixture()
+            .WithUpdate(new FunctionCallContent(callId, AssistantToolNames.SearchYoutube,
+                new Dictionary<string, object?> { ["query"] = "lofi" }!))
+            .WithFinishReason(ChatFinishReason.ToolCalls)
+            .Build();
+
+        var events = await CollectAsync(orchestrator, SingleUserMessage(), "en", cts.Token);
+
+        var done = events.Last();
+        done.Event.Should().Be(AssistantSseEventNames.Done);
+        ReasonOf(done).Should().Be(AssistantDoneReasons.MaxIterations);
+    }
+
+    [Fact]
+    public async Task StreamAsync_finish_reason_tool_calls_without_any_tool_invoked_signals_complete()
     {
         using var cts = new CancellationTokenSource(TestTimeout);
         var orchestrator = new Fixture()
@@ -205,7 +293,40 @@ public class AssistantChatOrchestratorTests
 
         var done = events.Last();
         done.Event.Should().Be(AssistantSseEventNames.Done);
-        ReasonOf(done).Should().Be(AssistantDoneReasons.MaxIterations);
+        ReasonOf(done).Should().Be(AssistantDoneReasons.Complete);
+    }
+
+    [Fact]
+    public async Task StreamAsync_request_timeout_emits_done_error_and_does_not_throw()
+    {
+        using var cts = new CancellationTokenSource(TestTimeout);
+        var orchestrator = new Fixture()
+            .WithRequestTimeoutSeconds(1)
+            .WithStreamDelay(TimeSpan.FromSeconds(30))
+            .WithTextDelta("never reached")
+            .Build();
+
+        var events = await CollectAsync(orchestrator, SingleUserMessage(), "en", cts.Token);
+
+        var done = events.Should().ContainSingle().Subject;
+        done.Event.Should().Be(AssistantSseEventNames.Done);
+        ReasonOf(done).Should().Be(AssistantDoneReasons.Error);
+    }
+
+    [Fact]
+    public async Task StreamAsync_caller_cancellation_propagates_as_cancellation_not_error_frame()
+    {
+        using var cts = new CancellationTokenSource();
+        var orchestrator = new Fixture()
+            .WithStreamDelay(TimeSpan.FromSeconds(30))
+            .WithTextDelta("never reached")
+            .Build();
+
+        cts.CancelAfter(TimeSpan.FromMilliseconds(200));
+
+        var act = async () => await CollectAsync(orchestrator, SingleUserMessage(), "en", cts.Token);
+
+        await act.Should().ThrowAsync<OperationCanceledException>();
     }
 
     [Fact]
@@ -224,6 +345,15 @@ public class AssistantChatOrchestratorTests
         System.Text.Json.JsonSerializer.Serialize(done.Data)
             .Should().NotContain("sk-12345");
     }
+
+    private static readonly System.Text.Json.JsonSerializerOptions WebOptions =
+        new(System.Text.Json.JsonSerializerDefaults.Web);
+
+    private static System.Text.Json.JsonElement SerializeToJsonElement<T>(T value) =>
+        System.Text.Json.JsonSerializer.SerializeToElement(value, WebOptions);
+
+    private static string SerializeData(object data) =>
+        System.Text.Json.JsonSerializer.Serialize(data);
 
     private static System.Collections.Generic.IDictionary<string, object?> ToDictionary(object data)
     {

@@ -52,7 +52,7 @@ public class AssistantChatHandlerTests
     }
 
     [Fact]
-    public async Task PreCheckAsync_returns_quota_exceeded_and_does_not_touch_client()
+    public async Task PreCheckAsync_returns_quota_exceeded_when_configured_but_quota_empty()
     {
         using var cts = new CancellationTokenSource(TestTimeout);
         var fixture = new Fixture().WithQuotaExceeded();
@@ -62,11 +62,10 @@ public class AssistantChatHandlerTests
 
         outcome.Should().Be(AssistantChatPreCheck.QuotaExceeded);
         fixture.Provider.VerifyGet(p => p.Client, Times.Never);
-        fixture.Provider.VerifyGet(p => p.IsConfigured, Times.Never);
     }
 
     [Fact]
-    public async Task PreCheckAsync_returns_not_configured_when_quota_ok_but_client_absent()
+    public async Task PreCheckAsync_returns_not_configured_without_consuming_quota()
     {
         using var cts = new CancellationTokenSource(TestTimeout);
         var fixture = new Fixture().WithClientNotConfigured();
@@ -75,10 +74,13 @@ public class AssistantChatHandlerTests
         var outcome = await handler.PreCheckAsync(UserId, DailyLimit, cts.Token);
 
         outcome.Should().Be(AssistantChatPreCheck.NotConfigured);
+        fixture.Usage.Verify(
+            u => u.TryConsumeAsync(It.IsAny<long>(), It.IsAny<int>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
-    public async Task PreCheckAsync_consumes_quota_before_checking_configuration()
+    public async Task PreCheckAsync_checks_configuration_before_consuming_quota()
     {
         using var cts = new CancellationTokenSource(TestTimeout);
         var fixture = new Fixture();
@@ -86,6 +88,7 @@ public class AssistantChatHandlerTests
 
         await handler.PreCheckAsync(UserId, DailyLimit, cts.Token);
 
+        fixture.Provider.VerifyGet(p => p.IsConfigured, Times.Once);
         fixture.Usage.Verify(
             u => u.TryConsumeAsync(UserId, DailyLimit, It.IsAny<CancellationToken>()),
             Times.Once);

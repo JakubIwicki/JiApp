@@ -12,10 +12,14 @@ public sealed class FakeChatClient : IChatClient
 {
     private readonly IReadOnlyList<ChatResponseUpdate> _scriptedUpdates;
     private readonly Exception? _throwOnStream;
+    private readonly TimeSpan _delayBeforeFirstUpdate;
 
-    public FakeChatClient(IReadOnlyList<ChatResponseUpdate> scriptedUpdates)
+    public FakeChatClient(
+        IReadOnlyList<ChatResponseUpdate> scriptedUpdates,
+        TimeSpan delayBeforeFirstUpdate = default)
     {
         _scriptedUpdates = scriptedUpdates;
+        _delayBeforeFirstUpdate = delayBeforeFirstUpdate;
     }
 
     private FakeChatClient(Exception throwOnStream)
@@ -41,6 +45,9 @@ public sealed class FakeChatClient : IChatClient
 
         if (_throwOnStream is not null)
             throw _throwOnStream;
+
+        if (_delayBeforeFirstUpdate > TimeSpan.Zero)
+            await Task.Delay(_delayBeforeFirstUpdate, cancellationToken);
 
         foreach (var update in _scriptedUpdates)
         {

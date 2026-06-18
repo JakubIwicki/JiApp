@@ -1,5 +1,7 @@
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using JiApp.YtDownloader.Agent;
+using JiApp.YtDownloader.Configuration;
 using JiApp.YtDownloader.Features.DownloadHistory;
 using JiApp.YtDownloader.Features.SearchHistory;
 using JiApp.YtDownloader.Features.SearchVideos;
@@ -12,8 +14,14 @@ namespace JiApp.YtDownloader.Features.Assistant;
 public sealed class AssistantChatOrchestrator(
     IAssistantChatClientProvider chatClientProvider,
     YtAgentToolService toolService,
+    Settings settings,
     ILogger<AssistantChatOrchestrator> logger)
 {
+    private const int DefaultRequestTimeoutSeconds = 60;
+
+    private static readonly JsonSerializerOptions ToolResultJsonOptions =
+        new(JsonSerializerDefaults.Web);
+
     public async IAsyncEnumerable<AssistantSseEvent> StreamAsync(
         IReadOnlyList<ChatMessageDto> messages,
         string? language,
@@ -22,14 +30,24 @@ public sealed class AssistantChatOrchestrator(
     {
         var chatClient = chatClientProvider.Client;
         var chatMessages = BuildChatMessages(messages, language);
-        var options = new ChatOptions { Tools = BuildTools(userId, ct) };
+
+        var timeoutSeconds = settings.DeepSeek?.RequestTimeoutSeconds is int configured and > 0
+            ? configured
+            : DefaultRequestTimeoutSeconds;
+
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        cts.CancelAfter(TimeSpan.FromSeconds(timeoutSeconds));
+        var turnToken = cts.Token;
+
+        var options = new ChatOptions { Tools = BuildTools(userId, turnToken) };
 
         var callIdToToolName = new Dictionary<string, string>();
         ChatFinishReason? lastFinishReason = null;
+        var anyToolInvoked = false;
         var faulted = false;
 
-        var stream = chatClient.GetStreamingResponseAsync(chatMessages, options, ct)
-            .GetAsyncEnumerator(ct);
+        var stream = chatClient.GetStreamingResponseAsync(chatMessages, options, turnToken)
+            .GetAsyncEnumerator(turnToken);
 
         try
         {
@@ -45,15 +63,21 @@ public sealed class AssistantChatOrchestrator(
                     if (update.FinishReason is { } finishReason)
                         lastFinishReason = finishReason;
 
-                    mapped = MapUpdate(update, callIdToToolName);
+                    mapped = MapUpdate(update, callIdToToolName, ref anyToolInvoked);
                 }
-                catch (OperationCanceledException)
+                catch (OperationCanceledException) when (ct.IsCancellationRequested)
                 {
                     throw;
                 }
+                catch (OperationCanceledException)
+                {
+                    logger.AssistantChatTurnTimedOut(userId, timeoutSeconds);
+                    faulted = true;
+                    break;
+                }
                 catch (Exception ex)
                 {
-                    logger.AssistantChatStreamFailed(ex, userId);
+                    logger.AssistantChatStreamFailed(userId, ex.GetType().Name, Redact(ex.Message));
                     faulted = true;
                     break;
                 }
@@ -69,17 +93,28 @@ public sealed class AssistantChatOrchestrator(
 
         yield return new AssistantSseEvent(
             AssistantSseEventNames.Done,
-            new { reason = ResolveDoneReason(faulted, lastFinishReason) });
+            new { reason = ResolveDoneReason(faulted, lastFinishReason, anyToolInvoked) });
     }
 
-    private static string ResolveDoneReason(bool faulted, ChatFinishReason? lastFinishReason)
+    private static string ResolveDoneReason(
+        bool faulted, ChatFinishReason? lastFinishReason, bool anyToolInvoked)
     {
         if (faulted)
             return AssistantDoneReasons.Error;
 
-        return lastFinishReason == ChatFinishReason.ToolCalls
+        return lastFinishReason == ChatFinishReason.ToolCalls && anyToolInvoked
             ? AssistantDoneReasons.MaxIterations
             : AssistantDoneReasons.Complete;
+    }
+
+    private const int MaxLoggedMessageLength = 200;
+
+    private static string Redact(string message)
+    {
+        var truncated = message.Length > MaxLoggedMessageLength
+            ? message[..MaxLoggedMessageLength]
+            : message;
+        return truncated;
     }
 
     private static List<ChatMessage> BuildChatMessages(
@@ -101,9 +136,10 @@ public sealed class AssistantChatOrchestrator(
         return chatMessages;
     }
 
-    private static AssistantSseEvent[] MapUpdate(
+    private AssistantSseEvent[] MapUpdate(
         ChatResponseUpdate update,
-        Dictionary<string, string> callIdToToolName)
+        Dictionary<string, string> callIdToToolName,
+        ref bool anyToolInvoked)
     {
         var events = new List<AssistantSseEvent>();
 
@@ -117,6 +153,7 @@ public sealed class AssistantChatOrchestrator(
                     break;
 
                 case FunctionCallContent call:
+                    anyToolInvoked = true;
                     callIdToToolName[call.CallId] = call.Name;
                     events.Add(new AssistantSseEvent(
                         AssistantSseEventNames.ToolStep,
@@ -139,20 +176,47 @@ public sealed class AssistantChatOrchestrator(
         return [.. events];
     }
 
-    private static AssistantSseEvent? MapToolResult(string toolName, object? result) => result switch
+    private AssistantSseEvent? MapToolResult(string toolName, object? result) => toolName switch
     {
-        IReadOnlyList<VideoItem> videos when toolName == AssistantToolNames.SearchYoutube =>
-            new AssistantSseEvent(AssistantSseEventNames.SearchResults, new { results = videos }),
-        DownloadOffer offer when toolName == AssistantToolNames.OfferDownload =>
-            new AssistantSseEvent(AssistantSseEventNames.DownloadOffer, new
-            {
-                videoId = offer.VideoId,
-                videoUrl = offer.VideoUrl,
-                title = offer.Title,
-                imageUrl = offer.ImageUrl
-            }),
+        AssistantToolNames.SearchYoutube =>
+            Deserialize<IReadOnlyList<VideoItem>, List<VideoItem>>(result, toolName) is { } videos
+                ? new AssistantSseEvent(AssistantSseEventNames.SearchResults, new { results = videos })
+                : null,
+        AssistantToolNames.OfferDownload =>
+            Deserialize<DownloadOffer, DownloadOffer>(result, toolName) is { } offer
+                ? new AssistantSseEvent(AssistantSseEventNames.DownloadOffer, new
+                {
+                    videoId = offer.VideoId,
+                    videoUrl = offer.VideoUrl,
+                    title = offer.Title,
+                    imageUrl = offer.ImageUrl
+                })
+                : null,
         _ => null
     };
+
+    private TTyped? Deserialize<TTyped, TJson>(object? result, string toolName)
+        where TTyped : class
+        where TJson : class, TTyped
+    {
+        switch (result)
+        {
+            case TTyped typed:
+                return typed;
+            case JsonElement element:
+                try
+                {
+                    return element.Deserialize<TJson>(ToolResultJsonOptions);
+                }
+                catch (JsonException ex)
+                {
+                    logger.AssistantToolResultDeserializeFailed(ex, toolName);
+                    return null;
+                }
+            default:
+                return null;
+        }
+    }
 
     private IList<AITool> BuildTools(long userId, CancellationToken ct)
     {
