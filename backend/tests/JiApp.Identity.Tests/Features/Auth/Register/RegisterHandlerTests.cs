@@ -1,4 +1,5 @@
 using JiApp.Common.Models;
+using JiApp.Common.Abstractions;
 using JiApp.Identity.Features.Auth.Register;
 using JiApp.Identity.Services;
 using Microsoft.AspNetCore.Identity;
@@ -9,7 +10,7 @@ using Moq;
 
 namespace JiApp.Identity.Tests.Features.Auth.Register;
 
-public class RegisterHandlerTests
+public sealed class RegisterHandlerTests
 {
     private sealed class Fixture
     {
@@ -25,6 +26,13 @@ public class RegisterHandlerTests
             Mock.Of<ILogger<UserManager<User>>>());
 
         public Mock<IUserModuleGrantService> GrantServiceMock { get; } = new();
+
+        public RegisterHandler Sut { get; }
+
+        public Fixture()
+        {
+            Sut = new RegisterHandler(UserManagerMock.Object, GrantServiceMock.Object, Mock.Of<ILogger<RegisterHandler>>());
+        }
 
         public Fixture WithSuccessfulCreate(long userId = 7)
         {
@@ -70,21 +78,17 @@ public class RegisterHandlerTests
                 .ThrowsAsync(new InvalidOperationException("DB unavailable"));
             return this;
         }
-
-        public RegisterHandler Build() =>
-            new(UserManagerMock.Object, GrantServiceMock.Object, Mock.Of<ILogger<RegisterHandler>>());
     }
 
     [Fact]
     public async Task HandleAsync_ReturnsSuccess_ForValidRegistration()
     {
         var fixture = new Fixture().WithSuccessfulCreate();
-        var sut = fixture.Build();
 
-        var result = await sut.HandleAsync(
+        var result = await fixture.Sut.HandleAsync(
             new RegisterRequest("newuser", "new@test.com", "Password1", "New User"));
 
-        result.IsSuccess.Should().BeTrue();
+        AssertSuccess(result);
     }
 
     [Fact]
@@ -92,9 +96,8 @@ public class RegisterHandlerTests
     {
         const long createdUserId = 7;
         var fixture = new Fixture().WithSuccessfulCreate(createdUserId);
-        var sut = fixture.Build();
 
-        await sut.HandleAsync(
+        await fixture.Sut.HandleAsync(
             new RegisterRequest("newuser", "new@test.com", "Password1", "New User"));
 
         fixture.GrantServiceMock.Verify(x => x.GrantAllAsync(createdUserId), Times.Once);
@@ -104,9 +107,8 @@ public class RegisterHandlerTests
     public async Task HandleAsync_DoesNotGrantModules_WhenRegistrationFails()
     {
         var fixture = new Fixture().WithFailingCreate("Passwords must have at least one uppercase ('A'-'Z').");
-        var sut = fixture.Build();
 
-        await sut.HandleAsync(
+        await fixture.Sut.HandleAsync(
             new RegisterRequest("newuser", "new@test.com", "weak", "New User"));
 
         fixture.GrantServiceMock.Verify(x => x.GrantAllAsync(It.IsAny<long>()), Times.Never);
@@ -116,9 +118,8 @@ public class RegisterHandlerTests
     public async Task HandleAsync_ReturnsGenericFailure_OnUniqueConstraintViolation()
     {
         var fixture = new Fixture().WithUniqueConstraintViolation();
-        var sut = fixture.Build();
 
-        var result = await sut.HandleAsync(
+        var result = await fixture.Sut.HandleAsync(
             new RegisterRequest("existinguser", "existing@test.com", "Password1", "New User"));
 
         result.IsSuccess.Should().BeFalse();
@@ -129,9 +130,8 @@ public class RegisterHandlerTests
     public async Task HandleAsync_ReturnsFailure_WhenCreateFails()
     {
         var fixture = new Fixture().WithFailingCreate("Passwords must have at least one uppercase ('A'-'Z').");
-        var sut = fixture.Build();
 
-        var result = await sut.HandleAsync(
+        var result = await fixture.Sut.HandleAsync(
             new RegisterRequest("newuser", "new@test.com", "weak", "New User"));
 
         result.IsSuccess.Should().BeFalse();
@@ -142,9 +142,8 @@ public class RegisterHandlerTests
     public async Task HandleAsync_ReturnsFailureWithAllErrors_WhenCreateFailsMultiple()
     {
         var fixture = new Fixture().WithCreateFailingMultiple();
-        var sut = fixture.Build();
 
-        var result = await sut.HandleAsync(
+        var result = await fixture.Sut.HandleAsync(
             new RegisterRequest("newuser", "new@test.com", "weak", "New User"));
 
         result.IsSuccess.Should().BeFalse();
@@ -159,9 +158,8 @@ public class RegisterHandlerTests
         var fixture = new Fixture()
             .WithSuccessfulCreate(createdUserId)
             .WithFailingGrantAllocation(createdUserId);
-        var sut = fixture.Build();
 
-        var result = await sut.HandleAsync(
+        var result = await fixture.Sut.HandleAsync(
             new RegisterRequest("newuser", "new@test.com", "Password1", "New User"));
 
         fixture.UserManagerMock.Verify(

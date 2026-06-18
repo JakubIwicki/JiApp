@@ -8,7 +8,7 @@ using Moq;
 
 namespace JiApp.Identity.Tests.Features.Auth.Me;
 
-public class MeHandlerTests
+public sealed class MeHandlerTests
 {
     private sealed class Fixture
     {
@@ -33,13 +33,22 @@ public class MeHandlerTests
             Mock.Of<IServiceProvider>(),
             Mock.Of<ILogger<UserManager<User>>>());
 
-        public Mock<ICurrentUserService> CurrentUserMock { get; } = new();
+        public MockCurrentUserService CurrentUserMock { get; } = new();
         public Mock<IUserModuleGrantService> GrantServiceMock { get; } = new();
+
+        public MeHandler Sut { get; }
+
+        public Fixture()
+        {
+            Sut = new MeHandler(
+                UserManagerMock.Object, CurrentUserMock.Mock.Object, GrantServiceMock.Object,
+                Mock.Of<ILogger<MeHandler>>());
+        }
 
         public Fixture WithExistingUser(long userId = 1)
         {
-            CurrentUserMock.Setup(x => x.UserId).Returns(userId);
-            CurrentUserMock.Setup(x => x.Username).Returns("testuser");
+            CurrentUserMock.WithReturning(userId);
+            CurrentUserMock.Mock.Setup(x => x.Username).Returns("testuser");
             UserManagerMock.Setup(x => x.FindByIdAsync(userId.ToString()))
                 .ReturnsAsync(_testUser);
             GrantServiceMock.Setup(x => x.GetModulesAsync(userId))
@@ -49,26 +58,21 @@ public class MeHandlerTests
 
         public Fixture WithMissingUser(long userId = 999)
         {
-            CurrentUserMock.Setup(x => x.UserId).Returns(userId);
+            CurrentUserMock.WithReturning(userId);
             UserManagerMock.Setup(x => x.FindByIdAsync(userId.ToString()))
                 .ReturnsAsync((User?)null);
             return this;
         }
-
-        public MeHandler Build() =>
-            new(UserManagerMock.Object, CurrentUserMock.Object, GrantServiceMock.Object,
-                Mock.Of<ILogger<MeHandler>>());
     }
 
     [Fact]
     public async Task HandleAsync_ReturnsProfile_ForValidUser()
     {
         var fixture = new Fixture().WithExistingUser();
-        var sut = fixture.Build();
 
-        var result = await sut.HandleAsync();
+        var result = await fixture.Sut.HandleAsync();
 
-        result.IsSuccess.Should().BeTrue();
+        AssertSuccess(result);
         result.Value.Should().NotBeNull();
         result.Value!.Id.Should().Be(1);
         result.Value.DisplayName.Should().Be("Test User");
@@ -80,9 +84,8 @@ public class MeHandlerTests
     public async Task HandleAsync_ReturnsFailure_ForNonexistentUser()
     {
         var fixture = new Fixture().WithMissingUser();
-        var sut = fixture.Build();
 
-        var result = await sut.HandleAsync();
+        var result = await fixture.Sut.HandleAsync();
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("User not found");
