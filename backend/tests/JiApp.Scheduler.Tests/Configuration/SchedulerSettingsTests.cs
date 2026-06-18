@@ -4,15 +4,9 @@ namespace JiApp.Scheduler.Tests.Configuration;
 
 public sealed class SchedulerSettingsTests
 {
-    private sealed class Fixture
-    {
-        public static Fixture Init() => new();
-    }
-
     [Fact]
     public void Validate_WithNullJwt_ThrowsInvalidOperationException()
     {
-        Fixture.Init();
         var settings = new SchedulerSettings
         {
             ConnectionString = "Data Source=test.db",
@@ -28,7 +22,6 @@ public sealed class SchedulerSettingsTests
     [Fact]
     public void Validate_WithNullConnectionString_ThrowsInvalidOperationException()
     {
-        Fixture.Init();
         var settings = new SchedulerSettings
         {
             ConnectionString = null,
@@ -44,7 +37,6 @@ public sealed class SchedulerSettingsTests
     [Fact]
     public void Validate_WithMissingJwtKey_ThrowsInvalidOperationException()
     {
-        Fixture.Init();
         var settings = new SchedulerSettings
         {
             ConnectionString = "Data Source=test.db",
@@ -60,7 +52,6 @@ public sealed class SchedulerSettingsTests
     [Fact]
     public void Validate_WithValidSettings_DoesNotThrow()
     {
-        Fixture.Init();
         var settings = new SchedulerSettings
         {
             ConnectionString = "Data Source=test.db",

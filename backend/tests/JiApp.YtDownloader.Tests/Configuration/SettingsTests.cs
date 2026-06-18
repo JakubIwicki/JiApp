@@ -4,30 +4,25 @@ namespace JiApp.YtDownloader.Tests.Configuration;
 
 public sealed class SettingsTests
 {
-    private sealed class Fixture
+    private Settings CreateValidSettings(int previewDurationSeconds = 10)
     {
-        public static Fixture Init() => new();
-
-        public Settings CreateValidSettings(int previewDurationSeconds = 10)
+        return new Settings
         {
-            return new Settings
+            ConnectionString = "Data Source=test.db",
+            App = new Settings.AppSettings
             {
-                ConnectionString = "Data Source=test.db",
-                App = new Settings.AppSettings
-                {
-                    BaseDirectory = "/tmp",
-                    PreviewDurationSeconds = previewDurationSeconds,
-                },
-                Jwt = new Settings.JwtSettings
-                {
-                    Key = "test-key", Issuer = "test-issuer", Audience = "test-audience",
-                },
-                Youtube = new Settings.YoutubeSettings
-                {
-                    ApiKey = "test-key", YtDlpPath = "yt-dlp", FfmpegPath = "ffmpeg",
-                },
-            };
-        }
+                BaseDirectory = "/tmp",
+                PreviewDurationSeconds = previewDurationSeconds,
+            },
+            Jwt = new Settings.JwtSettings
+            {
+                Key = "test-key", Issuer = "test-issuer", Audience = "test-audience",
+            },
+            Youtube = new Settings.YoutubeSettings
+            {
+                ApiKey = "test-key", YtDlpPath = "yt-dlp", FfmpegPath = "ffmpeg",
+            },
+        };
     }
 
     [Fact]
@@ -52,7 +47,7 @@ public sealed class SettingsTests
     [InlineData(-100)]
     public void Validate_Throws_WhenPreviewDurationSecondsIsNotPositive(int invalidDuration)
     {
-        var settings = new Fixture().CreateValidSettings(previewDurationSeconds: invalidDuration);
+        var settings = CreateValidSettings(previewDurationSeconds: invalidDuration);
 
         Action act = () => settings.Validate();
 
@@ -63,7 +58,7 @@ public sealed class SettingsTests
     [Fact]
     public void Validate_Passes_WhenPreviewDurationSecondsIsPositive()
     {
-        var settings = new Fixture().CreateValidSettings(previewDurationSeconds: 15);
+        var settings = CreateValidSettings(previewDurationSeconds: 15);
 
         Action act = () => settings.Validate();
 

@@ -2,11 +2,6 @@ namespace JiApp.Scheduler.Tests.Domain;
 
 public sealed class PriceTests
 {
-    private sealed class Fixture
-    {
-        public static Fixture Init() => new();
-    }
-
     [Fact]
     public void Price_DefaultCurrencyIsPLN()
     {

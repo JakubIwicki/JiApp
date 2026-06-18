@@ -2,11 +2,6 @@ namespace JiApp.Scheduler.Tests.Domain;
 
 public sealed class ClientTests
 {
-    private sealed class Fixture
-    {
-        public static Fixture Init() => new();
-    }
-
     [Fact]
     public void Client_HasDefaultValues()
     {
