@@ -34,6 +34,9 @@ public sealed class RateLimitPolicySelector(RequestDelegate next, RateLimitPolic
         // YT preview
         ["/api/v1/yt/preview"] = RateLimitPolicyNames.PreviewPolicy,
 
+        // YT assistant (LLM chat, SSE)
+        ["/api/v1/yt/assistant/chat"] = RateLimitPolicyNames.AssistantPolicy,
+
         // Health
         ["/health"] = RateLimitPolicyNames.HealthPolicy,
         ["/health/live"] = RateLimitPolicyNames.HealthPolicy,
