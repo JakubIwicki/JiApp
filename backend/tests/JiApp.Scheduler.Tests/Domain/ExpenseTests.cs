@@ -10,7 +10,6 @@ public sealed class ExpenseTests
     [Fact]
     public void Expense_HasDefaultValues()
     {
-        Fixture.Init();
         var expense = new Expense();
 
         expense.Id.Should().Be(0L);

@@ -10,7 +10,6 @@ public sealed class ClientTests
     [Fact]
     public void Client_HasDefaultValues()
     {
-        Fixture.Init();
         var client = new Client();
 
         client.Id.Should().Be(0L);

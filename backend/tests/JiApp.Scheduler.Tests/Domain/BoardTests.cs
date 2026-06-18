@@ -10,7 +10,6 @@ public sealed class BoardTests
     [Fact]
     public void Board_WithValidData_HasCorrectDefaults()
     {
-        Fixture.Init();
         var board = new Board
         {
             Name = "Test Board",

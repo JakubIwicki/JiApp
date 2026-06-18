@@ -10,7 +10,6 @@ public sealed class PriceTests
     [Fact]
     public void Price_DefaultCurrencyIsPLN()
     {
-        Fixture.Init();
         var price = new Price();
 
         price.Amount.Should().Be(0m);
@@ -20,7 +19,6 @@ public sealed class PriceTests
     [Fact]
     public void Price_ConstructorSetsAmountAndCurrency()
     {
-        Fixture.Init();
         var price = new Price(99.99m, "EUR");
 
         price.Amount.Should().Be(99.99m);
@@ -30,7 +28,6 @@ public sealed class PriceTests
     [Fact]
     public void Price_ConstructorDefaultsToPLN()
     {
-        Fixture.Init();
         var price = new Price(50m);
 
         price.Amount.Should().Be(50m);

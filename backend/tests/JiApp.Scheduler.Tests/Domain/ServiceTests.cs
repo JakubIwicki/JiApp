@@ -10,7 +10,6 @@ public sealed class ServiceTests
     [Fact]
     public void Service_HasDefaultValues()
     {
-        Fixture.Init();
         var service = new Service();
 
         service.Id.Should().Be(0L);
