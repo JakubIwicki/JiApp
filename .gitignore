@@ -64,7 +64,8 @@ backend/.pids/
 backend/.api-pid
 backend/.data/
 
-# Dev certificates (generated)
+# Dev certificates / private keys (never commit — public repo)
+backend/certs/
 backend/certs/dev-cert.pfx
 *.srl
 *.cer
