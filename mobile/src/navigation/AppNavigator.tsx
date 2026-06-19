@@ -6,6 +6,7 @@ import { ToastProvider } from '../context/ToastContext';
 import ToastContainer from '../components/ToastContainer';
 import WelcomeOverlay from '../components/WelcomeOverlay';
 import ConnectionFailureOverlay from '../components/ConnectionFailureOverlay';
+import ServerWakeScreen from '../screens/ServerWakeScreen';
 import AuthNavigator from './AuthNavigator';
 import RootNavigator from './RootNavigator';
 
@@ -22,11 +23,15 @@ const AppContent: React.FC = () => {
     dismissFarewell,
   } = use(AuthContext);
 
+  const [showWakeScreen, setShowWakeScreen] = useState(() => !__DEV__);
   const [connectionFailed, setConnectionFailed] = useState(false);
   const watchdogTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Connection watchdog: if isLoading stays true for 5s, assume server unreachable
+  // Disabled during the initial wake screen phase (we expect longer waits)
   useEffect(() => {
+    if (showWakeScreen) return;
+
     const timer = setTimeout(() => {
       setConnectionFailed(true);
     }, CONNECTION_WATCHDOG_TIMEOUT);
@@ -36,7 +41,7 @@ const AppContent: React.FC = () => {
     return () => {
       clearTimeout(timer);
     };
-  }, []);
+  }, [showWakeScreen]);
 
   // Clear timer if loading completes before timeout
   useEffect(() => {
@@ -46,9 +51,18 @@ const AppContent: React.FC = () => {
     }
   }, [isLoading]);
 
+  const handleWakeComplete = useCallback(() => {
+    setShowWakeScreen(false);
+  }, []);
+
   const handleConnectionTimeout = useCallback(() => {
     BackHandler.exitApp();
   }, []);
+
+  // Show the server wake screen in production builds before anything else
+  if (showWakeScreen) {
+    return <ServerWakeScreen onComplete={handleWakeComplete} />;
+  }
 
   if (connectionFailed) {
     return (

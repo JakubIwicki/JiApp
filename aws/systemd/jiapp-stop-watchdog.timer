@@ -1,0 +1,11 @@
+[Unit]
+Description=JiApp Stop Watchdog Timer — runs every 60s after boot
+Requires=jiapp.service
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=60s
+AccuracySec=5s
+
+[Install]
+WantedBy=timers.target

@@ -107,6 +107,14 @@
     "languagePolish": "Polski",
     "languageEnglish": "English"
   },
+  "wake": {
+    "title": "Budzenie serwera...",
+    "message": "To może potrwać do 2 minut",
+    "unavailable": "Serwer niedostępny",
+    "unavailableMessage": "Serwer niedostępny. To może potrwać 1–2 minuty.",
+    "retry": "Spróbuj ponownie",
+    "closeApp": "Zamknij aplikację"
+  },
   "connectionError": {
     "title": "Nie można połączyć się z serwerem",
     "message": "Skontaktuj się z administratorem.",

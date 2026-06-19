@@ -1,0 +1,123 @@
+# TODO: To enable GitHub CI auto-deploy, configure these
+# before merging to main:
+#   1. Auto-deploy on push stays disabled until docker buildx ARM64
+#      multi-arch is configured (EC2 is ARM64; without buildx,
+#      images built on ubuntu-latest x86_64 ship exec format error).
+#   2. Set GitHub Secrets (Settings → Secrets → Actions):
+#      AWS_DEPLOY_ROLE_ARN = arn:aws:iam::<your-account-id>:role/github-actions-deploy
+#      EC2_INSTANCE_ID      = <your-instance-id>
+# Currently using manual builds via /opt/jiapp/build-and-push.sh on EC2.
+name: Deploy to AWS
+
+on:
+  workflow_dispatch:
+    inputs:
+      image-tag:
+        description: 'Image tag to deploy (default: git short SHA)'
+        required: false
+
+env:
+  AWS_REGION: eu-central-1
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image tag
+        id: tag
+        run: |
+          TAG="${{ inputs.image-tag || github.sha }}"
+          echo "tag=${TAG:0:7}" >> "$GITHUB_OUTPUT"
+
+      - name: Install yt-dlp (needed for YtDownloader build context)
+        run: |
+          mkdir -p ~/.local/bin
+          curl -fsSL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o ~/.local/bin/yt-dlp
+          chmod +x ~/.local/bin/yt-dlp
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Build and push Docker images
+        env:
+          COMPOSE_PROJECT_NAME: jiapp
+        run: |
+          export IMAGE_TAG="${{ steps.tag.outputs.tag }}"
+          export ECR_URL="${{ steps.ecr-login.outputs.registry }}"
+          export ECR_BASE="${ECR_URL}/jiapp"
+
+          docker compose -f backend/docker-compose.yml build
+
+          for svc in gateway identity ytdownloader imagetools scheduler; do
+            echo "Pushing jiapp/${svc}:${IMAGE_TAG}..."
+            docker tag "jiapp-${svc}:latest" "${ECR_BASE}/${svc}:${IMAGE_TAG}"
+            docker push "${ECR_BASE}/${svc}:${IMAGE_TAG}"
+          done
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build-and-push]
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Check EC2 state
+        id: ec2-state
+        run: |
+          STATE=$(aws ec2 describe-instances \
+            --instance-ids "${{ secrets.EC2_INSTANCE_ID }}" \
+            --query 'Reservations[0].Instances[0].State.Name' \
+            --output text)
+          echo "state=${STATE}" >> "$GITHUB_OUTPUT"
+          echo "Instance state: ${STATE}"
+
+      - name: Deploy to running EC2
+        if: steps.ec2-state.outputs.state == 'running'
+        run: |
+          IMAGE_TAG="${{ needs.build-and-push.outputs.image-tag }}"
+          echo "Deploying ${IMAGE_TAG} to running instance..."
+
+          aws ssm send-command \
+            --instance-ids "${{ secrets.EC2_INSTANCE_ID }}" \
+            --document-name "AWS-RunShellScript" \
+            --comment "JiApp deploy ${IMAGE_TAG}" \
+            --parameters "commands=[
+              'cd /opt/jiapp',
+              'sed -i \"s/^IMAGE_TAG=.*/IMAGE_TAG=${IMAGE_TAG}/\" .env 2>/dev/null || echo IMAGE_TAG=${IMAGE_TAG} >> .env',
+              'export IMAGE_TAG=${IMAGE_TAG} ECR_BASE=\$(aws sts get-caller-identity --query Account --output text).dkr.ecr.${AWS_REGION}.amazonaws.com/jiapp',
+              'docker compose -f docker-compose.yml -f docker-compose.prod.yml pull',
+              'docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans'
+            ]"
+
+      - name: Update deploy tag for stopped EC2
+        if: steps.ec2-state.outputs.state == 'stopped'
+        run: |
+          IMAGE_TAG="${{ needs.build-and-push.outputs.image-tag }}"
+          echo "EC2 is stopped — writing ${IMAGE_TAG} to S3 for next start..."
+
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          echo "${IMAGE_TAG}" | aws s3 cp - "s3://jiapp-deploy-config-${ACCOUNT_ID}/current-tag.txt"
+
+          echo "Tag written. Instance will pull ${IMAGE_TAG} on next wake-up."
+
+      - name: Warn if EC2 state unknown
+        if: steps.ec2-state.outputs.state != 'running' && steps.ec2-state.outputs.state != 'stopped'
+        run: |
+          echo "::warning::EC2 is in state '${{ steps.ec2-state.outputs.state }}' — deploy skipped"
+          echo "Image was pushed to ECR as ${{ needs.build-and-push.outputs.image-tag }}"
+          echo "Deploy manually when instance is running or stopped."

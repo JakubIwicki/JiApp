@@ -13,9 +13,11 @@ graph TD
     YouTube["🌐 YouTube Data API v3<br/>www.googleapis.com/youtube/v3"]
     YtDlp["🌐 YouTube CDN<br/>www.youtube.com/watch?v=..."]
 
-    %% Infrastructure
-    PG[("🗄️ PostgreSQL<br/>:5432")]
+    %% Infrastructure (production uses SQLite, dev uses SQLite or PostgreSQL)
+    DB[("🗄️ SQLite / PostgreSQL<br/>")]
     GW["🚪 Gateway<br/>YARP Reverse Proxy<br/>:6700"]
+    Lambda["⚡ Lambda<br/>ji-app-starter"]
+    APIGW["🔀 API Gateway<br/>HTTP API"]
 
     %% Services
     ID["🔐 Identity<br/>:6701"]
@@ -39,9 +41,14 @@ graph TD
     GW -.->|"health check"| SCH
 
     %% Service → DB
-    ID ---|"jiapp_identity"| PG
-    YT ---|"jiapp_ytdownloader"| PG
-    SCH ---|"jiapp_scheduler"| PG
+    ID ---|"jiapp_identity"| DB
+    YT ---|"jiapp_ytdownloader"| DB
+    SCH ---|"jiapp_scheduler"| DB
+
+    %% Wake-up flow (production)
+    Mobile -->|"POST /start"| APIGW
+    APIGW -->|"invoke"| Lambda
+    Lambda -->|"ec2:StartInstances"| GW
 
     %% External calls
     YT -->|"Search API"| YouTube
@@ -52,7 +59,7 @@ graph TD
     classDef infra fill:#48b,stroke:#333,color:#fff
     classDef external fill:#e83,stroke:#333,color:#fff
     class GW,ID,YT,IMG,SCH live
-    class PG,GW infra
+    class DB,GW,Lambda,APIGW infra
     class YouTube,YtDlp,Mobile external
 ```
 
@@ -62,14 +69,27 @@ graph TD
 
 ### Service Port Bindings
 
-| Service | Dev URL | Prod Docker URL | Port |
-|---------|---------|-----------------|------|
-| **Gateway** | `https://*:6700` | `http://*:6700` | 6700 |
-| **Identity** | `https://*:6701` | `http://*:6701` | 6701 |
-| **YtDownloader** | `https://*:6702` | `http://*:6702` | 6702 |
-| **ImageTools** | `https://*:6703` | `http://*:6703` | 6703 |
-| **Scheduler** | `https://*:6704` | `http://*:6704` | 6704 |
-| **PostgreSQL** | `localhost:5432` | `postgres:5432` | 5432 |
+| Service | Dev URL | Prod URL | Port |
+|---------|---------|----------|------|
+| **Gateway** | `https://*:6700` | `https://*:6700` (Kestrel HTTPS, PFX cert) | 6700 |
+| **Identity** | `https://*:6701` | `http://*:6701` (internal) | 6701 |
+| **YtDownloader** | `https://*:6702` | `http://*:6702` (internal) | 6702 |
+| **ImageTools** | `https://*:6703` | `http://*:6703` (internal) | 6703 |
+| **Scheduler** | `https://*:6704` | `http://*:6704` (internal) | 6704 |
+
+**Production notes:** Only the Gateway is publicly exposed (HTTPS on :6700 with baked CA cert). Internal services use HTTP. Production uses SQLite (no PostgreSQL).
+
+### AWS Production Deployment
+
+| Resource | Endpoint / Identifier | Purpose |
+|----------|----------------------|---------|
+| **Wake-up API** | `POST https://{api-id}.execute-api.eu-central-1.amazonaws.com/start` | Starts EC2 instance on-demand from mobile |
+| **API Gateway** | `jiapp-wake` HTTP API | Routes `/start` → Lambda starter |
+| **ECR Registry** | `{account}.dkr.ecr.eu-central-1.amazonaws.com/jiapp/{service}` | Docker image storage (5 repos) |
+| **S3 Backups** | `s3://jiapp-backups-{account}/db-backups/` | SQLite database backups (30-day retention) |
+| **S3 Deploy Config** | `s3://jiapp-deploy-config-{account}/current-tag.txt` | Current deploy image tag |
+
+See `deployment_plan/DEPLOYMENT_PLAN.md` for full architecture.
 
 ### Docker Compose Internal URLs
 
