@@ -117,6 +117,6 @@ public sealed partial class YtAgentToolService(
             new DownloadHistoryResponse(items.AsReadOnly()));
     }
 
-    public DownloadOffer BuildDownloadOffer(string videoId, string videoUrl, string? title, string? imageUrl) =>
-        new(videoId, videoUrl, title, imageUrl);
+    public DownloadOffer BuildDownloadOffer(long userId, string videoId, string videoUrl, string? title, string? imageUrl) =>
+        new(videoId, videoUrl, title, imageUrl, userId);
 }

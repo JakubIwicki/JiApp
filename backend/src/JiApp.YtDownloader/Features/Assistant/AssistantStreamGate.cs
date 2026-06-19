@@ -1,8 +1,9 @@
 namespace JiApp.YtDownloader.Features.Assistant;
 
 /// <summary>
-/// Process-wide gate limiting concurrent assistant chat SSE streams to 1.
+/// Process-wide (single-instance) gate limiting concurrent assistant chat SSE streams to 1.
 /// Protects RAM on small instances (t4g.nano / 512 MB) from dual-session pressure.
+/// Horizontal scaling would need a distributed lock — this gate does not coordinate across instances.
 /// </summary>
 public sealed class AssistantStreamGate
 {

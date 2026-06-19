@@ -82,7 +82,7 @@ public sealed class YtMcpTools
         [Description("The video thumbnail image URL (optional, for display purposes).")]
         string? imageUrl = null)
     {
-        _ = currentUser.UserId; // validate JWT claim
-        return toolService.BuildDownloadOffer(videoId, videoUrl, title, imageUrl);
+        var userId = currentUser.UserId;
+        return toolService.BuildDownloadOffer(userId, videoId, videoUrl, title, imageUrl);
     }
 }

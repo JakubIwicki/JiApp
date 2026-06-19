@@ -4,4 +4,5 @@ public sealed record DownloadOffer(
     string VideoId,
     string VideoUrl,
     string? Title,
-    string? ImageUrl);
+    string? ImageUrl,
+    long RequestedByUserId);

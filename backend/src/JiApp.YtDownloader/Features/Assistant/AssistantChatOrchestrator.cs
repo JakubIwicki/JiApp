@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using JiApp.YtDownloader.Agent;
 using JiApp.YtDownloader.Configuration;
 using JiApp.YtDownloader.Features.DownloadHistory;
@@ -11,7 +12,7 @@ using Microsoft.Extensions.Logging;
 
 namespace JiApp.YtDownloader.Features.Assistant;
 
-public sealed class AssistantChatOrchestrator(
+public sealed partial class AssistantChatOrchestrator(
     IAssistantChatClientProvider chatClientProvider,
     YtAgentToolService toolService,
     Settings settings,
@@ -77,7 +78,7 @@ public sealed class AssistantChatOrchestrator(
                 }
                 catch (Exception ex)
                 {
-                    logger.AssistantChatStreamFailed(userId, ex.GetType().Name, Redact(ex.Message));
+                    logger.AssistantChatStreamFailed(userId, ex.GetType().Name, SanitizeForLog(ex.Message));
                     faulted = true;
                     break;
                 }
@@ -109,13 +110,17 @@ public sealed class AssistantChatOrchestrator(
 
     private const int MaxLoggedMessageLength = 200;
 
-    private static string Redact(string message)
+    /// <summary>Strips secret-like tokens then truncates to <see cref="MaxLoggedMessageLength"/> chars.</summary>
+    private static string SanitizeForLog(string message)
     {
-        var truncated = message.Length > MaxLoggedMessageLength
-            ? message[..MaxLoggedMessageLength]
-            : message;
-        return truncated;
+        var sanitized = SecretPattern().Replace(message, "sk-***");
+        return sanitized.Length > MaxLoggedMessageLength
+            ? sanitized[..MaxLoggedMessageLength]
+            : sanitized;
     }
+
+    [GeneratedRegex(@"sk-[A-Za-z0-9_-]{8,}", RegexOptions.CultureInvariant)]
+    private static partial Regex SecretPattern();
 
     private static List<ChatMessage> BuildChatMessages(
         IReadOnlyList<ChatMessageDto> messages, string? language)
@@ -245,7 +250,7 @@ public sealed class AssistantChatOrchestrator(
         }
 
         DownloadOffer OfferDownload(string videoId, string videoUrl, string? title, string? imageUrl) =>
-            toolService.BuildDownloadOffer(videoId, videoUrl, title, imageUrl);
+            toolService.BuildDownloadOffer(userId, videoId, videoUrl, title, imageUrl);
 
         return
         [

@@ -349,6 +349,7 @@ public class YtAgentToolServiceTests
 
         // Act
         var offer = sut.BuildDownloadOffer(
+            UserId,
             "dQw4w9WgXcQ",
             "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
             "Never Gonna Give You Up",
@@ -359,7 +360,8 @@ public class YtAgentToolServiceTests
             "dQw4w9WgXcQ",
             "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
             "Never Gonna Give You Up",
-            "https://i.ytimg.com/vi/dQw4w9WgXcQ/default.jpg"));
+            "https://i.ytimg.com/vi/dQw4w9WgXcQ/default.jpg",
+            UserId));
 
         youtubeClient.VerifyNoOtherCalls();
         searchHistoryRepo.VerifyNoOtherCalls();

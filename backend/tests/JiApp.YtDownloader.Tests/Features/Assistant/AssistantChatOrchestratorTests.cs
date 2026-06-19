@@ -223,7 +223,7 @@ public class AssistantChatOrchestratorTests
     {
         using var cts = new CancellationTokenSource(TestTimeout);
         const string callId = "call-json-2";
-        var offer = new DownloadOffer("vid9", "https://youtu.be/vid9", "A song", "img9");
+        var offer = new DownloadOffer("vid9", "https://youtu.be/vid9", "A song", "img9", UserId);
 
         var orchestrator = new Fixture()
             .WithUpdate(new FunctionCallContent(callId, AssistantToolNames.OfferDownload,
@@ -245,7 +245,7 @@ public class AssistantChatOrchestratorTests
     {
         using var cts = new CancellationTokenSource(TestTimeout);
         const string callId = "call-2";
-        var offer = new DownloadOffer("vid9", "https://youtu.be/vid9", "A song", "img9");
+        var offer = new DownloadOffer("vid9", "https://youtu.be/vid9", "A song", "img9", UserId);
 
         var orchestrator = new Fixture()
             .WithUpdate(new FunctionCallContent(callId, AssistantToolNames.OfferDownload,

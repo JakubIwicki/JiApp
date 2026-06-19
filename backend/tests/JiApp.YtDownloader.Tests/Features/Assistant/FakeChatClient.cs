@@ -53,7 +53,7 @@ public sealed class FakeChatClient : IChatClient
         {
             cancellationToken.ThrowIfCancellationRequested();
             yield return update;
-            await Task.Yield();
+            await Task.CompletedTask;
         }
     }
 
