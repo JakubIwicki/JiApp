@@ -37,7 +37,7 @@ echo "    GitHub Role: $GITHUB_ROLE_ARN"
 # ── 2. EC2 instance ───────────────────────────────────────────
 
 echo ""
-echo "==> [2/4] Launching EC2 (t4g.micro, ARM)..."
+echo "==> [2/4] Launching EC2 (t4g.small, ARM)..."
 AMI_ID=$(aws ec2 describe-images --region "$REGION" --owners amazon \
     --filters "Name=name,Values=al2023-ami-minimal-2023*-kernel-6.1-arm64" \
               "Name=state,Values=available" "Name=architecture,Values=arm64" \
@@ -54,7 +54,7 @@ BOOTSTRAP
 )
 
 INSTANCE_ID=$(aws ec2 run-instances \
-    --region "$REGION" --image-id "$AMI_ID" --instance-type t4g.micro \
+    --region "$REGION" --image-id "$AMI_ID" --instance-type t4g.small \
     --security-group-ids "$SG_ID" --iam-instance-profile Arn="$INSTANCE_PROFILE" \
     --block-device-mappings '[{"DeviceName":"/dev/xvda","Ebs":{"VolumeSize":30,"VolumeType":"gp3","Encrypted":true}}]' \
     --user-data "$USER_DATA" \

@@ -9,7 +9,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: "http://*:6701"
-      ConnectionStrings__Default: Data Source=/app/data/jiapp_identity.db
+      ConnectionString: Data Source=/app/data/jiapp_identity.db
       Jwt__Key: ${JWT_KEY:?required}
       Jwt__Issuer: ${JWT_ISSUER:-JiApp}
       Jwt__Audience: ${JWT_AUDIENCE:-JiAppMobile}
@@ -28,7 +28,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: "http://*:6702"
-      ConnectionStrings__Default: Data Source=/app/data/jiapp_ytdownloader.db
+      ConnectionString: Data Source=/app/data/jiapp_ytdownloader.db
       Jwt__Key: ${JWT_KEY:?required}
       Jwt__Issuer: ${JWT_ISSUER:-JiApp}
       Jwt__Audience: ${JWT_AUDIENCE:-JiAppMobile}
@@ -66,7 +66,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: "http://*:6704"
-      ConnectionStrings__Default: Data Source=/app/data/jiapp_scheduler.db
+      ConnectionString: Data Source=/app/data/jiapp_scheduler.db
       Jwt__Key: ${JWT_KEY:?required}
       Jwt__Issuer: ${JWT_ISSUER:-JiApp}
       Jwt__Audience: ${JWT_AUDIENCE:-JiAppMobile}
@@ -86,8 +86,8 @@ services:
       Jwt__Key: ${JWT_KEY:?required}
       Jwt__Issuer: ${JWT_ISSUER:-JiApp}
       Jwt__Audience: ${JWT_AUDIENCE:-JiAppMobile}
-      Kestrel__Certificates__Default__Path: /app/certs/server.pfx
-      Kestrel__Certificates__Default__Password: ${CERT_PASSWORD:?required}
+      Kestrel__Endpoints__Https__Certificate__Path: /app/certs/server.pfx
+      Kestrel__Endpoints__Https__Certificate__Password: ${CERT_PASSWORD:?required}
       ReverseProxy__Clusters__identity-cluster__Destinations__identity__Address: "http://identity:6701"
       ReverseProxy__Clusters__yt-cluster__Destinations__yt__Address: "http://ytdownloader:6702"
       ReverseProxy__Clusters__imagetools-cluster__Destinations__imagetools__Address: "http://imagetools:6703"

@@ -93,6 +93,9 @@ backend/.api-debug.log
 .env
 .venv
 
+# AWS prod secrets (template is tracked)
+aws/.env.prod
+
 **/graphify-out/
 docs/
 .superpowers/
