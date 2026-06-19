@@ -87,12 +87,16 @@ DEVICE_HOST=$(echo "$JIAPP_API_URL" | sed -E 's|^https?://([^:/]+).*|\1|')
 sed -i '/<!-- DEVICE_IP_BEGIN -->/,/<!-- DEVICE_IP_END -->/{ /<!-- DEVICE_IP_BEGIN -->/!{ /<!-- DEVICE_IP_END -->/!d; }; }' \
     "$NETWORK_SECURITY_CONFIG"
 
-if [ -n "$DEVICE_HOST" ] && [ "$DEVICE_HOST" != "10.0.2.2" ] && [ "$DEVICE_HOST" != "localhost" ]; then
+if [ -n "$DEVICE_HOST" ] && [ "$DEVICE_HOST" != "10.0.2.2" ] && [ "$DEVICE_HOST" != "localhost" ] && [ "$DEVICE_HOST" != "${JIAPP_PROD_IP:-}" ]; then
     sed -i "s|<!-- DEVICE_IP_BEGIN -->|&\n        <domain includeSubdomains=\"false\">$DEVICE_HOST</domain>|" \
         "$NETWORK_SECURITY_CONFIG"
     success "Injected $DEVICE_HOST into network_security_config.xml"
 else
-    info "Using emulator/localhost — no extra domain needed in network_security_config.xml"
+    if [ "$DEVICE_HOST" = "${JIAPP_PROD_IP:-}" ]; then
+        info "API host is the production IP ($DEVICE_HOST) — handled by prod-CA block, skipping dev-CA injection"
+    else
+        info "Using emulator/localhost — no extra domain needed in network_security_config.xml"
+    fi
 fi
 
 # ── Production CA cert — inject PROD_IP into network security config ─────
