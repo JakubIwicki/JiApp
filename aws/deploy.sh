@@ -122,6 +122,7 @@ aws ecr get-login-password --region ${REGION} | docker login --username AWS --pa
 aws s3 cp s3://${BUCKET}/ec2/.env /opt/jiapp/.env --region ${REGION} 2>/dev/null || true
 set -a; source /opt/jiapp/.env; set +a
 export ECR_BASE=${ECR_BASE}
+IMAGE_TAG=$(aws s3 cp "s3://${BUCKET}/current-tag.txt" - --region ${REGION} 2>/dev/null || echo "latest")
 export IMAGE_TAG=${IMAGE_TAG:-latest}
 
 echo "Starting JiApp (IMAGE_TAG=${IMAGE_TAG})..."
