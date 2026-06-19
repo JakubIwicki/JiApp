@@ -17,4 +17,13 @@
             <certificates src="@raw/jiapp_dev_ca" />
         </trust-anchors>
     </domain-config>
+    <!-- Production domain — CA cert for production Elastic IP.
+         build-apk.sh injects JIAPP_PROD_IP between BEGIN/END markers. -->
+    <domain-config cleartextTrafficPermitted="false">
+        <!-- PROD_IP_BEGIN -->
+        <!-- PROD_IP_END -->
+        <trust-anchors>
+            <certificates src="@raw/jiapp_prod_ca" />
+        </trust-anchors>
+    </domain-config>
 </network-security-config>
