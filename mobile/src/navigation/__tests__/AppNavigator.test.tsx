@@ -59,6 +59,15 @@ jest.mock('../../screens/SettingsScreen', () => {
   };
 });
 
+jest.mock('../../screens/ChatScreen', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: () => React.createElement(Text, null, 'ChatScreen'),
+  };
+});
+
 jest.mock('../SchedulerNavigator', () => {
   const React = require('react');
   const { Text } = require('react-native');

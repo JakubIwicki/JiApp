@@ -133,4 +133,99 @@ public class SettingsTests
 
         act.Should().NotThrow();
     }
+
+    // ── DeepSeek + Assistant ───────────────────────────────────────────────
+
+    [Fact]
+    public void DeepSeekSettings_defaults_are_set()
+    {
+        var deepSeek = new Settings.DeepSeekSettings();
+
+        deepSeek.ApiKey.Should().BeNull();
+        deepSeek.BaseUrl.Should().Be("https://api.deepseek.com");
+        deepSeek.Model.Should().Be("deepseek-chat");
+        deepSeek.MaxIterations.Should().Be(5);
+        deepSeek.RequestTimeoutSeconds.Should().Be(60);
+    }
+
+    [Fact]
+    public void AssistantSettings_DailyMessageLimitPerUser_defaults_to_30()
+    {
+        var assistant = new Settings.AssistantSettings();
+
+        assistant.DailyMessageLimitPerUser.Should().Be(30);
+    }
+
+    [Fact]
+    public void Validate_passes_when_DeepSeek_is_null()
+    {
+        var settings = ValidSettings();
+        settings.DeepSeek = null;
+
+        Action act = () => settings.Validate();
+
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void Validate_passes_when_DeepSeek_ApiKey_is_empty()
+    {
+        var settings = ValidSettings();
+        settings.DeepSeek = new Settings.DeepSeekSettings { ApiKey = "" };
+
+        Action act = () => settings.Validate();
+
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void Validate_passes_when_Assistant_is_null()
+    {
+        var settings = ValidSettings();
+        settings.Assistant = null;
+
+        Action act = () => settings.Validate();
+
+        act.Should().NotThrow();
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(-100)]
+    public void Validate_throws_when_Assistant_DailyMessageLimitPerUser_is_not_positive(int invalidLimit)
+    {
+        var settings = ValidSettings();
+        settings.Assistant = new Settings.AssistantSettings { DailyMessageLimitPerUser = invalidLimit };
+
+        Action act = () => settings.Validate();
+
+        act.Should().Throw<InvalidOperationException>()
+            .Which.Message.Should().Contain("DailyMessageLimitPerUser");
+    }
+
+    [Fact]
+    public void Validate_passes_when_Assistant_DailyMessageLimitPerUser_is_positive()
+    {
+        var settings = ValidSettings();
+        settings.Assistant = new Settings.AssistantSettings { DailyMessageLimitPerUser = 50 };
+
+        Action act = () => settings.Validate();
+
+        act.Should().NotThrow();
+    }
+
+    private static Settings ValidSettings() => new()
+    {
+        ConnectionString = "Data Source=test.db",
+        App = new Settings.AppSettings { BaseDirectory = "/tmp", PreviewDurationSeconds = 10 },
+        Jwt = new Settings.JwtSettings
+        {
+            Key = "test-key", Issuer = "test-issuer", Audience = "test-audience",
+        },
+        Youtube = new Settings.YoutubeSettings
+        {
+            ApiKey = "test-key", YtDlpPath = "yt-dlp", FfmpegPath = "ffmpeg",
+        },
+    };
 }

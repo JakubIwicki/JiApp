@@ -168,7 +168,18 @@ All origins accepted. Same policy on all services.
 | PATCH | `/api/v1/yt/downloads/history/{id:long}/archive` | `ArchiveDownloadEndpoint.cs` | 🟢 Live |
 | GET | `/api/v1/yt/history` | `GetHistoryEndpoint.cs` | 🟢 Live |
 | GET | `/api/v1/yt/preview/{videoId}` | `StreamPreviewEndpoint.cs` | 🟢 Live |
+| POST | `/api/v1/yt/assistant/chat` | `AssistantChatEndpoint.cs` | 🟢 Live |
 | GET | `/api/v1/yt/health` | `Startup.cs` | 🟢 Live |
+
+> **Assistant chat** is SSE (Server-Sent Events), JWT-gated (`module:YtDownloader`), routed through the Gateway at `/api/v1/yt/assistant/chat`. The endpoint accepts `POST` with `{ messages, language? }` and streams `text-delta`, `tool-step`, `search-results`, `download-offer`, and `done` events. Concurrent streams are capped at 1 (process-wide `SemaphoreSlim`); a second concurrent call receives **503** ("busy, try again").
+
+### Internal Listener (not Gateway-routed)
+
+| Method | Path | Handler | Status |
+|--------|------|---------|--------|
+| POST | `/mcp` | `Startup.cs` (MCP server) | 🟢 Live |
+
+> The MCP SSE endpoint is **JWT-gated** (`module:YtDownloader`) but mapped **outside** `/api/v1/yt`, so YARP does NOT proxy it. It is reachable only inside the Docker network at `http://ytdownloader:6702/mcp`. Internal MCP hosts connect to it directly, not through the Gateway.
 
 ### External API Calls
 
@@ -177,6 +188,7 @@ All origins accepted. Same policy on all services.
 | YouTube Data API v3 | `https://www.googleapis.com/youtube/v3/search` | `Google.Apis.YouTube.v3` |
 | YouTube video pages | `https://www.youtube.com/watch?v={videoId}` | yt-dlp |
 | YouTube shortlinks | `https://youtu.be/{videoId}` | Validator regex |
+| DeepSeek API | `https://api.deepseek.com/v1/chat/completions` | `Microsoft.Extensions.AI` |
 
 **Valid YouTube URL domains:** `youtube.com`, `www.youtube.com`, `m.youtube.com`, `youtu.be`, `youtube-nocookie.com`, `www.youtube-nocookie.com`
 
@@ -439,6 +451,9 @@ Custom CA cert `jiapp_dev_ca` trusted for HTTPS with self-signed dev certificate
 | `JWT_ACCESS_EXPIRE` | Access token lifetime | 15 minutes |
 | `JWT_REFRESH_EXPIRE` | Refresh token lifetime | 7 days |
 | `YOUTUBE_API_KEY` | YouTube Data API v3 key | *(required)* |
+| `DEEPSEEK_API_KEY` | DeepSeek API key for assistant chat | *(empty = 503)* |
+| `DEEPSEEK_MODEL` | DeepSeek model override | `deepseek-chat` |
+| `YT_GC_HEAP_LIMIT` | YtDownloader GC heap hard limit (hex) | *(empty = no cap)* |
 | `JIAPP_API_URL` | Mobile API base URL (build-time) | `https://localhost:6700/api/v1` |
 | `CORS_ALLOWED_ORIGIN` | CORS origin override | *(none)* |
 

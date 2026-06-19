@@ -64,7 +64,8 @@ backend/.pids/
 backend/.api-pid
 backend/.data/
 
-# Dev certificates (generated)
+# Dev certificates / private keys (never commit — public repo)
+backend/certs/
 backend/certs/dev-cert.pfx
 *.srl
 *.cer
@@ -78,6 +79,10 @@ backend/certs/prod/jiapp-server.key
 backend/certs/prod/jiapp-server.csr
 backend/certs/prod/jiapp-server.crt
 backend/certs/prod/server.pfx
+
+# Local Claude / MCP config (machine-specific, never commit)
+.mcp.json
+.claude/CLAUDE.local.md
 
 # Runtime logs
 backend/.api-debug.log
@@ -100,6 +105,9 @@ backend/inspect-file.sh
 
 # Test artifacts
 mobile/test-results/
+
+# Worktrees
+.worktrees/
 
 # Media
 *.mp3

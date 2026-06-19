@@ -40,6 +40,7 @@
   },
   "nav": {
     "search": "Search",
+    "assistant": "Assistant",
     "downloads": "Downloads",
     "history": "History",
     "settings": "Settings"
@@ -135,6 +136,49 @@
     },
     "emptyTitle": "No modules available",
     "emptyMessage": "Your account doesn't have access to any modules yet. Please contact your administrator."
+  },
+  "chat": {
+    "title": "Assistant",
+    "inputPlaceholder": "Ask for a song…",
+    "send": "Send",
+    "error": "Chat error",
+    "empty": {
+      "greeting": "Ask me to find a song, video, or check your history",
+      "examples": [
+        "Find lofi music",
+        "Download that video",
+        "What have I searched?"
+      ]
+    },
+    "thinking": "Thinking…",
+    "tool": {
+      "searchYoutube": {
+        "running": "Searching YouTube…",
+        "done": "YouTube search complete"
+      },
+      "listSearchHistory": {
+        "running": "Checking search history…",
+        "done": "Search history retrieved"
+      },
+      "listDownloadHistory": {
+        "running": "Checking downloads…",
+        "done": "Download history retrieved"
+      },
+      "offerDownload": {
+        "running": "Preparing download…",
+        "done": "Download ready"
+      }
+    },
+    "offer": {
+      "download": "Download",
+      "downloading": "Downloading…",
+      "done": "Downloaded",
+      "retry": "Retry"
+    },
+    "downloadNote": {
+      "success": "Downloaded '{{title}}'.",
+      "failed": "Download failed: {{reason}}."
+    }
   },
   "boardManagement": {
     "title": "Boards",

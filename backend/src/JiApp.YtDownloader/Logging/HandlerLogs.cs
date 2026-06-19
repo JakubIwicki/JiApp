@@ -36,4 +36,19 @@ internal static partial class HandlerLogs
     [LoggerMessage(EventId = 25, Level = LogLevel.Warning,
         Message = "yt-dlp download failed for video {VideoId}: {Errors}")]
     public static partial void YoutubeDlDownloadFailed(this ILogger logger, string videoId, string errors);
+
+    [LoggerMessage(EventId = 30, Level = LogLevel.Error,
+        Message = "Assistant chat stream failed for user {UserId}: {ExceptionType} {ExceptionMessage}")]
+    public static partial void AssistantChatStreamFailed(
+        this ILogger logger, long userId, string exceptionType, string exceptionMessage);
+
+    [LoggerMessage(EventId = 31, Level = LogLevel.Warning,
+        Message = "Failed to deserialize tool result for {ToolName}; skipping structured event")]
+    public static partial void AssistantToolResultDeserializeFailed(
+        this ILogger logger, Exception exception, string toolName);
+
+    [LoggerMessage(EventId = 32, Level = LogLevel.Warning,
+        Message = "Assistant chat turn timed out for user {UserId} after {TimeoutSeconds}s")]
+    public static partial void AssistantChatTurnTimedOut(
+        this ILogger logger, long userId, int timeoutSeconds);
 }

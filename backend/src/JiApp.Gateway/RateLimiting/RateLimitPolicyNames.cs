@@ -24,6 +24,9 @@ public static class RateLimitPolicyNames
     // YT preview
     public const string PreviewPolicy = "PreviewPolicy";
 
+    // YT assistant (LLM chat — burst protection; real budget is the DB daily quota)
+    public const string AssistantPolicy = "AssistantPolicy";
+
     // Health
     public const string HealthPolicy = "HealthPolicy";
 

@@ -31,8 +31,14 @@ export type SettingsStackParamList = {
   Settings: undefined;
 };
 
+export type ChatStackParamList = {
+  Chat: undefined;
+  Download: VideoItem;
+};
+
 export type MainTabParamList = {
   SearchTab: NavigatorScreenParams<MainStackParamList> | undefined;
+  AssistantTab: NavigatorScreenParams<ChatStackParamList> | undefined;
   DownloadsTab: undefined;
   HistoryTab: NavigatorScreenParams<HistoryStackParamList> | undefined;
   SettingsTab: NavigatorScreenParams<SettingsStackParamList> | undefined;

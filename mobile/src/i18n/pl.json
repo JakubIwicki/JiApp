@@ -40,6 +40,7 @@
   },
   "nav": {
     "search": "Szukaj",
+    "assistant": "Asystent",
     "downloads": "Pobrane",
     "history": "Historia",
     "settings": "Ustawienia"
@@ -135,6 +136,49 @@
     },
     "emptyTitle": "Brak dostępnych modułów",
     "emptyMessage": "Twoje konto nie ma jeszcze dostępu do żadnych modułów. Skontaktuj się z administratorem."
+  },
+  "chat": {
+    "title": "Asystent",
+    "inputPlaceholder": "Poproś o utwór…",
+    "send": "Wyślij",
+    "error": "Błąd czatu",
+    "empty": {
+      "greeting": "Poproś mnie o znalezienie piosenki, filmu lub sprawdzenie historii",
+      "examples": [
+        "Znajdź muzykę lofi",
+        "Pobierz ten film",
+        "Co wyszukiwałem?"
+      ]
+    },
+    "thinking": "Myślę…",
+    "tool": {
+      "searchYoutube": {
+        "running": "Szukam na YouTube…",
+        "done": "Wyszukiwanie YouTube zakończone"
+      },
+      "listSearchHistory": {
+        "running": "Sprawdzam historię wyszukiwania…",
+        "done": "Historia wyszukiwania pobrana"
+      },
+      "listDownloadHistory": {
+        "running": "Sprawdzam pobrania…",
+        "done": "Historia pobrań pobrana"
+      },
+      "offerDownload": {
+        "running": "Przygotowuję pobranie…",
+        "done": "Pobranie gotowe"
+      }
+    },
+    "offer": {
+      "download": "Pobierz",
+      "downloading": "Pobieranie…",
+      "done": "Pobrano",
+      "retry": "Spróbuj ponownie"
+    },
+    "downloadNote": {
+      "success": "Pobrano '{{title}}'.",
+      "failed": "Pobieranie nie powiodło się: {{reason}}."
+    }
   },
   "boardManagement": {
     "title": "Tablice",
