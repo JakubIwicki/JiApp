@@ -32,7 +32,8 @@ public sealed class YoutubeClient(
     string ytDlpPath,
     string ffmpegPath,
     string? cookiesFile = null,
-    string? cookiesFromBrowser = null) : IYoutubeClient, IDisposable
+    string? cookiesFromBrowser = null,
+    string? proxy = null) : IYoutubeClient, IDisposable
 {
     private readonly YouTubeService _youTubeService = new(new Google.Apis.Services.BaseClientService.Initializer
     {
@@ -113,6 +114,7 @@ public sealed class YoutubeClient(
             // When both are set, only pass --cookies-from-browser to avoid conflicting flags.
             CookiesFromBrowser = !string.IsNullOrEmpty(cookiesFromBrowser) ? cookiesFromBrowser : null,
             Cookies = string.IsNullOrEmpty(cookiesFromBrowser) && !string.IsNullOrEmpty(cookiesFile) ? cookiesFile : null,
+            Proxy = string.IsNullOrEmpty(proxy) ? null : proxy,
         };
         await _youtubeDlLock.WaitAsync(cancellationToken);
         try
@@ -176,6 +178,11 @@ public sealed class YoutubeClient(
         {
             startInfo.ArgumentList.Add("--cookies");
             startInfo.ArgumentList.Add(cookiesFile);
+        }
+        if (!string.IsNullOrEmpty(proxy))
+        {
+            startInfo.ArgumentList.Add("--proxy");
+            startInfo.ArgumentList.Add(proxy);
         }
         startInfo.ArgumentList.Add("--get-url");
         startInfo.ArgumentList.Add(videoUrl);

@@ -81,6 +81,7 @@ public sealed class Settings
         public string? FfmpegPath { get; set; }
         public string? CookiesFile { get; set; }
         public string? CookiesFromBrowser { get; set; }
+        public string? Proxy { get; set; }
     }
 
     public sealed class DeepSeekSettings

@@ -34,6 +34,7 @@ services:
       Jwt__Audience: ${JWT_AUDIENCE:-JiAppMobile}
       Youtube__ApiKey: ${YOUTUBE_API_KEY:?required}
       Youtube__CookiesFile: ${YOUTUBE_COOKIES_FILE:-}
+      Youtube__Proxy: ${YOUTUBE_PROXY:-}
       DeepSeek__ApiKey: ${DEEPSEEK_API_KEY:-}
       DeepSeek__Model: ${DEEPSEEK_MODEL:-}
       # GC heap limit tuned during Phase F load-test (empty = no cap)

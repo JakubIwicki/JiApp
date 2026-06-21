@@ -110,7 +110,8 @@ public class Startup(Settings settings)
                 settings.Youtube!.YtDlpPath!,
                 settings.Youtube!.FfmpegPath!,
                 settings.Youtube!.CookiesFile,
-                settings.Youtube!.CookiesFromBrowser));
+                settings.Youtube!.CookiesFromBrowser,
+                settings.Youtube!.Proxy));
 
         services.AddSingleton(settings);
         services.AddMemoryCache(options =>
