@@ -108,6 +108,8 @@ public sealed class YoutubeClient(
             NoPlaylist = true,
             ExtractAudio = true,
             AudioFormat = AudioConversionFormat.Mp3,
+            EmbedThumbnail = true,
+            EmbedMetadata = true,
             ExtractorArgs = "youtube:player_client=android_vr",
             Output = outputTemplate,
             // Precedence: cookiesFromBrowser wins over cookiesFile (matching ResolveAudioUrlAsync).
