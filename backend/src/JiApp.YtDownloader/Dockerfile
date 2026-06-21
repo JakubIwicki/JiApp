@@ -13,8 +13,9 @@ RUN dotnet publish "JiApp.YtDownloader.csproj" -c Release -o /app/publish
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 RUN apt-get update && apt-get install -y python3 python3-pip ffmpeg curl ca-certificates unzip && \
     rm -rf /var/lib/apt/lists/*
-RUN pip3 install --break-system-packages "yt-dlp[default]"
+RUN pip3 install --break-system-packages "yt-dlp[default]" bgutil-ytdlp-pot-provider
 RUN curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh && deno --version
+RUN printf '%s\n' '--extractor-args "youtubepot-bgutilhttp:base_url=http://bgutil-provider:4416"' > /etc/yt-dlp.conf
 WORKDIR /app
 COPY --from=publish /app/publish .
 # To authenticate YouTube requests, mount a cookies directory

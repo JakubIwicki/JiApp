@@ -42,6 +42,12 @@ services:
       - jiapp_data:/app/data
       - jiapp_logs:/app/logs
       - ./certs/prod/youtube:/app/cookies
+    depends_on:
+      - bgutil-provider
+    restart: unless-stopped
+
+  bgutil-provider:
+    image: brainicism/bgutil-ytdlp-pot-provider:latest
     restart: unless-stopped
 
   imagetools:
