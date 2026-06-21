@@ -41,6 +41,7 @@ services:
     volumes:
       - jiapp_data:/app/data
       - jiapp_logs:/app/logs
+      - ./certs/prod/youtube:/app/cookies
     restart: unless-stopped
 
   imagetools:

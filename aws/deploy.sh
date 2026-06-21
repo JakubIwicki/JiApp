@@ -51,6 +51,7 @@ COMPOSE
 aws s3 cp /tmp/jiapp-compose.yml "s3://${BUCKET}/ec2/docker-compose.yml" --region "$REGION"
 aws s3 cp "${REPO_ROOT}/backend/docker-compose.prod.yml" "s3://${BUCKET}/ec2/docker-compose.prod.yml" --region "$REGION"
 aws s3 cp "${REPO_ROOT}/backend/certs/prod/server.pfx" "s3://${BUCKET}/ec2/server.pfx" --region "$REGION"
+[ -f "${REPO_ROOT}/backend/certs/prod/youtube/youtube-cookies.txt" ] && aws s3 cp "${REPO_ROOT}/backend/certs/prod/youtube/youtube-cookies.txt" "s3://${BUCKET}/ec2/youtube-cookies.txt" --region "$REGION"
 
 # Scripts for EC2
 for script in startup.sh backup.sh stop-watchdog.sh build-and-push.sh; do
@@ -97,13 +98,14 @@ REGION='${REGION}'
 ACCOUNT='${ACCOUNT_ID}'
 ECR_BASE=${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/jiapp
 
-mkdir -p /opt/jiapp/{data,logs,certs/prod}
+mkdir -p /opt/jiapp/{data,logs,certs/prod,certs/prod/youtube}
 cd /opt/jiapp
 
 echo "Downloading configs..."
 aws s3 cp s3://${BUCKET}/ec2/docker-compose.yml . --region ${REGION}
 aws s3 cp s3://${BUCKET}/ec2/docker-compose.prod.yml . --region ${REGION}
 aws s3 cp s3://${BUCKET}/ec2/server.pfx ./certs/prod/ --region ${REGION}
+aws s3 cp s3://${BUCKET}/ec2/youtube-cookies.txt ./certs/prod/youtube/youtube-cookies.txt --region ${REGION} 2>/dev/null || true
 
 for f in startup.sh backup.sh stop-watchdog.sh build-and-push.sh; do
     aws s3 cp s3://${BUCKET}/ec2/${f} . --region ${REGION} 2>/dev/null || true

@@ -112,7 +112,7 @@ public sealed class YoutubeClient(
             // Precedence: cookiesFromBrowser wins over cookiesFile (matching ResolveAudioUrlAsync).
             // When both are set, only pass --cookies-from-browser to avoid conflicting flags.
             CookiesFromBrowser = !string.IsNullOrEmpty(cookiesFromBrowser) ? cookiesFromBrowser : null,
-            Cookies = string.IsNullOrEmpty(cookiesFromBrowser) ? cookiesFile : null,
+            Cookies = string.IsNullOrEmpty(cookiesFromBrowser) && !string.IsNullOrEmpty(cookiesFile) ? cookiesFile : null,
         };
         await _youtubeDlLock.WaitAsync(cancellationToken);
         try
