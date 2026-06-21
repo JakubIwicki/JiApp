@@ -1,4 +1,4 @@
-import React, { use, useState, useEffect, useRef, useCallback } from 'react';
+import React, { use, useState, useEffect, useCallback } from 'react';
 import { View, ActivityIndicator, BackHandler, StyleSheet } from 'react-native';
 import { colors } from '../styles/theme';
 import { AuthProvider, AuthContext } from '../context/AuthContext';
@@ -25,31 +25,16 @@ const AppContent: React.FC = () => {
 
   const [showWakeScreen, setShowWakeScreen] = useState(() => !__DEV__);
   const [connectionFailed, setConnectionFailed] = useState(false);
-  const watchdogTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Connection watchdog: if isLoading stays true for 5s, assume server unreachable
-  // Disabled during the initial wake screen phase (we expect longer waits)
+  // Connection watchdog: only if the app is STILL loading 5s after the wake
+  // screen dismisses do we treat the server as unreachable.
   useEffect(() => {
-    if (showWakeScreen) return;
-
+    if (showWakeScreen || !isLoading) return;
     const timer = setTimeout(() => {
       setConnectionFailed(true);
     }, CONNECTION_WATCHDOG_TIMEOUT);
-
-    watchdogTimerRef.current = timer;
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [showWakeScreen]);
-
-  // Clear timer if loading completes before timeout
-  useEffect(() => {
-    if (!isLoading && watchdogTimerRef.current) {
-      clearTimeout(watchdogTimerRef.current);
-      watchdogTimerRef.current = null;
-    }
-  }, [isLoading]);
+    return () => clearTimeout(timer);
+  }, [showWakeScreen, isLoading]);
 
   const handleWakeComplete = useCallback(() => {
     setShowWakeScreen(false);
