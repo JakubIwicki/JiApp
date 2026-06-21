@@ -93,6 +93,9 @@ backend/.api-debug.log
 .env
 .venv
 
+# AWS prod secrets (template is tracked)
+aws/.env.prod
+
 **/graphify-out/
 docs/
 .superpowers/
@@ -105,6 +108,9 @@ backend/inspect-file.sh
 
 # Test artifacts
 mobile/test-results/
+
+# Generated config
+mobile/src/config.generated.ts
 
 # Worktrees
 .worktrees/

@@ -6,19 +6,23 @@
 set -euo pipefail
 
 REGION="${AWS_REGION:-eu-central-1}"
-IMAGE_TAG="${IMAGE_TAG:-${2:-latest}}"
-INSTANCE_ID="${3:-${EC2_INSTANCE_ID:-}}"
-if [ -z "$INSTANCE_ID" ]; then echo "Usage: $0 [--source] [image-tag] <instance-id>  (or set EC2_INSTANCE_ID)" >&2; exit 1; fi
+UPLOAD_SOURCE=false
+NO_START=false
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --source) UPLOAD_SOURCE=true; shift ;;
+        --no-start) NO_START=true; shift ;;
+        *) break ;;
+    esac
+done
+IMAGE_TAG="${IMAGE_TAG:-${1:-latest}}"
+INSTANCE_ID="${2:-${EC2_INSTANCE_ID:-}}"
+if [ -z "$INSTANCE_ID" ]; then echo "Usage: $0 [--source] [--no-start] [image-tag] <instance-id>  (or set EC2_INSTANCE_ID)" >&2; exit 1; fi
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 BUCKET="jiapp-deploy-config-${ACCOUNT_ID}"
 ECR_BASE="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/jiapp"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-
-UPLOAD_SOURCE=false
-if [ "${1:-}" = "--source" ]; then
-    UPLOAD_SOURCE=true
-fi
 
 echo "==> Deploying to EC2: $INSTANCE_ID"
 
@@ -47,6 +51,7 @@ COMPOSE
 aws s3 cp /tmp/jiapp-compose.yml "s3://${BUCKET}/ec2/docker-compose.yml" --region "$REGION"
 aws s3 cp "${REPO_ROOT}/backend/docker-compose.prod.yml" "s3://${BUCKET}/ec2/docker-compose.prod.yml" --region "$REGION"
 aws s3 cp "${REPO_ROOT}/backend/certs/prod/server.pfx" "s3://${BUCKET}/ec2/server.pfx" --region "$REGION"
+[ -f "${REPO_ROOT}/backend/certs/prod/youtube/youtube-cookies.txt" ] && aws s3 cp "${REPO_ROOT}/backend/certs/prod/youtube/youtube-cookies.txt" "s3://${BUCKET}/ec2/youtube-cookies.txt" --region "$REGION"
 
 # Scripts for EC2
 for script in startup.sh backup.sh stop-watchdog.sh build-and-push.sh; do
@@ -75,6 +80,12 @@ fi
 
 echo "    Configs uploaded to s3://${BUCKET}/ec2/"
 
+if $NO_START; then
+    echo ""
+    echo "==> Upload-only (--no-start): skipping SSM start"
+    exit 0
+fi
+
 # ── Deploy to EC2 via SSM ────────────────────────────────────
 
 echo ""
@@ -87,13 +98,14 @@ REGION='${REGION}'
 ACCOUNT='${ACCOUNT_ID}'
 ECR_BASE=${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/jiapp
 
-mkdir -p /opt/jiapp/{data,logs,certs}
+mkdir -p /opt/jiapp/{data,logs,certs/prod,certs/prod/youtube}
 cd /opt/jiapp
 
 echo "Downloading configs..."
 aws s3 cp s3://${BUCKET}/ec2/docker-compose.yml . --region ${REGION}
 aws s3 cp s3://${BUCKET}/ec2/docker-compose.prod.yml . --region ${REGION}
-aws s3 cp s3://${BUCKET}/ec2/server.pfx ./certs/ --region ${REGION}
+aws s3 cp s3://${BUCKET}/ec2/server.pfx ./certs/prod/ --region ${REGION}
+aws s3 cp s3://${BUCKET}/ec2/youtube-cookies.txt ./certs/prod/youtube/youtube-cookies.txt --region ${REGION} 2>/dev/null || true
 
 for f in startup.sh backup.sh stop-watchdog.sh build-and-push.sh; do
     aws s3 cp s3://${BUCKET}/ec2/${f} . --region ${REGION} 2>/dev/null || true
@@ -109,8 +121,10 @@ systemctl start jiapp-stop-watchdog.timer 2>/dev/null || true
 
 # Login to ECR and start
 aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com
+aws s3 cp s3://${BUCKET}/ec2/.env /opt/jiapp/.env --region ${REGION} 2>/dev/null || true
 set -a; source /opt/jiapp/.env; set +a
 export ECR_BASE=${ECR_BASE}
+IMAGE_TAG=$(aws s3 cp "s3://${BUCKET}/current-tag.txt" - --region ${REGION} 2>/dev/null || echo "latest")
 export IMAGE_TAG=${IMAGE_TAG:-latest}
 
 echo "Starting JiApp (IMAGE_TAG=${IMAGE_TAG})..."
@@ -130,10 +144,11 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
 echo "Deploy complete"
 '
 
+DEPLOY_PARAMS=$(DEPLOY_SCRIPT="$DEPLOY_SCRIPT" python3 -c 'import json,os; print(json.dumps({"commands":[os.environ["DEPLOY_SCRIPT"]]}))')
 aws ssm send-command --region "$REGION" --instance-ids "$INSTANCE_ID" \
     --document-name "AWS-RunShellScript" \
     --comment "JiApp deploy" \
-    --parameters "commands=[\"${DEPLOY_SCRIPT}\"]" \
+    --parameters "$DEPLOY_PARAMS" \
     --query "Command.CommandId" --output text > /dev/null
 
 echo ""

@@ -72,6 +72,8 @@ Mobile App                    AWS Cloud
 
 Generate production CA → sign server cert → bake CA into APK → Kestrel serves HTTPS.
 
+**Why `digitalSignature` is mandatory:** TLS 1.3 uses RSA-PSS for the server's handshake signature; Android/BoringSSL strictly enforces `keyUsage` and rejects certs without `digitalSignature` (`KEY_USAGE_BIT_INCORRECT` / `illegal_parameter` alert). OpenSSL is lenient and hides the bug — always include it.
+
 ```
 openssl req -x509 -newkey rsa:4096 -days 1095 -nodes \
   -keyout jiapp-ca.key -out jiapp-ca.crt \
@@ -79,11 +81,19 @@ openssl req -x509 -newkey rsa:4096 -days 1095 -nodes \
 
 openssl req -new -newkey rsa:2048 -nodes \
   -keyout jiapp-server.key -out jiapp-server.csr \
-  -subj "/CN=JiApp Server"
+  -subj "/CN=<ELASTIC_IP>"
+
+cat > server-ext.cnf << 'EOF'
+basicConstraints = critical, CA:FALSE
+keyUsage = critical, digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
+subjectAltName = IP:<ELASTIC_IP>
+EOF
 
 openssl x509 -req -in jiapp-server.csr \
   -CA jiapp-ca.crt -CAkey jiapp-ca.key -CAcreateserial \
-  -out jiapp-server.crt -days 1095
+  -out jiapp-server.crt -days 1095 \
+  -extfile server-ext.cnf
 
 openssl pkcs12 -export -out server.pfx \
   -inkey jiapp-server.key -in jiapp-server.crt \

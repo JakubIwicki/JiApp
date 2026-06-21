@@ -52,11 +52,19 @@ export const downloadFile = async (
 ): Promise<DownloadedFile> => {
   const token = await getToken();
 
-  // Step 1: Download to internal cache (safe on scoped storage)
+  // Step 1: Download to internal cache with a named file (safe on scoped storage)
+  const displayName = sanitizeFileName(fileName);
+  const cachePath = `${ReactNativeBlobUtil.fs.dirs.CacheDir}/${displayName}.mp3`;
+
+  // Remove stale file from a previous download of the same song
+  if (await ReactNativeBlobUtil.fs.exists(cachePath)) {
+    await ReactNativeBlobUtil.fs.unlink(cachePath);
+  }
+
   let result;
   try {
     result = await ReactNativeBlobUtil.config({
-      fileCache: true,
+      path: cachePath,
     }).fetch(
       'GET',
       downloadUrl,
@@ -84,7 +92,6 @@ export const downloadFile = async (
   }
 
   // Step 2: Copy to public Downloads via MediaStore (scoped-storage compatible)
-  const displayName = sanitizeFileName(fileName);
   const contentUri = await ReactNativeBlobUtil.MediaCollection.copyToMediaStore(
     {
       name: `${displayName}.mp3`,
