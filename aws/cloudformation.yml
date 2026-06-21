@@ -187,10 +187,13 @@ Resources:
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
-              - Effect: Allow
-                Action:
-                  - ec2:StartInstances
-                  - ec2:DescribeInstances
+              - Sid: DescribeAllInstances
+                Effect: Allow
+                Action: ec2:DescribeInstances
+                Resource: '*'
+              - Sid: StartJiAppInstance
+                Effect: Allow
+                Action: ec2:StartInstances
                 Resource: !Sub arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:instance/*
 
   # ── IAM: GitHub Actions OIDC Role ───────────────────────
