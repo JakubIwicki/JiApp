@@ -1,0 +1,5 @@
+// Example config. Copied to config.generated.ts by scripts/ensure-config.js when missing.
+// config.generated.ts is gitignored and overwritten by build-apk.sh (from mobile/.env)
+// for physical-device builds. Never put a real IP here — keep it in mobile/.env.
+export const API_BASE_URL: string = 'https://10.0.2.2:6700/api/v1';
+export const WAKE_API_URL: string = 'https://abc123.execute-api.eu-central-1.amazonaws.com';

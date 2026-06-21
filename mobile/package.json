@@ -9,8 +9,9 @@
     "start": "react-native start",
     "storybook": "ENTRY_FILE=.storybook/index.js npx react-native start",
     "storybook:web": "storybook dev -c .storybook-web -p 6006",
+    "pretest": "node scripts/ensure-config.js",
     "test": "jest",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package && node scripts/ensure-config.js"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^3.0.3",

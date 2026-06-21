@@ -109,6 +109,9 @@ backend/inspect-file.sh
 # Test artifacts
 mobile/test-results/
 
+# Generated config
+mobile/src/config.generated.ts
+
 # Worktrees
 .worktrees/
 
