@@ -6,12 +6,77 @@ import Animated, {
   withRepeat,
   useAnimatedStyle,
 } from 'react-native-reanimated';
+import Markdown from 'react-native-markdown-display';
 import { colors, typography, spacing, borderRadius } from '../../styles/theme';
 import type { ChatMessage } from '../../types/chat';
 
 interface ChatBubbleProps {
   readonly message: ChatMessage;
 }
+
+// ── Markdown styles (only for assistant messages) ──────────────────────────
+
+const markdownStyles = {
+  body: { ...typography.body, color: colors.textPrimary },
+  heading1: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+    color: colors.textPrimary,
+    marginVertical: spacing.sm,
+  },
+  heading2: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: colors.textPrimary,
+    marginVertical: spacing.xs,
+  },
+  heading3: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: colors.textPrimary,
+    marginVertical: spacing.xs,
+  },
+  heading4: {
+    fontSize: 15,
+    fontWeight: '700' as const,
+    color: colors.textPrimary,
+  },
+  heading5: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: colors.textPrimary,
+  },
+  heading6: {
+    fontSize: 13,
+    fontWeight: '700' as const,
+    color: colors.textPrimary,
+  },
+  strong: { fontWeight: '700' as const },
+  em: { fontStyle: 'italic' as const },
+  paragraph: { marginTop: 0, marginBottom: spacing.xs },
+  bullet_list: {},
+  ordered_list: {},
+  list_item: { marginVertical: 2 },
+  code_inline: {
+    ...typography.monospace,
+    backgroundColor: colors.placeholder,
+    borderRadius: 3,
+    paddingHorizontal: 4,
+  },
+  fence: {
+    ...typography.monospace,
+    backgroundColor: colors.placeholder,
+    padding: spacing.sm,
+    borderRadius: borderRadius.sm,
+  },
+  blockquote: {
+    borderLeftWidth: 3,
+    borderLeftColor: colors.border,
+    paddingLeft: spacing.sm,
+    marginVertical: spacing.xs,
+  },
+  link: { color: colors.primary, textDecorationLine: 'underline' as const },
+};
 
 // ── Typing indicator (gently pulsing dots) ─────────────────────────────────
 
@@ -94,7 +159,12 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ message }) => {
   return (
     <View style={[styles.row, isAssistant ? styles.rowLeft : styles.rowRight]}>
       <Animated.View style={bubbleStyle}>
-        {hasText && <Text style={textStyle}>{message.text}</Text>}
+        {hasText &&
+          (isAssistant ? (
+            <Markdown style={markdownStyles}>{message.text}</Markdown>
+          ) : (
+            <Text style={textStyle}>{message.text}</Text>
+          ))}
         {showTyping && (
           <View style={styles.typingRow}>
             <TypingDots />

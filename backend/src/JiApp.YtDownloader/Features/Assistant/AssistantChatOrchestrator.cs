@@ -43,6 +43,7 @@ public sealed partial class AssistantChatOrchestrator(
         var options = new ChatOptions { Tools = BuildTools(userId, turnToken) };
 
         var callIdToToolName = new Dictionary<string, string>();
+        var textSanitizer = new AssistantTextSanitizer();
         ChatFinishReason? lastFinishReason = null;
         var anyToolInvoked = false;
         var faulted = false;
@@ -64,7 +65,7 @@ public sealed partial class AssistantChatOrchestrator(
                     if (update.FinishReason is { } finishReason)
                         lastFinishReason = finishReason;
 
-                    mapped = MapUpdate(update, callIdToToolName, ref anyToolInvoked);
+                    mapped = MapUpdate(update, callIdToToolName, ref anyToolInvoked, textSanitizer);
                 }
                 catch (OperationCanceledException) when (ct.IsCancellationRequested)
                 {
@@ -144,7 +145,8 @@ public sealed partial class AssistantChatOrchestrator(
     private AssistantSseEvent[] MapUpdate(
         ChatResponseUpdate update,
         Dictionary<string, string> callIdToToolName,
-        ref bool anyToolInvoked)
+        ref bool anyToolInvoked,
+        AssistantTextSanitizer textSanitizer)
     {
         var events = new List<AssistantSseEvent>();
 
@@ -153,9 +155,13 @@ public sealed partial class AssistantChatOrchestrator(
             switch (content)
             {
                 case TextContent { Text.Length: > 0 } text:
-                    events.Add(new AssistantSseEvent(
-                        AssistantSseEventNames.TextDelta, new { text = text.Text }));
+                {
+                    var cleaned = textSanitizer.ProcessDelta(text.Text);
+                    if (cleaned is { Length: > 0 })
+                        events.Add(new AssistantSseEvent(
+                            AssistantSseEventNames.TextDelta, new { text = cleaned }));
                     break;
+                }
 
                 case FunctionCallContent call:
                     anyToolInvoked = true;
