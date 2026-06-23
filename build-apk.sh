@@ -1,43 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ── Flags ────────────────────────────────────────────────────────────────
-RELEASE=false
-INSTALL=false
-CLEAN=false
-
-for arg in "$@"; do
-    case "$arg" in
-        --release) RELEASE=true ;;
-        --install) INSTALL=true ;;
-        --clean)   CLEAN=true ;;
-        --help|-h)
-            echo "Usage: $0 [--release] [--install] [--clean]"
-            echo ""
-            echo "  (none)       Build debug APK, no install"
-            echo "  --release    Build release APK with signing + version bump"
-            echo "  --install    Install APK to connected device via adb after build"
-            echo "  --clean      Run gradlew clean before building"
-            echo ""
-            echo "  Examples:"
-            echo "    $0                      # debug APK"
-            echo "    $0 --release            # signed release APK"
-            echo "    $0 --release --install  # release + install to device"
-            exit 0
-            ;;
-        *) echo "Unknown flag: $arg. Use --help for usage."; exit 1 ;;
-    esac
-done
-
-# ── Paths ────────────────────────────────────────────────────────────────
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-MOBILE_DIR="$SCRIPT_DIR/mobile"
-ANDROID_DIR="$MOBILE_DIR/android"
-GRADLE_FILE="$ANDROID_DIR/app/build.gradle"
-KEYSTORE_FILE="$ANDROID_DIR/app/jiapp-release.keystore"
-KEYSTORE_PROPS="$ANDROID_DIR/app/keystore.properties"
-DIST_DIR="$SCRIPT_DIR/dist"
-
+# ── Helpers ──────────────────────────────────────────────────────────────
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
@@ -49,92 +13,177 @@ success() { echo -e "${GREEN}[OK]${NC}      $*"; }
 warn()    { echo -e "${YELLOW}[WARN]${NC}    $*"; }
 error()   { echo -e "${RED}[ERROR]${NC}   $*"; }
 
-# ── Load .env for JIAPP_API_URL, JIAPP_WAKE_API_URL, JIAPP_PROD_IP ────────
+# ── Flags ────────────────────────────────────────────────────────────────
+RELEASE=false
+INSTALL=false
+CLEAN=false
+PROD=false
+DEV=false
+
+for arg in "$@"; do
+    case "$arg" in
+        --release) RELEASE=true ;;
+        --install) INSTALL=true ;;
+        --clean)   CLEAN=true ;;
+        --prod)    PROD=true ;;
+        --dev)     DEV=true ;;
+        --help|-h)
+            echo "Usage: $0 [--prod|--dev] [--release] [--install] [--clean]"
+            echo ""
+            echo "  --prod       Build PRODUCTION (AWS) APK — Elastic IP gateway, Wake Lambda, prod CA"
+            echo "  --dev        Build DEV (LAN) APK — dev machine IP, no Wake URL, dev CA"
+            echo "  --release    Build release APK with signing + version bump"
+            echo "  --install    Install APK to connected device via adb after build"
+            echo "  --clean      Run gradlew clean before building"
+            echo ""
+            echo "  If neither --prod nor --dev is given and stdin is a TTY,"
+            echo "  you will be prompted to choose interactively."
+            echo ""
+            echo "  Examples:"
+            echo "    $0 --prod                        # debug prod APK"
+            echo "    $0 --dev --release               # signed release dev APK"
+            echo "    $0 --prod --release --install    # release prod + install to device"
+            exit 0
+            ;;
+        *) echo "Unknown flag: $arg. Use --help for usage."; exit 1 ;;
+    esac
+done
+
+# ── Mutual exclusion + env selection ─────────────────────────────────────
+if $PROD && $DEV; then
+    error "--prod and --dev are mutually exclusive"
+    exit 1
+fi
+
+if ! $PROD && ! $DEV; then
+    if [ -t 0 ]; then
+        echo -ne "${CYAN}Build [p]rod (AWS) or [d]ev (LAN)? ${NC}"
+        read -r choice
+        case "$choice" in
+            p|P|prod|PROD) PROD=true ;;
+            d|D|dev|DEV)   DEV=true ;;
+            *) error "Invalid choice '$choice' — expected p/prod or d/dev"; exit 1 ;;
+        esac
+    else
+        error "No --prod or --dev flag and stdin is not a TTY."
+        error "Pass --prod (AWS) or --dev (LAN) explicitly in non-interactive builds."
+        exit 1
+    fi
+fi
+
+# ── Paths ────────────────────────────────────────────────────────────────
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+MOBILE_DIR="$SCRIPT_DIR/mobile"
+ANDROID_DIR="$MOBILE_DIR/android"
+GRADLE_FILE="$ANDROID_DIR/app/build.gradle"
+KEYSTORE_FILE="$ANDROID_DIR/app/jiapp-release.keystore"
+KEYSTORE_PROPS="$ANDROID_DIR/app/keystore.properties"
+DIST_DIR="$SCRIPT_DIR/dist"
+
+# ── Load .env ────────────────────────────────────────────────────────────
 ENV_FILE="$MOBILE_DIR/.env"
 GENERATED_CONFIG="$MOBILE_DIR/src/config.generated.ts"
 if [ -f "$ENV_FILE" ]; then
     set -a
     source "$ENV_FILE"
     set +a
-    success ".env loaded (JIAPP_API_URL=${JIAPP_API_URL:-not set}, JIAPP_WAKE_API_URL=${JIAPP_WAKE_API_URL:-not set}, JIAPP_PROD_IP=${JIAPP_PROD_IP:-not set})"
-
-    # Write generated config file — babel-plugin-transform-inline-environment-variables
-    # is unreliable via Gradle daemon, so we write the URL directly into a TS file.
-    if [ -n "$JIAPP_API_URL" ]; then
-        {
-            echo "// Auto-generated by build-apk.sh from mobile/.env — DO NOT EDIT."
-            echo "export const API_BASE_URL: string = '$JIAPP_API_URL';"
-            if [ -n "$JIAPP_WAKE_API_URL" ]; then
-                echo "export const WAKE_API_URL: string = '$JIAPP_WAKE_API_URL';"
-            fi
-        } > "$GENERATED_CONFIG"
-        success "config.generated.ts written"
-    else
-        error "JIAPP_API_URL not set in .env — build will fail"
-        exit 1
-    fi
+    success ".env loaded"
 else
     error ".env not found at $ENV_FILE"
-    error "Copy mobile/.env.example to mobile/.env and set JIAPP_API_URL"
+    error "Copy mobile/.env.example to mobile/.env and configure it"
     exit 1
 fi
 
-# ── Network security config — inject device IP ──────────────────────────
-NETWORK_SECURITY_CONFIG="$ANDROID_DIR/app/src/main/res/xml/network_security_config.xml"
-DEVICE_HOST=$(echo "$JIAPP_API_URL" | sed -E 's|^https?://([^:/]+).*|\1|')
+# ── Resolve API / Wake URLs per selected env ─────────────────────────────
+if $PROD; then
+    API_BASE_URL="${JIAPP_API_URL:-}"
+    WAKE_API_URL_VAL="${JIAPP_WAKE_API_URL:-}"
+    CA_CERT_NAME="jiapp_prod_ca"
+    if [ -z "$API_BASE_URL" ]; then
+        error "JIAPP_API_URL not set in .env — required for PROD build"
+        exit 1
+    fi
+else
+    API_BASE_URL="${JIAPP_DEV_API_URL:-}"
+    WAKE_API_URL_VAL=""
+    CA_CERT_NAME="jiapp_dev_ca"
+    if [ -z "$API_BASE_URL" ]; then
+        error "JIAPP_DEV_API_URL not set in .env — required for DEV build"
+        exit 1
+    fi
+fi
 
-# Always clear previously injected domain (if any), then add current one if needed
+# ── Write generated config ───────────────────────────────────────────────
+{
+    echo "// Auto-generated by build-apk.sh from mobile/.env — DO NOT EDIT."
+    echo "export const API_BASE_URL: string = '$API_BASE_URL';"
+    if [ -n "$WAKE_API_URL_VAL" ]; then
+        echo "export const WAKE_API_URL: string = '$WAKE_API_URL_VAL';"
+    fi
+} > "$GENERATED_CONFIG"
+success "config.generated.ts written (API_BASE_URL=$API_BASE_URL)"
+
+# ── Network security config ──────────────────────────────────────────────
+NETWORK_SECURITY_CONFIG="$ANDROID_DIR/app/src/main/res/xml/network_security_config.xml"
+
+# Always clear previously injected domains in both blocks
 sed -i '/<!-- DEVICE_IP_BEGIN -->/,/<!-- DEVICE_IP_END -->/{ /<!-- DEVICE_IP_BEGIN -->/!{ /<!-- DEVICE_IP_END -->/!d; }; }' \
     "$NETWORK_SECURITY_CONFIG"
+sed -i '/<!-- PROD_IP_BEGIN -->/,/<!-- PROD_IP_END -->/{ /<!-- PROD_IP_BEGIN -->/!{ /<!-- PROD_IP_END -->/!d; }; }' \
+    "$NETWORK_SECURITY_CONFIG"
 
-if [ -n "$DEVICE_HOST" ] && [ "$DEVICE_HOST" != "10.0.2.2" ] && [ "$DEVICE_HOST" != "localhost" ] && [ "$DEVICE_HOST" != "${JIAPP_PROD_IP:-}" ]; then
-    sed -i "s|<!-- DEVICE_IP_BEGIN -->|&\n        <domain includeSubdomains=\"false\">$DEVICE_HOST</domain>|" \
-        "$NETWORK_SECURITY_CONFIG"
-    success "Injected $DEVICE_HOST into network_security_config.xml"
+if $PROD; then
+    # ── Prod build: inject JIAPP_PROD_IP ─────────────────────────────────
+    if [ -n "${JIAPP_PROD_IP:-}" ]; then
+        sed -i "s|<!-- PROD_IP_BEGIN -->|&\n        <domain includeSubdomains=\"false\">$JIAPP_PROD_IP</domain>|" \
+            "$NETWORK_SECURITY_CONFIG"
+        success "Injected PROD_IP=$JIAPP_PROD_IP into network_security_config.xml (prod-CA block)"
+    else
+        warn "JIAPP_PROD_IP not set in .env — production CA domain not injected"
+    fi
 else
-    if [ "$DEVICE_HOST" = "${JIAPP_PROD_IP:-}" ]; then
-        info "API host is the production IP ($DEVICE_HOST) — handled by prod-CA block, skipping dev-CA injection"
+    # ── Dev build: inject dev machine LAN IP ─────────────────────────────
+    DEVICE_HOST=$(echo "$API_BASE_URL" | sed -E 's|^https?://([^:/]+).*|\1|')
+    if [ -n "$DEVICE_HOST" ] && [ "$DEVICE_HOST" != "10.0.2.2" ] && [ "$DEVICE_HOST" != "localhost" ]; then
+        sed -i "s|<!-- DEVICE_IP_BEGIN -->|&\n        <domain includeSubdomains=\"false\">$DEVICE_HOST</domain>|" \
+            "$NETWORK_SECURITY_CONFIG"
+        success "Injected $DEVICE_HOST into network_security_config.xml (dev-CA block)"
     else
         info "Using emulator/localhost — no extra domain needed in network_security_config.xml"
     fi
 fi
 
-# ── Production CA cert — inject PROD_IP into network security config ─────
-if [ -n "$JIAPP_PROD_IP" ]; then
-    # Clear previously injected PROD_IP domain
-    sed -i '/<!-- PROD_IP_BEGIN -->/,/<!-- PROD_IP_END -->/{ /<!-- PROD_IP_BEGIN -->/!{ /<!-- PROD_IP_END -->/!d; }; }' \
-        "$NETWORK_SECURITY_CONFIG"
-    sed -i "s|<!-- PROD_IP_BEGIN -->|&\n        <domain includeSubdomains=\"false\">$JIAPP_PROD_IP</domain>|" \
-        "$NETWORK_SECURITY_CONFIG"
-    success "Injected PROD_IP=$JIAPP_PROD_IP into network_security_config.xml"
-else
-    info "JIAPP_PROD_IP not set — skipping production CA domain injection"
-fi
-
 # ── CA cert for Android network security ─────────────────────────────────
-CA_CERT="$ANDROID_DIR/app/src/main/res/raw/jiapp_dev_ca"
-PFX_FILE="$SCRIPT_DIR/backend/certs/dev-cert.pfx"
+CA_CERT="$ANDROID_DIR/app/src/main/res/raw/$CA_CERT_NAME"
 if [ ! -f "$CA_CERT" ]; then
-    info "CA cert not found — attempting to extract from dev-cert.pfx..."
-    if [ -f "$PFX_FILE" ]; then
-        # Try to source backend .env for a custom PFX password, then fall back to dev default
-        PFX_PASS="JiAppDev2026!"
-        if [ -f "$SCRIPT_DIR/backend/.env" ]; then
-            BACKEND_PASS=$(grep -oP 'DEV_CERT_PASSWORD=\K.*' "$SCRIPT_DIR/backend/.env" 2>/dev/null || true)
-            [ -n "$BACKEND_PASS" ] && PFX_PASS="$BACKEND_PASS"
-        fi
-        if openssl pkcs12 -in "$PFX_FILE" -nokeys -passin "pass:$PFX_PASS" 2>/dev/null \
-            | openssl x509 -outform DER -out "$CA_CERT" 2>/dev/null; then
-            success "CA cert extracted to res/raw/jiapp_dev_ca"
+    if $DEV; then
+        # Dev CA can be auto-extracted from the backend dev-cert.pfx
+        PFX_FILE="$SCRIPT_DIR/backend/certs/dev-cert.pfx"
+        info "Dev CA cert not found — attempting to extract from dev-cert.pfx..."
+        if [ -f "$PFX_FILE" ]; then
+            PFX_PASS="JiAppDev2026!"
+            if [ -f "$SCRIPT_DIR/backend/.env" ]; then
+                BACKEND_PASS=$(grep -oP 'DEV_CERT_PASSWORD=\K.*' "$SCRIPT_DIR/backend/.env" 2>/dev/null || true)
+                [ -n "$BACKEND_PASS" ] && PFX_PASS="$BACKEND_PASS"
+            fi
+            if openssl pkcs12 -in "$PFX_FILE" -nokeys -passin "pass:$PFX_PASS" 2>/dev/null \
+                | openssl x509 -outform DER -out "$CA_CERT" 2>/dev/null; then
+                success "Dev CA cert extracted to res/raw/$CA_CERT_NAME"
+            else
+                warn "Failed to extract CA cert — HTTPS to dev server may not work"
+                warn "Run manually: openssl pkcs12 -in backend/certs/dev-cert.pfx -nokeys \\"
+                warn "    | openssl x509 -outform DER -out $CA_CERT"
+            fi
         else
-            warn "Failed to extract CA cert — HTTPS to dev server may not work"
-            warn "Run manually: openssl pkcs12 -in backend/certs/dev-cert.pfx -nokeys \\"
-            warn "    | openssl x509 -outform DER -out $CA_CERT"
+            warn "dev-cert.pfx not found — run backend/start-dev.sh first to create it"
+            warn "Without the CA cert, HTTPS to the dev server may fail on physical devices"
         fi
     else
-        warn "dev-cert.pfx not found — run backend/start-dev.sh first to create it"
-        warn "Without the CA cert, HTTPS to the dev server may fail on physical devices"
+        warn "Prod CA cert ($CA_CERT_NAME) not found in res/raw/"
+        warn "The production CA must be placed at $CA_CERT manually"
     fi
+else
+    success "CA cert present: $CA_CERT_NAME"
 fi
 echo ""
 
@@ -347,6 +396,14 @@ echo ""
 
 check_prerequisites
 install_deps
+
+# ── Build banner ──────────────────────────────────────────────────────────
+if $PROD; then
+    echo -e "${CYAN}==> Building PROD APK  | API=$API_BASE_URL  WAKE=${WAKE_API_URL_VAL:-none}  CA=$CA_CERT_NAME${NC}"
+else
+    echo -e "${CYAN}==> Building DEV APK   | API=$API_BASE_URL  WAKE=none  CA=$CA_CERT_NAME${NC}"
+fi
+echo ""
 
 if $RELEASE; then
     setup_keystore
