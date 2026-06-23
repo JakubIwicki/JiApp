@@ -1,14 +1,10 @@
 import React, { useCallback } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useHeaderHeight } from '@react-navigation/elements';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import type { ChatStackParamList } from '../navigation/types';
 import type { VideoItem } from '../types/api';
 import ChatMessageList from '../components/chat/ChatMessageList';
@@ -28,9 +24,9 @@ const ChatEmptyState: React.FC<{
     <Text style={styles.emptyEmoji}>{'💬'}</Text>
     <Text style={styles.emptyGreeting}>{greeting}</Text>
     <View style={styles.exampleRow}>
-      {examples.map((example, idx) => (
+      {examples.map(example => (
         <Text
-          key={idx}
+          key={example}
           style={styles.exampleChip}
           onPress={() => onExamplePress(example)}
         >
@@ -45,6 +41,7 @@ const ChatScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<ChatNavigationProp>();
   const { messages, isStreaming, error, send, confirmDownload } = useChat();
+  const headerHeight = useHeaderHeight();
 
   useScreenTitle('chat.title');
 
@@ -76,8 +73,8 @@ const ChatScreen: React.FC = () => {
   return (
     <KeyboardAvoidingView
       style={commonStyles.screenContainer}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      behavior="padding"
+      keyboardVerticalOffset={headerHeight}
     >
       <ChatMessageList
         messages={messages}

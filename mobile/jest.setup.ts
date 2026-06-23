@@ -21,9 +21,13 @@ jest.mock('react-native-reanimated', () => {
     withSequence: (...vals: unknown[]) => vals[vals.length - 1],
     withDelay: (_delay: unknown, value: unknown) => value,
     withRepeat: (value: unknown) => value,
-    interpolate: (_val: unknown, _input: unknown[], output: unknown[]) => output[output.length - 1],
+    interpolate: (_val: unknown, _input: unknown[], output: unknown[]) =>
+      output[output.length - 1],
     Easing: { linear: jest.fn(), ease: jest.fn(), bezier: jest.fn() },
-    runOnJS: (fn: (...args: unknown[]) => unknown) => (...args: unknown[]) => fn(...args),
+    runOnJS:
+      (fn: (...args: unknown[]) => unknown) =>
+      (...args: unknown[]) =>
+        fn(...args),
     cancelAnimation: jest.fn(),
     setUpTests: jest.fn(),
     Extrapolation: { CLAMP: 'clamp', EXTEND: 'extend', IDENTITY: 'identity' },
@@ -126,7 +130,6 @@ jest.mock('react-native-localize', () => ({
   removeEventListener: jest.fn(),
 }));
 
-
 // Mock @sayem314/react-native-keep-awake (native module imports cause cascade)
 jest.mock('@sayem314/react-native-keep-awake', () => ({
   __esModule: true,
@@ -137,3 +140,39 @@ jest.mock('@sayem314/react-native-keep-awake', () => ({
     deactivateKeepAwake: jest.fn(),
   },
 }));
+
+// Mock react-native-keyboard-controller (native module)
+jest.mock('react-native-keyboard-controller', () => {
+  const { createElement, Fragment } = require('react');
+  const { View } = require('react-native');
+
+  const KeyboardAvoidingView: React.FC<{
+    readonly children?: React.ReactNode;
+    readonly behavior?: string;
+    readonly keyboardVerticalOffset?: number;
+    readonly style?: object;
+  }> = ({ children, style }) => createElement(View, { style }, children);
+
+  const KeyboardProvider: React.FC<{ readonly children?: React.ReactNode }> = ({
+    children,
+  }) => createElement(Fragment, null, children);
+
+  return {
+    __esModule: true,
+    KeyboardAvoidingView,
+    KeyboardProvider,
+    KeyboardStickyView: KeyboardAvoidingView,
+    KeyboardAwareScrollView: KeyboardAvoidingView,
+    KeyboardToolbar: () => null,
+    DefaultKeyboardToolbarTheme: {},
+    useKeyboardAnimation: jest.fn(() => ({
+      progress: { value: 0 },
+      height: { value: 0 },
+    })),
+    useReanimatedKeyboardAnimation: jest.fn(() => ({
+      progress: { value: 0 },
+      height: { value: 0 },
+    })),
+    useWindowDimensions: jest.fn(() => ({ width: 390, height: 844 })),
+  };
+});

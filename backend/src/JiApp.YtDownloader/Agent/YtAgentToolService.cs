@@ -29,6 +29,11 @@ public sealed partial class YtAgentToolService(
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex YouTubeUrlRegex();
 
+    [GeneratedRegex(
+        @"top\s*\d+|\bmix\b|compilation|best of|full album|playlist|\bradio\b|\d+\s*hours?|megamix|non[-\s]?stop",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex CompilationTitleRegex();
+
     private static string CacheKey(string query) =>
         $"{CacheKeyPrefix}:{query.Trim().ToLowerInvariant()}";
 
@@ -75,7 +80,8 @@ public sealed partial class YtAgentToolService(
                 logger.FailedToSaveSearchHistory(ex, userId);
             }
 
-            var items = videos.Take(requestedMax).Select(v => new VideoItem(
+            var ordered = videos.OrderBy(v => CompilationTitleRegex().IsMatch(v.Title) ? 1 : 0);
+            var items = ordered.Take(requestedMax).Select(v => new VideoItem(
                 v.VideoId,
                 v.Title,
                 v.Description,

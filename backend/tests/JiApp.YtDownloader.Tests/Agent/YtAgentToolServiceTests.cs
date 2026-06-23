@@ -367,4 +367,54 @@ public class YtAgentToolServiceTests
         searchHistoryRepo.VerifyNoOtherCalls();
         downloadHistoryRepo.VerifyNoOtherCalls();
     }
+
+    // ── SearchAsync compilation de-prioritization ─────────────────────────
+
+    [Fact]
+    public async Task SearchAsync_deprioritizes_compilation_videos_behind_individual_tracks()
+    {
+        // Arrange
+        var videos = new YoutubeVideo[]
+        {
+            CreateVideo("a01", "Top 10 Most Popular Songs by NCS"),
+            CreateVideo("a02", "My Individual Track"),
+            CreateVideo("a03", "Best of 2025 Mix Compilation"),
+            CreateVideo("a04", "Another Single Song"),
+            CreateVideo("a05", "Non-Stop Megamix 3 Hours"),
+        };
+
+        var youtubeClient = new Mock<IYoutubeClient>();
+        youtubeClient
+            .Setup(c => c.SearchVideosAsync(It.IsAny<string>(), It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(videos);
+
+        var sut = CreateService(youtubeClient: youtubeClient);
+
+        // Act
+        var result = await sut.SearchAsync(UserId, "top songs", 5);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Results.Should().HaveCount(5);
+
+        var titles = result.Value.Results.Select(r => r.Title).ToList();
+
+        // Individual tracks ("My Individual Track", "Another Single Song") must appear
+        // before compilations ("Top 10 ...", "Best of 2025 ...", "Non-Stop Megamix ...")
+        var individualIndices = titles
+            .Select((title, idx) => (title, idx))
+            .Where(x => x.title == "My Individual Track" || x.title == "Another Single Song")
+            .Select(x => x.idx)
+            .ToList();
+
+        var compilationIndices = titles
+            .Select((title, idx) => (title, idx))
+            .Where(x => x.title != "My Individual Track" && x.title != "Another Single Song")
+            .Select(x => x.idx)
+            .ToList();
+
+        individualIndices.Max().Should().BeLessThan(compilationIndices.Min(),
+            "individual tracks should appear before compilations");
+    }
 }
