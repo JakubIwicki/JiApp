@@ -7,7 +7,7 @@ using Moq;
 
 namespace JiApp.Identity.Tests.Features.Auth.UpdateProfile;
 
-public class UpdateProfileHandlerTests
+public sealed class UpdateProfileHandlerTests
 {
     private sealed class Fixture
     {
@@ -32,11 +32,14 @@ public class UpdateProfileHandlerTests
             Mock.Of<IServiceProvider>(),
             Mock.Of<ILogger<UserManager<User>>>());
 
-        public Mock<ICurrentUserService> CurrentUserMock { get; } = new();
+        public MockCurrentUserService CurrentUser { get; } = MockCurrentUserService.GetSuccessful();
+
+        public UpdateProfileHandler Sut =>
+            new(UserManagerMock.Object, CurrentUser.Mock.Object, Mock.Of<ILogger<UpdateProfileHandler>>());
 
         public Fixture WithExistingUser(long userId = 1)
         {
-            CurrentUserMock.Setup(x => x.UserId).Returns(userId);
+            CurrentUser.WithReturning(userId);
             UserManagerMock.Setup(x => x.FindByIdAsync(userId.ToString()))
                 .ReturnsAsync(_testUser);
             UserManagerMock.Setup(x => x.UpdateAsync(_testUser))
@@ -62,26 +65,22 @@ public class UpdateProfileHandlerTests
 
         public Fixture WithMissingUser(long userId = 999)
         {
-            CurrentUserMock.Setup(x => x.UserId).Returns(userId);
+            CurrentUser.WithReturning(userId);
             UserManagerMock.Setup(x => x.FindByIdAsync(userId.ToString()))
                 .ReturnsAsync((User?)null);
             return this;
         }
-
-        public UpdateProfileHandler Build() =>
-            new(UserManagerMock.Object, CurrentUserMock.Object, Mock.Of<ILogger<UpdateProfileHandler>>());
     }
 
     [Fact]
-    public async Task HandleAsync_ReturnsUpdatedProfile_OnSuccess()
+    public async Task HandleAsync_WithValidProfile_ReturnsUpdatedProfile()
     {
         var fixture = new Fixture().WithExistingUser().WithSuccessfulEmailChange();
-        var sut = fixture.Build();
 
-        var result = await sut.HandleAsync(
+        var result = await fixture.Sut.HandleAsync(
             new UpdateProfileRequest("New Name", "new@test.com"));
 
-        result.IsSuccess.Should().BeTrue();
+        AssertSuccess(result);
         result.Value.Should().NotBeNull();
         result.Value!.Id.Should().Be(1);
         result.Value.DisplayName.Should().Be("New Name");
@@ -90,45 +89,40 @@ public class UpdateProfileHandlerTests
     }
 
     [Fact]
-    public async Task HandleAsync_SkipsEmailUpdate_WhenEmailUnchanged()
+    public async Task HandleAsync_WithUnchangedEmail_SkipsEmailUpdate()
     {
         var fixture = new Fixture().WithExistingUser();
-        var sut = fixture.Build();
 
-        var result = await sut.HandleAsync(
+        var result = await fixture.Sut.HandleAsync(
             new UpdateProfileRequest("New Name", "old@test.com"));
 
-        result.IsSuccess.Should().BeTrue();
+        AssertSuccess(result);
         fixture.UserManagerMock.Verify(
             x => x.SetEmailAsync(It.IsAny<User>(), It.IsAny<string>()),
             Times.Never);
     }
 
     [Fact]
-    public async Task HandleAsync_ReturnsFailure_WhenUserNotFound()
+    public async Task HandleAsync_WithMissingUser_ReturnsNotFound()
     {
         var fixture = new Fixture().WithMissingUser();
-        var sut = fixture.Build();
 
-        var result = await sut.HandleAsync(
+        var result = await fixture.Sut.HandleAsync(
             new UpdateProfileRequest("New Name", "new@test.com"));
 
-        result.IsSuccess.Should().BeFalse();
+        AssertFailure(result, ResultCategories.NotFound);
         result.Error.Should().Be("User not found");
-        result.ErrorCategory.Should().Be(ResultCategories.NotFound);
     }
 
     [Fact]
-    public async Task HandleAsync_ReturnsConflict_WhenEmailDuplicate()
+    public async Task HandleAsync_WithDuplicateEmail_ReturnsConflict()
     {
         var fixture = new Fixture().WithExistingUser().WithDuplicateEmailFailure();
-        var sut = fixture.Build();
 
-        var result = await sut.HandleAsync(
+        var result = await fixture.Sut.HandleAsync(
             new UpdateProfileRequest("New Name", "new@test.com"));
 
-        result.IsSuccess.Should().BeFalse();
-        result.ErrorCategory.Should().Be(ResultCategories.Conflict);
+        AssertFailure(result, ResultCategories.Conflict);
         result.Error.Should().Contain("already taken");
     }
 }

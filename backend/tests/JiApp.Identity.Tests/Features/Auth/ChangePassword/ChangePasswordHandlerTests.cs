@@ -7,7 +7,7 @@ using Moq;
 
 namespace JiApp.Identity.Tests.Features.Auth.ChangePassword;
 
-public class ChangePasswordHandlerTests
+public sealed class ChangePasswordHandlerTests
 {
     private sealed class Fixture
     {
@@ -32,11 +32,14 @@ public class ChangePasswordHandlerTests
             Mock.Of<IServiceProvider>(),
             Mock.Of<ILogger<UserManager<User>>>());
 
-        public Mock<ICurrentUserService> CurrentUserMock { get; } = new();
+        public MockCurrentUserService CurrentUser { get; } = MockCurrentUserService.GetSuccessful();
+
+        public ChangePasswordHandler Sut =>
+            new(UserManagerMock.Object, CurrentUser.Mock.Object, Mock.Of<ILogger<ChangePasswordHandler>>());
 
         public Fixture WithExistingUser(long userId = 1)
         {
-            CurrentUserMock.Setup(x => x.UserId).Returns(userId);
+            CurrentUser.WithReturning(userId);
             UserManagerMock.Setup(x => x.FindByIdAsync(userId.ToString()))
                 .ReturnsAsync(_testUser);
             return this;
@@ -59,54 +62,46 @@ public class ChangePasswordHandlerTests
 
         public Fixture WithMissingUser(long userId = 999)
         {
-            CurrentUserMock.Setup(x => x.UserId).Returns(userId);
+            CurrentUser.WithReturning(userId);
             UserManagerMock.Setup(x => x.FindByIdAsync(userId.ToString()))
                 .ReturnsAsync((User?)null);
             return this;
         }
-
-        public ChangePasswordHandler Build() =>
-            new(UserManagerMock.Object, CurrentUserMock.Object, Mock.Of<ILogger<ChangePasswordHandler>>());
     }
 
     [Fact]
-    public async Task HandleAsync_ReturnsSuccess_WhenPasswordChanged()
+    public async Task HandleAsync_WithValidPasswords_ReturnsSuccess()
     {
         var fixture = new Fixture().WithExistingUser().WithSuccessfulPasswordChange();
-        var sut = fixture.Build();
 
-        var result = await sut.HandleAsync(
+        var result = await fixture.Sut.HandleAsync(
             new ChangePasswordRequest("OldPass1", "NewPass1"));
 
-        result.IsSuccess.Should().BeTrue();
+        AssertSuccess(result);
         result.Value.Should().BeTrue();
     }
 
     [Fact]
-    public async Task HandleAsync_ReturnsFailure_WhenCurrentPasswordWrong()
+    public async Task HandleAsync_WithWrongCurrentPassword_ReturnsValidationFailure()
     {
         var fixture = new Fixture().WithExistingUser().WithFailingPasswordChange();
-        var sut = fixture.Build();
 
-        var result = await sut.HandleAsync(
+        var result = await fixture.Sut.HandleAsync(
             new ChangePasswordRequest("WrongPass", "NewPass1"));
 
-        result.IsSuccess.Should().BeFalse();
+        AssertFailure(result, ResultCategories.Validation);
         result.Error.Should().Contain("Incorrect password");
-        result.ErrorCategory.Should().Be(ResultCategories.Validation);
     }
 
     [Fact]
-    public async Task HandleAsync_ReturnsFailure_WhenUserNotFound()
+    public async Task HandleAsync_WithMissingUser_ReturnsNotFound()
     {
         var fixture = new Fixture().WithMissingUser();
-        var sut = fixture.Build();
 
-        var result = await sut.HandleAsync(
+        var result = await fixture.Sut.HandleAsync(
             new ChangePasswordRequest("OldPass1", "NewPass1"));
 
-        result.IsSuccess.Should().BeFalse();
+        AssertFailure(result, ResultCategories.NotFound);
         result.Error.Should().Be("User not found");
-        result.ErrorCategory.Should().Be(ResultCategories.NotFound);
     }
 }

@@ -12,7 +12,7 @@ using Moq;
 
 namespace JiApp.YtDownloader.Tests.Features.Assistant;
 
-public class AssistantChatOrchestratorTests
+public sealed class AssistantChatOrchestratorTests
 {
     private const long UserId = 42L;
     private static readonly TimeSpan TestTimeout = TimeSpan.FromSeconds(10);
@@ -24,7 +24,26 @@ public class AssistantChatOrchestratorTests
         private TimeSpan _streamDelay = TimeSpan.Zero;
         private int _requestTimeoutSeconds = 60;
 
-        public FakeChatClient? ChatClient { get; private set; }
+        private AssistantChatOrchestrator? _sut;
+        private FakeChatClient? _chatClient;
+
+        public FakeChatClient? ChatClient
+        {
+            get
+            {
+                EnsureBuilt();
+                return _chatClient;
+            }
+        }
+
+        public AssistantChatOrchestrator Sut
+        {
+            get
+            {
+                EnsureBuilt();
+                return _sut!;
+            }
+        }
 
         public Fixture WithTextDelta(string text)
         {
@@ -47,7 +66,7 @@ public class AssistantChatOrchestratorTests
             return this;
         }
 
-        public Fixture ThrowingOnStream(Exception exception)
+        public Fixture WithStreamException(Exception exception)
         {
             _throwOnStream = exception;
             return this;
@@ -65,15 +84,18 @@ public class AssistantChatOrchestratorTests
             return this;
         }
 
-        public AssistantChatOrchestrator Build()
+        private void EnsureBuilt()
         {
-            ChatClient = _throwOnStream is not null
+            if (_sut is not null)
+                return;
+
+            _chatClient = _throwOnStream is not null
                 ? FakeChatClient.Throwing(_throwOnStream)
                 : new FakeChatClient(_updates, _streamDelay);
 
             var provider = new Mock<IAssistantChatClientProvider>();
             provider.SetupGet(p => p.IsConfigured).Returns(true);
-            provider.SetupGet(p => p.Client).Returns(ChatClient);
+            provider.SetupGet(p => p.Client).Returns(_chatClient);
 
             var toolService = new YtAgentToolService(
                 new Mock<IYoutubeClient>().Object,
@@ -90,7 +112,7 @@ public class AssistantChatOrchestratorTests
                 }
             };
 
-            return new AssistantChatOrchestrator(
+            _sut = new AssistantChatOrchestrator(
                 provider.Object,
                 toolService,
                 settings,
@@ -114,13 +136,13 @@ public class AssistantChatOrchestratorTests
     }
 
     [Fact]
-    public async Task StreamAsync_text_updates_emit_ordered_text_deltas_then_done_complete()
+    public async Task StreamAsync_WithTextUpdates_EmitsOrderedTextDeltasThenDoneComplete()
     {
         using var cts = new CancellationTokenSource(TestTimeout);
         var orchestrator = new Fixture()
             .WithTextDelta("Hello ")
             .WithTextDelta("world")
-            .Build();
+            .Sut;
 
         var events = await CollectAsync(orchestrator, SingleUserMessage(), "en", cts.Token);
 
@@ -131,13 +153,12 @@ public class AssistantChatOrchestratorTests
     }
 
     [Fact]
-    public async Task StreamAsync_prepends_system_prompt_as_first_message()
+    public async Task StreamAsync_PrependsSystemPrompt_AsFirstMessage()
     {
         using var cts = new CancellationTokenSource(TestTimeout);
         var fixture = new Fixture().WithTextDelta("hi");
-        var orchestrator = fixture.Build();
 
-        await CollectAsync(orchestrator, SingleUserMessage(), "en", cts.Token);
+        await CollectAsync(fixture.Sut, SingleUserMessage(), "en", cts.Token);
 
         var captured = fixture.ChatClient!.CapturedMessages!;
         captured.Should().NotBeNull();
@@ -146,13 +167,12 @@ public class AssistantChatOrchestratorTests
     }
 
     [Fact]
-    public async Task StreamAsync_passes_four_tools_in_chat_options()
+    public async Task StreamAsync_PassesFourTools_InChatOptions()
     {
         using var cts = new CancellationTokenSource(TestTimeout);
         var fixture = new Fixture().WithTextDelta("hi");
-        var orchestrator = fixture.Build();
 
-        await CollectAsync(orchestrator, SingleUserMessage(), "en", cts.Token);
+        await CollectAsync(fixture.Sut, SingleUserMessage(), "en", cts.Token);
 
         var tools = fixture.ChatClient!.CapturedOptions!.Tools!;
         tools.Select(t => t.Name).Should().BeEquivalentTo(
@@ -163,7 +183,7 @@ public class AssistantChatOrchestratorTests
     }
 
     [Fact]
-    public async Task StreamAsync_search_youtube_emits_tool_steps_and_search_results()
+    public async Task StreamAsync_WithSearchYoutubeToolCall_EmitsToolStepsAndSearchResults()
     {
         using var cts = new CancellationTokenSource(TestTimeout);
         const string callId = "call-1";
@@ -177,7 +197,7 @@ public class AssistantChatOrchestratorTests
                 new Dictionary<string, object?> { ["query"] = "lofi" }!))
             .WithUpdate(new FunctionResultContent(callId, videos.Results))
             .WithTextDelta("Here are some results")
-            .Build();
+            .Sut;
 
         var events = await CollectAsync(orchestrator, SingleUserMessage(), "en", cts.Token);
 
@@ -195,7 +215,7 @@ public class AssistantChatOrchestratorTests
     }
 
     [Fact]
-    public async Task StreamAsync_search_youtube_json_element_result_emits_search_results()
+    public async Task StreamAsync_WithSearchYoutubeJsonElementResult_EmitsSearchResults()
     {
         using var cts = new CancellationTokenSource(TestTimeout);
         const string callId = "call-json-1";
@@ -208,7 +228,7 @@ public class AssistantChatOrchestratorTests
             .WithUpdate(new FunctionCallContent(callId, AssistantToolNames.SearchYoutube,
                 new Dictionary<string, object?> { ["query"] = "lofi" }!))
             .WithUpdate(new FunctionResultContent(callId, SerializeToJsonElement(videos)))
-            .Build();
+            .Sut;
 
         var events = await CollectAsync(orchestrator, SingleUserMessage(), "en", cts.Token);
 
@@ -219,7 +239,7 @@ public class AssistantChatOrchestratorTests
     }
 
     [Fact]
-    public async Task StreamAsync_offer_download_json_element_result_emits_download_offer()
+    public async Task StreamAsync_WithOfferDownloadJsonElementResult_EmitsDownloadOffer()
     {
         using var cts = new CancellationTokenSource(TestTimeout);
         const string callId = "call-json-2";
@@ -229,7 +249,7 @@ public class AssistantChatOrchestratorTests
             .WithUpdate(new FunctionCallContent(callId, AssistantToolNames.OfferDownload,
                 new Dictionary<string, object?> { ["videoId"] = "vid9" }!))
             .WithUpdate(new FunctionResultContent(callId, SerializeToJsonElement(offer)))
-            .Build();
+            .Sut;
 
         var events = await CollectAsync(orchestrator, SingleUserMessage(), "en", cts.Token);
 
@@ -241,7 +261,7 @@ public class AssistantChatOrchestratorTests
     }
 
     [Fact]
-    public async Task StreamAsync_offer_download_emits_download_offer_event_without_downloading()
+    public async Task StreamAsync_WithOfferDownloadToolCall_EmitsDownloadOfferEventWithoutDownloading()
     {
         using var cts = new CancellationTokenSource(TestTimeout);
         const string callId = "call-2";
@@ -251,7 +271,7 @@ public class AssistantChatOrchestratorTests
             .WithUpdate(new FunctionCallContent(callId, AssistantToolNames.OfferDownload,
                 new Dictionary<string, object?> { ["videoId"] = "vid9" }!))
             .WithUpdate(new FunctionResultContent(callId, offer))
-            .Build();
+            .Sut;
 
         var events = await CollectAsync(orchestrator, SingleUserMessage(), "en", cts.Token);
 
@@ -263,7 +283,7 @@ public class AssistantChatOrchestratorTests
     }
 
     [Fact]
-    public async Task StreamAsync_finish_reason_tool_calls_after_tool_invoked_signals_max_iterations()
+    public async Task StreamAsync_WithFinishReasonToolCallsAfterToolInvoked_SignalsMaxIterations()
     {
         using var cts = new CancellationTokenSource(TestTimeout);
         const string callId = "call-max";
@@ -271,7 +291,7 @@ public class AssistantChatOrchestratorTests
             .WithUpdate(new FunctionCallContent(callId, AssistantToolNames.SearchYoutube,
                 new Dictionary<string, object?> { ["query"] = "lofi" }!))
             .WithFinishReason(ChatFinishReason.ToolCalls)
-            .Build();
+            .Sut;
 
         var events = await CollectAsync(orchestrator, SingleUserMessage(), "en", cts.Token);
 
@@ -281,13 +301,13 @@ public class AssistantChatOrchestratorTests
     }
 
     [Fact]
-    public async Task StreamAsync_finish_reason_tool_calls_without_any_tool_invoked_signals_complete()
+    public async Task StreamAsync_WithFinishReasonToolCallsWithoutToolInvoked_SignalsComplete()
     {
         using var cts = new CancellationTokenSource(TestTimeout);
         var orchestrator = new Fixture()
             .WithTextDelta("working")
             .WithFinishReason(ChatFinishReason.ToolCalls)
-            .Build();
+            .Sut;
 
         var events = await CollectAsync(orchestrator, SingleUserMessage(), "en", cts.Token);
 
@@ -297,14 +317,14 @@ public class AssistantChatOrchestratorTests
     }
 
     [Fact]
-    public async Task StreamAsync_request_timeout_emits_done_error_and_does_not_throw()
+    public async Task StreamAsync_WithRequestTimeout_EmitsDoneErrorAndDoesNotThrow()
     {
         using var cts = new CancellationTokenSource(TestTimeout);
         var orchestrator = new Fixture()
             .WithRequestTimeoutSeconds(1)
             .WithStreamDelay(TimeSpan.FromSeconds(30))
             .WithTextDelta("never reached")
-            .Build();
+            .Sut;
 
         var events = await CollectAsync(orchestrator, SingleUserMessage(), "en", cts.Token);
 
@@ -314,13 +334,13 @@ public class AssistantChatOrchestratorTests
     }
 
     [Fact]
-    public async Task StreamAsync_caller_cancellation_propagates_as_cancellation_not_error_frame()
+    public async Task StreamAsync_WithCallerCancellation_PropagatesAsCancellationNotErrorFrame()
     {
         using var cts = new CancellationTokenSource();
         var orchestrator = new Fixture()
             .WithStreamDelay(TimeSpan.FromSeconds(30))
             .WithTextDelta("never reached")
-            .Build();
+            .Sut;
 
         cts.CancelAfter(TimeSpan.FromMilliseconds(200));
 
@@ -330,12 +350,12 @@ public class AssistantChatOrchestratorTests
     }
 
     [Fact]
-    public async Task StreamAsync_exception_emits_done_error_without_leaking_internals()
+    public async Task StreamAsync_WithException_EmitsDoneErrorWithoutLeakingInternals()
     {
         using var cts = new CancellationTokenSource(TestTimeout);
         var orchestrator = new Fixture()
-            .ThrowingOnStream(new InvalidOperationException("secret api key sk-12345"))
-            .Build();
+            .WithStreamException(new InvalidOperationException("secret api key sk-12345"))
+            .Sut;
 
         var events = await CollectAsync(orchestrator, SingleUserMessage(), "en", cts.Token);
 

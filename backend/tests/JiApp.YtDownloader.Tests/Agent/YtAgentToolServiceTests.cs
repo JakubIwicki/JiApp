@@ -9,23 +9,24 @@ using Moq;
 
 namespace JiApp.YtDownloader.Tests.Agent;
 
-public class YtAgentToolServiceTests
+public sealed class YtAgentToolServiceTests
 {
     private const long UserId = 7L;
 
-    private static YtAgentToolService CreateService(
-        Mock<IYoutubeClient>? youtubeClient = null,
-        Mock<ISearchHistoryRepository>? searchHistoryRepo = null,
-        Mock<IDownloadHistoryRepository>? downloadHistoryRepo = null,
-        IMemoryCache? cache = null)
+    private sealed class Fixture
     {
-        var yt = youtubeClient ?? new Mock<IYoutubeClient>();
-        var searchRepo = searchHistoryRepo ?? new Mock<ISearchHistoryRepository>();
-        var downloadRepo = downloadHistoryRepo ?? new Mock<IDownloadHistoryRepository>();
-        var memCache = cache ?? new MemoryCache(new MemoryCacheOptions());
-        var logger = Mock.Of<ILogger<YtAgentToolService>>();
+        public Mock<IYoutubeClient> YoutubeClientMock { get; } = new();
+        public Mock<ISearchHistoryRepository> SearchHistoryRepoMock { get; } = new();
+        public Mock<IDownloadHistoryRepository> DownloadHistoryRepoMock { get; } = new();
+        public IMemoryCache Cache { get; } = new MemoryCache(new MemoryCacheOptions());
 
-        return new YtAgentToolService(yt.Object, searchRepo.Object, downloadRepo.Object, memCache, logger);
+        public YtAgentToolService Sut =>
+            new(
+                YoutubeClientMock.Object,
+                SearchHistoryRepoMock.Object,
+                DownloadHistoryRepoMock.Object,
+                Cache,
+                Mock.Of<ILogger<YtAgentToolService>>());
     }
 
     private static YoutubeVideo CreateVideo(string videoId = "dQw4w9WgXcQ", string title = "A title") =>
@@ -36,30 +37,22 @@ public class YtAgentToolServiceTests
             ImageUrl: $"https://i.ytimg.com/vi/{videoId}/default.jpg",
             ChannelTitle: "Rick Astley");
 
-    // ── SearchAsync: mapping + history with the passed userId ───────────────
-
     [Fact]
-    public async Task SearchAsync_maps_videos_and_records_history_with_passed_userId()
+    public async Task SearchAsync_WithPlainTextQuery_MapsVideosAndRecordsHistoryWithPassedUserId()
     {
-        // Arrange
-        var youtubeClient = new Mock<IYoutubeClient>();
-        youtubeClient
+        var fixture = new Fixture();
+        fixture.YoutubeClientMock
             .Setup(c => c.SearchVideosAsync("rick astley", It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new[] { CreateVideo() });
 
-        var searchHistoryRepo = new Mock<ISearchHistoryRepository>();
         YoutubeSearchHistory? recorded = null;
-        searchHistoryRepo
+        fixture.SearchHistoryRepoMock
             .Setup(r => r.AddAsync(It.IsAny<YoutubeSearchHistory>()))
             .Callback<YoutubeSearchHistory>(entry => recorded = entry)
             .Returns(Task.CompletedTask);
 
-        var sut = CreateService(youtubeClient: youtubeClient, searchHistoryRepo: searchHistoryRepo);
+        var result = await fixture.Sut.SearchAsync(UserId, "rick astley", null);
 
-        // Act
-        var result = await sut.SearchAsync(UserId, "rick astley", null);
-
-        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value!.Results.Should().ContainSingle()
             .Which.VideoId.Should().Be("dQw4w9WgXcQ");
@@ -67,227 +60,177 @@ public class YtAgentToolServiceTests
         recorded.Should().NotBeNull();
         recorded!.UserId.Should().Be(UserId);
         recorded.SearchText.Should().Be("rick astley");
-        searchHistoryRepo.Verify(r => r.SaveChangesAsync(), Times.Once);
+        fixture.SearchHistoryRepoMock.Verify(r => r.SaveChangesAsync(), Times.Once);
     }
 
     [Fact]
-    public async Task SearchAsync_plain_text_query_calls_SearchVideosAsync()
+    public async Task SearchAsync_WithPlainTextQuery_CallsSearchVideosAsync()
     {
-        // Arrange
-        var youtubeClient = new Mock<IYoutubeClient>();
-        youtubeClient
+        var fixture = new Fixture();
+        fixture.YoutubeClientMock
             .Setup(c => c.SearchVideosAsync("never gonna give you up", It.IsAny<int>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new[] { CreateVideo() });
 
-        var sut = CreateService(youtubeClient: youtubeClient);
+        var result = await fixture.Sut.SearchAsync(UserId, "never gonna give you up", null);
 
-        // Act
-        var result = await sut.SearchAsync(UserId, "never gonna give you up", null);
-
-        // Assert
         result.IsSuccess.Should().BeTrue();
-        youtubeClient.Verify(
+        fixture.YoutubeClientMock.Verify(
             c => c.GetVideoByIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Never);
-        youtubeClient.Verify(
+        fixture.YoutubeClientMock.Verify(
             c => c.SearchVideosAsync("never gonna give you up", It.IsAny<int>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
     [Fact]
-    public async Task SearchAsync_honors_maxResults_limit()
+    public async Task SearchAsync_WithMaxResultsLimit_HonorsLimit()
     {
-        // Arrange
-        var youtubeClient = new Mock<IYoutubeClient>();
+        var fixture = new Fixture();
         var videos = Enumerable.Range(0, 20)
             .Select(i => CreateVideo($"vid{i:00000000}", $"Title {i}"))
             .ToArray();
-        youtubeClient
+        fixture.YoutubeClientMock
             .Setup(c => c.SearchVideosAsync(It.IsAny<string>(), It.IsAny<int>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(videos);
 
-        var sut = CreateService(youtubeClient: youtubeClient);
+        var result = await fixture.Sut.SearchAsync(UserId, "many results", 3);
 
-        // Act
-        var result = await sut.SearchAsync(UserId, "many results", 3);
-
-        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value!.Results.Should().HaveCount(3);
     }
 
     [Fact]
-    public async Task SearchAsync_default_maxResults_is_ten()
+    public async Task SearchAsync_WithNullMaxResults_DefaultsToTen()
     {
-        // Arrange
-        var youtubeClient = new Mock<IYoutubeClient>();
+        var fixture = new Fixture();
         var videos = Enumerable.Range(0, 20)
             .Select(i => CreateVideo($"vid{i:00000000}", $"Title {i}"))
             .ToArray();
-        youtubeClient
+        fixture.YoutubeClientMock
             .Setup(c => c.SearchVideosAsync(It.IsAny<string>(), It.IsAny<int>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(videos);
 
-        var sut = CreateService(youtubeClient: youtubeClient);
+        var result = await fixture.Sut.SearchAsync(UserId, "many results", null);
 
-        // Act
-        var result = await sut.SearchAsync(UserId, "many results", null);
-
-        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value!.Results.Should().HaveCount(10);
     }
 
     [Fact]
-    public async Task SearchAsync_youtube_url_calls_GetVideoByIdAsync()
+    public async Task SearchAsync_WithYoutubeUrl_CallsGetVideoByIdAsync()
     {
-        // Arrange
         const string videoId = "dQw4w9WgXcQ";
-        var youtubeClient = new Mock<IYoutubeClient>();
-        youtubeClient
+        var fixture = new Fixture();
+        fixture.YoutubeClientMock
             .Setup(c => c.GetVideoByIdAsync(videoId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateVideo(videoId));
 
-        var sut = CreateService(youtubeClient: youtubeClient);
+        var result = await fixture.Sut.SearchAsync(UserId, $"https://www.youtube.com/watch?v={videoId}", null);
 
-        // Act
-        var result = await sut.SearchAsync(UserId, $"https://www.youtube.com/watch?v={videoId}", null);
-
-        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value!.Results.Should().ContainSingle().Which.VideoId.Should().Be(videoId);
-        youtubeClient.Verify(c => c.GetVideoByIdAsync(videoId, It.IsAny<CancellationToken>()), Times.Once);
-        youtubeClient.Verify(
+        fixture.YoutubeClientMock.Verify(c => c.GetVideoByIdAsync(videoId, It.IsAny<CancellationToken>()), Times.Once);
+        fixture.YoutubeClientMock.Verify(
             c => c.SearchVideosAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
     [Fact]
-    public async Task SearchAsync_propagates_CancellationToken_to_YoutubeClient()
+    public async Task SearchAsync_PropagatesCancellationToken_ToYoutubeClient()
     {
-        // Arrange
-        var youtubeClient = new Mock<IYoutubeClient>();
-        youtubeClient
+        var fixture = new Fixture();
+        fixture.YoutubeClientMock
             .Setup(c => c.SearchVideosAsync(It.IsAny<string>(), It.IsAny<int>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
 
-        var sut = CreateService(youtubeClient: youtubeClient);
         using var cts = new CancellationTokenSource();
         var token = cts.Token;
 
-        // Act
-        await sut.SearchAsync(UserId, "test", null, token);
+        await fixture.Sut.SearchAsync(UserId, "test", null, token);
 
-        // Assert
-        youtubeClient.Verify(
+        fixture.YoutubeClientMock.Verify(
             c => c.SearchVideosAsync("test", It.IsAny<int>(), token),
             Times.Once);
     }
 
     [Fact]
-    public async Task SearchAsync_returns_sanitized_failure_on_GoogleApiException()
+    public async Task SearchAsync_WithGoogleApiException_ReturnsSanitizedFailure()
     {
-        // Arrange
-        var youtubeClient = new Mock<IYoutubeClient>();
-        youtubeClient
+        var fixture = new Fixture();
+        fixture.YoutubeClientMock
             .Setup(c => c.SearchVideosAsync(It.IsAny<string>(), It.IsAny<int>(),
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new GoogleApiException("youtube", "sensitive API key details"));
 
-        var sut = CreateService(youtubeClient: youtubeClient);
+        var result = await fixture.Sut.SearchAsync(UserId, "test", null);
 
-        // Act
-        var result = await sut.SearchAsync(UserId, "test", null);
-
-        // Assert
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().NotContain("sensitive API key details");
         result.Error.Should().Contain("Failed to search videos");
     }
 
     [Fact]
-    public async Task SearchAsync_succeeds_even_when_history_recording_throws()
+    public async Task SearchAsync_WhenHistoryRecordingThrows_StillSucceeds()
     {
-        // Arrange
-        var youtubeClient = new Mock<IYoutubeClient>();
-        youtubeClient
+        var fixture = new Fixture();
+        fixture.YoutubeClientMock
             .Setup(c => c.SearchVideosAsync(It.IsAny<string>(), It.IsAny<int>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new[] { CreateVideo() });
 
-        var searchHistoryRepo = new Mock<ISearchHistoryRepository>();
-        searchHistoryRepo
+        fixture.SearchHistoryRepoMock
             .Setup(r => r.AddAsync(It.IsAny<YoutubeSearchHistory>()))
             .ThrowsAsync(new InvalidOperationException("db down"));
 
-        var sut = CreateService(youtubeClient: youtubeClient, searchHistoryRepo: searchHistoryRepo);
+        var result = await fixture.Sut.SearchAsync(UserId, "test", null);
 
-        // Act
-        var result = await sut.SearchAsync(UserId, "test", null);
-
-        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value!.Results.Should().ContainSingle();
     }
 
-    // ── ListSearchHistoryAsync ─────────────────────────────────────────────
-
     [Fact]
-    public async Task ListSearchHistoryAsync_queries_repo_with_passed_userId_and_maps_entities()
+    public async Task ListSearchHistoryAsync_QueriesRepoWithPassedUserId_AndMapsEntities()
     {
-        // Arrange
         var entity = new YoutubeSearchHistory
         {
             UserId = UserId,
             SearchedAt = new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc),
             SearchText = "queen bohemian rhapsody"
         };
-        var searchHistoryRepo = new Mock<ISearchHistoryRepository>();
-        searchHistoryRepo
+        var fixture = new Fixture();
+        fixture.SearchHistoryRepoMock
             .Setup(r => r.GetByUserIdAsync(UserId, It.IsAny<int>(), It.IsAny<int>()))
             .ReturnsAsync([entity]);
 
-        var sut = CreateService(searchHistoryRepo: searchHistoryRepo);
+        var result = await fixture.Sut.ListSearchHistoryAsync(UserId, null);
 
-        // Act
-        var result = await sut.ListSearchHistoryAsync(UserId, null);
-
-        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value!.Items.Should().ContainSingle()
             .Which.SearchText.Should().Be("queen bohemian rhapsody");
-        searchHistoryRepo.Verify(r => r.GetByUserIdAsync(UserId, 10, It.IsAny<int>()), Times.Once);
+        fixture.SearchHistoryRepoMock.Verify(r => r.GetByUserIdAsync(UserId, 10, It.IsAny<int>()), Times.Once);
     }
 
     [Fact]
-    public async Task ListSearchHistoryAsync_uses_passed_limit()
+    public async Task ListSearchHistoryAsync_UsesPassedLimit()
     {
-        // Arrange
-        var searchHistoryRepo = new Mock<ISearchHistoryRepository>();
-        searchHistoryRepo
+        var fixture = new Fixture();
+        fixture.SearchHistoryRepoMock
             .Setup(r => r.GetByUserIdAsync(It.IsAny<long>(), It.IsAny<int>(), It.IsAny<int>()))
             .ReturnsAsync([]);
 
-        var sut = CreateService(searchHistoryRepo: searchHistoryRepo);
+        await fixture.Sut.ListSearchHistoryAsync(UserId, 25);
 
-        // Act
-        await sut.ListSearchHistoryAsync(UserId, 25);
-
-        // Assert
-        searchHistoryRepo.Verify(r => r.GetByUserIdAsync(UserId, 25, It.IsAny<int>()), Times.Once);
+        fixture.SearchHistoryRepoMock.Verify(r => r.GetByUserIdAsync(UserId, 25, It.IsAny<int>()), Times.Once);
     }
 
-    // ── ListDownloadHistoryAsync ───────────────────────────────────────────
-
     [Fact]
-    public async Task ListDownloadHistoryAsync_queries_repo_with_passed_userId_and_maps_entities()
+    public async Task ListDownloadHistoryAsync_QueriesRepoWithPassedUserId_AndMapsEntities()
     {
-        // Arrange
         var entity = new YoutubeDownloadHistory
         {
             UserId = UserId,
@@ -296,66 +239,45 @@ public class YtAgentToolServiceTests
             VideoId = "dQw4w9WgXcQ",
             VideoUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
         };
-        var downloadHistoryRepo = new Mock<IDownloadHistoryRepository>();
-        downloadHistoryRepo
+        var fixture = new Fixture();
+        fixture.DownloadHistoryRepoMock
             .Setup(r => r.GetByUserIdAsync(UserId, It.IsAny<int>(), It.IsAny<int>()))
             .ReturnsAsync([entity]);
 
-        var sut = CreateService(downloadHistoryRepo: downloadHistoryRepo);
+        var result = await fixture.Sut.ListDownloadHistoryAsync(UserId, null);
 
-        // Act
-        var result = await sut.ListDownloadHistoryAsync(UserId, null);
-
-        // Assert
         result.IsSuccess.Should().BeTrue();
         var item = result.Value!.Items.Should().ContainSingle().Which;
         item.VideoTitle.Should().Be("A song");
         item.VideoId.Should().Be("dQw4w9WgXcQ");
-        downloadHistoryRepo.Verify(r => r.GetByUserIdAsync(UserId, 10, It.IsAny<int>()), Times.Once);
+        fixture.DownloadHistoryRepoMock.Verify(r => r.GetByUserIdAsync(UserId, 10, It.IsAny<int>()), Times.Once);
     }
 
     [Fact]
-    public async Task ListDownloadHistoryAsync_uses_passed_limit()
+    public async Task ListDownloadHistoryAsync_UsesPassedLimit()
     {
-        // Arrange
-        var downloadHistoryRepo = new Mock<IDownloadHistoryRepository>();
-        downloadHistoryRepo
+        var fixture = new Fixture();
+        fixture.DownloadHistoryRepoMock
             .Setup(r => r.GetByUserIdAsync(It.IsAny<long>(), It.IsAny<int>(), It.IsAny<int>()))
             .ReturnsAsync([]);
 
-        var sut = CreateService(downloadHistoryRepo: downloadHistoryRepo);
+        await fixture.Sut.ListDownloadHistoryAsync(UserId, 25);
 
-        // Act
-        await sut.ListDownloadHistoryAsync(UserId, 25);
-
-        // Assert
-        downloadHistoryRepo.Verify(r => r.GetByUserIdAsync(UserId, 25, It.IsAny<int>()), Times.Once);
+        fixture.DownloadHistoryRepoMock.Verify(r => r.GetByUserIdAsync(UserId, 25, It.IsAny<int>()), Times.Once);
     }
 
-    // ── BuildDownloadOffer: pure, no side effects ──────────────────────────
-
     [Fact]
-    public void BuildDownloadOffer_returns_expected_record_with_no_side_effects()
+    public void BuildDownloadOffer_ReturnsExpectedRecord_WithNoSideEffects()
     {
-        // Arrange
-        var youtubeClient = new Mock<IYoutubeClient>(MockBehavior.Strict);
-        var searchHistoryRepo = new Mock<ISearchHistoryRepository>(MockBehavior.Strict);
-        var downloadHistoryRepo = new Mock<IDownloadHistoryRepository>(MockBehavior.Strict);
+        var fixture = new Fixture();
 
-        var sut = CreateService(
-            youtubeClient: youtubeClient,
-            searchHistoryRepo: searchHistoryRepo,
-            downloadHistoryRepo: downloadHistoryRepo);
-
-        // Act
-        var offer = sut.BuildDownloadOffer(
+        var offer = fixture.Sut.BuildDownloadOffer(
             UserId,
             "dQw4w9WgXcQ",
             "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
             "Never Gonna Give You Up",
             "https://i.ytimg.com/vi/dQw4w9WgXcQ/default.jpg");
 
-        // Assert
         offer.Should().Be(new DownloadOffer(
             "dQw4w9WgXcQ",
             "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
@@ -363,17 +285,14 @@ public class YtAgentToolServiceTests
             "https://i.ytimg.com/vi/dQw4w9WgXcQ/default.jpg",
             UserId));
 
-        youtubeClient.VerifyNoOtherCalls();
-        searchHistoryRepo.VerifyNoOtherCalls();
-        downloadHistoryRepo.VerifyNoOtherCalls();
+        fixture.YoutubeClientMock.VerifyNoOtherCalls();
+        fixture.SearchHistoryRepoMock.VerifyNoOtherCalls();
+        fixture.DownloadHistoryRepoMock.VerifyNoOtherCalls();
     }
 
-    // ── SearchAsync compilation de-prioritization ─────────────────────────
-
     [Fact]
-    public async Task SearchAsync_deprioritizes_compilation_videos_behind_individual_tracks()
+    public async Task SearchAsync_DeprioritizesCompilationVideos_BehindIndividualTracks()
     {
-        // Arrange
         var videos = new YoutubeVideo[]
         {
             CreateVideo("a01", "Top 10 Most Popular Songs by NCS"),
@@ -383,25 +302,19 @@ public class YtAgentToolServiceTests
             CreateVideo("a05", "Non-Stop Megamix 3 Hours"),
         };
 
-        var youtubeClient = new Mock<IYoutubeClient>();
-        youtubeClient
+        var fixture = new Fixture();
+        fixture.YoutubeClientMock
             .Setup(c => c.SearchVideosAsync(It.IsAny<string>(), It.IsAny<int>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(videos);
 
-        var sut = CreateService(youtubeClient: youtubeClient);
+        var result = await fixture.Sut.SearchAsync(UserId, "top songs", 5);
 
-        // Act
-        var result = await sut.SearchAsync(UserId, "top songs", 5);
-
-        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value!.Results.Should().HaveCount(5);
 
         var titles = result.Value.Results.Select(r => r.Title).ToList();
 
-        // Individual tracks ("My Individual Track", "Another Single Song") must appear
-        // before compilations ("Top 10 ...", "Best of 2025 ...", "Non-Stop Megamix ...")
         var individualIndices = titles
             .Select((title, idx) => (title, idx))
             .Where(x => x.title == "My Individual Track" || x.title == "Another Single Song")

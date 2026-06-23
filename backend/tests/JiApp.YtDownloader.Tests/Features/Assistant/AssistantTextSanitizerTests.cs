@@ -2,10 +2,10 @@ using JiApp.YtDownloader.Features.Assistant;
 
 namespace JiApp.YtDownloader.Tests.Features.Assistant;
 
-public class AssistantTextSanitizerTests
+public sealed class AssistantTextSanitizerTests
 {
     [Fact]
-    public void ProcessDelta_clean_text_passes_through_unchanged()
+    public void ProcessDelta_WithCleanText_PassesThroughUnchanged()
     {
         var sut = new AssistantTextSanitizer();
 
@@ -15,7 +15,7 @@ public class AssistantTextSanitizerTests
     }
 
     [Fact]
-    public void ProcessDelta_strips_tool_call_markup_when_present_in_single_delta()
+    public void ProcessDelta_WithToolCallMarkup_StripsMarkupInSingleDelta()
     {
         var sut = new AssistantTextSanitizer();
 
@@ -26,7 +26,7 @@ public class AssistantTextSanitizerTests
     }
 
     [Fact]
-    public void ProcessDelta_suppresses_all_subsequent_deltas_after_marker_is_detected()
+    public void ProcessDelta_AfterMarkerDetected_SuppressesAllSubsequentDeltas()
     {
         var sut = new AssistantTextSanitizer();
 
@@ -40,7 +40,7 @@ public class AssistantTextSanitizerTests
     }
 
     [Fact]
-    public void ProcessDelta_handles_marker_split_across_two_deltas()
+    public void ProcessDelta_WithMarkerSplitAcrossTwoDeltas_HandlesCorrectly()
     {
         var sut = new AssistantTextSanitizer();
 
@@ -52,7 +52,7 @@ public class AssistantTextSanitizerTests
     }
 
     [Fact]
-    public void ProcessDelta_strips_fullwidth_token_variant()
+    public void ProcessDelta_WithFullwidthTokenVariant_StripsMarkup()
     {
         var sut = new AssistantTextSanitizer();
 
@@ -62,7 +62,7 @@ public class AssistantTextSanitizerTests
     }
 
     [Fact]
-    public void ProcessDelta_lone_less_than_sign_passes_through()
+    public void ProcessDelta_WithLoneLessThanSign_PassesThrough()
     {
         var sut = new AssistantTextSanitizer();
 
@@ -72,7 +72,7 @@ public class AssistantTextSanitizerTests
     }
 
     [Fact]
-    public void ProcessDelta_less_than_followed_by_space_is_safe()
+    public void ProcessDelta_WithLessThanFollowedBySpace_IsSafe()
     {
         var sut = new AssistantTextSanitizer();
 
@@ -82,7 +82,7 @@ public class AssistantTextSanitizerTests
     }
 
     [Fact]
-    public void ProcessDelta_multiple_clean_deltas_accumulate_correctly()
+    public void ProcessDelta_WithMultipleCleanDeltas_AccumulatesCorrectly()
     {
         var sut = new AssistantTextSanitizer();
 
@@ -96,7 +96,7 @@ public class AssistantTextSanitizerTests
     }
 
     [Fact]
-    public void ProcessDelta_tool_calls_marker_without_brackets_is_detected()
+    public void ProcessDelta_WithToolCallsMarkerWithoutBrackets_IsDetected()
     {
         var sut = new AssistantTextSanitizer();
 
@@ -106,7 +106,7 @@ public class AssistantTextSanitizerTests
     }
 
     [Fact]
-    public void ProcessDelta_invoke_marker_without_pipe_is_detected()
+    public void ProcessDelta_WithInvokeMarkerWithoutPipe_IsDetected()
     {
         var sut = new AssistantTextSanitizer();
 
@@ -116,7 +116,7 @@ public class AssistantTextSanitizerTests
     }
 
     [Fact]
-    public void ProcessDelta_parameter_name_equals_marker_is_detected()
+    public void ProcessDelta_WithParameterNameEqualsMarker_IsDetected()
     {
         var sut = new AssistantTextSanitizer();
 
@@ -126,7 +126,7 @@ public class AssistantTextSanitizerTests
     }
 
     [Fact]
-    public void ProcessDelta_marker_found_at_start_of_delta_returns_null()
+    public void ProcessDelta_WithMarkerAtStartOfDelta_ReturnsNull()
     {
         var sut = new AssistantTextSanitizer();
 
@@ -136,15 +136,13 @@ public class AssistantTextSanitizerTests
     }
 
     [Fact]
-    public void ProcessDelta_buffer_flushes_when_tail_becomes_safe()
+    public void ProcessDelta_WithBufferFlushes_WhenTailBecomesSafe()
     {
         var sut = new AssistantTextSanitizer();
 
-        // "<|" alone looks like a marker prefix, so it's held back
         var first = sut.ProcessDelta("start <|");
         first.Should().Be("start ");
 
-        // Now the next delta confirms it's safe (not a marker)
         var second = sut.ProcessDelta(" actually means something");
         second.Should().Be("<| actually means something");
     }

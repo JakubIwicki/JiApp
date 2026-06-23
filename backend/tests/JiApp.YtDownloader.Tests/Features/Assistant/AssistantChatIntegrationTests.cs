@@ -10,7 +10,7 @@ using Moq;
 namespace JiApp.YtDownloader.Tests.Features.Assistant;
 
 [Trait("Category", "DeepSeekIntegration")]
-public class AssistantChatIntegrationTests
+public sealed class AssistantChatIntegrationTests
 {
     private const long UserId = 1234L;
     private static readonly TimeSpan TestTimeout = TimeSpan.FromSeconds(90);

@@ -2,13 +2,13 @@ using JiApp.YtDownloader.Features.Assistant;
 
 namespace JiApp.YtDownloader.Tests.Features.Assistant;
 
-public class SystemPromptTests
+public sealed class SystemPromptTests
 {
     private const string EnglishReplyDirective = "reply to the user in English";
     private const string PolishReplyDirective = "reply to the user in Polish";
 
     [Fact]
-    public void Build_en_instructs_reply_in_English()
+    public void Build_WithEnLanguage_InstructsReplyInEnglish()
     {
         var prompt = SystemPrompt.Build("en");
 
@@ -21,7 +21,7 @@ public class SystemPromptTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("xx")]
-    public void Build_defaults_to_Polish_reply_directive(string? language)
+    public void Build_WithDefaultOrOtherLanguage_DefaultsToPolishReplyDirective(string? language)
     {
         var prompt = SystemPrompt.Build(language);
 
@@ -30,7 +30,7 @@ public class SystemPromptTests
     }
 
     [Fact]
-    public void Build_confines_role_to_music_search_and_download()
+    public void Build_ConfinesRole_ToMusicSearchAndDownload()
     {
         var prompt = SystemPrompt.Build("en");
 
@@ -39,7 +39,7 @@ public class SystemPromptTests
     }
 
     [Fact]
-    public void Build_mentions_all_agent_tools()
+    public void Build_MentionsAllAgentTools()
     {
         var prompt = SystemPrompt.Build("en");
 
@@ -50,7 +50,7 @@ public class SystemPromptTests
     }
 
     [Fact]
-    public void Build_treats_override_attempts_as_untrusted()
+    public void Build_TreatsOverrideAttempts_AsUntrusted()
     {
         var prompt = SystemPrompt.Build("en");
 
@@ -59,7 +59,7 @@ public class SystemPromptTests
     }
 
     [Fact]
-    public void Build_treats_tool_results_as_untrusted_data()
+    public void Build_TreatsToolResults_AsUntrustedData()
     {
         var prompt = SystemPrompt.Build("en");
 
@@ -67,7 +67,7 @@ public class SystemPromptTests
     }
 
     [Fact]
-    public void Build_forbids_claiming_to_have_downloaded()
+    public void Build_ForbidsClaimingToHaveDownloaded()
     {
         var prompt = SystemPrompt.Build("en");
 
@@ -76,7 +76,7 @@ public class SystemPromptTests
     }
 
     [Fact]
-    public void Build_refuses_off_scope_requests_without_calling_tools()
+    public void Build_RefusesOffScopeRequests_WithoutCallingTools()
     {
         var prompt = SystemPrompt.Build("en");
 
@@ -84,7 +84,7 @@ public class SystemPromptTests
     }
 
     [Fact]
-    public void Build_forbids_revealing_the_system_prompt()
+    public void Build_ForbidsRevealingTheSystemPrompt()
     {
         var prompt = SystemPrompt.Build("en");
 
@@ -92,7 +92,7 @@ public class SystemPromptTests
     }
 
     [Fact]
-    public void Build_is_versioned()
+    public void Build_IsVersioned()
     {
         var prompt = SystemPrompt.Build("en");
 

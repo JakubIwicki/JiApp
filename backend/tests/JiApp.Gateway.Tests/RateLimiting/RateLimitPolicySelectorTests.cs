@@ -195,10 +195,10 @@ public sealed class RateLimitPolicySelectorTests
     [Fact]
     public async Task Matches_assistant_chat_path_to_AssistantPolicy()
     {
-        var context = CreateContext("/api/v1/yt/assistant/chat");
-        var middleware = CreateMiddleware();
+        var context = Fixture.CreateContext("/api/v1/yt/assistant/chat");
+        var fixture = Fixture.Init();
 
-        await middleware.InvokeAsync(context);
+        await fixture.Sut.InvokeAsync(context);
 
         var endpoint = context.GetEndpoint();
         endpoint.Should().NotBeNull();
