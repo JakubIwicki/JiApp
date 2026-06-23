@@ -1,20 +1,14 @@
 import React, { useCallback, useEffect, useReducer, useRef } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ScrollView, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import * as authService from '../services/authService';
-import FormInput from '../components/FormInput';
+import ProfileSection from './ProfileSection';
+import ChangePasswordSection from './ChangePasswordSection';
 import useAuth from '../hooks/useAuth';
 import useScreenTitle from '../hooks/useScreenTitle';
 import useToast from '../hooks/useToast';
-import { borderRadius, colors, commonStyles, spacing } from '../styles/theme';
+import { commonStyles } from '../styles/theme';
 
 const PASSWORD_MIN_LENGTH = 8;
 const DISPLAY_NAME_MAX_LENGTH = 50;
@@ -26,9 +20,9 @@ function extractFieldErrors(
   serverErrors: string[],
 ): Partial<Record<string, string>> {
   const fieldMap: Record<string, string> = {
-    password: 'currentPassword',
     currentpassword: 'currentPassword',
     newpassword: 'newPassword',
+    password: 'currentPassword',
     displayname: 'displayName',
     email: 'email',
   };
@@ -95,7 +89,8 @@ type EditProfileFormAction =
       email: string;
     }
   | { type: 'CLEAR_PASSWORD_FIELDS' }
-  | { type: 'CLEAR_ERRORS' };
+  | { type: 'CLEAR_PROFILE_ERRORS' }
+  | { type: 'CLEAR_PASSWORD_ERRORS' };
 
 const initialEditProfileFormState: EditProfileFormState = {
   displayName: '',
@@ -146,11 +141,16 @@ function editProfileFormReducer(
         newPasswordError: undefined,
         confirmPasswordError: undefined,
       };
-    case 'CLEAR_ERRORS':
+    case 'CLEAR_PROFILE_ERRORS':
       return {
         ...state,
         displayNameError: undefined,
         emailError: undefined,
+        apiError: undefined,
+      };
+    case 'CLEAR_PASSWORD_ERRORS':
+      return {
+        ...state,
         currentPasswordError: undefined,
         newPasswordError: undefined,
         confirmPasswordError: undefined,
@@ -214,7 +214,7 @@ const EditProfileScreen: React.FC = () => {
   // --- Profile section validation ---
 
   const validateProfile = useCallback((): boolean => {
-    dispatch({ type: 'CLEAR_ERRORS' });
+    dispatch({ type: 'CLEAR_PROFILE_ERRORS' });
     let hasError = false;
 
     if (!form.displayName.trim()) {
@@ -318,7 +318,7 @@ const EditProfileScreen: React.FC = () => {
 
   const validatePassword = useCallback((): boolean => {
     // Clear only password-related errors (plus apiError)
-    dispatch({ type: 'CLEAR_ERRORS' });
+    dispatch({ type: 'CLEAR_PASSWORD_ERRORS' });
     let hasError = false;
 
     if (!form.currentPassword.trim()) {
@@ -425,157 +425,79 @@ const EditProfileScreen: React.FC = () => {
       style={commonStyles.screenContainer}
       contentContainerStyle={commonStyles.scrollContent}
     >
-      {/* Profile Section */}
-      <View style={commonStyles.sectionContainer}>
-        <Text style={commonStyles.sectionHeader}>
-          {t('settings.profileSection')}
-        </Text>
+      <ProfileSection
+        displayName={form.displayName}
+        email={form.email}
+        displayNameError={form.displayNameError}
+        emailError={form.emailError}
+        loading={form.profileLoading}
+        onDisplayNameChange={text => {
+          dispatch({ type: 'SET_FIELD', field: 'displayName', value: text });
+          dispatch({
+            type: 'SET_FIELD_ERROR',
+            field: 'displayName',
+            error: undefined,
+          });
+        }}
+        onEmailChange={text => {
+          dispatch({ type: 'SET_FIELD', field: 'email', value: text });
+          dispatch({
+            type: 'SET_FIELD_ERROR',
+            field: 'email',
+            error: undefined,
+          });
+        }}
+        onSave={handleSaveProfile}
+        t={t}
+      />
 
-        <FormInput
-          value={form.displayName}
-          onChangeText={text => {
-            dispatch({ type: 'SET_FIELD', field: 'displayName', value: text });
-            dispatch({
-              type: 'SET_FIELD_ERROR',
-              field: 'displayName',
-              error: undefined,
-            });
-          }}
-          placeholder={t('auth.displayName')}
-          error={form.displayNameError}
-          label={t('auth.displayName')}
-        />
-
-        <FormInput
-          value={form.email}
-          onChangeText={text => {
-            dispatch({ type: 'SET_FIELD', field: 'email', value: text });
-            dispatch({
-              type: 'SET_FIELD_ERROR',
-              field: 'email',
-              error: undefined,
-            });
-          }}
-          placeholder={t('settings.email')}
-          error={form.emailError}
-          label={t('settings.email')}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-
-        <Pressable
-          style={({ pressed }) => [
-            styles.saveButton,
-            form.profileLoading && styles.saveButtonDisabled,
-            pressed && { opacity: 0.7 },
-          ]}
-          onPress={handleSaveProfile}
-          disabled={form.profileLoading}
-          testID="save-profile-button"
-          accessibilityRole="button"
-          accessibilityLabel={t('settings.save')}
-        >
-          {form.profileLoading ? (
-            <ActivityIndicator
-              color={colors.surface}
-              testID="save-profile-loading"
-              size="small"
-            />
-          ) : (
-            <Text style={styles.saveButtonText}>{t('settings.save')}</Text>
-          )}
-        </Pressable>
-      </View>
-
-      {/* Password Section */}
-      <View style={commonStyles.sectionContainer}>
-        <Text style={commonStyles.sectionHeader}>
-          {t('settings.passwordSection')}
-        </Text>
-
-        <FormInput
-          value={form.currentPassword}
-          onChangeText={text => {
-            dispatch({
-              type: 'SET_FIELD',
-              field: 'currentPassword',
-              value: text,
-            });
-            dispatch({
-              type: 'SET_FIELD_ERROR',
-              field: 'currentPassword',
-              error: undefined,
-            });
-          }}
-          placeholder={t('settings.currentPassword')}
-          error={form.currentPasswordError}
-          label={t('settings.currentPassword')}
-          secureTextEntry={true}
-        />
-
-        <FormInput
-          value={form.newPassword}
-          onChangeText={text => {
-            dispatch({
-              type: 'SET_FIELD',
-              field: 'newPassword',
-              value: text,
-            });
-            dispatch({
-              type: 'SET_FIELD_ERROR',
-              field: 'newPassword',
-              error: undefined,
-            });
-          }}
-          placeholder={t('settings.newPassword')}
-          error={form.newPasswordError}
-          label={t('settings.newPassword')}
-          secureTextEntry={true}
-        />
-
-        <FormInput
-          value={form.confirmPassword}
-          onChangeText={text => {
-            dispatch({
-              type: 'SET_FIELD',
-              field: 'confirmPassword',
-              value: text,
-            });
-            dispatch({
-              type: 'SET_FIELD_ERROR',
-              field: 'confirmPassword',
-              error: undefined,
-            });
-          }}
-          placeholder={t('settings.confirmPassword')}
-          error={form.confirmPasswordError}
-          label={t('settings.confirmPassword')}
-          secureTextEntry={true}
-        />
-
-        <Pressable
-          style={({ pressed }) => [
-            styles.saveButton,
-            form.passwordLoading && styles.saveButtonDisabled,
-            pressed && { opacity: 0.7 },
-          ]}
-          onPress={handleSavePassword}
-          disabled={form.passwordLoading}
-          testID="save-password-button"
-          accessibilityRole="button"
-          accessibilityLabel={t('settings.save')}
-        >
-          {form.passwordLoading ? (
-            <ActivityIndicator
-              color={colors.surface}
-              testID="save-password-loading"
-              size="small"
-            />
-          ) : (
-            <Text style={styles.saveButtonText}>{t('settings.save')}</Text>
-          )}
-        </Pressable>
-      </View>
+      <ChangePasswordSection
+        currentPassword={form.currentPassword}
+        newPassword={form.newPassword}
+        confirmPassword={form.confirmPassword}
+        currentPasswordError={form.currentPasswordError}
+        newPasswordError={form.newPasswordError}
+        confirmPasswordError={form.confirmPasswordError}
+        loading={form.passwordLoading}
+        onCurrentPasswordChange={text => {
+          dispatch({
+            type: 'SET_FIELD',
+            field: 'currentPassword',
+            value: text,
+          });
+          dispatch({
+            type: 'SET_FIELD_ERROR',
+            field: 'currentPassword',
+            error: undefined,
+          });
+        }}
+        onNewPasswordChange={text => {
+          dispatch({
+            type: 'SET_FIELD',
+            field: 'newPassword',
+            value: text,
+          });
+          dispatch({
+            type: 'SET_FIELD_ERROR',
+            field: 'newPassword',
+            error: undefined,
+          });
+        }}
+        onConfirmPasswordChange={text => {
+          dispatch({
+            type: 'SET_FIELD',
+            field: 'confirmPassword',
+            value: text,
+          });
+          dispatch({
+            type: 'SET_FIELD_ERROR',
+            field: 'confirmPassword',
+            error: undefined,
+          });
+        }}
+        onSave={handleSavePassword}
+        t={t}
+      />
 
       {form.apiError && (
         <Text style={commonStyles.apiError}>{form.apiError}</Text>
@@ -583,26 +505,5 @@ const EditProfileScreen: React.FC = () => {
     </ScrollView>
   );
 };
-
-const styles = StyleSheet.create({
-  saveButton: {
-    backgroundColor: colors.primary,
-    borderRadius: borderRadius.sm,
-    minHeight: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: spacing.lg,
-    marginTop: spacing.sm,
-  },
-  saveButtonDisabled: {
-    opacity: 0.5,
-  },
-  saveButtonText: {
-    color: colors.surface,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
 
 export default EditProfileScreen;

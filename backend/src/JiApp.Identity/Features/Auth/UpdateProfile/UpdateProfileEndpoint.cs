@@ -41,7 +41,8 @@ public static class UpdateProfileEndpoint
             .WithSummary("Update current user profile")
             .Produces<UpdateProfileResponse>()
             .ProducesValidationProblem()
-            .RequireAuthorization();
+            .RequireAuthorization()
+            .RequireRateLimiting("Login");
 
         return endpoints;
     }
