@@ -24,9 +24,9 @@ const ChatEmptyState: React.FC<{
     <Text style={styles.emptyEmoji}>{'💬'}</Text>
     <Text style={styles.emptyGreeting}>{greeting}</Text>
     <View style={styles.exampleRow}>
-      {examples.map((example, idx) => (
+      {examples.map(example => (
         <Text
-          key={idx}
+          key={example}
           style={styles.exampleChip}
           onPress={() => onExamplePress(example)}
         >
