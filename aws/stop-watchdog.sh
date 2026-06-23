@@ -7,8 +7,14 @@ set -euo pipefail
 exec 200>/tmp/jiapp_watchdog.lock
 flock -n 200 || exit 0
 
-INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
-REGION=$(curl -s http://169.254.169.254/latest/meta-data/placement/region)
+# Fetch IMDSv2 token; falls back to IMDSv1 if token endpoint unreachable
+TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 300" 2>/dev/null || true)
+IMDS_HDR=()
+if [ -n "${TOKEN:-}" ]; then
+    IMDS_HDR=(-H "X-aws-ec2-metadata-token: $TOKEN")
+fi
+INSTANCE_ID=$(curl -s "${IMDS_HDR[@]}" http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null || true)
+REGION=$(curl -s "${IMDS_HDR[@]}" http://169.254.169.254/latest/meta-data/placement/region 2>/dev/null || true)
 IDLE_FILE="/tmp/jiapp_idle_count"
 MAX_IDLE=20  # 20 consecutive checks × 60s = 20 minutes
 LOG_FILE="/opt/jiapp/logs/watchdog.log"
@@ -50,6 +56,12 @@ echo "[$(date)] Idle ${COUNT}/${MAX_IDLE}  yt-dlp=${PROCS} conns=${CONNS}" >> "$
 
 if [ "$COUNT" -ge "$MAX_IDLE" ]; then
     echo "[$(date)] IDLE THRESHOLD — initiating shutdown" >> "$LOG_FILE"
+
+    # Safety: verify we can resolve instance identity before tearing anything down
+    if [ -z "${INSTANCE_ID:-}" ] || [ -z "${REGION:-}" ]; then
+        echo "[$(date)] ABORT: could not resolve INSTANCE_ID/REGION from IMDS — skipping shutdown to avoid stopping containers without stopping the instance" >> "$LOG_FILE"
+        exit 0
+    fi
 
     # 1. Backup databases
     echo "[$(date)] Step 1/3: Backup databases..." >> "$LOG_FILE"
