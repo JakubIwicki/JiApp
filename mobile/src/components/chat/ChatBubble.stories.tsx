@@ -74,6 +74,16 @@ export const LongMessage: Story = {
   },
 };
 
+export const MarkdownAssistant: Story = {
+  args: {
+    message: {
+      id: 'msg-6',
+      role: 'assistant',
+      text: '**Bold heading**\n\n1. First item\n2. Second item\n3. Third item\n\n*Italic note* at the end.',
+    },
+  },
+};
+
 const styles = StyleSheet.create({
   decorator: {
     flex: 1,
