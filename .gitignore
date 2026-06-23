@@ -82,7 +82,6 @@ backend/certs/prod/server.pfx
 
 # Local Claude / MCP config (machine-specific, never commit)
 .mcp.json
-CLAUDE.md
 .claude/CLAUDE.local.md
 .claude/agents
 .claude/hooks
