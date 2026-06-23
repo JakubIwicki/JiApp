@@ -24,6 +24,8 @@ public sealed class AssistantUsageRepositoryTests
             _db.Database.EnsureCreated();
         }
 
+        public IAssistantUsageRepository Sut => new AssistantUsageRepository(_db);
+
         public Fixture WithUsage(long userId, DateOnly usageDateUtc, int count)
         {
             _db.AssistantDailyUsage.Add(new AssistantDailyUsage
@@ -36,8 +38,6 @@ public sealed class AssistantUsageRepositoryTests
             _db.ChangeTracker.Clear();
             return this;
         }
-
-        public IAssistantUsageRepository Sut => new AssistantUsageRepository(_db);
 
         public async Task<int> GetCountAsync(long userId, DateOnly usageDateUtc)
         {
@@ -56,7 +56,7 @@ public sealed class AssistantUsageRepositoryTests
     }
 
     [Fact]
-    public async Task TryConsumeAsync_FirstCallsUpToLimit_ReturnTrue()
+    public async Task TryConsumeAsync_WithFirstCallsUpToLimit_ReturnsTrueEachTime()
     {
         using var fixture = new Fixture();
         const long userId = 1L;
@@ -70,7 +70,7 @@ public sealed class AssistantUsageRepositoryTests
     }
 
     [Fact]
-    public async Task TryConsumeAsync_CallBeyondLimit_ReturnFalse()
+    public async Task TryConsumeAsync_WithCallBeyondLimit_ReturnsFalse()
     {
         using var fixture = new Fixture();
         const long userId = 1L;
@@ -102,7 +102,7 @@ public sealed class AssistantUsageRepositoryTests
     }
 
     [Fact]
-    public async Task TryConsumeAsync_DifferentUsers_AreIsolated()
+    public async Task TryConsumeAsync_WithDifferentUsers_IsIsolated()
     {
         using var fixture = new Fixture();
         const long userA = 1L;
@@ -120,7 +120,7 @@ public sealed class AssistantUsageRepositoryTests
     }
 
     [Fact]
-    public async Task TryConsumeAsync_YesterdayAtLimit_DoesNotBlockToday()
+    public async Task TryConsumeAsync_WithYesterdayAtLimit_DoesNotBlockToday()
     {
         const long userId = 1L;
         const int limit = 3;

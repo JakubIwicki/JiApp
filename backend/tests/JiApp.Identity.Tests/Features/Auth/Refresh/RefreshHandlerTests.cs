@@ -1,5 +1,6 @@
 using JiApp.Common.Models;
 using JiApp.Identity.Configuration;
+using JiApp.Common.Abstractions;
 using JiApp.Identity.Features.Auth.Refresh;
 using JiApp.Identity.Models;
 using JiApp.Identity.Services;
@@ -10,7 +11,7 @@ using Moq;
 
 namespace JiApp.Identity.Tests.Features.Auth.Refresh;
 
-public class RefreshHandlerTests
+public sealed class RefreshHandlerTests
 {
     private sealed class Fixture
     {
@@ -43,11 +44,21 @@ public class RefreshHandlerTests
             Jwt = new IdentitySettings.JwtSettings { AccessTokenExpireMinutes = 15 }
         };
 
+        public RefreshHandler Sut { get; }
+
         public Fixture()
         {
             RefreshTokenServiceMock
                 .Setup(x => x.BeginTransactionAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(TransactionMock.Object);
+
+            Sut = new RefreshHandler(
+                RefreshTokenServiceMock.Object,
+                UserManagerMock.Object,
+                JwtTokenServiceMock.Object,
+                GrantServiceMock.Object,
+                Settings,
+                Mock.Of<ILogger<RefreshHandler>>());
         }
 
         public Fixture WithValidRefreshToken(string rawToken = "valid-refresh-token")
@@ -103,26 +114,16 @@ public class RefreshHandlerTests
                 .ReturnsAsync(false); // already revoked by another request
             return this;
         }
-
-        public RefreshHandler Build() =>
-            new(
-                RefreshTokenServiceMock.Object,
-                UserManagerMock.Object,
-                JwtTokenServiceMock.Object,
-                GrantServiceMock.Object,
-                Settings,
-                Mock.Of<ILogger<RefreshHandler>>());
     }
 
     [Fact]
     public async Task HandleAsync_ReturnsNewTokens_ForValidRefreshToken()
     {
         var fixture = new Fixture().WithValidRefreshToken();
-        var sut = fixture.Build();
 
-        var result = await sut.HandleAsync(new RefreshRequest("valid-refresh-token"));
+        var result = await fixture.Sut.HandleAsync(new RefreshRequest("valid-refresh-token"));
 
-        result.IsSuccess.Should().BeTrue();
+        AssertSuccess(result);
         result.Value.Should().NotBeNull();
         result.Value!.AccessToken.Should().Be("new-access-token");
         result.Value.RefreshToken.Should().Be("new-refresh-token");
@@ -133,9 +134,8 @@ public class RefreshHandlerTests
     public async Task HandleAsync_RevokesOldToken_WhenIssuingNewTokens()
     {
         var fixture = new Fixture().WithValidRefreshToken();
-        var sut = fixture.Build();
 
-        await sut.HandleAsync(new RefreshRequest("valid-refresh-token"));
+        await fixture.Sut.HandleAsync(new RefreshRequest("valid-refresh-token"));
 
         fixture.RefreshTokenServiceMock.Verify(x => x.RevokeAsync(10), Times.Once);
     }
@@ -144,9 +144,8 @@ public class RefreshHandlerTests
     public async Task HandleAsync_ReturnsFailure_ForInvalidToken()
     {
         var fixture = new Fixture().WithInvalidToken();
-        var sut = fixture.Build();
 
-        var result = await sut.HandleAsync(new RefreshRequest("invalid-token"));
+        var result = await fixture.Sut.HandleAsync(new RefreshRequest("invalid-token"));
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Invalid or expired refresh token");
@@ -156,9 +155,8 @@ public class RefreshHandlerTests
     public async Task HandleAsync_ReturnsFailure_WhenUserNotFound()
     {
         var fixture = new Fixture().WithTokenForMissingUser();
-        var sut = fixture.Build();
 
-        var result = await sut.HandleAsync(new RefreshRequest("token-for-missing-user"));
+        var result = await fixture.Sut.HandleAsync(new RefreshRequest("token-for-missing-user"));
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("User not found");
@@ -168,9 +166,8 @@ public class RefreshHandlerTests
     public async Task HandleAsync_RevokesAllTokens_OnReuseDetection()
     {
         var fixture = new Fixture().WithReusedToken();
-        var sut = fixture.Build();
 
-        var result = await sut.HandleAsync(new RefreshRequest("reused-token"));
+        var result = await fixture.Sut.HandleAsync(new RefreshRequest("reused-token"));
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Invalid or expired refresh token");
@@ -181,9 +178,8 @@ public class RefreshHandlerTests
     public async Task HandleAsync_RevokesAllTokens_WhenConcurrentRevocationDetected()
     {
         var fixture = new Fixture().WithConcurrentRevocation();
-        var sut = fixture.Build();
 
-        var result = await sut.HandleAsync(new RefreshRequest("concurrent-token"));
+        var result = await fixture.Sut.HandleAsync(new RefreshRequest("concurrent-token"));
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Invalid or expired refresh token");

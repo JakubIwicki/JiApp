@@ -7,105 +7,85 @@ using JiApp.Scheduler.Features.Boards.GetBoard;
 using JiApp.Scheduler.Features.Boards.ListBoards;
 using JiApp.Scheduler.Features.Boards.RemoveBoardMember;
 using JiApp.Scheduler.Features.Boards.UpdateBoard;
-using Microsoft.Data.Sqlite;
-using Microsoft.Extensions.Logging;
 
 namespace JiApp.Scheduler.Tests.Features.Boards;
 
-public sealed class BoardHandlerTests
+public sealed class BoardHandlerTests : HandlerTestBase
 {
-    private sealed class Fixture : IDisposable
+    private sealed class Fixture
     {
-        private readonly SqliteConnection _connection;
-        private readonly SchedulerDbContext _db;
-        private readonly Mock<ICurrentUserService> _currentUser;
+        private readonly ISchedulerDbContext _dbContext;
+        private readonly TestDb _testDb;
+        private readonly ICurrentUserService _currentUser;
 
-        public Fixture()
+        private Fixture(ISchedulerDbContext dbContext, TestDb testDb)
         {
-            _connection = new SqliteConnection("DataSource=:memory:");
-            _connection.Open();
-            var options = new DbContextOptionsBuilder<SchedulerDbContext>()
-                .UseSqlite(_connection)
-                .Options;
-            _db = new SchedulerDbContext(options);
-            _db.Database.EnsureCreated();
-            _currentUser = new Mock<ICurrentUserService>();
-            _currentUser.Setup(x => x.UserId).Returns(1L);
+            _dbContext = dbContext;
+            _testDb = testDb;
+            _currentUser = MockCurrentUserService.GetSuccessful().Mock.Object;
         }
 
-        public SchedulerDbContext Db => _db;
-        public ICurrentUserService CurrentUser => _currentUser.Object;
+        public CreateBoardHandler Sut => new(_dbContext, _currentUser);
+        public GetBoardHandler GetBoard => new(_dbContext, _currentUser);
+        public UpdateBoardHandler UpdateBoard => new(_dbContext, _currentUser);
+        public DeleteBoardHandler DeleteBoard => new(_dbContext, _currentUser);
+        public ListBoardsHandler ListBoards => new(_dbContext, _currentUser);
+        public AddBoardMemberHandler AddBoardMember => new(_dbContext, _currentUser);
+        public RemoveBoardMemberHandler RemoveBoardMember => new(_dbContext, _currentUser);
+
+        public static Fixture Init(ISchedulerDbContext dbContext, TestDb testDb) => new(dbContext, testDb);
 
         public Fixture WithBoard(string name = "Test", List<long>? memberUserIds = null)
         {
             var board = new Board { Name = name, MemberUserIds = memberUserIds ?? [1L] };
-            _db.Boards.Add(board);
-            _db.SaveChanges();
-            _db.ChangeTracker.Clear();
+            _testDb.Store(board);
             return this;
         }
 
-        // Overload returning the board ID for tests that need it
         public Fixture WithBoard(out long boardId, string name = "Test", List<long>? memberUserIds = null)
         {
             var board = new Board { Name = name, MemberUserIds = memberUserIds ?? [1L] };
-            _db.Boards.Add(board);
-            _db.SaveChanges();
+            _testDb.Store(board);
             boardId = board.Id;
-            _db.ChangeTracker.Clear();
             return this;
-        }
-
-        public CreateBoardHandler CreateBoardSut => new(_db, _currentUser.Object);
-        public GetBoardHandler GetBoardSut => new(_db, _currentUser.Object);
-        public UpdateBoardHandler UpdateBoardSut => new(_db, _currentUser.Object);
-        public DeleteBoardHandler DeleteBoardSut => new(_db, _currentUser.Object);
-        public ListBoardsHandler ListBoardsSut => new(_db, _currentUser.Object);
-        public AddBoardMemberHandler AddBoardMemberSut => new(_db, _currentUser.Object);
-        public RemoveBoardMemberHandler RemoveBoardMemberSut => new(_db, _currentUser.Object);
-
-        public void Dispose()
-        {
-            _db.Dispose();
-            _connection.Close();
         }
     }
 
     [Fact]
     public async Task CreateBoard_WithValidName_ReturnsBoardId()
     {
-        using var fixture = new Fixture();
-        var sut = fixture.CreateBoardSut;
+        var fixture = Fixture.Init(DbContext, Db);
+        var sut = fixture.Sut;
         var request = new CreateBoardRequest("My Board");
 
         var result = await sut.HandleAsync(request, CancellationToken.None);
 
-        result.IsSuccess.Should().BeTrue();
+        AssertSuccess(result);
         result.Value.Should().BeGreaterThan(0);
     }
 
     [Fact]
     public async Task CreateBoard_SetsCreatorAsMember()
     {
-        using var fixture = new Fixture();
-        var sut = fixture.CreateBoardSut;
+        var fixture = Fixture.Init(DbContext, Db);
+        var sut = fixture.Sut;
         var request = new CreateBoardRequest("My Board");
 
         await sut.HandleAsync(request, CancellationToken.None);
 
-        var board = await fixture.Db.Boards.FirstAsync();
+        var board = await Db.Query<Board>().FirstAsync();
         board.MemberUserIds.Should().Contain(1L);
     }
 
     [Fact]
     public async Task GetBoard_WithValidId_ReturnsBoard()
     {
-        using var fixture = new Fixture().WithBoard(out var boardId);
-        var sut = fixture.GetBoardSut;
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
+        var sut = fixture.GetBoard;
 
         var result = await sut.HandleAsync(boardId, CancellationToken.None);
 
-        result.IsSuccess.Should().BeTrue();
+        AssertSuccess(result);
         result.Value!.Name.Should().Be("Test");
         result.Value.MemberUserIds.Should().Contain(1L);
     }
@@ -113,8 +93,8 @@ public sealed class BoardHandlerTests
     [Fact]
     public async Task GetBoard_WithInvalidId_ReturnsFailure()
     {
-        using var fixture = new Fixture();
-        var sut = fixture.GetBoardSut;
+        var fixture = Fixture.Init(DbContext, Db);
+        var sut = fixture.GetBoard;
 
         var result = await sut.HandleAsync(999L, CancellationToken.None);
 
@@ -124,21 +104,21 @@ public sealed class BoardHandlerTests
     [Fact]
     public async Task UpdateBoard_WithValidId_UpdatesName()
     {
-        using var fixture = new Fixture().WithBoard(out var boardId);
-        var sut = fixture.UpdateBoardSut;
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
+        var sut = fixture.UpdateBoard;
 
         var result = await sut.HandleAsync(boardId, new UpdateBoardRequest("Updated"), CancellationToken.None);
 
-        result.IsSuccess.Should().BeTrue();
-        var updated = await fixture.Db.Boards.FindAsync(boardId);
+        AssertSuccess(result);
+        var updated = Db.Find<Board>(boardId);
         updated!.Name.Should().Be("Updated");
     }
 
     [Fact]
     public async Task UpdateBoard_WithInvalidId_ReturnsFailure()
     {
-        using var fixture = new Fixture();
-        var sut = fixture.UpdateBoardSut;
+        var fixture = Fixture.Init(DbContext, Db);
+        var sut = fixture.UpdateBoard;
 
         var result = await sut.HandleAsync(999L, new UpdateBoardRequest("Test"), CancellationToken.None);
 
@@ -148,21 +128,21 @@ public sealed class BoardHandlerTests
     [Fact]
     public async Task AddBoardMember_WithValidData_AddsMember()
     {
-        using var fixture = new Fixture().WithBoard(out var boardId);
-        var sut = fixture.AddBoardMemberSut;
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
+        var sut = fixture.AddBoardMember;
 
         var result = await sut.HandleAsync(boardId, new AddBoardMemberRequest(2L), CancellationToken.None);
 
-        result.IsSuccess.Should().BeTrue();
-        var updated = await fixture.Db.Boards.FindAsync(boardId);
+        AssertSuccess(result);
+        var updated = Db.Find<Board>(boardId);
         updated!.MemberUserIds.Should().Contain([1L, 2L]);
     }
 
     [Fact]
     public async Task AddBoardMember_WithExistingMember_ReturnsFailure()
     {
-        using var fixture = new Fixture().WithBoard(out var boardId);
-        var sut = fixture.AddBoardMemberSut;
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
+        var sut = fixture.AddBoardMember;
 
         var result = await sut.HandleAsync(boardId, new AddBoardMemberRequest(1L), CancellationToken.None);
 
@@ -172,22 +152,22 @@ public sealed class BoardHandlerTests
     [Fact]
     public async Task DeleteBoard_WithValidId_DeletesBoard()
     {
-        using var fixture = new Fixture().WithBoard(out var boardId);
-        var sut = fixture.DeleteBoardSut;
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
+        var sut = fixture.DeleteBoard;
 
         var result = await sut.HandleAsync(boardId, CancellationToken.None);
 
-        result.IsSuccess.Should().BeTrue();
+        AssertSuccess(result);
         result.Value.Should().Be(boardId);
-        var deleted = await fixture.Db.Boards.FindAsync(boardId);
+        var deleted = Db.Find<Board>(boardId);
         deleted.Should().BeNull();
     }
 
     [Fact]
     public async Task DeleteBoard_WithInvalidId_ReturnsFailure()
     {
-        using var fixture = new Fixture();
-        var sut = fixture.DeleteBoardSut;
+        var fixture = Fixture.Init(DbContext, Db);
+        var sut = fixture.DeleteBoard;
 
         var result = await sut.HandleAsync(999L, CancellationToken.None);
 
@@ -198,8 +178,8 @@ public sealed class BoardHandlerTests
     [Fact]
     public async Task DeleteBoard_ByNonMember_ReturnsAccessDenied()
     {
-        using var fixture = new Fixture().WithBoard(out var boardId, memberUserIds: [2L]);
-        var sut = fixture.DeleteBoardSut;
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L]);
+        var sut = fixture.DeleteBoard;
 
         var result = await sut.HandleAsync(boardId, CancellationToken.None);
 
@@ -210,17 +190,16 @@ public sealed class BoardHandlerTests
     [Fact]
     public async Task ListBoards_ReturnsOnlyUsersBoards()
     {
-        using var fixture = new Fixture()
+        var fixture = Fixture.Init(DbContext, Db)
             .WithBoard(out var myBoardId, name: "Mine")
             .WithBoard(out var sharedBoardId, name: "Shared", memberUserIds: [1L, 2L]);
         var otherBoard = new Board { Name = "Theirs", MemberUserIds = [2L] };
-        fixture.Db.Boards.Add(otherBoard);
-        await fixture.Db.SaveChangesAsync();
-        var sut = fixture.ListBoardsSut;
+        StoreInDb(otherBoard);
+        var sut = fixture.ListBoards;
 
         var result = await sut.HandleAsync(CancellationToken.None);
 
-        result.IsSuccess.Should().BeTrue();
+        AssertSuccess(result);
         result.Value!.Boards.Should().HaveCount(2);
         result.Value!.Boards.Select(b => b.Id).Should().Contain([myBoardId, sharedBoardId]);
         result.Value!.Boards.Select(b => b.Id).Should().NotContain(otherBoard.Id);
@@ -229,36 +208,35 @@ public sealed class BoardHandlerTests
     [Fact]
     public async Task ListBoards_ReturnsEmptyForUserWithNoBoards()
     {
-        using var fixture = new Fixture();
+        var fixture = Fixture.Init(DbContext, Db);
         var otherBoard = new Board { Name = "Theirs", MemberUserIds = [2L] };
-        fixture.Db.Boards.Add(otherBoard);
-        await fixture.Db.SaveChangesAsync();
-        var sut = fixture.ListBoardsSut;
+        StoreInDb(otherBoard);
+        var sut = fixture.ListBoards;
 
         var result = await sut.HandleAsync(CancellationToken.None);
 
-        result.IsSuccess.Should().BeTrue();
+        AssertSuccess(result);
         result.Value!.Boards.Should().BeEmpty();
     }
 
     [Fact]
     public async Task RemoveBoardMember_RemovesMember()
     {
-        using var fixture = new Fixture().WithBoard(out var boardId, memberUserIds: [1L, 2L]);
-        var sut = fixture.RemoveBoardMemberSut;
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [1L, 2L]);
+        var sut = fixture.RemoveBoardMember;
 
         var result = await sut.HandleAsync(boardId, 2L, CancellationToken.None);
 
-        result.IsSuccess.Should().BeTrue();
-        var updated = await fixture.Db.Boards.FindAsync(boardId);
+        AssertSuccess(result);
+        var updated = Db.Find<Board>(boardId);
         updated!.MemberUserIds.Should().ContainSingle().Which.Should().Be(1L);
     }
 
     [Fact]
     public async Task RemoveBoardMember_WithInvalidBoard_ReturnsFailure()
     {
-        using var fixture = new Fixture();
-        var sut = fixture.RemoveBoardMemberSut;
+        var fixture = Fixture.Init(DbContext, Db);
+        var sut = fixture.RemoveBoardMember;
 
         var result = await sut.HandleAsync(999L, 2L, CancellationToken.None);
 
@@ -269,8 +247,8 @@ public sealed class BoardHandlerTests
     [Fact]
     public async Task RemoveBoardMember_ByNonMember_ReturnsAccessDenied()
     {
-        using var fixture = new Fixture().WithBoard(out var boardId, memberUserIds: [2L, 3L]);
-        var sut = fixture.RemoveBoardMemberSut;
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L, 3L]);
+        var sut = fixture.RemoveBoardMember;
 
         var result = await sut.HandleAsync(boardId, 3L, CancellationToken.None);
 
@@ -281,8 +259,8 @@ public sealed class BoardHandlerTests
     [Fact]
     public async Task RemoveBoardMember_WithNonExistentMember_ReturnsFailure()
     {
-        using var fixture = new Fixture().WithBoard(out var boardId, memberUserIds: [1L, 2L]);
-        var sut = fixture.RemoveBoardMemberSut;
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [1L, 2L]);
+        var sut = fixture.RemoveBoardMember;
 
         var result = await sut.HandleAsync(boardId, 999L, CancellationToken.None);
 
@@ -293,8 +271,8 @@ public sealed class BoardHandlerTests
     [Fact]
     public async Task RemoveBoardMember_WhenLastMember_ReturnsFailure()
     {
-        using var fixture = new Fixture().WithBoard(out var boardId);
-        var sut = fixture.RemoveBoardMemberSut;
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
+        var sut = fixture.RemoveBoardMember;
 
         var result = await sut.HandleAsync(boardId, 1L, CancellationToken.None);
 
@@ -305,110 +283,110 @@ public sealed class BoardHandlerTests
     [Fact]
     public async Task DeleteBoard_WithInvalidId_ReturnsNotFoundErrorCategory()
     {
-        using var fixture = new Fixture();
-        var sut = fixture.DeleteBoardSut;
+        var fixture = Fixture.Init(DbContext, Db);
+        var sut = fixture.DeleteBoard;
 
         var result = await sut.HandleAsync(999L, CancellationToken.None);
 
-        result.ErrorCategory.Should().Be(ResultCategories.NotFound);
+        AssertNotFound(result);
     }
 
     [Fact]
     public async Task DeleteBoard_ByNonMember_ReturnsAccessDeniedErrorCategory()
     {
-        using var fixture = new Fixture().WithBoard(out var boardId, memberUserIds: [2L]);
-        var sut = fixture.DeleteBoardSut;
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L]);
+        var sut = fixture.DeleteBoard;
 
         var result = await sut.HandleAsync(boardId, CancellationToken.None);
 
-        result.ErrorCategory.Should().Be(ResultCategories.AccessDenied);
+        AssertAccessDenied(result);
     }
 
     [Fact]
     public async Task RemoveBoardMember_WithInvalidBoard_ReturnsNotFoundErrorCategory()
     {
-        using var fixture = new Fixture();
-        var sut = fixture.RemoveBoardMemberSut;
+        var fixture = Fixture.Init(DbContext, Db);
+        var sut = fixture.RemoveBoardMember;
 
         var result = await sut.HandleAsync(999L, 2L, CancellationToken.None);
 
-        result.ErrorCategory.Should().Be(ResultCategories.NotFound);
+        AssertNotFound(result);
     }
 
     [Fact]
     public async Task RemoveBoardMember_ByNonMember_ReturnsAccessDeniedErrorCategory()
     {
-        using var fixture = new Fixture().WithBoard(out var boardId, memberUserIds: [2L, 3L]);
-        var sut = fixture.RemoveBoardMemberSut;
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L, 3L]);
+        var sut = fixture.RemoveBoardMember;
 
         var result = await sut.HandleAsync(boardId, 3L, CancellationToken.None);
 
-        result.ErrorCategory.Should().Be(ResultCategories.AccessDenied);
+        AssertAccessDenied(result);
     }
 
     [Fact]
     public async Task RemoveBoardMember_WithNonExistentMember_ReturnsNotFoundErrorCategory()
     {
-        using var fixture = new Fixture().WithBoard(out var boardId, memberUserIds: [1L, 2L]);
-        var sut = fixture.RemoveBoardMemberSut;
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [1L, 2L]);
+        var sut = fixture.RemoveBoardMember;
 
         var result = await sut.HandleAsync(boardId, 999L, CancellationToken.None);
 
-        result.ErrorCategory.Should().Be(ResultCategories.NotFound);
+        AssertNotFound(result);
     }
 
     [Fact]
     public async Task RemoveBoardMember_WhenLastMember_ReturnsConflictErrorCategory()
     {
-        using var fixture = new Fixture().WithBoard(out var boardId);
-        var sut = fixture.RemoveBoardMemberSut;
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
+        var sut = fixture.RemoveBoardMember;
 
         var result = await sut.HandleAsync(boardId, 1L, CancellationToken.None);
 
-        result.ErrorCategory.Should().Be(ResultCategories.Conflict);
+        AssertConflict(result);
     }
 
     [Fact]
     public async Task GetBoard_WithInvalidId_ReturnsNotFoundErrorCategory()
     {
-        using var fixture = new Fixture();
-        var sut = fixture.GetBoardSut;
+        var fixture = Fixture.Init(DbContext, Db);
+        var sut = fixture.GetBoard;
 
         var result = await sut.HandleAsync(999L, CancellationToken.None);
 
-        result.ErrorCategory.Should().Be(ResultCategories.NotFound);
+        AssertNotFound(result);
     }
 
     [Fact]
     public async Task GetBoard_ByNonMember_ReturnsAccessDeniedErrorCategory()
     {
-        using var fixture = new Fixture().WithBoard(out var boardId, memberUserIds: [2L]);
-        var sut = fixture.GetBoardSut;
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L]);
+        var sut = fixture.GetBoard;
 
         var result = await sut.HandleAsync(boardId, CancellationToken.None);
 
-        result.ErrorCategory.Should().Be(ResultCategories.AccessDenied);
+        AssertAccessDenied(result);
     }
 
     [Fact]
     public async Task UpdateBoard_WithInvalidId_ReturnsNotFoundErrorCategory()
     {
-        using var fixture = new Fixture();
-        var sut = fixture.UpdateBoardSut;
+        var fixture = Fixture.Init(DbContext, Db);
+        var sut = fixture.UpdateBoard;
 
         var result = await sut.HandleAsync(999L, new UpdateBoardRequest("Test"), CancellationToken.None);
 
-        result.ErrorCategory.Should().Be(ResultCategories.NotFound);
+        AssertNotFound(result);
     }
 
     [Fact]
     public async Task UpdateBoard_ByNonMember_ReturnsAccessDeniedErrorCategory()
     {
-        using var fixture = new Fixture().WithBoard(out var boardId, memberUserIds: [2L]);
-        var sut = fixture.UpdateBoardSut;
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L]);
+        var sut = fixture.UpdateBoard;
 
         var result = await sut.HandleAsync(boardId, new UpdateBoardRequest("Test"), CancellationToken.None);
 
-        result.ErrorCategory.Should().Be(ResultCategories.AccessDenied);
+        AssertAccessDenied(result);
     }
 }

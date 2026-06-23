@@ -1,18 +1,24 @@
 namespace JiApp.Gateway.Tests.RateLimiting;
 
-public class RateLimitPolicyServiceTests
+public sealed class RateLimitPolicyServiceTests
 {
-    private readonly RateLimitPolicyService _service = new();
+    private sealed class Fixture
+    {
+        public RateLimitPolicyService Sut { get; } = new();
+
+        public static Fixture Init() => new();
+    }
 
     [Fact]
-    public void AttachRateLimitPolicy_adds_rate_limiting_metadata()
+    public void AttachRateLimitPolicy_AddsRateLimitingMetadata()
     {
+        var fixture = Fixture.Init();
         var original = new Endpoint(
             _ => Task.CompletedTask,
             EndpointMetadataCollection.Empty,
             "test-endpoint-adds-rate-limiting-metadata");
 
-        var result = _service.AttachRateLimitPolicy(original, "TestPolicy");
+        var result = fixture.Sut.AttachRateLimitPolicy(original, "TestPolicy");
 
         result.DisplayName.Should().Be("test-endpoint-adds-rate-limiting-metadata");
         result.Metadata.GetMetadata<EnableRateLimitingAttribute>()
@@ -22,9 +28,10 @@ public class RateLimitPolicyServiceTests
     }
 
     [Fact]
-    public async Task AttachRateLimitPolicy_preserves_original_request_delegate()
+    public async Task AttachRateLimitPolicy_PreservesOriginalRequestDelegate()
     {
         var handlerInvoked = false;
+        var fixture = Fixture.Init();
         var original = new Endpoint(
             _ =>
             {
@@ -34,17 +41,17 @@ public class RateLimitPolicyServiceTests
             EndpointMetadataCollection.Empty,
             "test-endpoint-preserves-delegate");
 
-        var result = _service.AttachRateLimitPolicy(original, "TestPolicy");
+        var result = fixture.Sut.AttachRateLimitPolicy(original, "TestPolicy");
 
-        // Invoke the returned endpoint's request delegate to verify it works
         await result.RequestDelegate(new DefaultHttpContext());
         handlerInvoked.Should().BeTrue();
     }
 
     [Fact]
-    public void CreatePolicyEndpoint_creates_endpoint_with_policy_name()
+    public void CreatePolicyEndpoint_CreatesEndpoint_WithPolicyName()
     {
-        var result = _service.CreatePolicyEndpoint("/test/path-policy-name", "TestPolicy");
+        var fixture = Fixture.Init();
+        var result = fixture.Sut.CreatePolicyEndpoint("/test/path-policy-name", "TestPolicy");
 
         result.DisplayName.Should().Be("TestPolicy");
         result.Metadata.GetMetadata<EnableRateLimitingAttribute>()
@@ -52,33 +59,36 @@ public class RateLimitPolicyServiceTests
     }
 
     [Fact]
-    public void AttachRateLimitPolicy_caches_endpoint_for_same_parameters()
+    public void AttachRateLimitPolicy_CachesEndpoint_ForSameParameters()
     {
+        var fixture = Fixture.Init();
         var original = new Endpoint(
             _ => Task.CompletedTask,
             EndpointMetadataCollection.Empty,
             "test-endpoint-cache-same-params");
 
-        var result1 = _service.AttachRateLimitPolicy(original, "CachePolicy");
-        var result2 = _service.AttachRateLimitPolicy(original, "CachePolicy");
+        var result1 = fixture.Sut.AttachRateLimitPolicy(original, "CachePolicy");
+        var result2 = fixture.Sut.AttachRateLimitPolicy(original, "CachePolicy");
 
         result1.Should().BeSameAs(result2);
     }
 
     [Fact]
-    public void CreatePolicyEndpoint_caches_endpoint_for_same_path_and_policy()
+    public void CreatePolicyEndpoint_CachesEndpoint_ForSamePathAndPolicy()
     {
-        var result1 = _service.CreatePolicyEndpoint("/test/path-cache", "CachePolicy");
-        var result2 = _service.CreatePolicyEndpoint("/test/path-cache", "CachePolicy");
+        var fixture = Fixture.Init();
+        var result1 = fixture.Sut.CreatePolicyEndpoint("/test/path-cache", "CachePolicy");
+        var result2 = fixture.Sut.CreatePolicyEndpoint("/test/path-cache", "CachePolicy");
 
         result1.Should().BeSameAs(result2);
     }
 
     [Fact]
-    public void CreatePolicyEndpoint_different_policies_produce_different_endpoints()
+    public void CreatePolicyEndpoint_DifferentPolicies_ProduceDifferentEndpoints()
     {
-        var result1 = _service.CreatePolicyEndpoint("/test/path-diff-policy", "PolicyA");
-        var result2 = _service.CreatePolicyEndpoint("/test/path-diff-policy", "PolicyB");
+        var fixture = Fixture.Init();
+        var result1 = fixture.Sut.CreatePolicyEndpoint("/test/path-diff-policy", "PolicyA");
+        var result2 = fixture.Sut.CreatePolicyEndpoint("/test/path-diff-policy", "PolicyB");
 
         result1.Should().NotBeSameAs(result2);
         result1.Metadata.GetMetadata<EnableRateLimitingAttribute>()!.PolicyName.Should().Be("PolicyA");

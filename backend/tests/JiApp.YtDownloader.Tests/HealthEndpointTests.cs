@@ -2,7 +2,7 @@ using JiApp.Common.Abstractions;
 
 namespace JiApp.YtDownloader.Tests;
 
-public class HealthEndpointTests
+public sealed class HealthEndpointTests
 {
     [Fact]
     public void Test_project_references_resolve()
@@ -20,7 +20,7 @@ public class HealthEndpointTests
     [Fact]
     public void YtDownloader_assembly_is_loadable()
     {
-        var type = typeof(Program);
+        var type = typeof(JiApp.YtDownloader.Program);
         type.Should().NotBeNull();
         type.Assembly.FullName.Should().Contain("JiApp.YtDownloader");
     }

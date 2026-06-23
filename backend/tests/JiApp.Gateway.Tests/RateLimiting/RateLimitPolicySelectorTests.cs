@@ -1,29 +1,35 @@
 namespace JiApp.Gateway.Tests.RateLimiting;
 
-public class RateLimitPolicySelectorTests
+public sealed class RateLimitPolicySelectorTests
 {
-    private static DefaultHttpContext CreateContext(string path)
+    private sealed class Fixture
     {
-        var context = new DefaultHttpContext();
-        context.Request.Path = new PathString(path);
-        context.Request.Method = "GET";
-        context.Response.Body = new MemoryStream();
-        return context;
-    }
+        public RateLimitPolicySelector Sut { get; }
 
-    private static RateLimitPolicySelector CreateMiddleware(RequestDelegate? next = null)
-    {
-        var policyService = new RateLimitPolicyService();
-        return new RateLimitPolicySelector(next ?? (_ => Task.CompletedTask), policyService);
+        public Fixture(RequestDelegate? next = null)
+        {
+            Sut = new RateLimitPolicySelector(next ?? (_ => Task.CompletedTask), new RateLimitPolicyService());
+        }
+
+        public static DefaultHttpContext CreateContext(string path)
+        {
+            var context = new DefaultHttpContext();
+            context.Request.Path = new PathString(path);
+            context.Request.Method = "GET";
+            context.Response.Body = new MemoryStream();
+            return context;
+        }
+
+        public static Fixture Init() => new();
     }
 
     [Fact]
     public async Task Matches_uppercase_path_with_case_insensitive_exact_match()
     {
-        var context = CreateContext("/API/V1/AUTH/LOGIN");
-        var middleware = CreateMiddleware();
+        var context = Fixture.CreateContext("/API/V1/AUTH/LOGIN");
+        var fixture = Fixture.Init();
 
-        await middleware.InvokeAsync(context);
+        await fixture.Sut.InvokeAsync(context);
 
         var endpoint = context.GetEndpoint();
         endpoint.Should().NotBeNull();
@@ -33,10 +39,10 @@ public class RateLimitPolicySelectorTests
     [Fact]
     public async Task Matches_login_path_to_LoginPolicy()
     {
-        var context = CreateContext("/api/v1/auth/login");
-        var middleware = CreateMiddleware();
+        var context = Fixture.CreateContext("/api/v1/auth/login");
+        var fixture = Fixture.Init();
 
-        await middleware.InvokeAsync(context);
+        await fixture.Sut.InvokeAsync(context);
 
         var endpoint = context.GetEndpoint();
         endpoint.Should().NotBeNull();
@@ -46,10 +52,10 @@ public class RateLimitPolicySelectorTests
     [Fact]
     public async Task Matches_register_path_to_RegisterPolicy()
     {
-        var context = CreateContext("/api/v1/auth/register");
-        var middleware = CreateMiddleware();
+        var context = Fixture.CreateContext("/api/v1/auth/register");
+        var fixture = Fixture.Init();
 
-        await middleware.InvokeAsync(context);
+        await fixture.Sut.InvokeAsync(context);
 
         var endpoint = context.GetEndpoint();
         endpoint.Should().NotBeNull();
@@ -59,10 +65,10 @@ public class RateLimitPolicySelectorTests
     [Fact]
     public async Task Matches_refresh_path_to_RefreshPolicy()
     {
-        var context = CreateContext("/api/v1/auth/refresh");
-        var middleware = CreateMiddleware();
+        var context = Fixture.CreateContext("/api/v1/auth/refresh");
+        var fixture = Fixture.Init();
 
-        await middleware.InvokeAsync(context);
+        await fixture.Sut.InvokeAsync(context);
 
         var endpoint = context.GetEndpoint();
         endpoint.Should().NotBeNull();
@@ -72,10 +78,10 @@ public class RateLimitPolicySelectorTests
     [Fact]
     public async Task Matches_logout_path_to_LogoutPolicy()
     {
-        var context = CreateContext("/api/v1/auth/logout");
-        var middleware = CreateMiddleware();
+        var context = Fixture.CreateContext("/api/v1/auth/logout");
+        var fixture = Fixture.Init();
 
-        await middleware.InvokeAsync(context);
+        await fixture.Sut.InvokeAsync(context);
 
         var endpoint = context.GetEndpoint();
         endpoint.Should().NotBeNull();
@@ -85,10 +91,10 @@ public class RateLimitPolicySelectorTests
     [Fact]
     public async Task Matches_me_path_to_MePolicy()
     {
-        var context = CreateContext("/api/v1/auth/me");
-        var middleware = CreateMiddleware();
+        var context = Fixture.CreateContext("/api/v1/auth/me");
+        var fixture = Fixture.Init();
 
-        await middleware.InvokeAsync(context);
+        await fixture.Sut.InvokeAsync(context);
 
         var endpoint = context.GetEndpoint();
         endpoint.Should().NotBeNull();
@@ -98,10 +104,10 @@ public class RateLimitPolicySelectorTests
     [Fact]
     public async Task Matches_search_videos_path_to_SearchVideosPolicy()
     {
-        var context = CreateContext("/api/v1/yt/search");
-        var middleware = CreateMiddleware();
+        var context = Fixture.CreateContext("/api/v1/yt/search");
+        var fixture = Fixture.Init();
 
-        await middleware.InvokeAsync(context);
+        await fixture.Sut.InvokeAsync(context);
 
         var endpoint = context.GetEndpoint();
         endpoint.Should().NotBeNull();
@@ -111,10 +117,10 @@ public class RateLimitPolicySelectorTests
     [Fact]
     public async Task Matches_downloads_mp3_path_to_GetDownloadLinkPolicy()
     {
-        var context = CreateContext("/api/v1/yt/downloads/mp3");
-        var middleware = CreateMiddleware();
+        var context = Fixture.CreateContext("/api/v1/yt/downloads/mp3");
+        var fixture = Fixture.Init();
 
-        await middleware.InvokeAsync(context);
+        await fixture.Sut.InvokeAsync(context);
 
         var endpoint = context.GetEndpoint();
         endpoint.Should().NotBeNull();
@@ -124,10 +130,10 @@ public class RateLimitPolicySelectorTests
     [Fact]
     public async Task Matches_download_file_path_to_DownloadFilePolicy()
     {
-        var context = CreateContext("/api/v1/yt/downloads/file");
-        var middleware = CreateMiddleware();
+        var context = Fixture.CreateContext("/api/v1/yt/downloads/file");
+        var fixture = Fixture.Init();
 
-        await middleware.InvokeAsync(context);
+        await fixture.Sut.InvokeAsync(context);
 
         var endpoint = context.GetEndpoint();
         endpoint.Should().NotBeNull();
@@ -137,10 +143,10 @@ public class RateLimitPolicySelectorTests
     [Fact]
     public async Task Matches_history_search_path_to_SearchHistoryPolicy()
     {
-        var context = CreateContext("/api/v1/yt/search/history");
-        var middleware = CreateMiddleware();
+        var context = Fixture.CreateContext("/api/v1/yt/search/history");
+        var fixture = Fixture.Init();
 
-        await middleware.InvokeAsync(context);
+        await fixture.Sut.InvokeAsync(context);
 
         var endpoint = context.GetEndpoint();
         endpoint.Should().NotBeNull();
@@ -150,10 +156,10 @@ public class RateLimitPolicySelectorTests
     [Fact]
     public async Task Matches_history_downloads_path_to_DownloadHistoryPolicy()
     {
-        var context = CreateContext("/api/v1/yt/downloads/history");
-        var middleware = CreateMiddleware();
+        var context = Fixture.CreateContext("/api/v1/yt/downloads/history");
+        var fixture = Fixture.Init();
 
-        await middleware.InvokeAsync(context);
+        await fixture.Sut.InvokeAsync(context);
 
         var endpoint = context.GetEndpoint();
         endpoint.Should().NotBeNull();
@@ -163,10 +169,10 @@ public class RateLimitPolicySelectorTests
     [Fact]
     public async Task Matches_history_root_path_to_GetHistoryPolicy()
     {
-        var context = CreateContext("/api/v1/yt/history");
-        var middleware = CreateMiddleware();
+        var context = Fixture.CreateContext("/api/v1/yt/history");
+        var fixture = Fixture.Init();
 
-        await middleware.InvokeAsync(context);
+        await fixture.Sut.InvokeAsync(context);
 
         var endpoint = context.GetEndpoint();
         endpoint.Should().NotBeNull();
@@ -176,10 +182,10 @@ public class RateLimitPolicySelectorTests
     [Fact]
     public async Task Matches_preview_path_to_PreviewPolicy()
     {
-        var context = CreateContext("/api/v1/yt/preview");
-        var middleware = CreateMiddleware();
+        var context = Fixture.CreateContext("/api/v1/yt/preview");
+        var fixture = Fixture.Init();
 
-        await middleware.InvokeAsync(context);
+        await fixture.Sut.InvokeAsync(context);
 
         var endpoint = context.GetEndpoint();
         endpoint.Should().NotBeNull();
@@ -189,10 +195,10 @@ public class RateLimitPolicySelectorTests
     [Fact]
     public async Task Matches_assistant_chat_path_to_AssistantPolicy()
     {
-        var context = CreateContext("/api/v1/yt/assistant/chat");
-        var middleware = CreateMiddleware();
+        var context = Fixture.CreateContext("/api/v1/yt/assistant/chat");
+        var fixture = Fixture.Init();
 
-        await middleware.InvokeAsync(context);
+        await fixture.Sut.InvokeAsync(context);
 
         var endpoint = context.GetEndpoint();
         endpoint.Should().NotBeNull();
@@ -202,10 +208,10 @@ public class RateLimitPolicySelectorTests
     [Fact]
     public async Task Matches_health_path_to_HealthPolicy()
     {
-        var context = CreateContext("/health");
-        var middleware = CreateMiddleware();
+        var context = Fixture.CreateContext("/health");
+        var fixture = Fixture.Init();
 
-        await middleware.InvokeAsync(context);
+        await fixture.Sut.InvokeAsync(context);
 
         var endpoint = context.GetEndpoint();
         endpoint.Should().NotBeNull();
@@ -215,10 +221,10 @@ public class RateLimitPolicySelectorTests
     [Fact]
     public async Task Matches_health_live_path_to_HealthPolicy()
     {
-        var context = CreateContext("/health/live");
-        var middleware = CreateMiddleware();
+        var context = Fixture.CreateContext("/health/live");
+        var fixture = Fixture.Init();
 
-        await middleware.InvokeAsync(context);
+        await fixture.Sut.InvokeAsync(context);
 
         var endpoint = context.GetEndpoint();
         endpoint.Should().NotBeNull();
@@ -228,10 +234,10 @@ public class RateLimitPolicySelectorTests
     [Fact]
     public async Task Matches_health_ready_path_to_HealthPolicy()
     {
-        var context = CreateContext("/health/ready");
-        var middleware = CreateMiddleware();
+        var context = Fixture.CreateContext("/health/ready");
+        var fixture = Fixture.Init();
 
-        await middleware.InvokeAsync(context);
+        await fixture.Sut.InvokeAsync(context);
 
         var endpoint = context.GetEndpoint();
         endpoint.Should().NotBeNull();
@@ -241,10 +247,10 @@ public class RateLimitPolicySelectorTests
     [Fact]
     public async Task Matches_scheduler_path_to_SchedulerPolicy()
     {
-        var context = CreateContext("/api/v1/scheduler/appointments");
-        var middleware = CreateMiddleware();
+        var context = Fixture.CreateContext("/api/v1/scheduler/appointments");
+        var fixture = Fixture.Init();
 
-        await middleware.InvokeAsync(context);
+        await fixture.Sut.InvokeAsync(context);
 
         var endpoint = context.GetEndpoint();
         endpoint.Should().NotBeNull();
@@ -254,16 +260,16 @@ public class RateLimitPolicySelectorTests
     [Fact]
     public async Task Returns_403_for_unmatched_path_with_endpoint()
     {
-        var context = CreateContext("/api/v1/unknown/endpoint");
+        var context = Fixture.CreateContext("/api/v1/unknown/endpoint");
         // Simulate that routing matched an endpoint — middleware should still
         // reject with 403 (fail closed) since no rate limit policy exists.
         context.SetEndpoint(new Endpoint(
             _ => Task.CompletedTask,
             EndpointMetadataCollection.Empty,
             "unmatched-route"));
-        var middleware = CreateMiddleware();
+        var fixture = Fixture.Init();
 
-        await middleware.InvokeAsync(context);
+        await fixture.Sut.InvokeAsync(context);
 
         context.Response.StatusCode.Should().Be(StatusCodes.Status403Forbidden);
     }
@@ -271,20 +277,20 @@ public class RateLimitPolicySelectorTests
     [Fact]
     public async Task Matches_imagetools_prefix_path_without_rate_limiting()
     {
-        var context = CreateContext("/api/v1/imagetools/resize");
+        var context = Fixture.CreateContext("/api/v1/imagetools/resize");
         // Simulate YARP having routed this request (proxied route has an endpoint)
         context.SetEndpoint(new Endpoint(
             _ => Task.CompletedTask,
             EndpointMetadataCollection.Empty,
             "imagetools-route"));
         var nextCalled = false;
-        var middleware = CreateMiddleware(_ =>
+        var fixture = new Fixture(_ =>
         {
             nextCalled = true;
             return Task.CompletedTask;
         });
 
-        await middleware.InvokeAsync(context);
+        await fixture.Sut.InvokeAsync(context);
 
         nextCalled.Should().BeTrue();
         context.Response.StatusCode.Should().Be(StatusCodes.Status200OK);
@@ -293,20 +299,20 @@ public class RateLimitPolicySelectorTests
     [Fact]
     public async Task Matches_imagetools_root_path_without_rate_limiting()
     {
-        var context = CreateContext("/api/v1/imagetools");
+        var context = Fixture.CreateContext("/api/v1/imagetools");
         // Simulate YARP having routed this request (proxied route has an endpoint)
         context.SetEndpoint(new Endpoint(
             _ => Task.CompletedTask,
             EndpointMetadataCollection.Empty,
             "imagetools-route"));
         var nextCalled = false;
-        var middleware = CreateMiddleware(_ =>
+        var fixture = new Fixture(_ =>
         {
             nextCalled = true;
             return Task.CompletedTask;
         });
 
-        await middleware.InvokeAsync(context);
+        await fixture.Sut.InvokeAsync(context);
 
         nextCalled.Should().BeTrue();
         context.Response.StatusCode.Should().Be(StatusCodes.Status200OK);
@@ -315,14 +321,14 @@ public class RateLimitPolicySelectorTests
     [Fact]
     public async Task Returns_proper_ApiErrorResponse_for_403_body()
     {
-        var context = CreateContext("/api/v1/unknown/endpoint");
+        var context = Fixture.CreateContext("/api/v1/unknown/endpoint");
         context.SetEndpoint(new Endpoint(
             _ => Task.CompletedTask,
             EndpointMetadataCollection.Empty,
             "unmatched-route"));
-        var middleware = CreateMiddleware();
+        var fixture = Fixture.Init();
 
-        await middleware.InvokeAsync(context);
+        await fixture.Sut.InvokeAsync(context);
 
         context.Response.StatusCode.Should().Be(StatusCodes.Status403Forbidden);
         context.Response.Body.Position = 0;
@@ -338,14 +344,14 @@ public class RateLimitPolicySelectorTests
     public async Task Calls_next_for_matched_path()
     {
         var nextCalled = false;
-        var context = CreateContext("/api/v1/auth/login");
-        var middleware = CreateMiddleware(_ =>
+        var context = Fixture.CreateContext("/api/v1/auth/login");
+        var fixture = new Fixture(_ =>
         {
             nextCalled = true;
             return Task.CompletedTask;
         });
 
-        await middleware.InvokeAsync(context);
+        await fixture.Sut.InvokeAsync(context);
 
         nextCalled.Should().BeTrue();
     }
@@ -356,14 +362,14 @@ public class RateLimitPolicySelectorTests
         // When routing doesn't match a route (no endpoint), the middleware
         // should not block — let the framework return 404.
         var nextCalled = false;
-        var context = CreateContext("/api/v1/unknown/endpoint");
-        var middleware = CreateMiddleware(_ =>
+        var context = Fixture.CreateContext("/api/v1/unknown/endpoint");
+        var fixture = new Fixture(_ =>
         {
             nextCalled = true;
             return Task.CompletedTask;
         });
 
-        await middleware.InvokeAsync(context);
+        await fixture.Sut.InvokeAsync(context);
 
         nextCalled.Should().BeTrue();
     }
@@ -374,18 +380,18 @@ public class RateLimitPolicySelectorTests
         // When routing DID match an endpoint but no rate limit policy exists,
         // the middleware should short-circuit with 403 (fail closed).
         var nextCalled = false;
-        var context = CreateContext("/api/v1/unknown/endpoint");
+        var context = Fixture.CreateContext("/api/v1/unknown/endpoint");
         context.SetEndpoint(new Endpoint(
             _ => Task.CompletedTask,
             EndpointMetadataCollection.Empty,
             "unmatched-route"));
-        var middleware = CreateMiddleware(_ =>
+        var fixture = new Fixture(_ =>
         {
             nextCalled = true;
             return Task.CompletedTask;
         });
 
-        await middleware.InvokeAsync(context);
+        await fixture.Sut.InvokeAsync(context);
 
         nextCalled.Should().BeFalse();
     }
@@ -408,12 +414,12 @@ public class RateLimitPolicySelectorTests
             new EndpointMetadataCollection(new object[] { "test-metadata" }),
             "original-endpoint-preserve-delegate");
 
-        var context = CreateContext("/api/v1/auth/login");
+        var context = Fixture.CreateContext("/api/v1/auth/login");
         context.SetEndpoint(originalEndpoint);
 
-        var middleware = CreateMiddleware();
+        var fixture = Fixture.Init();
 
-        await middleware.InvokeAsync(context);
+        await fixture.Sut.InvokeAsync(context);
 
         var endpoint = context.GetEndpoint()!;
         endpoint.Should().NotBeNull();
@@ -431,12 +437,12 @@ public class RateLimitPolicySelectorTests
             new EndpointMetadataCollection(new object[] { "test-metadata" }),
             "original-endpoint");
 
-        var context = CreateContext("/api/v1/auth/login");
+        var context = Fixture.CreateContext("/api/v1/auth/login");
         context.SetEndpoint(originalEndpoint);
 
-        var middleware = CreateMiddleware();
+        var fixture = Fixture.Init();
 
-        await middleware.InvokeAsync(context);
+        await fixture.Sut.InvokeAsync(context);
 
         var endpoint = context.GetEndpoint();
         endpoint.Should().NotBeNull();

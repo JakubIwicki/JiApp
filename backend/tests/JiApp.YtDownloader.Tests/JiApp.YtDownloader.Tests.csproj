@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\JiApp.YtDownloader\JiApp.YtDownloader.csproj" />
+    <ProjectReference Include="..\JiApp.Testing.Common\JiApp.Testing.Common.csproj" />
   </ItemGroup>
 
 </Project>

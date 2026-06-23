@@ -1,3 +1,4 @@
+using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Identity.Configuration;
 using JiApp.Identity.Features.Auth.Login;
@@ -11,7 +12,7 @@ using Moq;
 
 namespace JiApp.Identity.Tests.Features.Auth.Login;
 
-public class LoginHandlerTests
+public sealed class LoginHandlerTests
 {
     private sealed class Fixture
     {
@@ -48,6 +49,8 @@ public class LoginHandlerTests
             Jwt = new IdentitySettings.JwtSettings { AccessTokenExpireMinutes = 15 }
         };
 
+        public LoginHandler Sut { get; }
+
         public Fixture()
         {
             SignInManagerMock = new Mock<SignInManager<User>>(
@@ -65,6 +68,16 @@ public class LoginHandlerTests
             PasswordHasherMock
                 .Setup(x => x.VerifyHashedPassword(It.IsAny<User>(), It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(PasswordVerificationResult.Failed);
+
+            Sut = new LoginHandler(
+                SignInManagerMock.Object,
+                UserManagerMock.Object,
+                JwtTokenServiceMock.Object,
+                RefreshTokenServiceMock.Object,
+                GrantServiceMock.Object,
+                PasswordHasherMock.Object,
+                Settings,
+                Mock.Of<ILogger<LoginHandler>>());
         }
 
         public Fixture WithExistingUser()
@@ -112,28 +125,16 @@ public class LoginHandlerTests
                 .ReturnsAsync(SignInResult.LockedOut);
             return this;
         }
-
-        public LoginHandler Build() =>
-            new(
-                SignInManagerMock.Object,
-                UserManagerMock.Object,
-                JwtTokenServiceMock.Object,
-                RefreshTokenServiceMock.Object,
-                GrantServiceMock.Object,
-                PasswordHasherMock.Object,
-                Settings,
-                Mock.Of<ILogger<LoginHandler>>());
     }
 
     [Fact]
     public async Task HandleAsync_ReturnsSuccess_ForValidCredentials()
     {
         var fixture = new Fixture().WithExistingUser();
-        var sut = fixture.Build();
 
-        var result = await sut.HandleAsync(new LoginRequest("testuser", "correct-password"));
+        var result = await fixture.Sut.HandleAsync(new LoginRequest("testuser", "correct-password"));
 
-        result.IsSuccess.Should().BeTrue();
+        AssertSuccess(result);
         result.Value.Should().NotBeNull();
         result.Value!.UserId.Should().Be(1);
         result.Value.AccessToken.Should().Be("access-token");
@@ -146,9 +147,8 @@ public class LoginHandlerTests
     public async Task HandleAsync_PassesGrantedModules_IntoAccessToken()
     {
         var fixture = new Fixture().WithExistingUser();
-        var sut = fixture.Build();
 
-        await sut.HandleAsync(new LoginRequest("testuser", "correct-password"));
+        await fixture.Sut.HandleAsync(new LoginRequest("testuser", "correct-password"));
 
         fixture.JwtTokenServiceMock.Verify(x => x.GenerateToken(
             1, "testuser",
@@ -160,9 +160,8 @@ public class LoginHandlerTests
     public async Task HandleAsync_ReturnsFailure_ForNonexistentUser()
     {
         var fixture = new Fixture().WithNonexistentUser();
-        var sut = fixture.Build();
 
-        var result = await sut.HandleAsync(new LoginRequest("unknown", "any-password"));
+        var result = await fixture.Sut.HandleAsync(new LoginRequest("unknown", "any-password"));
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Invalid username or password");
@@ -172,9 +171,8 @@ public class LoginHandlerTests
     public async Task HandleAsync_CallsPasswordHasher_ForNonexistentUser_ToPreventTimingAttack()
     {
         var fixture = new Fixture().WithNonexistentUser();
-        var sut = fixture.Build();
 
-        await sut.HandleAsync(new LoginRequest("unknown", "any-password"));
+        await fixture.Sut.HandleAsync(new LoginRequest("unknown", "any-password"));
 
         fixture.PasswordHasherMock.Verify(
             x => x.HashPassword(It.IsAny<User>(), It.IsAny<string>()), Times.Once);
@@ -186,21 +184,19 @@ public class LoginHandlerTests
     public async Task HandleAsync_ReturnsFailure_ForWrongPassword()
     {
         var fixture = new Fixture().WithWrongPassword();
-        var sut = fixture.Build();
 
-        var result = await sut.HandleAsync(new LoginRequest("testuser", "wrong-password"));
+        var result = await fixture.Sut.HandleAsync(new LoginRequest("testuser", "wrong-password"));
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Invalid username or password");
     }
 
     [Fact]
-    public async Task HandleAsync_ReturnsLockoutMessage_WhenAccountIsLocked()
+    public async Task HandleAsync_ReturnsLockout_WhenAccountIsLocked()
     {
         var fixture = new Fixture().WithLockedAccount();
-        var sut = fixture.Build();
 
-        var result = await sut.HandleAsync(new LoginRequest("testuser", "any-password"));
+        var result = await fixture.Sut.HandleAsync(new LoginRequest("testuser", "any-password"));
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Account is locked. Please try again later.");

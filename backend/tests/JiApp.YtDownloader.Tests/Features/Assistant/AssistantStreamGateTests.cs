@@ -1,51 +1,57 @@
 using JiApp.YtDownloader.Features.Assistant;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace JiApp.YtDownloader.Tests.Features.Assistant;
 
-public class AssistantStreamGateTests
+public sealed class AssistantStreamGateTests
 {
-    private static AssistantStreamGate CreateSut() => new();
-
-    [Fact]
-    public void TryEnter_succeeds_when_gate_is_free()
+    private sealed class Fixture
     {
-        var sut = CreateSut();
-        var acquired = sut.TryEnter();
-        acquired.Should().BeTrue();
-        sut.Release();
+        public AssistantStreamGate Sut { get; } = new();
+
+        public static Fixture Init() => new();
     }
 
     [Fact]
-    public void TryEnter_fails_when_gate_is_already_held()
+    public void TryEnter_WhenGateIsFree_ReturnsTrue()
     {
-        var sut = CreateSut();
-        var first = sut.TryEnter();
-        var second = sut.TryEnter();
+        var fixture = Fixture.Init();
+
+        var acquired = fixture.Sut.TryEnter();
+
+        acquired.Should().BeTrue();
+        fixture.Sut.Release();
+    }
+
+    [Fact]
+    public void TryEnter_WhenGateIsAlreadyHeld_ReturnsFalse()
+    {
+        var fixture = Fixture.Init();
+
+        var first = fixture.Sut.TryEnter();
+        var second = fixture.Sut.TryEnter();
 
         first.Should().BeTrue();
         second.Should().BeFalse();
 
-        sut.Release();
+        fixture.Sut.Release();
     }
 
     [Fact]
-    public void Release_allows_next_acquire_to_succeed()
+    public void Release_AfterAcquire_AllowsNextAcquireToSucceed()
     {
-        var sut = CreateSut();
+        var fixture = Fixture.Init();
 
-        sut.TryEnter();
-        sut.Release();
+        fixture.Sut.TryEnter();
+        fixture.Sut.Release();
 
-        var reacquired = sut.TryEnter();
+        var reacquired = fixture.Sut.TryEnter();
         reacquired.Should().BeTrue();
-        sut.Release();
+        fixture.Sut.Release();
     }
 
     [Fact]
-    public void Gate_registered_as_singleton_returns_same_instance()
+    public void Gate_RegisteredAsSingleton_ReturnsSameInstance()
     {
         var services = new ServiceCollection();
         services.AddSingleton<AssistantStreamGate>();
@@ -58,25 +64,18 @@ public class AssistantStreamGateTests
     }
 
     [Fact]
-    public void Concurrent_streams_second_is_blocked_by_gate()
+    public void ConcurrentStreams_SecondIsBlockedByGate()
     {
-        // Simulate the endpoint's gate pattern:
-        // Stream 1 acquires → Stream 2 fails with 503 → Stream 1 releases → Stream 3 succeeds.
-
         var gate = new AssistantStreamGate();
 
-        // Stream 1 enters
         var stream1Acquired = gate.TryEnter();
         stream1Acquired.Should().BeTrue();
 
-        // Stream 2 tries simultaneously — must fail
         var stream2Acquired = gate.TryEnter();
         stream2Acquired.Should().BeFalse();
 
-        // Stream 1 finishes
         gate.Release();
 
-        // Stream 3 now succeeds
         var stream3Acquired = gate.TryEnter();
         stream3Acquired.Should().BeTrue();
         gate.Release();

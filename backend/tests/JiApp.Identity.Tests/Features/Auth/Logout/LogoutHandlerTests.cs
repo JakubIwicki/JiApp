@@ -6,52 +6,73 @@ using Moq;
 
 namespace JiApp.Identity.Tests.Features.Auth.Logout;
 
-public class LogoutHandlerTests
+public sealed class LogoutHandlerTests
 {
-    private readonly Mock<IRefreshTokenService> _refreshTokenServiceMock;
-    private readonly LogoutHandler _sut;
-
-    public LogoutHandlerTests()
+    private sealed class Fixture
     {
-        _refreshTokenServiceMock = new Mock<IRefreshTokenService>();
-        var logger = Mock.Of<ILogger<LogoutHandler>>();
-        _sut = new LogoutHandler(_refreshTokenServiceMock.Object, logger);
+        public Mock<IRefreshTokenService> RefreshTokenServiceMock { get; } = new();
+
+        public LogoutHandler Sut { get; }
+
+        public Fixture()
+        {
+            Sut = new LogoutHandler(RefreshTokenServiceMock.Object, Mock.Of<ILogger<LogoutHandler>>());
+        }
+
+        public Fixture WithValidToken(string rawToken = "valid-token")
+        {
+            RefreshTokenServiceMock
+                .Setup(x => x.ValidateAsync(rawToken))
+                .ReturnsAsync(new RefreshToken { Id = 10, Token = "raw-token", UserId = 1 });
+            return this;
+        }
+
+        public Fixture WithAlreadyRevokedToken(string rawToken = "already-revoked")
+        {
+            RefreshTokenServiceMock
+                .Setup(x => x.ValidateAsync(rawToken))
+                .ReturnsAsync(new RefreshToken { Id = 10, Token = "raw-token", UserId = 1, IsRevoked = true });
+            return this;
+        }
+
+        public Fixture WithNonexistentToken(string rawToken = "nonexistent-token")
+        {
+            RefreshTokenServiceMock
+                .Setup(x => x.ValidateAsync(rawToken))
+                .ReturnsAsync((RefreshToken?)null);
+            return this;
+        }
     }
 
     [Fact]
-    public async Task HandleAsync_revokes_token_when_valid()
+    public async Task HandleAsync_RevokesToken_WhenValid()
     {
-        var storedToken = new RefreshToken { Id = 10, Token = "raw-token", UserId = 1 };
-        _refreshTokenServiceMock.Setup(x => x.ValidateAsync("valid-token"))
-            .ReturnsAsync(storedToken);
+        var fixture = new Fixture().WithValidToken();
 
-        await _sut.HandleAsync(new LogoutRequest("valid-token"));
+        await fixture.Sut.HandleAsync(new LogoutRequest("valid-token"));
 
-        _refreshTokenServiceMock.Verify(x => x.RevokeAsync(10), Times.Once);
+        fixture.RefreshTokenServiceMock.Verify(x => x.RevokeAsync(10), Times.Once);
     }
 
     [Fact]
-    public async Task HandleAsync_revokes_already_revoked_token_idempotently()
+    public async Task HandleAsync_RevokesAlreadyRevokedToken_Idempotently()
     {
-        var revokedToken = new RefreshToken { Id = 10, Token = "raw-token", UserId = 1, IsRevoked = true };
-        _refreshTokenServiceMock.Setup(x => x.ValidateAsync("already-revoked"))
-            .ReturnsAsync(revokedToken);
+        var fixture = new Fixture().WithAlreadyRevokedToken();
 
-        await _sut.HandleAsync(new LogoutRequest("already-revoked"));
+        await fixture.Sut.HandleAsync(new LogoutRequest("already-revoked"));
 
         // RevokeAsync is idempotent; the call is made regardless since
         // ValidateAsync now returns revoked tokens for reuse detection
-        _refreshTokenServiceMock.Verify(x => x.RevokeAsync(10), Times.Once);
+        fixture.RefreshTokenServiceMock.Verify(x => x.RevokeAsync(10), Times.Once);
     }
 
     [Fact]
-    public async Task HandleAsync_does_not_revoke_when_token_does_not_exist()
+    public async Task HandleAsync_DoesNotRevoke_WhenTokenDoesNotExist()
     {
-        _refreshTokenServiceMock.Setup(x => x.ValidateAsync("nonexistent-token"))
-            .ReturnsAsync((RefreshToken?)null);
+        var fixture = new Fixture().WithNonexistentToken();
 
-        await _sut.HandleAsync(new LogoutRequest("nonexistent-token"));
+        await fixture.Sut.HandleAsync(new LogoutRequest("nonexistent-token"));
 
-        _refreshTokenServiceMock.Verify(x => x.RevokeAsync(It.IsAny<long>()), Times.Never);
+        fixture.RefreshTokenServiceMock.Verify(x => x.RevokeAsync(It.IsAny<long>()), Times.Never);
     }
 }

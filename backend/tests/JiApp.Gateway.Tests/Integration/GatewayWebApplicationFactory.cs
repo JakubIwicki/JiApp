@@ -11,7 +11,7 @@ namespace JiApp.Gateway.Tests.Integration;
 /// that doesn't exist in the test runner environment).
 /// Also sets DOTNET_USE_POLLING_FILE_WATCHER=1 to work around WSL inotify limits.
 /// </summary>
-public class GatewayWebApplicationFactory : WebApplicationFactory<Program>
+public class GatewayWebApplicationFactory : WebApplicationFactory<JiApp.Gateway.Program>
 {
     static GatewayWebApplicationFactory()
     {

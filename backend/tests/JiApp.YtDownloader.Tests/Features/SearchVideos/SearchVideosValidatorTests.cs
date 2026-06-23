@@ -2,12 +2,12 @@ using JiApp.YtDownloader.Features.SearchVideos;
 
 namespace JiApp.YtDownloader.Tests.Features.SearchVideos;
 
-public class SearchVideosValidatorTests
+public sealed class SearchVideosValidatorTests
 {
     private static SearchVideosValidator CreateValidator() => new();
 
     [Fact]
-    public void Validator_rejects_query_longer_than_100_characters()
+    public void Validator_RejectsQuery_LongerThan100Characters()
     {
         var validator = CreateValidator();
         var request = new SearchVideosRequest(new string('x', 101), null);
@@ -19,7 +19,7 @@ public class SearchVideosValidatorTests
     }
 
     [Fact]
-    public void Validator_accepts_query_of_100_characters()
+    public void Validator_AcceptsQuery_Of100Characters()
     {
         var validator = CreateValidator();
         var request = new SearchVideosRequest(new string('x', 100), null);
@@ -30,7 +30,7 @@ public class SearchVideosValidatorTests
     }
 
     [Fact]
-    public void Validator_rejects_empty_query()
+    public void Validator_RejectsEmptyQuery()
     {
         var validator = CreateValidator();
 

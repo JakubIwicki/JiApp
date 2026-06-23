@@ -2,10 +2,31 @@ using JiApp.YtDownloader.Configuration;
 
 namespace JiApp.YtDownloader.Tests.Configuration;
 
-public class SettingsTests
+public sealed class SettingsTests
 {
+    private Settings CreateValidSettings(int previewDurationSeconds = 10)
+    {
+        return new Settings
+        {
+            ConnectionString = "Data Source=test.db",
+            App = new Settings.AppSettings
+            {
+                BaseDirectory = "/tmp",
+                PreviewDurationSeconds = previewDurationSeconds,
+            },
+            Jwt = new Settings.JwtSettings
+            {
+                Key = "test-key", Issuer = "test-issuer", Audience = "test-audience",
+            },
+            Youtube = new Settings.YoutubeSettings
+            {
+                ApiKey = "test-key", YtDlpPath = "yt-dlp", FfmpegPath = "ffmpeg",
+            },
+        };
+    }
+
     [Fact]
-    public void AppSettings_PreviewDurationSeconds_defaults_to_10()
+    public void AppSettings_PreviewDurationSeconds_DefaultsTo10()
     {
         var app = new Settings.AppSettings();
 
@@ -13,7 +34,7 @@ public class SettingsTests
     }
 
     [Fact]
-    public void AppSettings_PreviewDurationSeconds_can_be_configured()
+    public void AppSettings_PreviewDurationSeconds_CanBeConfigured()
     {
         var app = new Settings.AppSettings { PreviewDurationSeconds = 30 };
 
@@ -24,25 +45,9 @@ public class SettingsTests
     [InlineData(0)]
     [InlineData(-1)]
     [InlineData(-100)]
-    public void Validate_throws_when_PreviewDurationSeconds_is_not_positive(int invalidDuration)
+    public void Validate_Throws_WhenPreviewDurationSecondsIsNotPositive(int invalidDuration)
     {
-        var settings = new Settings
-        {
-            ConnectionString = "Data Source=test.db",
-            App = new Settings.AppSettings
-            {
-                BaseDirectory = "/tmp",
-                PreviewDurationSeconds = invalidDuration,
-            },
-            Jwt = new Settings.JwtSettings
-            {
-                Key = "test-key", Issuer = "test-issuer", Audience = "test-audience",
-            },
-            Youtube = new Settings.YoutubeSettings
-            {
-                ApiKey = "test-key", YtDlpPath = "yt-dlp", FfmpegPath = "ffmpeg",
-            },
-        };
+        var settings = CreateValidSettings(previewDurationSeconds: invalidDuration);
 
         Action act = () => settings.Validate();
 
@@ -51,25 +56,9 @@ public class SettingsTests
     }
 
     [Fact]
-    public void Validate_passes_when_PreviewDurationSeconds_is_positive()
+    public void Validate_Passes_WhenPreviewDurationSecondsIsPositive()
     {
-        var settings = new Settings
-        {
-            ConnectionString = "Data Source=test.db",
-            App = new Settings.AppSettings
-            {
-                BaseDirectory = "/tmp",
-                PreviewDurationSeconds = 15,
-            },
-            Jwt = new Settings.JwtSettings
-            {
-                Key = "test-key", Issuer = "test-issuer", Audience = "test-audience",
-            },
-            Youtube = new Settings.YoutubeSettings
-            {
-                ApiKey = "test-key", YtDlpPath = "yt-dlp", FfmpegPath = "ffmpeg",
-            },
-        };
+        var settings = CreateValidSettings(previewDurationSeconds: 15);
 
         Action act = () => settings.Validate();
 
@@ -77,7 +66,7 @@ public class SettingsTests
     }
 
     [Fact]
-    public void YoutubeSettings_CookiesFile_defaults_to_null()
+    public void YoutubeSettings_CookiesFile_DefaultsToNull()
     {
         var youtube = new Settings.YoutubeSettings();
 
@@ -85,7 +74,7 @@ public class SettingsTests
     }
 
     [Fact]
-    public void YoutubeSettings_CookiesFromBrowser_defaults_to_null()
+    public void YoutubeSettings_CookiesFromBrowser_DefaultsToNull()
     {
         var youtube = new Settings.YoutubeSettings();
 
@@ -93,7 +82,7 @@ public class SettingsTests
     }
 
     [Fact]
-    public void YoutubeSettings_cookie_properties_can_be_configured()
+    public void YoutubeSettings_CookieProperties_CanBeConfigured()
     {
         var youtube = new Settings.YoutubeSettings
         {
@@ -106,7 +95,7 @@ public class SettingsTests
     }
 
     [Fact]
-    public void Validate_passes_when_cookie_properties_are_not_set()
+    public void Validate_Passes_WhenCookiePropertiesAreNotSet()
     {
         var settings = new Settings
         {
@@ -125,7 +114,6 @@ public class SettingsTests
                 ApiKey = "test-key",
                 YtDlpPath = "yt-dlp",
                 FfmpegPath = "ffmpeg",
-                // CookiesFile and CookiesFromBrowser left null — should still pass
             },
         };
 

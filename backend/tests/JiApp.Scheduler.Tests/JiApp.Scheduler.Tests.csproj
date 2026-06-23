@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\JiApp.Scheduler\JiApp.Scheduler.csproj" />
+    <ProjectReference Include="..\JiApp.Testing.Common\JiApp.Testing.Common.csproj" />
   </ItemGroup>
 
 </Project>

@@ -3,10 +3,10 @@ using JiApp.YtDownloader.Features.Assistant;
 
 namespace JiApp.YtDownloader.Tests.Features.Assistant;
 
-public class DeepSeekChatClientProviderTests
+public sealed class DeepSeekChatClientProviderTests
 {
     [Fact]
-    public void Provider_is_not_configured_when_deepseek_section_is_absent()
+    public void Provider_WithAbsentDeepSeekSection_IsNotConfigured()
     {
         var provider = new DeepSeekChatClientProvider(new Settings());
 
@@ -17,7 +17,7 @@ public class DeepSeekChatClientProviderTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void Provider_is_not_configured_when_api_key_is_blank(string? apiKey)
+    public void Provider_WithBlankApiKey_IsNotConfigured(string? apiKey)
     {
         var settings = new Settings
         {
@@ -30,7 +30,7 @@ public class DeepSeekChatClientProviderTests
     }
 
     [Fact]
-    public void Accessing_client_when_not_configured_throws()
+    public void Provider_WhenNotConfigured_ThrowsOnClientAccess()
     {
         var provider = new DeepSeekChatClientProvider(new Settings());
 
@@ -40,7 +40,7 @@ public class DeepSeekChatClientProviderTests
     }
 
     [Fact]
-    public void Provider_is_configured_and_builds_client_when_api_key_present()
+    public void Provider_WithApiKey_IsConfiguredAndBuildsClient()
     {
         var settings = new Settings
         {

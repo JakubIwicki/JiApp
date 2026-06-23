@@ -3,7 +3,7 @@ using JiApp.Identity.Services;
 
 namespace JiApp.Identity.Tests.Services;
 
-public class JwtTokenServiceTests
+public sealed class JwtTokenServiceTests
 {
     private const string Key = "this-is-a-test-key-that-is-at-least-32-bytes-long!";
     private const string Issuer = "JiApp-Identity";
@@ -12,28 +12,19 @@ public class JwtTokenServiceTests
 
     private sealed class Fixture
     {
-        private readonly string _key;
-        private readonly string _issuer;
-        private readonly string _audience;
-        private readonly int _expireMinutes;
+        public JwtTokenService Sut { get; }
 
         public Fixture(string key = Key, string issuer = Issuer, string audience = Audience,
             int expireMinutes = ExpireMinutes)
         {
-            _key = key;
-            _issuer = issuer;
-            _audience = audience;
-            _expireMinutes = expireMinutes;
+            Sut = new JwtTokenService(key, issuer, audience, expireMinutes);
         }
-
-        public JwtTokenService Build() =>
-            new(_key, _issuer, _audience, _expireMinutes);
     }
 
     [Fact]
     public void GenerateToken_ReturnsValidJwt()
     {
-        var sut = new Fixture().Build();
+        var sut = new Fixture().Sut;
 
         var token = sut.GenerateToken(1, "testuser", []);
 
@@ -44,7 +35,7 @@ public class JwtTokenServiceTests
     [Fact]
     public void GenerateToken_EmitsModuleClaim_PerGrantedModule()
     {
-        var sut = new Fixture().Build();
+        var sut = new Fixture().Sut;
         var modules = new[] { "YtDownloader", "Scheduler" };
 
         var token = sut.GenerateToken(1, "testuser", modules);
@@ -62,7 +53,7 @@ public class JwtTokenServiceTests
     [Fact]
     public void GenerateToken_EmitsNoModuleClaims_WhenNoneGranted()
     {
-        var sut = new Fixture().Build();
+        var sut = new Fixture().Sut;
 
         var token = sut.GenerateToken(1, "testuser", []);
 
@@ -77,7 +68,7 @@ public class JwtTokenServiceTests
     [Fact]
     public void IsTokenValid_ReturnsFalse_ForGarbageToken()
     {
-        var sut = new Fixture().Build();
+        var sut = new Fixture().Sut;
 
         sut.IsTokenValid("not-a-jwt").Should().BeFalse();
     }
@@ -85,7 +76,7 @@ public class JwtTokenServiceTests
     [Fact]
     public void GetUsernameFromToken_ReturnsCorrectUsername()
     {
-        var sut = new Fixture().Build();
+        var sut = new Fixture().Sut;
 
         var token = sut.GenerateToken(42, "jakub", []);
         var username = sut.GetUsernameFromToken(token);
@@ -96,7 +87,7 @@ public class JwtTokenServiceTests
     [Fact]
     public void GetUserIdFromToken_ReturnsCorrectUserId()
     {
-        var sut = new Fixture().Build();
+        var sut = new Fixture().Sut;
 
         var token = sut.GenerateToken(42, "jakub", []);
         var userId = sut.GetUserIdFromToken(token);
@@ -107,7 +98,7 @@ public class JwtTokenServiceTests
     [Fact]
     public void GenerateToken_ProducesDifferentTokens_ForDifferentUsers()
     {
-        var sut = new Fixture().Build();
+        var sut = new Fixture().Sut;
 
         var t1 = sut.GenerateToken(1, "alice", []);
         var t2 = sut.GenerateToken(2, "bob", []);
@@ -118,9 +109,9 @@ public class JwtTokenServiceTests
     [Fact]
     public void IsTokenValid_ReturnsFalse_ForExpiredToken()
     {
-        var sut = new Fixture(expireMinutes: -1).Build();
+        var sut = new Fixture(expireMinutes: -1).Sut;
 
         var token = sut.GenerateToken(1, "testuser", []);
-        new Fixture().Build().IsTokenValid(token).Should().BeFalse();
+        new Fixture().Sut.IsTokenValid(token).Should().BeFalse();
     }
 }
