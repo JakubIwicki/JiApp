@@ -25,7 +25,7 @@ check_idle() {
 
     # No established TCP connections to Gateway port
     local conns
-    conns=$(ss -tn state established dport = :6700 2>/dev/null | tail -n +2 | wc -l)
+    conns=$(ss -tn state established sport = :6700 2>/dev/null | tail -n +2 | wc -l)
 
     [ "$procs" -eq 0 ] && [ "$conns" -eq 0 ]
 }
@@ -42,7 +42,8 @@ echo "$COUNT" > "$IDLE_FILE"
 # Log status
 PROCS=$(pgrep -c 'yt-dlp|ffmpeg' 2>/dev/null) || true
 PROCS=${PROCS:-0}
-CONNS=$(ss -tn state established dport = :6700 2>/dev/null | tail -n +2 | wc -l)
+CONNS=$(ss -tn state established sport = :6700 2>/dev/null | tail -n +2 | wc -l) || true
+CONNS=${CONNS:-0}
 echo "[$(date)] Idle ${COUNT}/${MAX_IDLE}  yt-dlp=${PROCS} conns=${CONNS}" >> "$LOG_FILE"
 
 # ── Threshold reached ────────────────────────────────────
