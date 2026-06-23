@@ -142,6 +142,8 @@ All origins accepted. Same policy on all services.
 | POST | `/api/v1/auth/refresh` | `RefreshEndpoint.cs` | 🟢 Live |
 | POST | `/api/v1/auth/logout` | `LogoutEndpoint.cs` | 🟢 Live |
 | GET | `/api/v1/auth/me` | `MeEndpoint.cs` | 🟢 Live |
+| PATCH | `/api/v1/auth/profile` | `UpdateProfileEndpoint.cs` | 🟢 Live |
+| POST | `/api/v1/auth/change-password` | `ChangePasswordEndpoint.cs` | 🟢 Live |
 | GET | `/api/v1/auth/health` | `Startup.cs` | 🟢 Live |
 | GET | `/api/v1/auth/throw` | `Startup.cs` (dev only) | 🟢 Live |
 
@@ -297,6 +299,8 @@ All calls go through the Gateway at `:6700` and are proxied via YARP.
 | POST | `/api/v1/auth/login` | `authService.ts:9` | LoginScreen |
 | POST | `/api/v1/auth/register` | `authService.ts:25` | RegisterScreen |
 | GET | `/api/v1/auth/me` | `authService.ts:31` | AuthContext |
+| PATCH | `/api/v1/auth/profile` | `authService.ts` | EditProfileScreen |
+| POST | `/api/v1/auth/change-password` | `authService.ts` | EditProfileScreen |
 
 #### YouTube Search & History
 

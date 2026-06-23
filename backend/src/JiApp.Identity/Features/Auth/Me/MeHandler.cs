@@ -30,6 +30,6 @@ public sealed class MeHandler(
 
         var modules = await grantService.GetModulesAsync(userId);
 
-        return Result<MeResponse>.Success(new MeResponse(user.Id, user.DisplayName, username, modules));
+        return Result<MeResponse>.Success(new MeResponse(user.Id, user.DisplayName, username, user.Email, modules));
     }
 }
