@@ -89,6 +89,8 @@ CLAUDE.md
 .claude/skills
 .claude/themes
 .claude/output-styles
+.claude/plans
+.claude/specs
 
 # Runtime logs
 backend/.api-debug.log
