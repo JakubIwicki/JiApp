@@ -29,6 +29,7 @@ export type HistoryStackParamList = {
 
 export type SettingsStackParamList = {
   Settings: undefined;
+  EditProfile: undefined;
 };
 
 export type ChatStackParamList = {

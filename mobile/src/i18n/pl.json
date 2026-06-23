@@ -106,7 +106,20 @@
     "logout": "Wyloguj",
     "version": "Wersja",
     "languagePolish": "Polski",
-    "languageEnglish": "English"
+    "languageEnglish": "English",
+    "editProfile": "Edytuj profil",
+    "profileSection": "Profil",
+    "passwordSection": "Zmień hasło",
+    "email": "Email",
+    "currentPassword": "Aktualne hasło",
+    "newPassword": "Nowe hasło",
+    "confirmPassword": "Potwierdź hasło",
+    "save": "Zapisz",
+    "profileUpdated": "Profil zaktualizowany",
+    "passwordChanged": "Hasło zmienione",
+    "passwordsMustMatch": "Hasła muszą być zgodne",
+    "displayNameMax": "Nazwa wyświetlana może mieć maksymalnie 50 znaków",
+    "emailTaken": "Ten adres e-mail jest już zajęty"
   },
   "wake": {
     "title": "Budzenie serwera...",

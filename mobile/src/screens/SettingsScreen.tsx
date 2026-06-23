@@ -14,12 +14,20 @@ import {
   typography,
   spacing,
 } from '../styles/theme';
-import type { RootStackParamList } from '../navigation/types';
+import type {
+  RootStackParamList,
+  SettingsStackParamList,
+} from '../navigation/types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+type SettingsNavigationProp = NativeStackNavigationProp<
+  SettingsStackParamList,
+  'Settings'
+>;
 
 const SettingsScreen: React.FC = () => {
   const { t } = useTranslation();
-  const navigation = useNavigation();
+  const navigation = useNavigation<SettingsNavigationProp>();
   const { displayName, username, logout } = useAuth();
   const { showSuccess } = useToast();
 
@@ -30,6 +38,10 @@ const SettingsScreen: React.FC = () => {
     const rootNavigation =
       navigation.getParent<NativeStackNavigationProp<RootStackParamList>>();
     rootNavigation?.navigate('ModuleSelection');
+  }, [navigation]);
+
+  const handleEditProfile = useCallback(() => {
+    navigation.navigate('EditProfile');
   }, [navigation]);
 
   return (
@@ -57,6 +69,20 @@ const SettingsScreen: React.FC = () => {
             <Text style={styles.infoValue}>{username ?? '-'}</Text>
           </View>
         </View>
+        <Pressable
+          style={({ pressed }) => [
+            styles.editProfileButton,
+            pressed && { opacity: 0.7 },
+          ]}
+          onPress={handleEditProfile}
+          testID="edit-profile-button"
+          accessibilityRole="button"
+          accessibilityLabel={t('settings.editProfile')}
+        >
+          <Text style={styles.editProfileText}>
+            {t('settings.editProfile')}
+          </Text>
+        </Pressable>
       </View>
 
       <View style={styles.switchSection}>
@@ -125,6 +151,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   switchText: {
+    fontSize: 16,
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  editProfileButton: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    paddingVertical: 14,
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing.md,
+  },
+  editProfileText: {
     fontSize: 16,
     color: colors.primary,
     fontWeight: '600',

@@ -106,7 +106,20 @@
     "logout": "Logout",
     "version": "Version",
     "languagePolish": "Polish",
-    "languageEnglish": "English"
+    "languageEnglish": "English",
+    "editProfile": "Edit Profile",
+    "profileSection": "Profile",
+    "passwordSection": "Change Password",
+    "email": "Email",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "save": "Save",
+    "profileUpdated": "Profile updated",
+    "passwordChanged": "Password changed",
+    "passwordsMustMatch": "Passwords must match",
+    "displayNameMax": "Display name must be 50 characters or fewer",
+    "emailTaken": "That email address is already in use"
   },
   "wake": {
     "title": "Waking server...",

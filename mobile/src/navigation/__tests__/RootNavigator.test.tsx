@@ -82,6 +82,7 @@ const buildAuthValue = (modules: ModuleId[]) => ({
   checkToken: async () => {},
   dismissWelcome: () => {},
   dismissFarewell: () => {},
+  updateProfile: async () => {},
 });
 
 const testMetrics = {

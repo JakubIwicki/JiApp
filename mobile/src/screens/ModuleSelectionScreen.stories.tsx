@@ -24,6 +24,7 @@ const buildAuthValue = ({ modules, displayName }: MockAuthOptions) => ({
   checkToken: async () => {},
   dismissWelcome: () => {},
   dismissFarewell: () => {},
+  updateProfile: async () => {},
 });
 
 const withAuth = (options: MockAuthOptions) => (Story: React.FC) =>

@@ -54,6 +54,7 @@ const buildAuthValue = (
   checkToken: async () => {},
   dismissWelcome: () => {},
   dismissFarewell: () => {},
+  updateProfile: async () => {},
 });
 
 const renderScreen = (

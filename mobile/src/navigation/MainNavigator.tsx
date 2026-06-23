@@ -11,6 +11,7 @@ import DownloadScreen from '../screens/DownloadScreen';
 import DownloadsScreen from '../screens/DownloadsScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import EditProfileScreen from '../screens/EditProfileScreen';
 import { colors, tabBar } from '../styles/theme';
 import type {
   MainTabParamList,
@@ -68,6 +69,7 @@ const DownloadsStackScreen: React.FC = () => (
 const SettingsStackScreen: React.FC = () => (
   <SettingsStack.Navigator screenOptions={stackScreenOptions}>
     <SettingsStack.Screen name="Settings" component={SettingsScreen} />
+    <SettingsStack.Screen name="EditProfile" component={EditProfileScreen} />
   </SettingsStack.Navigator>
 );
 
