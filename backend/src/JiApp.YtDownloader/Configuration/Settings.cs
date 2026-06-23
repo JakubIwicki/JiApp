@@ -6,6 +6,8 @@ public sealed class Settings
     public AppSettings? App { get; init; }
     public JwtSettings? Jwt { get; set; }
     public YoutubeSettings? Youtube { get; set; }
+    public DeepSeekSettings? DeepSeek { get; set; }
+    public AssistantSettings? Assistant { get; set; }
 
     public void Validate()
     {
@@ -51,6 +53,9 @@ public sealed class Settings
                 errors.Add("Youtube:FfmpegPath is not configured.");
         }
 
+        if (Assistant is { DailyMessageLimitPerUser: <= 0 })
+            errors.Add("Assistant:DailyMessageLimitPerUser must be greater than 0.");
+
         if (errors.Count > 0)
             throw new InvalidOperationException(
                 $"Configuration validation failed:\n{string.Join("\n", errors)}");
@@ -76,5 +81,20 @@ public sealed class Settings
         public string? FfmpegPath { get; set; }
         public string? CookiesFile { get; set; }
         public string? CookiesFromBrowser { get; set; }
+        public string? Proxy { get; set; }
+    }
+
+    public sealed class DeepSeekSettings
+    {
+        public string? ApiKey { get; set; }
+        public string? BaseUrl { get; set; } = "https://api.deepseek.com";
+        public string? Model { get; set; } = "deepseek-chat";
+        public int MaxIterations { get; set; } = 5;
+        public int RequestTimeoutSeconds { get; set; } = 60;
+    }
+
+    public sealed class AssistantSettings
+    {
+        public int DailyMessageLimitPerUser { get; set; } = 30;
     }
 }

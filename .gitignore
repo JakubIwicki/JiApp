@@ -64,12 +64,31 @@ backend/.pids/
 backend/.api-pid
 backend/.data/
 
-# Dev certificates (generated)
+# Dev certificates / private keys (never commit — public repo)
+backend/certs/
 backend/certs/dev-cert.pfx
 *.srl
 *.cer
 mobile/android/app/src/main/res/raw/jiapp_dev_ca
 mobile/android/app/src/main/res/raw/ca_cert_dev.der
+
+# Production certificates (private keys + deployment-generated files MUST NOT be committed)
+backend/certs/prod/jiapp-ca.key
+backend/certs/prod/jiapp-ca.srl
+backend/certs/prod/jiapp-server.key
+backend/certs/prod/jiapp-server.csr
+backend/certs/prod/jiapp-server.crt
+backend/certs/prod/server.pfx
+
+# Local Claude / MCP config (machine-specific, never commit)
+.mcp.json
+CLAUDE.md
+.claude/CLAUDE.local.md
+.claude/agents
+.claude/hooks
+.claude/skills
+.claude/themes
+.claude/output-styles
 
 # Runtime logs
 backend/.api-debug.log
@@ -79,6 +98,9 @@ backend/.api-debug.log
 
 .env
 .venv
+
+# AWS prod secrets (template is tracked)
+aws/.env.prod
 
 **/graphify-out/
 docs/
@@ -92,6 +114,12 @@ backend/inspect-file.sh
 
 # Test artifacts
 mobile/test-results/
+
+# Generated config
+mobile/src/config.generated.ts
+
+# Worktrees
+.worktrees/
 
 # Media
 *.mp3

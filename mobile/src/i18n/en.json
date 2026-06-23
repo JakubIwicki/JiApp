@@ -40,6 +40,7 @@
   },
   "nav": {
     "search": "Search",
+    "assistant": "Assistant",
     "downloads": "Downloads",
     "history": "History",
     "settings": "Settings"
@@ -105,7 +106,28 @@
     "logout": "Logout",
     "version": "Version",
     "languagePolish": "Polish",
-    "languageEnglish": "English"
+    "languageEnglish": "English",
+    "editProfile": "Edit Profile",
+    "profileSection": "Profile",
+    "passwordSection": "Change Password",
+    "email": "Email",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "save": "Save",
+    "profileUpdated": "Profile updated",
+    "passwordChanged": "Password changed",
+    "passwordsMustMatch": "Passwords must match",
+    "displayNameMax": "Display name must be 50 characters or fewer",
+    "emailTaken": "That email address is already in use"
+  },
+  "wake": {
+    "title": "Waking server...",
+    "message": "This may take up to 2 minutes",
+    "unavailable": "Server unavailable",
+    "unavailableMessage": "Server unavailable. This may take 1–2 minutes.",
+    "retry": "Retry",
+    "closeApp": "Close app"
   },
   "connectionError": {
     "title": "Cannot connect to server",
@@ -127,6 +149,49 @@
     },
     "emptyTitle": "No modules available",
     "emptyMessage": "Your account doesn't have access to any modules yet. Please contact your administrator."
+  },
+  "chat": {
+    "title": "Assistant",
+    "inputPlaceholder": "Ask for a song…",
+    "send": "Send",
+    "error": "Chat error",
+    "empty": {
+      "greeting": "Ask me to find a song, video, or check your history",
+      "examples": [
+        "Find lofi music",
+        "Download that video",
+        "What have I searched?"
+      ]
+    },
+    "thinking": "Thinking…",
+    "tool": {
+      "searchYoutube": {
+        "running": "Searching YouTube…",
+        "done": "YouTube search complete"
+      },
+      "listSearchHistory": {
+        "running": "Checking search history…",
+        "done": "Search history retrieved"
+      },
+      "listDownloadHistory": {
+        "running": "Checking downloads…",
+        "done": "Download history retrieved"
+      },
+      "offerDownload": {
+        "running": "Preparing download…",
+        "done": "Download ready"
+      }
+    },
+    "offer": {
+      "download": "Download",
+      "downloading": "Downloading…",
+      "done": "Downloaded",
+      "retry": "Retry"
+    },
+    "downloadNote": {
+      "success": "Downloaded '{{title}}'.",
+      "failed": "Download failed: {{reason}}."
+    }
   },
   "boardManagement": {
     "title": "Boards",

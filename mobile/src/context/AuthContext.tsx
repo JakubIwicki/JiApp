@@ -40,7 +40,8 @@ type AuthAction =
     }
   | { type: 'SET_LOADING'; isLoading: boolean }
   | { type: 'SHOW_WELCOME'; showWelcome: boolean }
-  | { type: 'SHOW_FAREWELL'; showFarewell: boolean };
+  | { type: 'SHOW_FAREWELL'; showFarewell: boolean }
+  | { type: 'UPDATE_PROFILE'; displayName: string };
 
 interface AuthContextValue extends AuthState {
   login: (username: string, password: string) => Promise<void>;
@@ -54,6 +55,7 @@ interface AuthContextValue extends AuthState {
   checkToken: () => Promise<void>;
   dismissWelcome: () => void;
   dismissFarewell: () => void;
+  updateProfile: (displayName: string, email: string) => Promise<void>;
 }
 
 const initialState: AuthState = {
@@ -117,6 +119,11 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
         ...state,
         showFarewell: action.showFarewell,
       };
+    case 'UPDATE_PROFILE':
+      return {
+        ...state,
+        displayName: action.displayName,
+      };
     default:
       return state;
   }
@@ -137,6 +144,7 @@ export const AuthContext = createContext<AuthContextValue>({
   checkToken: async () => {},
   dismissWelcome: () => {},
   dismissFarewell: () => {},
+  updateProfile: async () => {},
 });
 
 const KNOWN_MODULES: readonly ModuleId[] = ['YtDownloader', 'Scheduler'];
@@ -242,6 +250,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     dispatch({ type: 'LOGOUT' });
   }, []);
 
+  const updateProfile = useCallback(
+    async (displayName: string, email: string) => {
+      await authService.updateProfile(displayName, email);
+      await storageService.saveDisplayName(displayName);
+      dispatch({ type: 'UPDATE_PROFILE', displayName });
+    },
+    [],
+  );
+
   const value = useMemo(
     () => ({
       token: state.token,
@@ -258,6 +275,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       checkToken,
       dismissWelcome,
       dismissFarewell,
+      updateProfile,
     }),
     [
       state,
@@ -267,6 +285,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       checkToken,
       dismissWelcome,
       dismissFarewell,
+      updateProfile,
     ],
   );
 

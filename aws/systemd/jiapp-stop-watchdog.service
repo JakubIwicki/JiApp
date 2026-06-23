@@ -1,0 +1,9 @@
+[Unit]
+Description=JiApp Stop Watchdog — checks idle and stops instance
+After=jiapp.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/jiapp/stop-watchdog.sh
+StandardOutput=journal
+StandardError=journal

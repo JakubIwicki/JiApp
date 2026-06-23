@@ -1,4 +1,5 @@
 using JiApp.YtApi;
+using YoutubeDLSharp.Options;
 
 namespace JiApp.YtDownloader.Tests;
 
@@ -97,5 +98,16 @@ public sealed class YoutubeClientValidationTests
         // NOT the "Is a directory" error from trying to use the file path.
         (await act.Should().ThrowExactlyAsync<InvalidOperationException>())
             .And.Message.Should().Contain("unsupported browser");
+    }
+
+    [Fact]
+    public void OptionSet_includes_embed_thumbnail_and_metadata_for_yt_dlp()
+    {
+        var options = new OptionSet { ExtractAudio = true, EmbedThumbnail = true, EmbedMetadata = true };
+
+        var args = options.ToString();
+
+        args.Should().Contain("--embed-thumbnail");
+        args.Should().Contain("--embed-metadata");
     }
 }

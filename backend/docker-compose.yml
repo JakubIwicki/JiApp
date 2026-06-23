@@ -1,32 +1,12 @@
 services:
-  postgres:
-    image: postgres:16
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: jiapp
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
-      POSTGRES_MULTIPLE_DATABASES: jiapp_identity,jiapp_ytdownloader,jiapp_scheduler
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U jiapp"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
   identity:
     build:
       context: .
       dockerfile: ./src/JiApp.Identity/Dockerfile
     ports:
       - "6701:6701"
-    depends_on:
-      postgres:
-        condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionString=Host=postgres;Database=jiapp_identity;Username=jiapp;Password=${POSTGRES_PASSWORD:?required}
 
   ytdownloader:
     build:
@@ -34,12 +14,8 @@ services:
       dockerfile: ./src/JiApp.YtDownloader/Dockerfile
     ports:
       - "6702:6702"
-    depends_on:
-      postgres:
-        condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionString=Host=postgres;Database=jiapp_ytdownloader;Username=jiapp;Password=${POSTGRES_PASSWORD:?required}
 
   imagetools:
     build:
@@ -49,8 +25,6 @@ services:
       - "6703:6703"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_HTTP_PORTS=6703
-      - ASPNETCORE_HTTPS_PORTS=""
 
   scheduler:
     build:
@@ -58,12 +32,8 @@ services:
       dockerfile: ./src/JiApp.Scheduler/Dockerfile
     ports:
       - "6704:6704"
-    depends_on:
-      postgres:
-        condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionString=Host=postgres;Port=5432;Database=jiapp_scheduler;Username=jiapp;Password=${POSTGRES_PASSWORD:?required}
 
   gateway:
     build:
@@ -76,6 +46,3 @@ services:
       - ytdownloader
       - imagetools
       - scheduler
-
-volumes:
-  pgdata:

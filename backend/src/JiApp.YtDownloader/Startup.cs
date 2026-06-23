@@ -6,9 +6,11 @@ using JiApp.Common.Abstractions;
 using JiApp.Common.Middleware;
 using JiApp.Common.Services;
 using JiApp.YtApi;
+using JiApp.YtDownloader.Agent;
 using JiApp.YtDownloader.Configuration;
 using JiApp.YtDownloader.Features.ArchiveDownload;
 using JiApp.YtDownloader.Features.ArchiveSearch;
+using JiApp.YtDownloader.Features.Assistant;
 using JiApp.YtDownloader.Features.DownloadFile;
 using JiApp.YtDownloader.Features.DownloadHistory;
 using JiApp.YtDownloader.Features.GetDownloadLink;
@@ -16,6 +18,7 @@ using JiApp.YtDownloader.Features.GetHistory;
 using JiApp.YtDownloader.Features.SearchHistory;
 using JiApp.YtDownloader.Features.SearchVideos;
 using JiApp.YtDownloader.Features.StreamPreview;
+using JiApp.YtDownloader.Mcp;
 using JiApp.YtDownloader.Persistence;
 using JiApp.YtDownloader.Repositories;
 using JiApp.YtDownloader.Services;
@@ -97,6 +100,7 @@ public class Startup(Settings settings)
         // Repositories
         services.AddScoped<ISearchHistoryRepository, SearchHistoryRepository>();
         services.AddScoped<IDownloadHistoryRepository, DownloadHistoryRepository>();
+        services.AddScoped<IAssistantUsageRepository, AssistantUsageRepository>();
         // Services
         services.AddSingleton<ITempFileStore, TempFileStore>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
@@ -106,7 +110,8 @@ public class Startup(Settings settings)
                 settings.Youtube!.YtDlpPath!,
                 settings.Youtube!.FfmpegPath!,
                 settings.Youtube!.CookiesFile,
-                settings.Youtube!.CookiesFromBrowser));
+                settings.Youtube!.CookiesFromBrowser,
+                settings.Youtube!.Proxy));
 
         services.AddSingleton(settings);
         services.AddMemoryCache(options =>
@@ -124,6 +129,7 @@ public class Startup(Settings settings)
         services.AddScoped<IValidator<DownloadHistoryRequest>, DownloadHistoryValidator>();
         services.AddScoped<IValidator<ArchiveDownloadRequest>, ArchiveDownloadValidator>();
         services.AddScoped<IValidator<GetHistoryRequest>, GetHistoryValidator>();
+        services.AddScoped<IValidator<AssistantChatRequest>, AssistantChatValidator>();
 
         // Handlers
         services.AddScoped<SearchVideosHandler>();
@@ -135,6 +141,16 @@ public class Startup(Settings settings)
         services.AddScoped<ArchiveDownloadHandler>();
         services.AddScoped<GetHistoryHandler>();
         services.AddScoped<StreamPreviewHandler>();
+        services.AddScoped<YtAgentToolService>();
+
+        // Assistant chat (DeepSeek)
+        services.AddSingleton<IAssistantChatClientProvider, DeepSeekChatClientProvider>();
+        services.AddSingleton<AssistantStreamGate>();
+        services.AddScoped<AssistantChatHandler>();
+        services.AddScoped<AssistantChatOrchestrator>();
+
+        // MCP server (internal-only, JWT-gated) exposing the YtDownloader agent tools
+        services.AddMcpServer().WithHttpTransport().WithTools<YtMcpTools>();
 
         // Background services
         services.AddHostedService<TempFileCleanupService>();
@@ -168,6 +184,11 @@ public class Startup(Settings settings)
         app.UseAuthentication();
         app.UseAuthorization();
 
+        // Mapped outside /api/v1/yt — the public Gateway (YARP) only proxies
+        // /api/v1/yt/**, so /mcp is unreachable through the public Gateway
+        // (internal-network + JWT only). No Gateway route is added for /mcp.
+        app.MapMcp("/mcp").RequireAuthorization("module:YtDownloader");
+
         var yt = app.MapGroup("/api/v1/yt")
             .RequireAuthorization("module:YtDownloader");
 
@@ -180,6 +201,7 @@ public class Startup(Settings settings)
         yt.MapArchiveDownload();
         yt.MapGetHistory();
         yt.MapStreamPreview();
+        yt.MapAssistantChat();
 
         app.MapGet("/api/v1/yt/health", async (YtDbContext db) =>
             {

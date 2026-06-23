@@ -8,5 +8,6 @@ public static class SwaggerConstants
         public const string Downloads = "Downloads";
         public const string History = "History";
         public const string System = "System";
+        public const string Assistant = "Assistant";
     }
 }

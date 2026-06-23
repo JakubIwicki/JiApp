@@ -77,6 +77,7 @@ public sealed class MeHandlerTests
         result.Value!.Id.Should().Be(1);
         result.Value.DisplayName.Should().Be("Test User");
         result.Value.Username.Should().Be("testuser");
+        result.Value.Email.Should().Be("test@test.com");
         result.Value.Modules.Should().BeEquivalentTo("YtDownloader", "Scheduler");
     }
 

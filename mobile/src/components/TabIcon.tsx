@@ -2,7 +2,7 @@ import React from 'react';
 import Svg, { Circle, Line, Path, Polyline } from 'react-native-svg';
 
 interface TabIconProps {
-  name: 'search' | 'downloads' | 'history' | 'settings';
+  name: 'search' | 'assistant' | 'downloads' | 'history' | 'settings';
   color: string;
   size?: number;
 }
@@ -132,11 +132,33 @@ const SettingsIcon: React.FC<{ color: string; size: number }> = ({
   </Svg>
 );
 
+const AssistantIcon: React.FC<{ color: string; size: number }> = ({
+  color,
+  size,
+}) => (
+  <Svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    testID="tab-icon-svg"
+  >
+    <Path
+      d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+      stroke={color}
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
 const iconComponents: Record<
   TabIconProps['name'],
   React.FC<{ color: string; size: number }>
 > = {
   search: SearchIcon,
+  assistant: AssistantIcon,
   downloads: DownloadsIcon,
   history: HistoryIcon,
   settings: SettingsIcon,

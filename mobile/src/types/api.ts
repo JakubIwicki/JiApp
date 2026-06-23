@@ -28,6 +28,7 @@ export interface MeApiRaw {
   id: number;
   displayName?: string;
   username?: string;
+  email?: string;
   modules?: string[];
 }
 
@@ -36,6 +37,24 @@ export interface RegisterRequest {
   email: string;
   password: string;
   displayName: string;
+}
+
+export interface UpdateProfileRequest {
+  displayName: string;
+  email: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+/** Raw shape of PATCH /auth/profile response. */
+export interface UpdateProfileApiRaw {
+  id: number;
+  displayName?: string;
+  username?: string;
+  email?: string;
 }
 
 export interface SearchRequest {

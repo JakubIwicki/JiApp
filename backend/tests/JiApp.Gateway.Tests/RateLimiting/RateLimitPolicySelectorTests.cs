@@ -193,6 +193,19 @@ public sealed class RateLimitPolicySelectorTests
     }
 
     [Fact]
+    public async Task Matches_assistant_chat_path_to_AssistantPolicy()
+    {
+        var context = CreateContext("/api/v1/yt/assistant/chat");
+        var middleware = CreateMiddleware();
+
+        await middleware.InvokeAsync(context);
+
+        var endpoint = context.GetEndpoint();
+        endpoint.Should().NotBeNull();
+        endpoint!.DisplayName.Should().Be("AssistantPolicy");
+    }
+
+    [Fact]
     public async Task Matches_health_path_to_HealthPolicy()
     {
         var context = Fixture.CreateContext("/health");

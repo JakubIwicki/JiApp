@@ -1,4 +1,4 @@
-import React, { use, useState, useEffect, useRef, useCallback } from 'react';
+import React, { use, useState, useEffect, useCallback } from 'react';
 import { View, ActivityIndicator, BackHandler, StyleSheet } from 'react-native';
 import { colors } from '../styles/theme';
 import { AuthProvider, AuthContext } from '../context/AuthContext';
@@ -6,6 +6,7 @@ import { ToastProvider } from '../context/ToastContext';
 import ToastContainer from '../components/ToastContainer';
 import WelcomeOverlay from '../components/WelcomeOverlay';
 import ConnectionFailureOverlay from '../components/ConnectionFailureOverlay';
+import ServerWakeScreen from '../screens/ServerWakeScreen';
 import AuthNavigator from './AuthNavigator';
 import RootNavigator from './RootNavigator';
 
@@ -22,33 +23,31 @@ const AppContent: React.FC = () => {
     dismissFarewell,
   } = use(AuthContext);
 
+  const [showWakeScreen, setShowWakeScreen] = useState(() => !__DEV__);
   const [connectionFailed, setConnectionFailed] = useState(false);
-  const watchdogTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Connection watchdog: if isLoading stays true for 5s, assume server unreachable
+  // Connection watchdog: only if the app is STILL loading 5s after the wake
+  // screen dismisses do we treat the server as unreachable.
   useEffect(() => {
+    if (showWakeScreen || !isLoading) return;
     const timer = setTimeout(() => {
       setConnectionFailed(true);
     }, CONNECTION_WATCHDOG_TIMEOUT);
+    return () => clearTimeout(timer);
+  }, [showWakeScreen, isLoading]);
 
-    watchdogTimerRef.current = timer;
-
-    return () => {
-      clearTimeout(timer);
-    };
+  const handleWakeComplete = useCallback(() => {
+    setShowWakeScreen(false);
   }, []);
-
-  // Clear timer if loading completes before timeout
-  useEffect(() => {
-    if (!isLoading && watchdogTimerRef.current) {
-      clearTimeout(watchdogTimerRef.current);
-      watchdogTimerRef.current = null;
-    }
-  }, [isLoading]);
 
   const handleConnectionTimeout = useCallback(() => {
     BackHandler.exitApp();
   }, []);
+
+  // Show the server wake screen in production builds before anything else
+  if (showWakeScreen) {
+    return <ServerWakeScreen onComplete={handleWakeComplete} />;
+  }
 
   if (connectionFailed) {
     return (

@@ -10,7 +10,9 @@ using JiApp.Identity.Features.Auth.Login;
 using JiApp.Identity.Features.Auth.Logout;
 using JiApp.Identity.Features.Auth.Me;
 using JiApp.Identity.Features.Auth.Refresh;
+using JiApp.Identity.Features.Auth.ChangePassword;
 using JiApp.Identity.Features.Auth.Register;
+using JiApp.Identity.Features.Auth.UpdateProfile;
 using JiApp.Identity.Persistence;
 using JiApp.Identity.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -125,6 +127,8 @@ public class Startup(IdentitySettings settings)
         services.AddScoped<RefreshHandler>();
         services.AddScoped<LogoutHandler>();
         services.AddScoped<MeHandler>();
+        services.AddScoped<UpdateProfileHandler>();
+        services.AddScoped<ChangePasswordHandler>();
 
         services.AddValidatorsFromAssemblyContaining<RegisterValidator>();
 
@@ -205,6 +209,8 @@ public class Startup(IdentitySettings settings)
         auth.MapRefresh();
         auth.MapLogout();
         auth.MapMe();
+        auth.MapUpdateProfile();
+        auth.MapChangePassword();
 
         auth.MapGet("/health", async (IdentityDbContext db) =>
             {

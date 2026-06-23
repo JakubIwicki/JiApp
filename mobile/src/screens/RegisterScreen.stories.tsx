@@ -31,6 +31,7 @@ const mockAuthValue = {
   checkToken: async () => {},
   dismissWelcome: () => {},
   dismissFarewell: () => {},
+  updateProfile: async () => {},
 };
 
 const meta: Meta<typeof RegisterScreen> = {

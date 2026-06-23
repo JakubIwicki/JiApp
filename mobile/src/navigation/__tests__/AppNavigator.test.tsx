@@ -59,6 +59,29 @@ jest.mock('../../screens/SettingsScreen', () => {
   };
 });
 
+jest.mock('../../screens/ChatScreen', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: () => React.createElement(Text, null, 'ChatScreen'),
+  };
+});
+
+jest.mock('../../screens/ServerWakeScreen', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({ onComplete }: { onComplete: () => void }) => {
+      React.useEffect(() => {
+        capturedOnWakeComplete = onComplete;
+      }, [onComplete]);
+      return React.createElement(Text, null, 'ServerWakeScreen');
+    },
+  };
+});
+
 jest.mock('../SchedulerNavigator', () => {
   const React = require('react');
   const { Text } = require('react-native');
@@ -133,6 +156,8 @@ jest.mock('../../components/WelcomeOverlay', () => {
 
 // Collects onTimeout so the test can invoke it
 let capturedOnTimeout: (() => void) | null = null;
+// Collects onComplete so the test can control wake screen dismissal
+let capturedOnWakeComplete: (() => void) | null = null;
 
 jest.mock('../../components/ConnectionFailureOverlay', () => {
   const React = require('react');
@@ -175,6 +200,8 @@ describe('AppNavigator', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
     capturedOnTimeout = null;
+    capturedOnWakeComplete = null;
+    (global as unknown as { __DEV__: boolean }).__DEV__ = true;
     // Default: no token
     mockGetTokenImpl = () => Promise.resolve(null);
   });
@@ -310,6 +337,44 @@ describe('AppNavigator', () => {
 
       jest.advanceTimersByTime(6000);
       expect(queryByText('ConnectionFailureOverlay')).toBeNull();
+    });
+
+    it('does not show connection failure overlay when auth settles during the wake screen then wake dismisses', async () => {
+      // Reproduce the production sequence: auth resolves (isLoading→false)
+      // WHILE the wake screen is up, then the wake screen dismisses later.
+      // The old two-effect watchdog would fire spuriously because Effect B
+      // only saw isLoading transitions; the merged effect must not fire.
+      (global as unknown as { __DEV__: boolean }).__DEV__ = false;
+      try {
+        mockGetTokenImpl = () => Promise.resolve(null); // auth settles quickly
+
+        const { queryByText, getByText } = renderWithProviders(
+          <AppNavigator />,
+        );
+
+        // Wait for auth to settle — isLoading becomes false while wake screen is up
+        await act(async () => {
+          jest.advanceTimersByTime(0);
+        });
+
+        // Wake screen should be visible, auth has settled (isLoading=false)
+        expect(getByText('ServerWakeScreen')).toBeTruthy();
+
+        // Now dismiss the wake screen (simulates onComplete firing)
+        expect(capturedOnWakeComplete).not.toBeNull();
+        await act(async () => {
+          capturedOnWakeComplete!();
+        });
+
+        // Advance past the watchdog timeout — overlay should NOT appear
+        await act(async () => {
+          jest.advanceTimersByTime(6000);
+        });
+
+        expect(queryByText('ConnectionFailureOverlay')).toBeNull();
+      } finally {
+        (global as unknown as { __DEV__: boolean }).__DEV__ = true;
+      }
     });
   });
 

@@ -9,8 +9,9 @@
     "start": "react-native start",
     "storybook": "ENTRY_FILE=.storybook/index.js npx react-native start",
     "storybook:web": "storybook dev -c .storybook-web -p 6006",
+    "pretest": "node scripts/ensure-config.js",
     "test": "jest",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package && node scripts/ensure-config.js"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^3.0.3",
@@ -27,13 +28,17 @@
     "react-native-blob-util": "^0.24.9",
     "react-native-encrypted-storage": "^4.0.3",
     "react-native-gesture-handler": "^2.31.2",
+    "react-native-keyboard-controller": "^1.21.12",
     "react-native-localize": "^3.7.0",
+    "react-native-markdown-display": "^7.0.2",
     "react-native-reanimated": "^4.4.0",
     "react-native-safe-area-context": "^5.8.0",
     "react-native-screens": "^4.25.1",
+    "react-native-sse": "^1.2.1",
     "react-native-svg": "^15.15.5",
     "react-native-track-player": "^4.1.2",
-    "react-native-worklets": "^0.9.1"
+    "react-native-worklets": "^0.9.1",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

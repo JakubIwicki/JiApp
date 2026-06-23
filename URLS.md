@@ -13,9 +13,11 @@ graph TD
     YouTube["🌐 YouTube Data API v3<br/>www.googleapis.com/youtube/v3"]
     YtDlp["🌐 YouTube CDN<br/>www.youtube.com/watch?v=..."]
 
-    %% Infrastructure
-    PG[("🗄️ PostgreSQL<br/>:5432")]
+    %% Infrastructure (production uses SQLite, dev uses SQLite or PostgreSQL)
+    DB[("🗄️ SQLite / PostgreSQL<br/>")]
     GW["🚪 Gateway<br/>YARP Reverse Proxy<br/>:6700"]
+    Lambda["⚡ Lambda<br/>ji-app-starter"]
+    APIGW["🔀 API Gateway<br/>HTTP API"]
 
     %% Services
     ID["🔐 Identity<br/>:6701"]
@@ -39,9 +41,14 @@ graph TD
     GW -.->|"health check"| SCH
 
     %% Service → DB
-    ID ---|"jiapp_identity"| PG
-    YT ---|"jiapp_ytdownloader"| PG
-    SCH ---|"jiapp_scheduler"| PG
+    ID ---|"jiapp_identity"| DB
+    YT ---|"jiapp_ytdownloader"| DB
+    SCH ---|"jiapp_scheduler"| DB
+
+    %% Wake-up flow (production)
+    Mobile -->|"POST /start"| APIGW
+    APIGW -->|"invoke"| Lambda
+    Lambda -->|"ec2:StartInstances"| GW
 
     %% External calls
     YT -->|"Search API"| YouTube
@@ -52,7 +59,7 @@ graph TD
     classDef infra fill:#48b,stroke:#333,color:#fff
     classDef external fill:#e83,stroke:#333,color:#fff
     class GW,ID,YT,IMG,SCH live
-    class PG,GW infra
+    class DB,GW,Lambda,APIGW infra
     class YouTube,YtDlp,Mobile external
 ```
 
@@ -62,14 +69,27 @@ graph TD
 
 ### Service Port Bindings
 
-| Service | Dev URL | Prod Docker URL | Port |
-|---------|---------|-----------------|------|
-| **Gateway** | `https://*:6700` | `http://*:6700` | 6700 |
-| **Identity** | `https://*:6701` | `http://*:6701` | 6701 |
-| **YtDownloader** | `https://*:6702` | `http://*:6702` | 6702 |
-| **ImageTools** | `https://*:6703` | `http://*:6703` | 6703 |
-| **Scheduler** | `https://*:6704` | `http://*:6704` | 6704 |
-| **PostgreSQL** | `localhost:5432` | `postgres:5432` | 5432 |
+| Service | Dev URL | Prod URL | Port |
+|---------|---------|----------|------|
+| **Gateway** | `https://*:6700` | `https://*:6700` (Kestrel HTTPS, PFX cert) | 6700 |
+| **Identity** | `https://*:6701` | `http://*:6701` (internal) | 6701 |
+| **YtDownloader** | `https://*:6702` | `http://*:6702` (internal) | 6702 |
+| **ImageTools** | `https://*:6703` | `http://*:6703` (internal) | 6703 |
+| **Scheduler** | `https://*:6704` | `http://*:6704` (internal) | 6704 |
+
+**Production notes:** Only the Gateway is publicly exposed (HTTPS on :6700 with baked CA cert). Internal services use HTTP. Production uses SQLite (no PostgreSQL).
+
+### AWS Production Deployment
+
+| Resource | Endpoint / Identifier | Purpose |
+|----------|----------------------|---------|
+| **Wake-up API** | `POST https://{api-id}.execute-api.eu-central-1.amazonaws.com/start` | Starts EC2 instance on-demand from mobile |
+| **API Gateway** | `jiapp-wake` HTTP API | Routes `/start` → Lambda starter |
+| **ECR Registry** | `{account}.dkr.ecr.eu-central-1.amazonaws.com/jiapp/{service}` | Docker image storage (5 repos) |
+| **S3 Backups** | `s3://jiapp-backups-{account}/db-backups/` | SQLite database backups (30-day retention) |
+| **S3 Deploy Config** | `s3://jiapp-deploy-config-{account}/current-tag.txt` | Current deploy image tag |
+
+See `deployment_plan/DEPLOYMENT_PLAN.md` for full architecture.
 
 ### Docker Compose Internal URLs
 
@@ -122,6 +142,8 @@ All origins accepted. Same policy on all services.
 | POST | `/api/v1/auth/refresh` | `RefreshEndpoint.cs` | 🟢 Live |
 | POST | `/api/v1/auth/logout` | `LogoutEndpoint.cs` | 🟢 Live |
 | GET | `/api/v1/auth/me` | `MeEndpoint.cs` | 🟢 Live |
+| PATCH | `/api/v1/auth/profile` | `UpdateProfileEndpoint.cs` | 🟢 Live |
+| POST | `/api/v1/auth/change-password` | `ChangePasswordEndpoint.cs` | 🟢 Live |
 | GET | `/api/v1/auth/health` | `Startup.cs` | 🟢 Live |
 | GET | `/api/v1/auth/throw` | `Startup.cs` (dev only) | 🟢 Live |
 
@@ -148,7 +170,18 @@ All origins accepted. Same policy on all services.
 | PATCH | `/api/v1/yt/downloads/history/{id:long}/archive` | `ArchiveDownloadEndpoint.cs` | 🟢 Live |
 | GET | `/api/v1/yt/history` | `GetHistoryEndpoint.cs` | 🟢 Live |
 | GET | `/api/v1/yt/preview/{videoId}` | `StreamPreviewEndpoint.cs` | 🟢 Live |
+| POST | `/api/v1/yt/assistant/chat` | `AssistantChatEndpoint.cs` | 🟢 Live |
 | GET | `/api/v1/yt/health` | `Startup.cs` | 🟢 Live |
+
+> **Assistant chat** is SSE (Server-Sent Events), JWT-gated (`module:YtDownloader`), routed through the Gateway at `/api/v1/yt/assistant/chat`. The endpoint accepts `POST` with `{ messages, language? }` and streams `text-delta`, `tool-step`, `search-results`, `download-offer`, and `done` events. Concurrent streams are capped at 1 (process-wide `SemaphoreSlim`); a second concurrent call receives **503** ("busy, try again").
+
+### Internal Listener (not Gateway-routed)
+
+| Method | Path | Handler | Status |
+|--------|------|---------|--------|
+| POST | `/mcp` | `Startup.cs` (MCP server) | 🟢 Live |
+
+> The MCP SSE endpoint is **JWT-gated** (`module:YtDownloader`) but mapped **outside** `/api/v1/yt`, so YARP does NOT proxy it. It is reachable only inside the Docker network at `http://ytdownloader:6702/mcp`. Internal MCP hosts connect to it directly, not through the Gateway.
 
 ### External API Calls
 
@@ -157,6 +190,7 @@ All origins accepted. Same policy on all services.
 | YouTube Data API v3 | `https://www.googleapis.com/youtube/v3/search` | `Google.Apis.YouTube.v3` |
 | YouTube video pages | `https://www.youtube.com/watch?v={videoId}` | yt-dlp |
 | YouTube shortlinks | `https://youtu.be/{videoId}` | Validator regex |
+| DeepSeek API | `https://api.deepseek.com/v1/chat/completions` | `Microsoft.Extensions.AI` |
 
 **Valid YouTube URL domains:** `youtube.com`, `www.youtube.com`, `m.youtube.com`, `youtu.be`, `youtube-nocookie.com`, `www.youtube-nocookie.com`
 
@@ -265,6 +299,8 @@ All calls go through the Gateway at `:6700` and are proxied via YARP.
 | POST | `/api/v1/auth/login` | `authService.ts:9` | LoginScreen |
 | POST | `/api/v1/auth/register` | `authService.ts:25` | RegisterScreen |
 | GET | `/api/v1/auth/me` | `authService.ts:31` | AuthContext |
+| PATCH | `/api/v1/auth/profile` | `authService.ts` | EditProfileScreen |
+| POST | `/api/v1/auth/change-password` | `authService.ts` | EditProfileScreen |
 
 #### YouTube Search & History
 
@@ -419,6 +455,9 @@ Custom CA cert `jiapp_dev_ca` trusted for HTTPS with self-signed dev certificate
 | `JWT_ACCESS_EXPIRE` | Access token lifetime | 15 minutes |
 | `JWT_REFRESH_EXPIRE` | Refresh token lifetime | 7 days |
 | `YOUTUBE_API_KEY` | YouTube Data API v3 key | *(required)* |
+| `DEEPSEEK_API_KEY` | DeepSeek API key for assistant chat | *(empty = 503)* |
+| `DEEPSEEK_MODEL` | DeepSeek model override | `deepseek-chat` |
+| `YT_GC_HEAP_LIMIT` | YtDownloader GC heap hard limit (hex) | *(empty = no cap)* |
 | `JIAPP_API_URL` | Mobile API base URL (build-time) | `https://localhost:6700/api/v1` |
 | `CORS_ALLOWED_ORIGIN` | CORS origin override | *(none)* |
 

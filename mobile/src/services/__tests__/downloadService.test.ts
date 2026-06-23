@@ -21,6 +21,8 @@ jest.mock('react-native-blob-util', () => ({
         DocumentDir: '/storage/emulated/0/Documents',
         CacheDir: '/cache',
       },
+      exists: jest.fn(() => Promise.resolve(false)),
+      unlink: jest.fn(() => Promise.resolve()),
     },
     config: jest.fn(() => ({
       fetch: jest.fn(() =>
@@ -46,6 +48,8 @@ jest.mock('react-native-blob-util', () => ({
         DocumentDir: '/storage/emulated/0/Documents',
         CacheDir: '/cache',
       },
+      exists: jest.fn(() => Promise.resolve(false)),
+      unlink: jest.fn(() => Promise.resolve()),
     },
     config: jest.fn(() => ({
       fetch: jest.fn(() =>
@@ -221,7 +225,9 @@ describe('downloadFile', () => {
     expect(mockGetToken).toHaveBeenCalledTimes(1);
 
     // Should configure download with auth header
-    expect(mockConfig).toHaveBeenCalledWith({ fileCache: true });
+    expect(mockConfig).toHaveBeenCalledWith({
+      path: '/cache/Never Gonna Give You Up.mp3',
+    });
     const configResult = mockConfig.mock.results[0]?.value;
     expect(configResult.fetch).toHaveBeenCalledWith('GET', downloadUrl, {
       Authorization: 'Bearer jwt-token-123',
@@ -250,7 +256,9 @@ describe('downloadFile', () => {
 
     await downloadFile(downloadUrl, fileName);
 
-    expect(mockConfig).toHaveBeenCalledWith({ fileCache: true });
+    expect(mockConfig).toHaveBeenCalledWith({
+      path: '/cache/Never Gonna Give You Up.mp3',
+    });
     const configResult = mockConfig.mock.results[0]?.value;
     expect(configResult.fetch).toHaveBeenCalledWith('GET', downloadUrl, {});
   });

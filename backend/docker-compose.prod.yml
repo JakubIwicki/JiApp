@@ -1,20 +1,6 @@
+# Production override — SQLite, HTTPS Gateway, no PostgreSQL.
+# Use: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 services:
-  postgres:
-    ports: []
-    environment:
-      POSTGRES_USER: jiapp
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
-      POSTGRES_MULTIPLE_DATABASES: jiapp_identity,jiapp_ytdownloader,jiapp_scheduler
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-      - ./docker/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U jiapp"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
   identity:
     ports: []
     build:
@@ -23,15 +9,15 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: "http://*:6701"
-      ConnectionString: Host=postgres;Port=5432;Database=jiapp_identity;Username=jiapp;Password=${POSTGRES_PASSWORD}
+      ConnectionString: Data Source=/app/data/jiapp_identity.db
       Jwt__Key: ${JWT_KEY:?required}
-      Jwt__Issuer: ${JWT_ISSUER:-JiApp-Identity}
-      Jwt__Audience: ${JWT_AUDIENCE:-jiapp-gateway}
+      Jwt__Issuer: ${JWT_ISSUER:-JiApp}
+      Jwt__Audience: ${JWT_AUDIENCE:-JiAppMobile}
       Jwt__AccessTokenExpireMinutes: ${JWT_ACCESS_EXPIRE:-15}
       Jwt__RefreshTokenExpireDays: ${JWT_REFRESH_EXPIRE:-7}
-    depends_on:
-      postgres:
-        condition: service_healthy
+    volumes:
+      - jiapp_data:/app/data
+      - jiapp_logs:/app/logs
     restart: unless-stopped
 
   ytdownloader:
@@ -42,16 +28,46 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: "http://*:6702"
-      ConnectionString: Host=postgres;Port=5432;Database=jiapp_ytdownloader;Username=jiapp;Password=${POSTGRES_PASSWORD}
+      ConnectionString: Data Source=/app/data/jiapp_ytdownloader.db
       Jwt__Key: ${JWT_KEY:?required}
-      Jwt__Issuer: ${JWT_ISSUER:-JiApp-Identity}
-      Jwt__Audience: ${JWT_AUDIENCE:-jiapp-gateway}
+      Jwt__Issuer: ${JWT_ISSUER:-JiApp}
+      Jwt__Audience: ${JWT_AUDIENCE:-JiAppMobile}
       Youtube__ApiKey: ${YOUTUBE_API_KEY:?required}
       Youtube__CookiesFile: ${YOUTUBE_COOKIES_FILE:-}
+      Youtube__Proxy: ${YOUTUBE_PROXY:-}
+      DeepSeek__ApiKey: ${DEEPSEEK_API_KEY:-}
+      DeepSeek__Model: ${DEEPSEEK_MODEL:-}
+      # GC heap limit tuned during Phase F load-test (empty = no cap)
+      DOTNET_GCHeapHardLimit: ${YT_GC_HEAP_LIMIT:-}
+    volumes:
+      - jiapp_data:/app/data
+      - jiapp_logs:/app/logs
+      - ./certs/prod/youtube:/app/cookies
     depends_on:
-      postgres:
-        condition: service_healthy
+      - bgutil-provider
+      - warp
     restart: unless-stopped
+
+  bgutil-provider:
+    image: brainicism/bgutil-ytdlp-pot-provider:latest
+    restart: unless-stopped
+
+  warp:
+    image: caomingjun/warp:latest
+    restart: unless-stopped
+    device_cgroup_rules:
+      - 'c 10:200 rwm'
+    environment:
+      - WARP_SLEEP=2
+    cap_add:
+      - MKNOD
+      - AUDIT_WRITE
+      - NET_ADMIN
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+      - net.ipv4.conf.all.src_valid_mark=1
+    volumes:
+      - warp_data:/var/lib/cloudflare-warp
 
   imagetools:
     ports: []
@@ -62,10 +78,10 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: "http://*:6703"
       Jwt__Key: ${JWT_KEY:?required}
-      Jwt__Issuer: ${JWT_ISSUER:-JiApp-Identity}
-      Jwt__Audience: ${JWT_AUDIENCE:-jiapp-gateway}
-    depends_on:
-      - identity
+      Jwt__Issuer: ${JWT_ISSUER:-JiApp}
+      Jwt__Audience: ${JWT_AUDIENCE:-JiAppMobile}
+    volumes:
+      - jiapp_logs:/app/logs
     restart: unless-stopped
 
   scheduler:
@@ -76,13 +92,13 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: "http://*:6704"
-      ConnectionString: Host=postgres;Port=5432;Database=jiapp_scheduler;Username=jiapp;Password=${POSTGRES_PASSWORD}
+      ConnectionString: Data Source=/app/data/jiapp_scheduler.db
       Jwt__Key: ${JWT_KEY:?required}
-      Jwt__Issuer: ${JWT_ISSUER:-JiApp-Identity}
-      Jwt__Audience: ${JWT_AUDIENCE:-jiapp-gateway}
-    depends_on:
-      postgres:
-        condition: service_healthy
+      Jwt__Issuer: ${JWT_ISSUER:-JiApp}
+      Jwt__Audience: ${JWT_AUDIENCE:-JiAppMobile}
+    volumes:
+      - jiapp_data:/app/data
+      - jiapp_logs:/app/logs
     restart: unless-stopped
 
   gateway:
@@ -93,15 +109,18 @@ services:
       - "6700:6700"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      ASPNETCORE_HTTP_PORTS: 6700
-      ASPNETCORE_HTTPS_PORTS:
       Jwt__Key: ${JWT_KEY:?required}
-      Jwt__Issuer: ${JWT_ISSUER:-JiApp-Identity}
-      Jwt__Audience: ${JWT_AUDIENCE:-jiapp-gateway}
+      Jwt__Issuer: ${JWT_ISSUER:-JiApp}
+      Jwt__Audience: ${JWT_AUDIENCE:-JiAppMobile}
+      Kestrel__Endpoints__Https__Certificate__Path: /app/certs/server.pfx
+      Kestrel__Endpoints__Https__Certificate__Password: ${CERT_PASSWORD:?required}
       ReverseProxy__Clusters__identity-cluster__Destinations__identity__Address: "http://identity:6701"
       ReverseProxy__Clusters__yt-cluster__Destinations__yt__Address: "http://ytdownloader:6702"
       ReverseProxy__Clusters__imagetools-cluster__Destinations__imagetools__Address: "http://imagetools:6703"
       ReverseProxy__Clusters__scheduler-cluster__Destinations__scheduler__Address: "http://scheduler:6704"
+    volumes:
+      - ./certs/prod/server.pfx:/app/certs/server.pfx:ro
+      - ./logs:/app/logs
     depends_on:
       - identity
       - ytdownloader
@@ -110,4 +129,6 @@ services:
     restart: unless-stopped
 
 volumes:
-  pgdata:
+  jiapp_data:
+  jiapp_logs:
+  warp_data:
