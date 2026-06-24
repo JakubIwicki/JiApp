@@ -425,7 +425,7 @@ public sealed class RateLimitPolicySelectorTests
         endpoint.Should().NotBeNull();
         endpoint.DisplayName.Should().Be("original-endpoint-preserve-delegate");
 
-        await endpoint.RequestDelegate(context);
+        await endpoint.RequestDelegate!(context);
         originalHandlerInvoked.Should().BeTrue();
     }
 

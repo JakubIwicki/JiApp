@@ -1,8 +1,6 @@
-using JiApp.ImageTools.Configuration;
-
 namespace JiApp.ImageTools;
 
-public class Startup(ImageToolsSettings settings)
+public class Startup()
 {
     public void ConfigureServices(IServiceCollection services)
     {

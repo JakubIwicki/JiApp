@@ -43,7 +43,7 @@ public sealed class RateLimitPolicyServiceTests
 
         var result = fixture.Sut.AttachRateLimitPolicy(original, "TestPolicy");
 
-        await result.RequestDelegate(new DefaultHttpContext());
+        await result.RequestDelegate!(new DefaultHttpContext());
         handlerInvoked.Should().BeTrue();
     }
 

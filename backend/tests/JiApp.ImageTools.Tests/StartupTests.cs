@@ -21,8 +21,7 @@ public sealed class StartupTests
                 .UseTestServer()
                 .ConfigureServices(services =>
                 {
-                    var settings = new ImageToolsSettings();
-                    var startup = new Startup(settings);
+                    var startup = new Startup();
                     startup.ConfigureServices(services);
                 })
                 .Configure(app =>
