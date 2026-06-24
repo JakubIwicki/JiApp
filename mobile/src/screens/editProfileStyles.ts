@@ -2,6 +2,9 @@ import { StyleSheet } from 'react-native';
 import { borderRadius, colors, spacing } from '../styles/theme';
 
 const editProfileStyles = StyleSheet.create({
+  sectionBody: {
+    paddingHorizontal: spacing.lg,
+  },
   saveButton: {
     backgroundColor: colors.primary,
     borderRadius: borderRadius.sm,

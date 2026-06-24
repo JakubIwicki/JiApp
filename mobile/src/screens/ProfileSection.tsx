@@ -33,48 +33,50 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
         {t('settings.profileSection')}
       </Text>
 
-      <FormInput
-        value={displayName}
-        onChangeText={onDisplayNameChange}
-        placeholder={t('auth.displayName')}
-        error={displayNameError}
-        label={t('auth.displayName')}
-      />
+      <View style={editProfileStyles.sectionBody}>
+        <FormInput
+          value={displayName}
+          onChangeText={onDisplayNameChange}
+          placeholder={t('auth.displayName')}
+          error={displayNameError}
+          label={t('auth.displayName')}
+        />
 
-      <FormInput
-        value={email}
-        onChangeText={onEmailChange}
-        placeholder={t('settings.email')}
-        error={emailError}
-        label={t('settings.email')}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
+        <FormInput
+          value={email}
+          onChangeText={onEmailChange}
+          placeholder={t('settings.email')}
+          error={emailError}
+          label={t('settings.email')}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
 
-      <Pressable
-        style={({ pressed }) => [
-          editProfileStyles.saveButton,
-          loading && editProfileStyles.saveButtonDisabled,
-          pressed && { opacity: 0.7 },
-        ]}
-        onPress={onSave}
-        disabled={loading}
-        testID="save-profile-button"
-        accessibilityRole="button"
-        accessibilityLabel={t('settings.save')}
-      >
-        {loading ? (
-          <ActivityIndicator
-            color={colors.surface}
-            testID="save-profile-loading"
-            size="small"
-          />
-        ) : (
-          <Text style={editProfileStyles.saveButtonText}>
-            {t('settings.save')}
-          </Text>
-        )}
-      </Pressable>
+        <Pressable
+          style={({ pressed }) => [
+            editProfileStyles.saveButton,
+            loading && editProfileStyles.saveButtonDisabled,
+            pressed && { opacity: 0.7 },
+          ]}
+          onPress={onSave}
+          disabled={loading}
+          testID="save-profile-button"
+          accessibilityRole="button"
+          accessibilityLabel={t('settings.save')}
+        >
+          {loading ? (
+            <ActivityIndicator
+              color={colors.surface}
+              testID="save-profile-loading"
+              size="small"
+            />
+          ) : (
+            <Text style={editProfileStyles.saveButtonText}>
+              {t('settings.save')}
+            </Text>
+          )}
+        </Pressable>
+      </View>
     </View>
   );
 };
