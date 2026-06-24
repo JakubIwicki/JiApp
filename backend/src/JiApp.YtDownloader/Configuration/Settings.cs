@@ -5,6 +5,7 @@ public sealed class Settings
     public string? ConnectionString { get; set; }
     public AppSettings? App { get; init; }
     public JwtSettings? Jwt { get; set; }
+    public string[]? CorsAllowedOrigins { get; set; }
     public YoutubeSettings? Youtube { get; set; }
     public DeepSeekSettings? DeepSeek { get; set; }
     public AssistantSettings? Assistant { get; set; }
