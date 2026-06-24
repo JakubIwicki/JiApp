@@ -8,7 +8,8 @@ touch /tmp/jiapp_deploying
 trap 'rm -f /tmp/jiapp_deploying' EXIT
 
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-REGION=$(curl -s http://169.254.169.254/latest/meta-data/placement/region)
+TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 60" 2>/dev/null || echo "")
+REGION=$(curl -s -H "X-aws-ec2-metadata-token: ${TOKEN}" http://169.254.169.254/latest/meta-data/placement/region 2>/dev/null || echo "eu-central-1")
 BUCKET="jiapp-deploy-config-${ACCOUNT_ID}"
 
 echo "[$(date)] JiApp startup — phase 0: fetch deploy config"
