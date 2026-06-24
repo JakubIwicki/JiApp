@@ -203,7 +203,7 @@ export function openChatStream(params: ChatStreamParams): ChatStreamHandle {
             await Promise.all([
               saveToken(accessToken),
               saveUserId(userId),
-              saveDisplayName(displayName),
+              saveDisplayName(displayName ?? ''),
               saveUsername(credentials.username),
             ]);
 

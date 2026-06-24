@@ -12,6 +12,7 @@ import useScreenTitle from '../hooks/useScreenTitle';
 import useToast from '../hooks/useToast';
 import * as storageService from '../services/storageService';
 import { colors, spacing } from '../styles/theme';
+import type { ServerAugmentedError } from '../types/api';
 
 type LoginNavigationProp = NativeStackNavigationProp<
   AuthStackParamList,
@@ -159,7 +160,7 @@ const LoginScreen: React.FC = () => {
           dispatch({
             type: 'SET_API_ERROR',
             error:
-              (err as any)._serverError ||
+              (err as ServerAugmentedError)._serverError ||
               err.response?.data?.error ||
               t('auth.invalidCredentials'),
           });

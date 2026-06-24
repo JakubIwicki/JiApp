@@ -6,6 +6,10 @@ import type {
   DownloadResponse,
   DownloadHistoryItem,
 } from '../types/api';
+import {
+  DownloadResponseSchema,
+  DownloadHistoryResponseSchema,
+} from '../types/schemas';
 
 const sanitizeFileName = (name: string): string =>
   name.replace(/[/\\:*?"<>|]/g, '').trim() || 'download';
@@ -19,21 +23,17 @@ export const requestDownloadLink = async (
     request,
     { signal },
   );
-  return response.data;
+  return DownloadResponseSchema.parse(response.data);
 };
-
-interface DownloadHistoryResponse {
-  items: DownloadHistoryItem[];
-}
 
 export const getDownloadHistory = async (
   limit?: number,
 ): Promise<DownloadHistoryItem[]> => {
-  const response = await apiClient.get<DownloadHistoryResponse>(
+  const response = await apiClient.get<{ items: DownloadHistoryItem[] }>(
     '/yt/downloads/history',
     { params: { limit } },
   );
-  return response.data.items;
+  return DownloadHistoryResponseSchema.parse(response.data).items;
 };
 
 export const archiveDownload = async (id: number): Promise<void> => {
