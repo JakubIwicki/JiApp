@@ -54,14 +54,14 @@ aws s3 cp "${REPO_ROOT}/backend/certs/prod/server.pfx" "s3://${BUCKET}/ec2/serve
 [ -f "${REPO_ROOT}/backend/certs/prod/youtube/youtube-cookies.txt" ] && aws s3 cp "${REPO_ROOT}/backend/certs/prod/youtube/youtube-cookies.txt" "s3://${BUCKET}/ec2/youtube-cookies.txt" --region "$REGION"
 
 # Scripts for EC2
-for script in startup.sh backup.sh stop-watchdog.sh build-and-push.sh; do
+for script in startup.sh backup.sh stop-watchdog.sh build-and-push.sh jiapp-health.sh; do
     if [ -f "${SCRIPT_DIR}/${script}" ]; then
         aws s3 cp "${SCRIPT_DIR}/${script}" "s3://${BUCKET}/ec2/${script}" --region "$REGION"
     fi
 done
 
 # Systemd units
-for unit in jiapp.service jiapp-stop-watchdog.service jiapp-stop-watchdog.timer; do
+for unit in jiapp.service jiapp-stop-watchdog.service jiapp-stop-watchdog.timer jiapp-health.service jiapp-health.timer; do
     if [ -f "${SCRIPT_DIR}/systemd/${unit}" ]; then
         aws s3 cp "${SCRIPT_DIR}/systemd/${unit}" "s3://${BUCKET}/ec2/${unit}" --region "$REGION"
     fi
@@ -100,6 +100,8 @@ ECR_BASE=${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/jiapp
 
 mkdir -p /opt/jiapp/{data,logs,certs/prod,certs/prod/youtube}
 cd /opt/jiapp
+touch /tmp/jiapp_deploying
+trap 'rm -f /tmp/jiapp_deploying' EXIT
 
 echo "Downloading configs..."
 aws s3 cp s3://${BUCKET}/ec2/docker-compose.yml . --region ${REGION}
@@ -107,17 +109,18 @@ aws s3 cp s3://${BUCKET}/ec2/docker-compose.prod.yml . --region ${REGION}
 aws s3 cp s3://${BUCKET}/ec2/server.pfx ./certs/prod/ --region ${REGION}
 aws s3 cp s3://${BUCKET}/ec2/youtube-cookies.txt ./certs/prod/youtube/youtube-cookies.txt --region ${REGION} 2>/dev/null || true
 
-for f in startup.sh backup.sh stop-watchdog.sh build-and-push.sh; do
+for f in startup.sh backup.sh stop-watchdog.sh build-and-push.sh jiapp-health.sh; do
     aws s3 cp s3://${BUCKET}/ec2/${f} . --region ${REGION} 2>/dev/null || true
 done
 chmod +x /opt/jiapp/*.sh
 
-for unit in jiapp.service jiapp-stop-watchdog.service jiapp-stop-watchdog.timer; do
+for unit in jiapp.service jiapp-stop-watchdog.service jiapp-stop-watchdog.timer jiapp-health.service jiapp-health.timer; do
     aws s3 cp s3://${BUCKET}/ec2/${unit} /etc/systemd/system/ --region ${REGION} 2>/dev/null || true
 done
 systemctl daemon-reload
-systemctl enable jiapp.service jiapp-stop-watchdog.timer 2>/dev/null || true
+systemctl enable jiapp.service jiapp-stop-watchdog.timer jiapp-health.timer 2>/dev/null || true
 systemctl start jiapp-stop-watchdog.timer 2>/dev/null || true
+systemctl start jiapp-health.timer 2>/dev/null || true
 
 # Login to ECR and start
 aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com

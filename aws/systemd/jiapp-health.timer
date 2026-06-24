@@ -1,0 +1,11 @@
+[Unit]
+Description=JiApp Gateway Health Timer — runs every 60s after boot
+Requires=jiapp.service
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=60s
+AccuracySec=5s
+
+[Install]
+WantedBy=timers.target

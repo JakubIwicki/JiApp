@@ -63,6 +63,9 @@ if [ "$COUNT" -ge "$MAX_IDLE" ]; then
         exit 0
     fi
 
+    # Signal the health watchdog to stand down while we tear the stack down.
+    touch /tmp/jiapp_stopping
+
     # 1. Backup databases
     echo "[$(date)] Step 1/3: Backup databases..." >> "$LOG_FILE"
     /opt/jiapp/backup.sh >> "$LOG_FILE" 2>&1 || echo "[$(date)] Backup had errors — continuing" >> "$LOG_FILE"
@@ -74,8 +77,11 @@ if [ "$COUNT" -ge "$MAX_IDLE" ]; then
 
     # 3. Stop EC2 instance
     echo "[$(date)] Step 3/3: Stopping EC2 instance ${INSTANCE_ID}..." >> "$LOG_FILE"
-    aws ec2 stop-instances --region "$REGION" --instance-ids "$INSTANCE_ID" >> "$LOG_FILE" 2>&1
-
-    rm -f "$IDLE_FILE"
-    echo "[$(date)] Shutdown complete" >> "$LOG_FILE"
+    if aws ec2 stop-instances --region "$REGION" --instance-ids "$INSTANCE_ID" >> "$LOG_FILE" 2>&1; then
+        rm -f "$IDLE_FILE"
+        echo "[$(date)] Shutdown complete" >> "$LOG_FILE"
+    else
+        echo "[$(date)] ERROR: stop-instances failed — removing /tmp/jiapp_stopping so the health watchdog can recover the box" >> "$LOG_FILE"
+        rm -f /tmp/jiapp_stopping
+    fi
 fi

@@ -3,6 +3,10 @@
 # Run on the EC2 instance: /opt/jiapp/build-and-push.sh [tag]
 set -euo pipefail
 
+# Hold off the health watchdog: a heavy build can starve the gateway and trip a false restart.
+touch /tmp/jiapp_deploying
+trap 'rm -f /tmp/jiapp_deploying' EXIT
+
 TAG="${1:-$(date -u +%Y%m%d-%H%M%S)}"
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 60" 2>/dev/null || echo "")

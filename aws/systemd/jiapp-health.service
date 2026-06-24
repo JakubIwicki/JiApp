@@ -1,0 +1,9 @@
+[Unit]
+Description=JiApp Gateway Health Watchdog — restarts the stack if the gateway is down
+After=jiapp.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/jiapp/jiapp-health.sh
+StandardOutput=journal
+StandardError=journal

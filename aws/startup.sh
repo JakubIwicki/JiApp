@@ -3,6 +3,10 @@
 # Runs on every EC2 boot via systemd (jiapp.service).
 set -euo pipefail
 
+# Signal the health watchdog to stand down while we (re)start the stack.
+touch /tmp/jiapp_deploying
+trap 'rm -f /tmp/jiapp_deploying' EXIT
+
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 REGION=$(curl -s http://169.254.169.254/latest/meta-data/placement/region)
 BUCKET="jiapp-deploy-config-${ACCOUNT_ID}"
