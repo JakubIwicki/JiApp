@@ -1,16 +1,6 @@
 import { z } from 'zod';
+import { VideoItemSchema } from './schemas';
 import type { VideoItem } from './api';
-
-// ── VideoItem schema (must match the API type exactly) ──────────────────────
-
-export const VideoItemSchema = z.object({
-  videoId: z.string(),
-  title: z.string(),
-  description: z.string(),
-  imageUrl: z.string(),
-  videoUrl: z.string(),
-  channelTitle: z.string(),
-}) satisfies z.ZodSchema<VideoItem>;
 
 // ── SSE event schemas ──────────────────────────────────────────────────────
 

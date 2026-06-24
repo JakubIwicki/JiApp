@@ -1,5 +1,6 @@
 import apiClient from './apiClient';
 import type { HistoryResponse } from '../types/api';
+import { HistoryResponseSchema } from '../types/schemas';
 
 export const getHistory = async (
   limit?: number,
@@ -9,5 +10,5 @@ export const getHistory = async (
     params: { limit },
     signal,
   });
-  return response.data;
+  return HistoryResponseSchema.parse(response.data);
 };
