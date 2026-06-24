@@ -101,7 +101,7 @@ ECR_BASE=${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/jiapp
 mkdir -p /opt/jiapp/{data,logs,certs/prod,certs/prod/youtube}
 cd /opt/jiapp
 touch /tmp/jiapp_deploying
-trap 'rm -f /tmp/jiapp_deploying' EXIT
+trap "rm -f /tmp/jiapp_deploying" EXIT
 
 echo "Downloading configs..."
 aws s3 cp s3://${BUCKET}/ec2/docker-compose.yml . --region ${REGION}
