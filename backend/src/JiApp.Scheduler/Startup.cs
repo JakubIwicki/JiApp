@@ -100,14 +100,21 @@ public class Startup(SchedulerSettings settings)
             .AddPolicy("module:Scheduler", policy =>
                 policy.RequireClaim("module", Modules.Scheduler, Modules.FullAccess));
 
+        // CORS — AllowCredentials prevents using AllowAnyOrigin, so we use
+        // SetIsOriginAllowed. In production, restrict to configured origins.
+        // In development, accept any origin by default (null/empty config).
         services.AddCors(options =>
         {
             options.AddDefaultPolicy(policy =>
             {
                 policy.AllowAnyMethod()
                     .AllowAnyHeader()
-                    .AllowCredentials()
-                    .SetIsOriginAllowed(_ => true);
+                    .AllowCredentials();
+
+                if (settings.CorsAllowedOrigins is { Length: > 0 } origins)
+                    policy.SetIsOriginAllowed(origin => origins.Contains(origin));
+                else
+                    policy.SetIsOriginAllowed(_ => true);
             });
         });
 

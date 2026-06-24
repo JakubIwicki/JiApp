@@ -9,6 +9,11 @@ import {
   UpdateProfileApiRaw,
   UpdateProfileRequest,
 } from '../types/api';
+import {
+  LoginApiRawSchema,
+  MeApiRawSchema,
+  UpdateProfileApiRawSchema,
+} from '../types/schemas';
 
 export interface ProfileResponse {
   id: number;
@@ -23,12 +28,13 @@ export const login = async (
 ): Promise<LoginResponse> => {
   const body: LoginRequest = { username, password };
   const response = await apiClient.post<LoginApiRaw>('/auth/login', body);
+  const data = LoginApiRawSchema.parse(response.data);
   // Map API field names (accessToken, userId) to app model (token, id)
   return {
-    token: response.data.accessToken,
-    id: response.data.userId,
-    displayName: response.data.displayName,
-    modules: response.data.modules ?? [],
+    token: data.accessToken,
+    id: data.userId,
+    displayName: data.displayName ?? '',
+    modules: data.modules ?? [],
   };
 };
 
@@ -51,21 +57,23 @@ export const checkToken = async (token: string): Promise<LoginResponse> => {
   const response = await apiClient.get<MeApiRaw>('/auth/me', {
     headers: { Authorization: `Bearer ${token}` },
   });
+  const data = MeApiRawSchema.parse(response.data);
   return {
     token,
-    id: response.data.id,
-    displayName: response.data.displayName ?? '',
-    modules: response.data.modules ?? [],
+    id: data.id,
+    displayName: data.displayName ?? '',
+    modules: data.modules ?? [],
   };
 };
 
 export const getProfile = async (): Promise<ProfileResponse> => {
   const response = await apiClient.get<MeApiRaw>('/auth/me');
+  const data = MeApiRawSchema.parse(response.data);
   return {
-    id: response.data.id,
-    displayName: response.data.displayName ?? '',
-    email: response.data.email,
-    modules: response.data.modules ?? [],
+    id: data.id,
+    displayName: data.displayName ?? '',
+    email: data.email,
+    modules: data.modules ?? [],
   };
 };
 
@@ -78,10 +86,11 @@ export const updateProfile = async (
     '/auth/profile',
     body,
   );
+  const data = UpdateProfileApiRawSchema.parse(response.data);
   return {
-    id: response.data.id,
-    displayName: response.data.displayName ?? '',
-    email: response.data.email,
+    id: data.id,
+    displayName: data.displayName ?? '',
+    email: data.email,
     modules: [],
   };
 };

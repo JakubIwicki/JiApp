@@ -31,8 +31,10 @@ describe('login', () => {
 
   const mockApiRaw = {
     accessToken: 'jwt-token-123',
+    refreshToken: 'refresh-token-456',
     userId: 1,
     displayName: 'John Doe',
+    expiresIn: 3600,
     modules: ['YtDownloader', 'Scheduler'],
   };
 
@@ -52,8 +54,10 @@ describe('login', () => {
     mockPost.mockResolvedValueOnce({
       data: {
         accessToken: 'jwt-token-123',
+        refreshToken: 'refresh-token-456',
         userId: 1,
         displayName: 'John Doe',
+        expiresIn: 3600,
       },
     });
 

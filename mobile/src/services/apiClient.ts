@@ -13,6 +13,7 @@ import {
   getCredentials,
 } from './storageService';
 import { API_BASE_URL } from '../config';
+import type { ServerAugmentedError } from '../types/api';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -93,7 +94,7 @@ apiClient.interceptors.response.use(
     if (error.response?.data && typeof error.response.data === 'object') {
       const data = error.response.data as Record<string, unknown>;
       if (typeof data.error === 'string') {
-        (error as any)._serverError = data.error;
+        (error as ServerAugmentedError)._serverError = data.error;
       }
     }
 
