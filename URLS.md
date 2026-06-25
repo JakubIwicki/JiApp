@@ -88,6 +88,11 @@ graph TD
 | **ECR Registry** | `{account}.dkr.ecr.eu-central-1.amazonaws.com/jiapp/{service}` | Docker image storage (5 repos) |
 | **S3 Backups** | `s3://jiapp-backups-{account}/db-backups/` | SQLite database backups (30-day retention) |
 | **S3 Deploy Config** | `s3://jiapp-deploy-config-{account}/current-tag.txt` | Current deploy image tag |
+| **S3 Downloads** | `s3://jiapp-downloads-{account}/JiApp-latest.apk` | Public APK download (stable URL) |
+| **S3 Downloads (versioned)** | `s3://jiapp-downloads-{account}/JiApp-{versionCode}.apk` | Archived versioned APK (immutable) |
+| **S3 Downloads (metadata)** | `s3://jiapp-downloads-{account}/apk-metadata.json` | Public APK metadata (version, size, sha256) |
+
+> **Portfolio site:** The APK and metadata are served to the public portfolio site at `https://jakubiwicki.github.io` (GitHub Pages, repo `JakubIwicki.github.io`). The site fetches `apk-metadata.json` client-side and links to `JiApp-latest.apk` for direct download. APKs are published via `./publish-apk.sh` (repo root). The APK binary is never committed to git.
 
 See `deployment_plan/DEPLOYMENT_PLAN.md` for full architecture.
 
