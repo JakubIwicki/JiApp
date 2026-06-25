@@ -14,20 +14,15 @@ export function Footer() {
           >
             GitHub
           </a>
-          {/* TODO(jakub): replace with real LinkedIn URL */}
           <a
-            href="https://linkedin.com/in/REPLACE_ME"
+            href="https://www.linkedin.com/in/jakub-iwicki/"
             target="_blank"
             rel="noopener noreferrer"
-            className={`${styles.link} ${styles.muted}`}
+            className={styles.link}
           >
             LinkedIn
           </a>
-          {/* TODO(jakub): replace with real email */}
-          <a
-            href="mailto:REPLACE_ME@example.com"
-            className={`${styles.link} ${styles.muted}`}
-          >
+          <a href="mailto:jakubiwicki.aj@gmail.com" className={styles.link}>
             Email
           </a>
         </div>

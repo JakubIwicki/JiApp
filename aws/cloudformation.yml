@@ -53,6 +53,16 @@ Resources:
         BlockPublicPolicy: false
         IgnorePublicAcls: true
         RestrictPublicBuckets: false
+      CorsConfiguration:
+        CorsRules:
+          - AllowedOrigins:
+              - https://jakubiwicki.github.io
+              - http://localhost:5173
+            AllowedMethods:
+              - GET
+            AllowedHeaders:
+              - "*"
+            MaxAge: 3600
 
   DownloadsBucketPolicy:
     Type: AWS::S3::BucketPolicy
