@@ -6,52 +6,45 @@ import type { Project } from "../types";
  */
 export const projects: Project[] = [
   {
+    name: "SlopBot",
+    description:
+      "An algorithmic trading engine for Capital.com — streaming market data, ML-driven price predictions, and automated position management with risk controls.",
+    tech: ["C#", ".NET", "Machine Learning", "Trading"],
+    githubUrl: "https://github.com/JakubIwicki/SlopBot",
+  },
+  {
     name: "JiApp",
     description:
-      "Full-stack social media management app with a .NET backend on AWS and a React Native Android client.",
+      "A full-stack YouTube-to-MP3 download app — a .NET microservices backend on AWS with a React Native Android client.",
     tech: ["C#", ".NET", "React Native", "AWS"],
     githubUrl: "https://github.com/JakubIwicki/JiApp",
   },
   {
-    name: "ki",
+    name: "FruityClassify",
     description:
-      "A modern fuzzy finder and file-navigation tool for the terminal, written in Rust.",
-    tech: ["Rust", "CLI", "Fuzzy Matching"],
-    githubUrl: "https://github.com/JakubIwicki/ki",
+      "A deep-learning image classifier that benchmarks custom CNN, EfficientNetB0, MobileNetV3Large, and ensemble models across 10 fruit classes.",
+    tech: ["Python", "TensorFlow/Keras", "Deep Learning"],
+    githubUrl: "https://github.com/JakubIwicki/FruityClassify",
   },
   {
-    name: "MeSH",
+    name: "ParkingFlow",
     description:
-      "Tools and utilities for working with the Medical Subject Headings (MeSH) thesaurus and biomedical ontologies.",
-    tech: ["Python", "Biomedical", "NLP"],
-    githubUrl: "https://github.com/JakubIwicki/MeSH",
+      "A full-stack parking management system for defining parking areas, calculating fees, and tracking payments with multi-currency support.",
+    tech: ["ASP.NET Core", "React", "TypeScript", "RavenDB"],
+    githubUrl: "https://github.com/JakubIwicki/ParkingFlow",
   },
   {
-    name: "trading-api",
+    name: "CRM_Pro",
     description:
-      "Algorithmic trading infrastructure — data pipelines, backtesting harness, and broker API integrations.",
-    tech: ["Python", "Finance", "REST APIs"],
-    githubUrl: "https://github.com/JakubIwicki/trading-api",
+      "A full-stack CRM for managing clients, orders, products, and services, with a REST API backend and a React dashboard.",
+    tech: ["Node.js", "React", "TypeScript", "Prisma"],
+    githubUrl: "https://github.com/JakubIwicki/CRM_Pro",
   },
   {
-    name: "SlopBot",
+    name: "Bawario-Game",
     description:
-      "A Discord bot with moderation utilities, custom commands, and server-management automation.",
-    tech: ["TypeScript", "Discord API", "Node.js"],
-    githubUrl: "https://github.com/JakubIwicki/SlopBot",
-  },
-  {
-    name: "beesness",
-    description:
-      "A playful business-simulation game where you manage a bee colony and compete in honey markets.",
-    tech: ["TypeScript", "Game", "Web"],
-    githubUrl: "https://github.com/JakubIwicki/beesness",
-  },
-  {
-    name: "permafrost",
-    description:
-      "Climate-data tooling for permafrost modelling — processing pipelines and interactive visualizations.",
-    tech: ["Python", "Climate", "Data Viz"],
-    githubUrl: "https://github.com/JakubIwicki/permafrost",
+      "A low-poly Unity arena slasher with infinite levels, an in-game shop, and escalating waves of enemies.",
+    tech: ["C#", "Unity", "Game"],
+    githubUrl: "https://github.com/JakubIwicki/Bawario-Game",
   },
 ];
