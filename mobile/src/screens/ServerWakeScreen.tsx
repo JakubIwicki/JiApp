@@ -14,6 +14,7 @@ import Animated, {
   useAnimatedStyle,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import useKeepAwake from '../hooks/useKeepAwake';
 import { API_BASE_URL, WAKE_API_URL } from '../config';
 import {
   animation,
@@ -40,6 +41,8 @@ const ServerWakeScreen: React.FC<Props> = ({ onComplete }) => {
     'waking',
   );
   const [retryCount, setRetryCount] = useState(0);
+  const isWakingOrPolling = phase === 'waking' || phase === 'polling';
+  useKeepAwake(isWakingOrPolling);
   const activeRef = useRef(true);
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
@@ -178,8 +181,6 @@ const ServerWakeScreen: React.FC<Props> = ({ onComplete }) => {
   const buttonAnimatedStyle = useAnimatedStyle(() => ({
     opacity: buttonOpacity.value,
   }));
-
-  const isWakingOrPolling = phase === 'waking' || phase === 'polling';
 
   return (
     <View style={styles.container} testID="server-wake-screen">

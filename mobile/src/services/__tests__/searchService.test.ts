@@ -38,30 +38,32 @@ describe('searchVideos', () => {
         channelTitle: 'Rick Astley',
       },
     ],
+    hasMore: false,
   };
 
-  it('calls /yt/search with query and returns results', async () => {
+  it('calls /yt/search with query + page 0 by default and returns results with hasMore', async () => {
     mockPost.mockResolvedValueOnce({ data: mockSearchResponse });
 
     const result = await searchVideos(query);
 
     expect(mockPost).toHaveBeenCalledWith(
       '/yt/search',
-      { query, maxResults: undefined },
+      { query, page: 0 },
       { signal: undefined },
     );
     expect(result).toEqual(mockSearchResponse);
+    expect(result.hasMore).toBe(false);
   });
 
-  it('passes maxResults and signal when provided', async () => {
+  it('passes page and signal when provided', async () => {
     mockPost.mockResolvedValueOnce({ data: mockSearchResponse });
     const abortController = new AbortController();
 
-    await searchVideos(query, 5, abortController.signal);
+    await searchVideos(query, 2, abortController.signal);
 
     expect(mockPost).toHaveBeenCalledWith(
       '/yt/search',
-      { query, maxResults: 5 },
+      { query, page: 2 },
       { signal: abortController.signal },
     );
   });

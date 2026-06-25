@@ -21,6 +21,7 @@ public sealed class SettingsTests
             Youtube = new Settings.YoutubeSettings
             {
                 ApiKey = "test-key", YtDlpPath = "yt-dlp", FfmpegPath = "ffmpeg",
+                MaxResults = 30, PageSize = 10,
             },
         };
     }
@@ -114,6 +115,8 @@ public sealed class SettingsTests
                 ApiKey = "test-key",
                 YtDlpPath = "yt-dlp",
                 FfmpegPath = "ffmpeg",
+                MaxResults = 30,
+                PageSize = 10,
             },
         };
 
@@ -214,6 +217,108 @@ public sealed class SettingsTests
         Youtube = new Settings.YoutubeSettings
         {
             ApiKey = "test-key", YtDlpPath = "yt-dlp", FfmpegPath = "ffmpeg",
+            MaxResults = 30, PageSize = 10,
         },
     };
+
+    // ── Youtube MaxResults / PageSize ──────────────────────────────────────
+
+    [Fact]
+    public void YoutubeSettings_ValidatedMaxResults_ReturnsValue_WhenSet()
+    {
+        var youtube = new Settings.YoutubeSettings { MaxResults = 25 };
+
+        youtube.ValidatedMaxResults.Should().Be(25);
+    }
+
+    [Fact]
+    public void YoutubeSettings_ValidatedMaxResults_Throws_WhenNull()
+    {
+        var youtube = new Settings.YoutubeSettings();
+
+        Action act = () => _ = youtube.ValidatedMaxResults;
+
+        act.Should().Throw<InvalidOperationException>()
+            .Which.Message.Should().Contain("MaxResults");
+    }
+
+    [Fact]
+    public void YoutubeSettings_ValidatedPageSize_ReturnsValue_WhenSet()
+    {
+        var youtube = new Settings.YoutubeSettings { PageSize = 10 };
+
+        youtube.ValidatedPageSize.Should().Be(10);
+    }
+
+    [Fact]
+    public void YoutubeSettings_ValidatedPageSize_Throws_WhenNull()
+    {
+        var youtube = new Settings.YoutubeSettings();
+
+        Action act = () => _ = youtube.ValidatedPageSize;
+
+        act.Should().Throw<InvalidOperationException>()
+            .Which.Message.Should().Contain("PageSize");
+    }
+
+    [Fact]
+    public void Validate_Throws_WhenMaxResultsIsNull()
+    {
+        var settings = ValidSettings();
+        settings.Youtube!.MaxResults = null;
+
+        Action act = () => settings.Validate();
+
+        act.Should().Throw<InvalidOperationException>()
+            .Which.Message.Should().Contain("MaxResults");
+    }
+
+    [Fact]
+    public void Validate_Throws_WhenMaxResultsIsZero()
+    {
+        var settings = ValidSettings();
+        settings.Youtube!.MaxResults = 0;
+
+        Action act = () => settings.Validate();
+
+        act.Should().Throw<InvalidOperationException>()
+            .Which.Message.Should().Contain("MaxResults");
+    }
+
+    [Fact]
+    public void Validate_Throws_WhenPageSizeIsNull()
+    {
+        var settings = ValidSettings();
+        settings.Youtube!.PageSize = null;
+
+        Action act = () => settings.Validate();
+
+        act.Should().Throw<InvalidOperationException>()
+            .Which.Message.Should().Contain("PageSize");
+    }
+
+    [Fact]
+    public void Validate_Throws_WhenPageSizeExceedsMaxResults()
+    {
+        var settings = ValidSettings();
+        settings.Youtube!.MaxResults = 10;
+        settings.Youtube!.PageSize = 20;
+
+        Action act = () => settings.Validate();
+
+        act.Should().Throw<InvalidOperationException>()
+            .Which.Message.Should().Contain("PageSize");
+    }
+
+    [Fact]
+    public void Validate_Passes_WhenPageSizeEqualsMaxResults()
+    {
+        var settings = ValidSettings();
+        settings.Youtube!.MaxResults = 10;
+        settings.Youtube!.PageSize = 10;
+
+        Action act = () => settings.Validate();
+
+        act.Should().NotThrow();
+    }
 }

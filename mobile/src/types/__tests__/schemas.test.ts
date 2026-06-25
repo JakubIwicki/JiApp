@@ -171,6 +171,7 @@ describe('SearchResponseSchema', () => {
         channelTitle: 'Rick Astley',
       },
     ],
+    hasMore: false,
   };
 
   it('parses a valid SearchResponse', () => {

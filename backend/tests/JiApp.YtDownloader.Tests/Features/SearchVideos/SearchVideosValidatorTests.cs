@@ -39,4 +39,27 @@ public sealed class SearchVideosValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == "Query");
     }
+
+    [Fact]
+    public void Validator_RejectsNegativePage()
+    {
+        var validator = CreateValidator();
+        var request = new SearchVideosRequest("test", -1);
+
+        var result = validator.Validate(request);
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.PropertyName == "Page");
+    }
+
+    [Fact]
+    public void Validator_AcceptsZeroPage()
+    {
+        var validator = CreateValidator();
+        var request = new SearchVideosRequest("test", 0);
+
+        var result = validator.Validate(request);
+
+        result.IsValid.Should().BeTrue();
+    }
 }

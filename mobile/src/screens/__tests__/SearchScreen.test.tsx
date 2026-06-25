@@ -4,17 +4,23 @@ import { render, fireEvent, act } from '@testing-library/react-native';
 // Mock useSearch
 const mockSearch = jest.fn();
 const mockClearResults = jest.fn();
+const mockLoadMore = jest.fn();
 const mockResults: any[] = [];
 let mockIsLoading = false;
+let mockIsLoadingMore = false;
 let mockError: string | null = null;
+let mockHasMore = false;
 
 jest.mock('../../hooks/useSearch', () => ({
   __esModule: true,
   default: () => ({
     results: mockResults,
     isLoading: mockIsLoading,
+    isLoadingMore: mockIsLoadingMore,
     error: mockError,
+    hasMore: mockHasMore,
     search: mockSearch,
+    loadMore: mockLoadMore,
     clearResults: mockClearResults,
   }),
 }));
@@ -58,7 +64,9 @@ describe('SearchScreen', () => {
     jest.clearAllMocks();
     mockResults.splice(0, mockResults.length);
     mockIsLoading = false;
+    mockIsLoadingMore = false;
     mockError = null;
+    mockHasMore = false;
   });
 
   it('renders search bar', () => {
@@ -100,5 +108,60 @@ describe('SearchScreen', () => {
     fireEvent.press(getByTestId('video-card'));
 
     expect(mockNavigate).toHaveBeenCalledWith('Download', videoItem);
+  });
+
+  it('shows load-more spinner in footer when isLoadingMore', () => {
+    mockResults.push({
+      videoId: 'abc123',
+      title: 'Test Video Title',
+      description: 'Test video description',
+      imageUrl: 'https://example.com/thumb.jpg',
+      videoUrl: 'https://example.com/video.mp4',
+      channelTitle: 'Test Channel',
+    });
+    mockHasMore = true;
+    mockIsLoadingMore = true;
+
+    const { getByTestId } = render(<SearchScreen />);
+    expect(getByTestId('load-more-spinner')).toBeTruthy();
+  });
+
+  it('calls loadMore when FlatList onEndReached fires and hasMore is true', () => {
+    mockResults.push({
+      videoId: 'abc123',
+      title: 'Test Video Title',
+      description: 'Test video description',
+      imageUrl: 'https://example.com/thumb.jpg',
+      videoUrl: 'https://example.com/video.mp4',
+      channelTitle: 'Test Channel',
+    });
+    mockHasMore = true;
+
+    const { getByTestId } = render(<SearchScreen />);
+
+    // Fire onEndReached on the FlatList
+    const flatList = getByTestId('search-results-flatlist');
+    fireEvent(flatList, 'onEndReached');
+
+    expect(mockLoadMore).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not call loadMore when hasMore is false', () => {
+    mockResults.push({
+      videoId: 'abc123',
+      title: 'Test Video Title',
+      description: 'Test video description',
+      imageUrl: 'https://example.com/thumb.jpg',
+      videoUrl: 'https://example.com/video.mp4',
+      channelTitle: 'Test Channel',
+    });
+    mockHasMore = false;
+
+    const { getByTestId } = render(<SearchScreen />);
+
+    const flatList = getByTestId('search-results-flatlist');
+    fireEvent(flatList, 'onEndReached');
+
+    expect(mockLoadMore).not.toHaveBeenCalled();
   });
 });

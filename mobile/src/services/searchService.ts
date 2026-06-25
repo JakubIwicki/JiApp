@@ -11,12 +11,12 @@ export const archiveSearchHistory = async (id: number): Promise<void> => {
 
 export const searchVideos = async (
   query: string,
-  maxResults?: number,
+  page = 0,
   signal?: AbortSignal,
 ): Promise<SearchResponse> => {
   const response = await apiClient.post<SearchResponse>(
     '/yt/search',
-    { query, maxResults },
+    { query, page },
     { signal },
   );
   return SearchResponseSchema.parse(response.data);

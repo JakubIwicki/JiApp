@@ -190,7 +190,7 @@ public sealed class AssistantChatOrchestratorTests
         var videos = new SearchVideosResponse(
         [
             new VideoItem("vid1", "Lofi beats", "desc", "img", "url", "channel")
-        ]);
+        ], false);
 
         var orchestrator = new Fixture()
             .WithUpdate(new FunctionCallContent(callId, AssistantToolNames.SearchYoutube,

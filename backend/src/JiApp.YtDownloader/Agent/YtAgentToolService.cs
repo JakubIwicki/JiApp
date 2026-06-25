@@ -91,7 +91,7 @@ public sealed partial class YtAgentToolService(
             )).ToList();
 
             return Result<SearchVideosResponse>.Success(
-                new SearchVideosResponse(items.AsReadOnly()));
+                new SearchVideosResponse(items.AsReadOnly(), false));
         }
         catch (Google.GoogleApiException ex)
         {
