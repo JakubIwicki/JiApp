@@ -1,0 +1,26 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-bg);
+  background: var(--color-accent);
+  padding: 0.875rem 2.5rem;
+  border-radius: var(--radius-full);
+  transition: background var(--transition-fast), box-shadow var(--transition-fast),
+    transform var(--transition-fast);
+  white-space: nowrap;
+}
+
+.button:hover {
+  background: var(--color-accent-hover);
+  box-shadow: var(--shadow-glow);
+  transform: translateY(-1px);
+}
+
+.button:active {
+  transform: translateY(0);
+}

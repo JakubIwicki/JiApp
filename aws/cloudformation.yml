@@ -42,6 +42,40 @@ Resources:
         IgnorePublicAcls: true
         RestrictPublicBuckets: true
 
+  DownloadsBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub jiapp-downloads-${AWS::AccountId}
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: false
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: false
+      CorsConfiguration:
+        CorsRules:
+          - AllowedOrigins:
+              - https://jakubiwicki.github.io
+              - http://localhost:5173
+            AllowedMethods:
+              - GET
+            AllowedHeaders:
+              - "*"
+            MaxAge: 3600
+
+  DownloadsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref DownloadsBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: s3:GetObject
+            Resource: !Sub arn:aws:s3:::jiapp-downloads-${AWS::AccountId}/*
+
   # ── ECR Repositories ────────────────────────────────────
 
   EcrGateway:

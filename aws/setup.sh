@@ -34,6 +34,47 @@ echo "    SG: $SG_ID"
 echo "    Lambda Role: $LAMBDA_ROLE_ARN"
 echo "    GitHub Role: $GITHUB_ROLE_ARN"
 
+# ── S3: Downloads bucket (public-read for APK) ──────────────
+
+DOWNLOADS_BUCKET="jiapp-downloads-${ACCOUNT_ID}"
+echo ""
+echo "==> Configuring downloads bucket: $DOWNLOADS_BUCKET"
+
+# Ensure bucket exists (created by CloudFormation; idempotent create if not)
+aws s3api head-bucket --bucket "$DOWNLOADS_BUCKET" --region "$REGION" 2>/dev/null || \
+    aws s3api create-bucket --bucket "$DOWNLOADS_BUCKET" --region "$REGION" \
+        --create-bucket-configuration "LocationConstraint=$REGION"
+
+# Public-access-block: block ACLs but ALLOW public bucket-policy reads
+aws s3api put-public-access-block --bucket "$DOWNLOADS_BUCKET" \
+    --public-access-block-configuration \
+        "BlockPublicAcls=true,BlockPublicPolicy=false,IgnorePublicAcls=true,RestrictPublicBuckets=false"
+
+# Bucket policy: public-read s3:GetObject on bucket objects only
+aws s3api put-bucket-policy --bucket "$DOWNLOADS_BUCKET" \
+    --policy '{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": "*",
+    "Action": "s3:GetObject",
+    "Resource": "arn:aws:s3:::'"$DOWNLOADS_BUCKET"'/*"
+  }]
+}'
+
+# CORS: allow GET of apk-metadata.json (and APK) from Pages + localhost dev
+aws s3api put-bucket-cors --bucket "$DOWNLOADS_BUCKET" \
+    --cors-configuration '{
+  "CORSRules": [{
+    "AllowedOrigins": ["https://jakubiwicki.github.io", "http://localhost:5173"],
+    "AllowedMethods": ["GET"],
+    "AllowedHeaders": ["*"],
+    "MaxAgeSeconds": 3600
+  }]
+}'
+
+echo "    Downloads bucket ready: s3://${DOWNLOADS_BUCKET}/"
+
 # ── 2. EC2 instance ───────────────────────────────────────────
 
 echo ""

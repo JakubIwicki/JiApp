@@ -1,0 +1,98 @@
+.section {
+  padding: var(--space-4xl) var(--space-lg);
+  border-top: 1px solid var(--color-border);
+}
+
+.container {
+  max-width: 640px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xl);
+}
+
+.heading {
+  text-align: center;
+}
+
+/* Metadata */
+.meta {
+  font-family: var(--font-heading);
+  font-size: 0.8125rem;
+  color: var(--color-accent);
+  text-align: center;
+}
+
+/* Action area */
+.action {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-sm) 0;
+}
+
+/* Collapsible install steps */
+.details {
+  width: 100%;
+  max-width: 480px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.summary {
+  padding: var(--space-md) var(--space-lg);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  user-select: none;
+  transition: color var(--transition-fast);
+}
+
+.summary:hover {
+  color: var(--color-text);
+}
+
+.steps {
+  padding: 0 var(--space-lg) var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  counter-reset: step;
+}
+
+.steps li {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  padding-left: var(--space-lg);
+  position: relative;
+}
+
+.steps li::before {
+  counter-increment: step;
+  content: counter(step) ".";
+  font-family: var(--font-heading);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-accent);
+  position: absolute;
+  left: 0;
+}
+
+/* Notes */
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  max-width: 480px;
+  padding-top: var(--space-sm);
+}
+
+.notes p {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
