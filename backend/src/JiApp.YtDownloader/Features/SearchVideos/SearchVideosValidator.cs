@@ -10,8 +10,8 @@ public sealed class SearchVideosValidator : AbstractValidator<SearchVideosReques
             .NotEmpty()
             .MaximumLength(100);
 
-        RuleFor(x => x.MaxResults)
-            .InclusiveBetween(1, 50)
-            .When(x => x.MaxResults.HasValue);
+        RuleFor(x => x.Page)
+            .GreaterThanOrEqualTo(0)
+            .When(x => x.Page.HasValue);
     }
 }

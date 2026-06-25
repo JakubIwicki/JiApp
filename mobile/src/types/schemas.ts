@@ -57,6 +57,7 @@ export const UpdateProfileApiRawSchema = z.object({
 
 export const SearchResponseSchema = z.object({
   results: z.array(VideoItemSchema),
+  hasMore: z.boolean(),
 });
 
 export const SearchHistoryResponseSchema = z.object({

@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.YtApi;
+using JiApp.YtDownloader.Configuration;
 using JiApp.YtDownloader.Logging;
 using JiApp.YtDownloader.Repositories;
 using Microsoft.Extensions.Caching.Memory;
@@ -14,10 +15,10 @@ public sealed partial class SearchVideosHandler(
     ISearchHistoryRepository searchHistoryRepository,
     ICurrentUserService currentUser,
     IMemoryCache cache,
+    Settings settings,
     ILogger<SearchVideosHandler> logger)
 {
     private const int CacheDurationHours = 1;
-    private const int MaxYouTubeResults = 50;
     private const string CacheKeyPrefix = "youtube:search";
 
     /// <summary>
@@ -41,7 +42,9 @@ public sealed partial class SearchVideosHandler(
     {
         try
         {
-            var requestedMax = request.MaxResults ?? 10;
+            var maxResults = settings.Youtube!.ValidatedMaxResults;
+            var pageSize = settings.Youtube!.ValidatedPageSize;
+            var page = request.Page ?? 0;
             IReadOnlyList<YoutubeVideo> videos;
 
             // Detect YouTube URL → direct video lookup for exact match
@@ -62,38 +65,44 @@ public sealed partial class SearchVideosHandler(
                     entry.Size = 1;
                     entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(CacheDurationHours);
                     return await youtubeClient.SearchVideosAsync(
-                        request.Query, MaxYouTubeResults, cancellationToken);
+                        request.Query, maxResults, cancellationToken);
                 }) ?? [];
             }
 
-            var historyEntry = new YoutubeSearchHistory
+            if (page == 0)
             {
-                UserId = currentUser.UserId,
-                SearchedAt = DateTime.UtcNow,
-                SearchText = request.Query
-            };
+                var historyEntry = new YoutubeSearchHistory
+                {
+                    UserId = currentUser.UserId,
+                    SearchedAt = DateTime.UtcNow,
+                    SearchText = request.Query
+                };
 
-            try
-            {
-                await searchHistoryRepository.AddAsync(historyEntry);
-                await searchHistoryRepository.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                logger.FailedToSaveSearchHistory(ex, currentUser.UserId);
+                try
+                {
+                    await searchHistoryRepository.AddAsync(historyEntry);
+                    await searchHistoryRepository.SaveChangesAsync();
+                }
+                catch (Exception ex)
+                {
+                    logger.FailedToSaveSearchHistory(ex, currentUser.UserId);
+                }
             }
 
-            var items = videos.Take(requestedMax).Select(v => new VideoItem(
-                v.VideoId,
-                v.Title,
-                v.Description,
-                v.ImageUrl,
-                v.VideoUrl,
-                v.ChannelTitle
-            )).ToList();
+            var skip = page * pageSize;
+            var pageItems = videos.Skip(skip).Take(pageSize)
+                .Select(v => new VideoItem(
+                    v.VideoId,
+                    v.Title,
+                    v.Description,
+                    v.ImageUrl,
+                    v.VideoUrl,
+                    v.ChannelTitle
+                )).ToList();
+            var hasMore = skip + pageSize < videos.Count;
 
             return Result<SearchVideosResponse>.Success(
-                new SearchVideosResponse(items.AsReadOnly()));
+                new SearchVideosResponse(pageItems.AsReadOnly(), hasMore));
         }
         catch (Google.GoogleApiException ex)
         {

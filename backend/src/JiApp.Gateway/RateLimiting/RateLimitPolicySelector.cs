@@ -17,6 +17,8 @@ public sealed class RateLimitPolicySelector(RequestDelegate next, RateLimitPolic
         ["/api/v1/auth/refresh"] = RateLimitPolicyNames.RefreshPolicy,
         ["/api/v1/auth/logout"] = RateLimitPolicyNames.LogoutPolicy,
         ["/api/v1/auth/me"] = RateLimitPolicyNames.MePolicy,
+        ["/api/v1/auth/profile"] = RateLimitPolicyNames.LoginPolicy,
+        ["/api/v1/auth/change-password"] = RateLimitPolicyNames.LoginPolicy,
         ["/api/v1/auth/throw"] = RateLimitPolicyNames.ThrowPolicy,
 
         // YT search

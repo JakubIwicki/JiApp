@@ -1,6 +1,8 @@
 using Google;
 using JiApp.Common.Abstractions;
+using JiApp.Common.Models;
 using JiApp.YtApi;
+using JiApp.YtDownloader.Configuration;
 using JiApp.YtDownloader.Features.SearchVideos;
 using JiApp.YtDownloader.Repositories;
 using Microsoft.Extensions.Caching.Memory;
@@ -11,6 +13,21 @@ namespace JiApp.YtDownloader.Tests.Features.SearchVideos;
 
 public sealed class SearchVideosHandlerTests
 {
+    private const int MaxResults = 6;
+    private const int PageSize = 2;
+
+    private static Settings CreateSettings() => new()
+    {
+        ConnectionString = "Data Source=test.db",
+        App = new Settings.AppSettings { BaseDirectory = "/tmp", PreviewDurationSeconds = 10 },
+        Jwt = new Settings.JwtSettings { Key = "test-key", Issuer = "test-issuer", Audience = "test-audience" },
+        Youtube = new Settings.YoutubeSettings
+        {
+            ApiKey = "test-key", YtDlpPath = "yt-dlp", FfmpegPath = "ffmpeg",
+            MaxResults = MaxResults, PageSize = PageSize,
+        },
+    };
+
     private sealed class Fixture
     {
         public Mock<IYoutubeClient> YoutubeClientMock { get; } = new();
@@ -22,7 +39,8 @@ public sealed class SearchVideosHandlerTests
         {
             var user = Mock.Of<ICurrentUserService>(x => x.UserId == 42L && x.Username == "test-user");
             Sut = new SearchVideosHandler(
-                YoutubeClientMock.Object, HistoryRepoMock.Object, user, Cache, Mock.Of<ILogger<SearchVideosHandler>>());
+                YoutubeClientMock.Object, HistoryRepoMock.Object, user, Cache,
+                CreateSettings(), Mock.Of<ILogger<SearchVideosHandler>>());
         }
 
         public Fixture WithSearchResults(params YoutubeVideo[] videos)
@@ -57,6 +75,16 @@ public sealed class SearchVideosHandlerTests
             Description: "Official video",
             ImageUrl: $"https://i.ytimg.com/vi/{videoId}/default.jpg",
             ChannelTitle: "Rick Astley");
+
+    private static YoutubeVideo[] CreateVideos(int count) =>
+        Enumerable.Range(0, count)
+            .Select(i => new YoutubeVideo(
+                VideoId: $"vid{i:00000000}",
+                Title: $"Title {i}",
+                Description: $"Description {i}",
+                ImageUrl: $"https://i.ytimg.com/vi/vid{i:00000000}/default.jpg",
+                ChannelTitle: $"Channel {i}"))
+            .ToArray();
 
     [Fact]
     public async Task HandleAsync_PropagatesCancellationToken_ToYoutubeClient()
@@ -151,5 +179,106 @@ public sealed class SearchVideosHandlerTests
         second.Value!.Results.Should().ContainSingle();
         fixture.YoutubeClientMock.Verify(
             c => c.SearchVideosAsync("rick astley", It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    // ── Pagination ─────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task HandleAsync_Page0_ReturnsFirstPageWithHasMoreTrue()
+    {
+        var videos = CreateVideos(MaxResults);
+        var fixture = new Fixture().WithSearchResults(videos);
+
+        var result = await fixture.Sut.HandleAsync(new SearchVideosRequest("test", 0));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Results.Should().HaveCount(PageSize);
+        result.Value!.HasMore.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task HandleAsync_LastPage_ReturnsHasMoreFalse()
+    {
+        var videos = CreateVideos(MaxResults);
+        var fixture = new Fixture().WithSearchResults(videos);
+
+        var lastPage = (MaxResults / PageSize) - 1;
+        var result = await fixture.Sut.HandleAsync(new SearchVideosRequest("test", lastPage));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Results.Should().HaveCount(PageSize);
+        result.Value!.HasMore.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task HandleAsync_NullPage_DefaultsToPage0()
+    {
+        var videos = CreateVideos(MaxResults);
+        var fixture = new Fixture().WithSearchResults(videos);
+
+        var result = await fixture.Sut.HandleAsync(new SearchVideosRequest("test", null));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Results.Should().HaveCount(PageSize);
+        result.Value!.HasMore.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task HandleAsync_PageBeyondEnd_ReturnsEmptyResultsWithHasMoreFalse()
+    {
+        var videos = CreateVideos(MaxResults);
+        var fixture = new Fixture().WithSearchResults(videos);
+
+        var result = await fixture.Sut.HandleAsync(new SearchVideosRequest("test", 999));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Results.Should().BeEmpty();
+        result.Value!.HasMore.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task HandleAsync_ResultsNeverExceedMaxResults()
+    {
+        // MaxResults limits what we ask YouTube for; the mock returns all.
+        // The paginated traversal across pages should yield exactly MaxResults.
+        var videos = CreateVideos(MaxResults);
+        var fixture = new Fixture().WithSearchResults(videos);
+
+        var allResults = new List<VideoItem>();
+        var page = 0;
+        while (true)
+        {
+            var result = await fixture.Sut.HandleAsync(new SearchVideosRequest("test", page));
+            result.IsSuccess.Should().BeTrue();
+            allResults.AddRange(result.Value!.Results);
+            if (!result.Value!.HasMore)
+                break;
+            page++;
+        }
+
+        allResults.Should().HaveCount(MaxResults);
+    }
+
+    [Fact]
+    public async Task HandleAsync_SearchHistory_WrittenOnPage0()
+    {
+        var fixture = new Fixture().WithSearchResults(CreateVideos(1));
+
+        await fixture.Sut.HandleAsync(new SearchVideosRequest("history test", 0));
+
+        fixture.HistoryRepoMock.Verify(r => r.AddAsync(It.IsAny<YoutubeSearchHistory>()), Times.Once);
+        fixture.HistoryRepoMock.Verify(r => r.SaveChangesAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleAsync_SearchHistory_NotWrittenOnPageGreaterThanZero()
+    {
+        var videos = CreateVideos(MaxResults);
+        var fixture = new Fixture().WithSearchResults(videos);
+
+        await fixture.Sut.HandleAsync(new SearchVideosRequest("history test", 1));
+
+        fixture.HistoryRepoMock.Verify(r => r.AddAsync(It.IsAny<YoutubeSearchHistory>()), Times.Never);
+        fixture.HistoryRepoMock.Verify(r => r.SaveChangesAsync(), Times.Never);
     }
 }

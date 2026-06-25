@@ -30,20 +30,28 @@ const fakeResults = [
 ];
 
 const fakeHistory: SearchHistoryItem[] = [
-  { id: 1, searchText: 'never gonna give you up', searchedAt: new Date(Date.now() - 3600000).toISOString() },
-  { id: 2, searchText: 'gangnam style', searchedAt: new Date(Date.now() - 86400000).toISOString() },
+  {
+    id: 1,
+    searchText: 'never gonna give you up',
+    searchedAt: new Date(Date.now() - 3600000).toISOString(),
+  },
+  {
+    id: 2,
+    searchText: 'gangnam style',
+    searchedAt: new Date(Date.now() - 86400000).toISOString(),
+  },
 ];
 
 export const searchVideos = async (
   _query: string,
-  _maxResults?: number,
+  _page = 0,
   _signal?: AbortSignal,
 ): Promise<SearchResponse> => {
   if (_delayMs) await new Promise(r => setTimeout(r, _delayMs));
   if (_mode === 'loading') await new Promise(() => {});
   if (_mode === 'error') throw new Error('Mock search error');
-  if (_mode === 'empty') return { results: [] };
-  return { results: fakeResults };
+  if (_mode === 'empty') return { results: [], hasMore: false };
+  return { results: fakeResults, hasMore: false };
 };
 
 export const getSearchHistory = async (

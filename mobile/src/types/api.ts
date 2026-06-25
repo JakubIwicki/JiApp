@@ -37,7 +37,7 @@ export interface ChangePasswordRequest {
 
 export interface SearchRequest {
   query: string;
-  maxResults?: number;
+  page?: number;
 }
 
 export interface DownloadRequest {

@@ -3,7 +3,7 @@ using JiApp.YtApi;
 namespace JiApp.YtDownloader.Features.SearchVideos;
 
 [Serializable]
-public sealed record SearchVideosResponse(IReadOnlyList<VideoItem> Results);
+public sealed record SearchVideosResponse(IReadOnlyList<VideoItem> Results, bool HasMore);
 
 [Serializable]
 public sealed record VideoItem(

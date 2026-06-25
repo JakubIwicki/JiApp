@@ -1,5 +1,11 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -35,7 +41,17 @@ const SearchResultsView: React.FC<{
   keyExtractor: (item: VideoItem) => string;
   onBack: () => void;
   backLabel: string;
-}> = ({ results, renderVideoItem, keyExtractor, onBack, backLabel }) => (
+  ListFooterComponent: React.ReactElement | null;
+  onEndReached: () => void;
+}> = ({
+  results,
+  renderVideoItem,
+  keyExtractor,
+  onBack,
+  backLabel,
+  ListFooterComponent,
+  onEndReached,
+}) => (
   <View style={styles.resultsContainer}>
     <Text style={styles.backButton} onPress={onBack}>
       {'← ' + backLabel}
@@ -46,6 +62,10 @@ const SearchResultsView: React.FC<{
       renderItem={renderVideoItem}
       contentContainerStyle={styles.listContent}
       keyboardShouldPersistTaps="handled"
+      onEndReached={onEndReached}
+      onEndReachedThreshold={0.5}
+      ListFooterComponent={ListFooterComponent}
+      testID="search-results-flatlist"
     />
   </View>
 );
@@ -83,7 +103,16 @@ const SearchInitialEmptyView: React.FC<{ emptyText: string }> = ({
 const SearchScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<SearchNavigationProp>();
-  const { results, isLoading, error, search, clearResults } = useSearch();
+  const {
+    results,
+    isLoading,
+    isLoadingMore,
+    error,
+    hasMore,
+    search,
+    loadMore,
+    clearResults,
+  } = useSearch();
   const lastQueryRef = useRef<string>('');
 
   useScreenTitle('search.title');
@@ -146,6 +175,20 @@ const SearchScreen: React.FC = () => {
 
   const keyExtractor = useCallback((item: VideoItem) => item.videoId, []);
 
+  const handleEndReached = useCallback(() => {
+    if (hasMore && !isLoadingMore) {
+      loadMore();
+    }
+  }, [hasMore, isLoadingMore, loadMore]);
+
+  const footerComponent = isLoadingMore ? (
+    <ActivityIndicator
+      color={colors.primary}
+      style={styles.footerLoader}
+      testID="load-more-spinner"
+    />
+  ) : null;
+
   const showLogo =
     !isLoading && !error && results.length === 0 && lastQueryRef.current === '';
 
@@ -182,6 +225,8 @@ const SearchScreen: React.FC = () => {
             keyExtractor={keyExtractor}
             onBack={handleBackToRecent}
             backLabel={t('search.backToRecent')}
+            ListFooterComponent={footerComponent}
+            onEndReached={handleEndReached}
           />
         ) : !historyLoading && recentSearches.length > 0 ? (
           <SearchRecentView
@@ -256,6 +301,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.textTertiary,
     marginBottom: spacing.md,
+  },
+  footerLoader: {
+    paddingVertical: spacing.lg,
   },
   recentItem: {
     fontSize: 14,

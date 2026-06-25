@@ -102,6 +102,32 @@ public sealed class RateLimitPolicySelectorTests
     }
 
     [Fact]
+    public async Task Matches_profile_path_to_LoginPolicy()
+    {
+        var context = Fixture.CreateContext("/api/v1/auth/profile");
+        var fixture = Fixture.Init();
+
+        await fixture.Sut.InvokeAsync(context);
+
+        var endpoint = context.GetEndpoint();
+        endpoint.Should().NotBeNull();
+        endpoint!.DisplayName.Should().Be("LoginPolicy");
+    }
+
+    [Fact]
+    public async Task Matches_change_password_path_to_LoginPolicy()
+    {
+        var context = Fixture.CreateContext("/api/v1/auth/change-password");
+        var fixture = Fixture.Init();
+
+        await fixture.Sut.InvokeAsync(context);
+
+        var endpoint = context.GetEndpoint();
+        endpoint.Should().NotBeNull();
+        endpoint!.DisplayName.Should().Be("LoginPolicy");
+    }
+
+    [Fact]
     public async Task Matches_search_videos_path_to_SearchVideosPolicy()
     {
         var context = Fixture.CreateContext("/api/v1/yt/search");

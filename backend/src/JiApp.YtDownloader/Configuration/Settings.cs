@@ -52,6 +52,12 @@ public sealed class Settings
                 errors.Add("Youtube:YtDlpPath is not configured.");
             if (string.IsNullOrEmpty(Youtube.FfmpegPath))
                 errors.Add("Youtube:FfmpegPath is not configured.");
+            if (Youtube.MaxResults is null or <= 0)
+                errors.Add("Youtube:MaxResults must be configured and greater than 0.");
+            if (Youtube.PageSize is null or <= 0)
+                errors.Add("Youtube:PageSize must be configured and greater than 0.");
+            if (Youtube.PageSize.HasValue && Youtube.MaxResults.HasValue && Youtube.PageSize > Youtube.MaxResults)
+                errors.Add("Youtube:PageSize must be less than or equal to Youtube:MaxResults.");
         }
 
         if (Assistant is { DailyMessageLimitPerUser: <= 0 })
@@ -83,6 +89,11 @@ public sealed class Settings
         public string? CookiesFile { get; set; }
         public string? CookiesFromBrowser { get; set; }
         public string? Proxy { get; set; }
+        public int? MaxResults { get; set; }
+        public int? PageSize { get; set; }
+
+        public int ValidatedMaxResults => MaxResults ?? throw new InvalidOperationException("Youtube:MaxResults not configured after validation");
+        public int ValidatedPageSize => PageSize ?? throw new InvalidOperationException("Youtube:PageSize not configured after validation");
     }
 
     public sealed class DeepSeekSettings
