@@ -13,13 +13,6 @@ export const projects: Project[] = [
     githubUrl: "https://github.com/JakubIwicki/JiApp",
   },
   {
-    name: "ki",
-    description:
-      "A modern fuzzy finder and file-navigation tool for the terminal, written in Rust.",
-    tech: ["Rust", "CLI", "Fuzzy Matching"],
-    githubUrl: "https://github.com/JakubIwicki/ki",
-  },
-  {
     name: "MeSH",
     description:
       "Tools and utilities for working with the Medical Subject Headings (MeSH) thesaurus and biomedical ontologies.",
@@ -41,17 +34,10 @@ export const projects: Project[] = [
     githubUrl: "https://github.com/JakubIwicki/SlopBot",
   },
   {
-    name: "beesness",
+    name: "FruityClassify",
     description:
-      "A playful business-simulation game where you manage a bee colony and compete in honey markets.",
-    tech: ["TypeScript", "Game", "Web"],
-    githubUrl: "https://github.com/JakubIwicki/beesness",
-  },
-  {
-    name: "permafrost",
-    description:
-      "Climate-data tooling for permafrost modelling — processing pipelines and interactive visualizations.",
-    tech: ["Python", "Climate", "Data Viz"],
-    githubUrl: "https://github.com/JakubIwicki/permafrost",
+      "An image-classification model that identifies fruit varieties from photos, built and trained in Jupyter notebooks.",
+    tech: ["Python", "Jupyter", "Machine Learning"],
+    githubUrl: "https://github.com/JakubIwicki/FruityClassify",
   },
 ];
