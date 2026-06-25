@@ -43,8 +43,8 @@ export const projects: Project[] = [
   {
     name: "Bawario-Game",
     description:
-      "A low-poly Unity arena slasher with infinite levels, an in-game shop, and escalating waves of enemies.",
-    tech: ["C#", "Unity", "Game"],
+      "A low-poly Unity arena slasher — infinite levels, an in-game shop, and escalating enemy waves — architected with Zenject dependency-injection containers.",
+    tech: ["C#", "Unity", "Zenject", "Game"],
     githubUrl: "https://github.com/JakubIwicki/Bawario-Game",
   },
 ];
