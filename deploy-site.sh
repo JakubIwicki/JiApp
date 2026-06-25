@@ -180,6 +180,7 @@ success "Committed: $COMMIT_SHA"
 info "Pushing to origin/main ..."
 git -C "$TMP/site" push origin HEAD:main
 success "Push complete"
+PUSHED_SHA=$(git -C "$TMP/site" rev-parse HEAD)
 
 # ── Step 6: Poll deploy run + verify live (unless --no-wait) ─────────────
 if $NO_WAIT; then
@@ -201,7 +202,7 @@ POLL_INTERVAL=10
 ELAPSED=0
 
 while [ $ELAPSED -lt $MAX_WAIT ]; do
-	RUN_JSON=$(gh run list -R "$SITE_REPO" --workflow=deploy.yml --limit 1 --json databaseId,status,conclusion 2>/dev/null || echo "")
+	RUN_JSON=$(gh run list -R "$SITE_REPO" --workflow=deploy.yml --limit 10 --json databaseId,status,conclusion,headSha 2>/dev/null || echo "")
 	if [ -z "$RUN_JSON" ]; then
 		warn "Could not fetch deploy run info; retrying in ${POLL_INTERVAL}s ..."
 		sleep "$POLL_INTERVAL"
@@ -209,9 +210,16 @@ while [ $ELAPSED -lt $MAX_WAIT ]; do
 		continue
 	fi
 
-	STATUS=$(echo "$RUN_JSON" | jq -r '.[0].status // "unknown"')
-	CONCLUSION=$(echo "$RUN_JSON" | jq -r '.[0].conclusion // "null"')
-	RUN_ID=$(echo "$RUN_JSON" | jq -r '.[0].databaseId // "?"')
+	OUR_RUN=$(echo "$RUN_JSON" | jq -c --arg sha "$PUSHED_SHA" '[.[] | select(.headSha == $sha)] | .[0] // empty')
+	if [ -z "$OUR_RUN" ]; then
+		info "Deploy run for $COMMIT_SHA not registered yet; waiting ..."
+		sleep "$POLL_INTERVAL"
+		ELAPSED=$((ELAPSED + POLL_INTERVAL))
+		continue
+	fi
+	STATUS=$(echo "$OUR_RUN" | jq -r '.status // "unknown"')
+	CONCLUSION=$(echo "$OUR_RUN" | jq -r '.conclusion // "null"')
+	RUN_ID=$(echo "$OUR_RUN" | jq -r '.databaseId // "?"')
 
 	info "Run #$RUN_ID status=$STATUS conclusion=$CONCLUSION (${ELAPSED}s elapsed)"
 
