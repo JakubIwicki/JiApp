@@ -31,9 +31,6 @@
   color: var(--color-accent);
 }
 
-.muted {
-  color: var(--color-text-muted);
-}
 
 .copy {
   font-size: 0.75rem;

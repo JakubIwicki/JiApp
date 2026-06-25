@@ -100,8 +100,9 @@ if [ -n "$(git -C "$SCRIPT_DIR" status --porcelain "$WEB_DIR" 2>/dev/null)" ]; t
 fi
 
 # ── Temp working dir ─────────────────────────────────────────────────────
+TMP=""
+trap 'rm -rf "${TMP:-}"' EXIT INT TERM
 TMP=$(mktemp -d)
-trap 'rm -rf "$TMP"' EXIT
 info "Working in $TMP"
 
 # ── Step 1: Clone Pages repo ─────────────────────────────────────────────
@@ -212,7 +213,7 @@ while [ $ELAPSED -lt $MAX_WAIT ]; do
 
 	OUR_RUN=$(echo "$RUN_JSON" | jq -c --arg sha "$PUSHED_SHA" '[.[] | select(.headSha == $sha)] | .[0] // empty')
 	if [ -z "$OUR_RUN" ]; then
-		info "Deploy run for $COMMIT_SHA not registered yet; waiting ..."
+		info "Deploy run for $PUSHED_SHA not registered yet; waiting ..."
 		sleep "$POLL_INTERVAL"
 		ELAPSED=$((ELAPSED + POLL_INTERVAL))
 		continue

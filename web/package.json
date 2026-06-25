@@ -8,7 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "check:no-placeholder": "grep -rq REPLACE_ME dist && { echo 'ERROR: REPLACE_ME placeholder present in build output — set the real S3 URL in src/config.ts before deploying'; exit 1; } || echo 'OK: no REPLACE_ME in dist'"
+    "check:no-placeholder": "if [ ! -d dist ]; then echo 'ERROR: dist/ not found — run build first'; exit 1; fi; if grep -rq REPLACE_ME dist; then echo 'ERROR: REPLACE_ME placeholder present in build output — set the real S3 URL in src/config.ts before deploying'; exit 1; else echo 'OK: no REPLACE_ME in dist'; fi"
   },
   "dependencies": {
     "qrcode.react": "^4.2.0",
