@@ -11,7 +11,6 @@ import TrackPlayer, { Capability } from 'react-native-track-player';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import AppNavigator from './src/navigation/AppNavigator';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
-import { palettes, DEFAULT_PALETTE } from './src/styles/theme';
 import './src/i18n';
 
 const ThemedNavigationContainer: React.FC = () => {
@@ -61,12 +60,7 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <GestureHandlerRootView
-      style={{
-        flex: 1,
-        backgroundColor: palettes[DEFAULT_PALETTE].light.background,
-      }}
-    >
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <KeyboardProvider>
         <SafeAreaProvider>
           <ThemeProvider>
