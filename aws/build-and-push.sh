@@ -5,7 +5,6 @@ set -euo pipefail
 
 # Hold off the health watchdog: a heavy build can starve the gateway and trip a false restart.
 touch /tmp/jiapp_deploying
-trap 'rm -f /tmp/jiapp_deploying' EXIT
 
 TAG="${1:-$(date -u +%Y%m%d-%H%M%S)}"
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
@@ -14,8 +13,28 @@ REGION=$(curl -s -H "X-aws-ec2-metadata-token: ${TOKEN}" http://169.254.169.254/
 ECR_BASE="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/jiapp"
 SOURCE_BUCKET="jiapp-deploy-config-${ACCOUNT_ID}"
 WORK_DIR="/opt/jiapp/.build-$$"
+trap 'rm -f /tmp/jiapp_deploying; rm -rf "${WORK_DIR}" /opt/jiapp/.jiapp-src.tar.gz' EXIT
 
 echo "[$(date)] Build started — TAG=${TAG}"
+
+# ── 0. Disk preflight + reclaim ──
+echo "[$(date)] Disk preflight..."
+df -h /opt/jiapp /var/lib/docker 2>/dev/null | sort -u || df -h /
+docker image prune -f || true
+docker builder prune -f || true
+AVAIL_GB=$(df -BG --output=avail /var/lib/docker 2>/dev/null | tail -1 | tr -dc '0-9')
+[ -n "${AVAIL_GB}" ] || AVAIL_GB=$(df -BG --output=avail / 2>/dev/null | tail -1 | tr -dc '0-9')
+if [ "${AVAIL_GB:-0}" -lt 6 ]; then
+    echo "[$(date)] WARNING: ${AVAIL_GB}G free — running aggressive reclaim..."
+    docker system prune -af || true
+    AVAIL_GB=$(df -BG --output=avail /var/lib/docker 2>/dev/null | tail -1 | tr -dc '0-9')
+    [ -n "${AVAIL_GB}" ] || AVAIL_GB=$(df -BG --output=avail / 2>/dev/null | tail -1 | tr -dc '0-9')
+    if [ "${AVAIL_GB:-0}" -lt 4 ]; then
+        echo "ERROR: <4G free after prune — aborting before build to avoid wedging the box." >&2
+        exit 1
+    fi
+fi
+echo "[$(date)] Disk preflight OK — ${AVAIL_GB}G free"
 
 # ── 1. Download & extract source ──
 echo "[$(date)] Downloading source..."
@@ -61,6 +80,4 @@ echo "[$(date)] Push complete"
 echo "${TAG}" | aws s3 cp - "s3://${SOURCE_BUCKET}/current-tag.txt" --region "${REGION}"
 echo "${TAG}" > /opt/jiapp/.tag
 
-# ── 5. Cleanup ──
-rm -rf "${WORK_DIR}" /opt/jiapp/.jiapp-src.tar.gz
 echo "[$(date)] Done — TAG=${TAG}"

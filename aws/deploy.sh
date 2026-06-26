@@ -144,6 +144,10 @@ for i in $(seq 1 15); do
 done
 
 docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
+echo "Pruning stale docker images + build cache..."
+docker image prune -af 2>/dev/null || true
+docker builder prune -f 2>/dev/null || true
+df -h /var/lib/docker 2>/dev/null | tail -1 || df -h / | tail -1
 echo "Deploy complete"
 '
 
