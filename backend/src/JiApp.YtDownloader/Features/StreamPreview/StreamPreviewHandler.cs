@@ -11,8 +11,7 @@ public sealed class StreamPreviewHandler(
     ILogger<StreamPreviewHandler> logger,
     Settings settings)
 {
-    public StreamPreviewResult HandleAsync(
-        string videoId, CancellationToken cancellationToken = default)
+    public StreamPreviewResult Handle(string videoId)
     {
         Process ytDlp;
         try

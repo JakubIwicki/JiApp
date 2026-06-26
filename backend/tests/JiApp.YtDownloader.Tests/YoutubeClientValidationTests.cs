@@ -14,8 +14,8 @@ public sealed class YoutubeClientValidationTests
             Sut = new YoutubeClient("fake-key", "yt-dlp", "ffmpeg", cookiesFile, cookiesFromBrowser, proxy);
         }
 
-        public static Fixture Create(string? cookiesFile = null, string? cookiesFromBrowser = null) =>
-            new(cookiesFile, cookiesFromBrowser);
+        public static Fixture Create(string? cookiesFile = null, string? cookiesFromBrowser = null, string? proxy = null) =>
+            new(cookiesFile, cookiesFromBrowser, proxy);
     }
 
     [Theory]
@@ -46,7 +46,7 @@ public sealed class YoutubeClientValidationTests
 
         process.StartInfo.ArgumentList.Should().Contain("--no-playlist");
         process.StartInfo.ArgumentList.Should().Contain("youtube:player_client=android_vr");
-        process.StartInfo.ArgumentList.Should().Contain("bestaudio");
+        process.StartInfo.ArgumentList.Should().Contain("bestaudio[ext=webm]/bestaudio");
         process.StartInfo.ArgumentList.Should().Contain("-o");
         process.StartInfo.ArgumentList.Should().Contain("-");
         process.StartInfo.ArgumentList.Should()
@@ -95,75 +95,12 @@ public sealed class YoutubeClientValidationTests
     [Fact]
     public void BuildPreviewAudioProcess_IncludesProxy_WhenConfigured()
     {
-        var fixture = new Fixture(proxy: "socks5://127.0.0.1:1080");
+        var fixture = Fixture.Create(proxy: "socks5://127.0.0.1:1080");
 
         var process = fixture.Sut.BuildPreviewAudioProcess("dQw4w9WgXcQ");
 
         process.StartInfo.ArgumentList.Should().Contain("--proxy");
         process.StartInfo.ArgumentList.Should().Contain("socks5://127.0.0.1:1080");
-    }
-
-    [Theory]
-    [InlineData("dQw4w9WgXcQ")] // 11 chars, standard
-    public async Task ResolveAudioUrlAsync_DoesNotThrow_ForPlausibleVideoId(string plausibleVideoId)
-    {
-        var fixture = Fixture.Create();
-
-        // This may fail (network / yt-dlp error), but it must NOT be an
-        // ArgumentException — the validation guard must pass valid IDs through.
-        try
-        {
-            await fixture.Sut.ResolveAudioUrlAsync(plausibleVideoId);
-        }
-        catch (ArgumentException)
-        {
-            throw;
-        }
-        catch (Exception)
-        {
-            // Any non-ArgumentException exception is fine — it means yt-dlp
-            // was called, which is the correct behavior after validation passes.
-        }
-    }
-
-    [Fact]
-    public async Task ResolveAudioUrlAsync_PassesCookiesFromBrowser_ToYtDlp()
-    {
-        var fixture = Fixture.Create(cookiesFromBrowser: "madeupbrowser");
-
-        var act = async () => await fixture.Sut.ResolveAudioUrlAsync("dQw4w9WgXcQ");
-
-        (await act.Should().ThrowExactlyAsync<InvalidOperationException>())
-            .And.Message.Should().Contain("unsupported browser");
-    }
-
-    [Fact]
-    public async Task ResolveAudioUrlAsync_PassesCookiesFile_ToYtDlp()
-    {
-        // Use a directory as the cookies "file" — yt-dlp fails immediately
-        // (before any network call) with "Is a directory", which proves the
-        // --cookies flag was passed with the given path.
-        var fixture = Fixture.Create(cookiesFile: "/tmp");
-
-        var act = async () => await fixture.Sut.ResolveAudioUrlAsync("dQw4w9WgXcQ");
-
-        var ex = await act.Should().ThrowExactlyAsync<InvalidOperationException>();
-        ex.And.Message.Should().Contain("Is a directory");
-    }
-
-    [Fact]
-    public async Task ResolveAudioUrlAsync_CookiesFromBrowser_TakesPrecedenceOverFile()
-    {
-        var fixture = Fixture.Create(
-            cookiesFile: "/tmp",
-            cookiesFromBrowser: "madeupbrowser");
-
-        var act = async () => await fixture.Sut.ResolveAudioUrlAsync("dQw4w9WgXcQ");
-
-        // When both are set, cookiesFromBrowser wins → expect "unsupported browser" error,
-        // NOT the "Is a directory" error from trying to use the file path.
-        (await act.Should().ThrowExactlyAsync<InvalidOperationException>())
-            .And.Message.Should().Contain("unsupported browser");
     }
 
     [Fact]

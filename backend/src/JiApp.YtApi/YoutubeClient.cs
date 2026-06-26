@@ -24,8 +24,6 @@ public interface IYoutubeClient
     Task<YoutubeClientResponse> DownloadVideoAsync(string videoId, string outputPath,
         CancellationToken cancellationToken = default);
 
-    Task<string> ResolveAudioUrlAsync(string videoId, CancellationToken cancellationToken = default);
-
     Process BuildPreviewAudioProcess(string videoId);
 }
 
@@ -114,7 +112,7 @@ public sealed class YoutubeClient(
             EmbedMetadata = true,
             ExtractorArgs = "youtube:player_client=android_vr",
             Output = outputTemplate,
-            // Precedence: cookiesFromBrowser wins over cookiesFile (matching ResolveAudioUrlAsync).
+            // Precedence: cookiesFromBrowser wins over cookiesFile.
             // When both are set, only pass --cookies-from-browser to avoid conflicting flags.
             CookiesFromBrowser = !string.IsNullOrEmpty(cookiesFromBrowser) ? cookiesFromBrowser : null,
             Cookies = string.IsNullOrEmpty(cookiesFromBrowser) && !string.IsNullOrEmpty(cookiesFile) ? cookiesFile : null,
@@ -159,74 +157,6 @@ public sealed class YoutubeClient(
             throw new ArgumentException($"Invalid videoId: '{videoId}'", nameof(videoId));
     }
 
-    public async Task<string> ResolveAudioUrlAsync(string videoId, CancellationToken ct = default)
-    {
-        ValidateVideoId(videoId);
-
-        var videoUrl = $"https://www.youtube.com/watch?v={videoId}";
-
-        // Run yt-dlp directly — YoutubeDLSharp's RunWithOptions doesn't capture
-        // stdout when Print = "urls" is used, so result.Data ends up empty.
-        var startInfo = new ProcessStartInfo(ytDlpPath)
-        {
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-        };
-        startInfo.ArgumentList.Add("--no-playlist");
-        startInfo.ArgumentList.Add("--extract-audio");
-        startInfo.ArgumentList.Add("--audio-format");
-        startInfo.ArgumentList.Add("mp3");
-        if (!string.IsNullOrEmpty(cookiesFromBrowser))
-        {
-            startInfo.ArgumentList.Add("--cookies-from-browser");
-            startInfo.ArgumentList.Add(cookiesFromBrowser);
-        }
-        else if (!string.IsNullOrEmpty(cookiesFile))
-        {
-            startInfo.ArgumentList.Add("--cookies");
-            startInfo.ArgumentList.Add(cookiesFile);
-        }
-        if (!string.IsNullOrEmpty(proxy))
-        {
-            startInfo.ArgumentList.Add("--proxy");
-            startInfo.ArgumentList.Add(proxy);
-        }
-        startInfo.ArgumentList.Add("--get-url");
-        startInfo.ArgumentList.Add(videoUrl);
-
-        using var process = Process.Start(startInfo)
-                            ?? throw new InvalidOperationException("Failed to start yt-dlp process.");
-
-        // Read stdout and stderr concurrently to avoid deadlock when the
-        // stderr pipe buffer fills while the parent is blocked on stdout.
-        var stdoutTask = process.StandardOutput.ReadToEndAsync();
-        var stderrTask = process.StandardError.ReadToEndAsync();
-        await Task.WhenAll(stdoutTask, stderrTask);
-        await process.WaitForExitAsync(ct);
-
-        var stdout = stdoutTask.Result;
-        var stderr = stderrTask.Result;
-
-        if (process.ExitCode != 0)
-        {
-            throw new InvalidOperationException(
-                $"""Failed to resolve audio URL for video "{videoId}" (exit code {process.ExitCode}): {stderr.Trim()}""");
-        }
-
-        var audioUrl = stdout.Trim();
-
-        if (string.IsNullOrEmpty(audioUrl) || !Uri.TryCreate(audioUrl, UriKind.Absolute, out var audioUri) ||
-            audioUri.Scheme is not ("http" or "https"))
-        {
-            throw new InvalidOperationException(
-                $"""Resolved audio URL for video "{videoId}" is invalid: '{audioUrl}'""");
-        }
-
-        return audioUrl;
-    }
-
     public Process BuildPreviewAudioProcess(string videoId)
     {
         ValidateVideoId(videoId);
@@ -244,7 +174,7 @@ public sealed class YoutubeClient(
         startInfo.ArgumentList.Add("--extractor-args");
         startInfo.ArgumentList.Add("youtube:player_client=android_vr");
         startInfo.ArgumentList.Add("-f");
-        startInfo.ArgumentList.Add("bestaudio");
+        startInfo.ArgumentList.Add("bestaudio[ext=webm]/bestaudio");
         if (!string.IsNullOrEmpty(cookiesFromBrowser))
         {
             startInfo.ArgumentList.Add("--cookies-from-browser");

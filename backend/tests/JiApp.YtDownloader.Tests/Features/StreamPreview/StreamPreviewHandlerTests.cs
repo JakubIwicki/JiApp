@@ -74,7 +74,7 @@ public sealed class StreamPreviewHandlerTests
     {
         var fixture = new Fixture().WithBuildPreviewThrows(new ArgumentException("Invalid videoId: 'bad'"));
 
-        var result = fixture.Sut.HandleAsync("bad");
+        var result = fixture.Sut.Handle("bad");
 
         result.Should().Be(StreamPreviewResult.ResolveFailed);
     }
