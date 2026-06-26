@@ -1,23 +1,34 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Pressable, ScrollView, Alert, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  Pressable,
+  ScrollView,
+  Alert,
+  StyleSheet,
+} from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import * as appointmentService from '../services/appointmentService';
-import { colors, typography, spacing, borderRadius } from '../../../styles/theme';
+import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
+import type { Theme } from '../../../styles/theme';
+import { spacing, borderRadius } from '../../../styles/theme';
 import type { Appointment } from '../types/api';
 import type { SchedulerStackParamList } from '../types/navigation';
 
 type DetailRoute = RouteProp<SchedulerStackParamList, 'AppointmentDetail'>;
 
-const STATUS_COLORS: Record<string, string> = {
-  Created: colors.primary,
-  Done: colors.success,
-  Cancelled: colors.error,
-};
-
 const AppointmentDetailScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<DetailRoute>();
   const { appointmentId } = route.params;
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
+  const STATUS_COLORS: Record<string, string> = {
+    Created: colors.primary,
+    Done: colors.success,
+    Cancelled: colors.error,
+  };
 
   const [appointment, setAppointment] = useState<Appointment | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -33,7 +44,7 @@ const AppointmentDetailScreen: React.FC = () => {
   const handleMarkDone = async () => {
     try {
       await appointmentService.updateStatus(appointmentId, 'Done');
-      setAppointment((prev) => prev ? { ...prev, status: 'Done' } : prev);
+      setAppointment(prev => (prev ? { ...prev, status: 'Done' } : prev));
     } catch {
       Alert.alert('Error', 'Failed to update status');
     }
@@ -48,7 +59,7 @@ const AppointmentDetailScreen: React.FC = () => {
         onPress: async () => {
           try {
             await appointmentService.updateStatus(appointmentId, 'Cancelled');
-            setAppointment((prev) =>
+            setAppointment(prev =>
               prev ? { ...prev, status: 'Cancelled' } : prev,
             );
           } catch {
@@ -116,7 +127,8 @@ const AppointmentDetailScreen: React.FC = () => {
       <View style={styles.card}>
         <Text style={styles.cardTitle}>{appointment.service.name}</Text>
         <Text style={styles.cardDetail}>
-          {appointment.service.category} | {appointment.service.baseDuration} min
+          {appointment.service.category} | {appointment.service.baseDuration}{' '}
+          min
         </Text>
       </View>
 
@@ -160,15 +172,33 @@ const AppointmentDetailScreen: React.FC = () => {
       <View style={styles.actions}>
         {appointment.status === 'Created' ? (
           <>
-            <Pressable style={({ pressed }) => [styles.doneButton, pressed && { opacity: 0.7 }]} onPress={handleMarkDone}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.doneButton,
+                pressed && { opacity: 0.7 },
+              ]}
+              onPress={handleMarkDone}
+            >
               <Text style={styles.actionButtonText}>Mark Done</Text>
             </Pressable>
-            <Pressable style={({ pressed }) => [styles.cancelButton, pressed && { opacity: 0.7 }]} onPress={handleCancel}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.cancelButton,
+                pressed && { opacity: 0.7 },
+              ]}
+              onPress={handleCancel}
+            >
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </Pressable>
           </>
         ) : null}
-        <Pressable style={({ pressed }) => [styles.deleteButton, pressed && { opacity: 0.7 }]} onPress={handleDelete}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.deleteButton,
+            pressed && { opacity: 0.7 },
+          ]}
+          onPress={handleDelete}
+        >
           <Text style={styles.deleteButtonText}>Delete</Text>
         </Pressable>
       </View>
@@ -176,105 +206,106 @@ const AppointmentDetailScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xxl,
-  },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.background,
-  },
-  loadingText: {
-    ...typography.body,
-    color: colors.textSecondary,
-  },
-  errorText: {
-    ...typography.body,
-    color: colors.error,
-  },
-  statusBadge: {
-    alignSelf: 'flex-start',
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    marginBottom: spacing.lg,
-  },
-  statusText: {
-    ...typography.caption,
-    color: colors.textInverse,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-  },
-  sectionTitle: {
-    ...typography.label,
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: spacing.sm,
-    marginTop: spacing.md,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-  },
-  cardTitle: {
-    ...typography.body,
-    color: colors.textPrimary,
-    fontWeight: '600',
-  },
-  cardDetail: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-    marginTop: 4,
-  },
-  priceValue: {
-    ...typography.heading,
-    color: colors.success,
-  },
-  actions: {
-    marginTop: spacing.xl,
-    gap: spacing.md,
-  },
-  doneButton: {
-    backgroundColor: colors.success,
-    borderRadius: borderRadius.lg,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  cancelButton: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    paddingVertical: 14,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.error,
-  },
-  deleteButton: {
-    alignItems: 'center',
-    paddingVertical: 14,
-  },
-  actionButtonText: {
-    ...typography.body,
-    color: colors.textInverse,
-    fontWeight: '700',
-  },
-  cancelButtonText: {
-    ...typography.body,
-    color: colors.error,
-    fontWeight: '600',
-  },
-  deleteButtonText: {
-    ...typography.body,
-    color: colors.error,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: t.colors.background,
+    },
+    content: {
+      padding: spacing.lg,
+      paddingBottom: spacing.xxl,
+    },
+    center: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: t.colors.background,
+    },
+    loadingText: {
+      ...t.typography.body,
+      color: t.colors.textSecondary,
+    },
+    errorText: {
+      ...t.typography.body,
+      color: t.colors.error,
+    },
+    statusBadge: {
+      alignSelf: 'flex-start',
+      borderRadius: borderRadius.md,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.xs,
+      marginBottom: spacing.lg,
+    },
+    statusText: {
+      ...t.typography.caption,
+      color: t.colors.textInverse,
+      fontWeight: '700',
+      textTransform: 'uppercase',
+    },
+    sectionTitle: {
+      ...t.typography.label,
+      color: t.colors.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      marginBottom: spacing.sm,
+      marginTop: spacing.md,
+    },
+    card: {
+      backgroundColor: t.colors.surface,
+      borderRadius: borderRadius.lg,
+      padding: spacing.lg,
+    },
+    cardTitle: {
+      ...t.typography.body,
+      color: t.colors.textPrimary,
+      fontWeight: '600',
+    },
+    cardDetail: {
+      ...t.typography.bodySmall,
+      color: t.colors.textSecondary,
+      marginTop: 4,
+    },
+    priceValue: {
+      ...t.typography.heading,
+      color: t.colors.success,
+    },
+    actions: {
+      marginTop: spacing.xl,
+      gap: spacing.md,
+    },
+    doneButton: {
+      backgroundColor: t.colors.success,
+      borderRadius: borderRadius.lg,
+      paddingVertical: 14,
+      alignItems: 'center',
+    },
+    cancelButton: {
+      backgroundColor: t.colors.surface,
+      borderRadius: borderRadius.lg,
+      paddingVertical: 14,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: t.colors.error,
+    },
+    deleteButton: {
+      alignItems: 'center',
+      paddingVertical: 14,
+    },
+    actionButtonText: {
+      ...t.typography.body,
+      color: t.colors.textInverse,
+      fontWeight: '700',
+    },
+    cancelButtonText: {
+      ...t.typography.body,
+      color: t.colors.error,
+      fontWeight: '600',
+    },
+    deleteButtonText: {
+      ...t.typography.body,
+      color: t.colors.error,
+    },
+  });
 
 export default AppointmentDetailScreen;

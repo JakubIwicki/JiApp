@@ -12,13 +12,9 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useBoard } from '../hooks/useBoard';
 import useToast from '../../../hooks/useToast';
-import {
-  borderRadius,
-  colors,
-  commonStyles,
-  spacing,
-  typography,
-} from '../../../styles/theme';
+import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
+import type { Theme } from '../../../styles/theme';
+import { spacing, borderRadius } from '../../../styles/theme';
 import type { Board } from '../types/api';
 
 const MIN_TOUCH = 44;
@@ -41,6 +37,8 @@ const BoardRow: React.FC<BoardRowProps> = ({
   onRemoveMember,
 }) => {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [memberId, setMemberId] = useState('');
 
   const handleAddMember = useCallback(() => {
@@ -138,6 +136,8 @@ const BoardRow: React.FC<BoardRowProps> = ({
 
 const BoardManagementScreen: React.FC = () => {
   const { t } = useTranslation();
+  const { colors, commonStyles } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const {
     boards,
     isLoading,
@@ -290,149 +290,150 @@ const BoardManagementScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  center: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  content: {
-    padding: spacing.lg,
-    gap: spacing.md,
-  },
-  createCard: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    alignItems: 'center',
-  },
-  createInput: {
-    flex: 1,
-    minHeight: MIN_TOUCH,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.md,
-    ...typography.body,
-  },
-  createButton: {
-    minHeight: MIN_TOUCH,
-    minWidth: 88,
-    paddingHorizontal: spacing.lg,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  createButtonText: {
-    color: colors.textInverse,
-    fontWeight: '600',
-    fontSize: 15,
-  },
-  boardCard: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    overflow: 'hidden',
-    boxShadow: '0 2px 8px rgba(43,33,24,0.08)',
-  },
-  boardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    minHeight: 56,
-  },
-  boardInfo: {
-    flex: 1,
-  },
-  boardName: {
-    ...typography.body,
-    fontWeight: '600',
-    color: colors.textPrimary,
-  },
-  memberCount: {
-    ...typography.caption,
-    color: colors.textTertiary,
-  },
-  deleteBtn: {
-    minHeight: MIN_TOUCH,
-    minWidth: MIN_TOUCH,
-    paddingHorizontal: spacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  deleteBtnText: {
-    ...typography.caption,
-    color: colors.error,
-    fontWeight: '600',
-  },
-  membersSection: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.separator,
-    paddingTop: spacing.md,
-  },
-  membersTitle: {
-    ...commonStyles.sectionHeader,
-    marginHorizontal: 0,
-  },
-  memberRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.xs,
-    minHeight: MIN_TOUCH,
-  },
-  memberId: {
-    ...typography.body,
-    color: colors.textPrimary,
-  },
-  removeBtn: {
-    minHeight: MIN_TOUCH,
-    minWidth: MIN_TOUCH,
-    paddingHorizontal: spacing.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  removeBtnText: {
-    ...typography.caption,
-    color: colors.error,
-  },
-  addMemberRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    alignItems: 'center',
-    marginTop: spacing.sm,
-  },
-  memberInput: {
-    flex: 1,
-    minHeight: MIN_TOUCH,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.md,
-    ...typography.body,
-  },
-  addMemberBtn: {
-    minHeight: MIN_TOUCH,
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.md,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addMemberBtnText: {
-    ...typography.caption,
-    color: colors.primary,
-    fontWeight: '600',
-  },
-  pressed: {
-    opacity: 0.7,
-  },
-  disabled: {
-    opacity: 0.5,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    center: {
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    content: {
+      padding: spacing.lg,
+      gap: spacing.md,
+    },
+    createCard: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+      alignItems: 'center',
+    },
+    createInput: {
+      flex: 1,
+      minHeight: MIN_TOUCH,
+      backgroundColor: t.colors.surface,
+      borderWidth: 1,
+      borderColor: t.colors.border,
+      borderRadius: borderRadius.md,
+      paddingHorizontal: spacing.md,
+      ...t.typography.body,
+    },
+    createButton: {
+      minHeight: MIN_TOUCH,
+      minWidth: 88,
+      paddingHorizontal: spacing.lg,
+      borderRadius: borderRadius.md,
+      backgroundColor: t.colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    createButtonText: {
+      color: t.colors.textInverse,
+      fontWeight: '600',
+      fontSize: 15,
+    },
+    boardCard: {
+      backgroundColor: t.colors.surface,
+      borderRadius: borderRadius.lg,
+      overflow: 'hidden',
+      boxShadow: '0 2px 8px rgba(43,33,24,0.08)',
+    },
+    boardHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing.lg,
+      minHeight: 56,
+    },
+    boardInfo: {
+      flex: 1,
+    },
+    boardName: {
+      ...t.typography.body,
+      fontWeight: '600',
+      color: t.colors.textPrimary,
+    },
+    memberCount: {
+      ...t.typography.caption,
+      color: t.colors.textTertiary,
+    },
+    deleteBtn: {
+      minHeight: MIN_TOUCH,
+      minWidth: MIN_TOUCH,
+      paddingHorizontal: spacing.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    deleteBtnText: {
+      ...t.typography.caption,
+      color: t.colors.error,
+      fontWeight: '600',
+    },
+    membersSection: {
+      paddingHorizontal: spacing.lg,
+      paddingBottom: spacing.md,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: t.colors.separator,
+      paddingTop: spacing.md,
+    },
+    membersTitle: {
+      ...t.commonStyles.sectionHeader,
+      marginHorizontal: 0,
+    },
+    memberRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: spacing.xs,
+      minHeight: MIN_TOUCH,
+    },
+    memberId: {
+      ...t.typography.body,
+      color: t.colors.textPrimary,
+    },
+    removeBtn: {
+      minHeight: MIN_TOUCH,
+      minWidth: MIN_TOUCH,
+      paddingHorizontal: spacing.sm,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    removeBtnText: {
+      ...t.typography.caption,
+      color: t.colors.error,
+    },
+    addMemberRow: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+      alignItems: 'center',
+      marginTop: spacing.sm,
+    },
+    memberInput: {
+      flex: 1,
+      minHeight: MIN_TOUCH,
+      borderWidth: 1,
+      borderColor: t.colors.border,
+      borderRadius: borderRadius.md,
+      paddingHorizontal: spacing.md,
+      ...t.typography.body,
+    },
+    addMemberBtn: {
+      minHeight: MIN_TOUCH,
+      paddingHorizontal: spacing.md,
+      borderRadius: borderRadius.md,
+      borderWidth: 1.5,
+      borderColor: t.colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    addMemberBtnText: {
+      ...t.typography.caption,
+      color: t.colors.primary,
+      fontWeight: '600',
+    },
+    pressed: {
+      opacity: 0.7,
+    },
+    disabled: {
+      opacity: 0.5,
+    },
+  });
 
 export default BoardManagementScreen;

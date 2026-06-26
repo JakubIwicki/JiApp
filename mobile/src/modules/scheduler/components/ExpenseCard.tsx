@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, typography, spacing, borderRadius } from '../../../styles/theme';
+import { useThemedStyles } from '../../../context/ThemeContext';
+import type { Theme } from '../../../styles/theme';
+import { spacing, borderRadius } from '../../../styles/theme';
 import type { Expense } from '../types/api';
 
 interface ExpenseCardProps {
@@ -9,6 +11,7 @@ interface ExpenseCardProps {
 }
 
 const ExpenseCard: React.FC<ExpenseCardProps> = ({ expense, onPress }) => {
+  const styles = useThemedStyles(makeStyles);
   const categoryLabel = expense.category;
   const note = expense.note?.trim();
 
@@ -28,44 +31,45 @@ const ExpenseCard: React.FC<ExpenseCardProps> = ({ expense, onPress }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  card: {
-    flexDirection: 'row',
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    marginHorizontal: spacing.lg,
-    marginVertical: spacing.xs,
-    overflow: 'hidden',
-  },
-  leftBorder: {
-    width: 4,
-    backgroundColor: colors.warning,
-  },
-  content: {
-    flex: 1,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-  },
-  topRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  categoryText: {
-    ...typography.bodySmall,
-    fontWeight: '600',
-    color: colors.textPrimary,
-  },
-  amountText: {
-    ...typography.bodySmall,
-    fontWeight: '700',
-    color: colors.warning,
-  },
-  noteText: {
-    ...typography.caption,
-    color: colors.textTertiary,
-    marginTop: 2,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    card: {
+      flexDirection: 'row',
+      backgroundColor: t.colors.surface,
+      borderRadius: borderRadius.md,
+      marginHorizontal: spacing.lg,
+      marginVertical: spacing.xs,
+      overflow: 'hidden',
+    },
+    leftBorder: {
+      width: 4,
+      backgroundColor: t.colors.warning,
+    },
+    content: {
+      flex: 1,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+    },
+    topRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    categoryText: {
+      ...t.typography.bodySmall,
+      fontWeight: '600',
+      color: t.colors.textPrimary,
+    },
+    amountText: {
+      ...t.typography.bodySmall,
+      fontWeight: '700',
+      color: t.colors.warning,
+    },
+    noteText: {
+      ...t.typography.caption,
+      color: t.colors.textTertiary,
+      marginTop: 2,
+    },
+  });
 
 export default ExpenseCard;

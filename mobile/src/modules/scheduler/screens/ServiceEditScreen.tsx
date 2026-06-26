@@ -10,7 +10,9 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import * as serviceCatalogService from '../services/serviceCatalogService';
-import { colors, typography, spacing, borderRadius } from '../../../styles/theme';
+import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
+import type { Theme } from '../../../styles/theme';
+import { spacing, borderRadius } from '../../../styles/theme';
 import type { SchedulerStackParamList } from '../types/navigation';
 
 type EditRoute = RouteProp<SchedulerStackParamList, 'ServiceEdit'>;
@@ -36,9 +38,18 @@ type ServiceFormAction =
   | { type: 'SET_CATEGORY'; category: string }
   | { type: 'SET_DURATION'; duration: string }
   | { type: 'SET_PRICE'; price: string }
-  | { type: 'LOAD'; name: string; category: string; duration: string; price: string };
+  | {
+      type: 'LOAD';
+      name: string;
+      category: string;
+      duration: string;
+      price: string;
+    };
 
-function serviceFormReducer(state: ServiceFormState, action: ServiceFormAction): ServiceFormState {
+function serviceFormReducer(
+  state: ServiceFormState,
+  action: ServiceFormAction,
+): ServiceFormState {
   switch (action.type) {
     case 'SET_NAME':
       return { ...state, name: action.name };
@@ -49,7 +60,12 @@ function serviceFormReducer(state: ServiceFormState, action: ServiceFormAction):
     case 'SET_PRICE':
       return { ...state, price: action.price };
     case 'LOAD':
-      return { name: action.name, category: action.category, duration: action.duration, price: action.price };
+      return {
+        name: action.name,
+        category: action.category,
+        duration: action.duration,
+        price: action.price,
+      };
     default:
       return state;
   }
@@ -68,6 +84,9 @@ const ServiceEditScreen: React.FC = () => {
   const { serviceId, boardId } = route.params;
   const isEditing = serviceId !== undefined;
 
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   const [form, dispatch] = useReducer(serviceFormReducer, initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(isEditing);
@@ -76,7 +95,7 @@ const ServiceEditScreen: React.FC = () => {
     if (isEditing && serviceId) {
       serviceCatalogService
         .getService(serviceId)
-        .then((svc) =>
+        .then(svc =>
           dispatch({
             type: 'LOAD',
             name: svc.name,
@@ -128,7 +147,10 @@ const ServiceEditScreen: React.FC = () => {
       }
       navigation.goBack();
     } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to save service');
+      Alert.alert(
+        'Error',
+        err instanceof Error ? err.message : 'Failed to save service',
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -144,20 +166,22 @@ const ServiceEditScreen: React.FC = () => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>{isEditing ? 'Edit Service' : 'New Service'}</Text>
+      <Text style={styles.title}>
+        {isEditing ? 'Edit Service' : 'New Service'}
+      </Text>
 
       <Text style={styles.label}>Name</Text>
       <TextInput
         style={styles.input}
         value={form.name}
-        onChangeText={(name) => dispatch({ type: 'SET_NAME', name })}
+        onChangeText={name => dispatch({ type: 'SET_NAME', name })}
         placeholder="e.g. Premium Haircut"
         placeholderTextColor={colors.textTertiary}
       />
 
       <Text style={styles.label}>Category</Text>
       <View style={styles.categoryRow}>
-        {CATEGORIES.map((cat) => (
+        {CATEGORIES.map(cat => (
           <Pressable
             key={cat}
             style={({ pressed }) => [
@@ -183,7 +207,7 @@ const ServiceEditScreen: React.FC = () => {
       <TextInput
         style={styles.input}
         value={form.duration}
-        onChangeText={(duration) => dispatch({ type: 'SET_DURATION', duration })}
+        onChangeText={duration => dispatch({ type: 'SET_DURATION', duration })}
         keyboardType="numeric"
         placeholder="30"
         placeholderTextColor={colors.textTertiary}
@@ -193,103 +217,112 @@ const ServiceEditScreen: React.FC = () => {
       <TextInput
         style={styles.input}
         value={form.price}
-        onChangeText={(price) => dispatch({ type: 'SET_PRICE', price })}
+        onChangeText={price => dispatch({ type: 'SET_PRICE', price })}
         keyboardType="decimal-pad"
         placeholder="60"
         placeholderTextColor={colors.textTertiary}
       />
 
       <Pressable
-        style={({ pressed }) => [styles.submitButton, isSubmitting && styles.submitButtonDisabled, pressed && { opacity: 0.7 }]}
+        style={({ pressed }) => [
+          styles.submitButton,
+          isSubmitting && styles.submitButtonDisabled,
+          pressed && { opacity: 0.7 },
+        ]}
         onPress={handleSubmit}
         disabled={isSubmitting}
       >
         <Text style={styles.submitText}>
-          {isSubmitting ? 'Saving…' : isEditing ? 'Update Service' : 'Create Service'}
+          {isSubmitting
+            ? 'Saving…'
+            : isEditing
+            ? 'Update Service'
+            : 'Create Service'}
         </Text>
       </Pressable>
     </ScrollView>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xxl,
-  },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.background,
-  },
-  loadingText: {
-    ...typography.body,
-    color: colors.textSecondary,
-  },
-  title: {
-    ...typography.heading,
-    marginBottom: spacing.lg,
-  },
-  label: {
-    ...typography.label,
-    color: colors.textSecondary,
-    marginBottom: spacing.xs,
-    marginTop: spacing.md,
-  },
-  input: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 12,
-    ...typography.body,
-    color: colors.textPrimary,
-  },
-  categoryRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-  },
-  categoryChip: {
-    borderRadius: borderRadius.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    backgroundColor: colors.surface,
-  },
-  categoryChipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  categoryChipText: {
-    ...typography.caption,
-    color: colors.textSecondary,
-  },
-  categoryChipTextActive: {
-    color: colors.textInverse,
-  },
-  submitButton: {
-    backgroundColor: colors.primary,
-    borderRadius: borderRadius.lg,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: spacing.xl,
-  },
-  submitButtonDisabled: {
-    opacity: 0.6,
-  },
-  submitText: {
-    ...typography.body,
-    color: colors.textInverse,
-    fontWeight: '700',
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: t.colors.background,
+    },
+    content: {
+      padding: spacing.lg,
+      paddingBottom: spacing.xxl,
+    },
+    center: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: t.colors.background,
+    },
+    loadingText: {
+      ...t.typography.body,
+      color: t.colors.textSecondary,
+    },
+    title: {
+      ...t.typography.heading,
+      marginBottom: spacing.lg,
+    },
+    label: {
+      ...t.typography.label,
+      color: t.colors.textSecondary,
+      marginBottom: spacing.xs,
+      marginTop: spacing.md,
+    },
+    input: {
+      backgroundColor: t.colors.surface,
+      borderRadius: borderRadius.md,
+      borderWidth: 1,
+      borderColor: t.colors.border,
+      paddingHorizontal: spacing.md,
+      paddingVertical: 12,
+      ...t.typography.body,
+      color: t.colors.textPrimary,
+    },
+    categoryRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.xs,
+    },
+    categoryChip: {
+      borderRadius: borderRadius.xl,
+      borderWidth: 1,
+      borderColor: t.colors.border,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.xs,
+      backgroundColor: t.colors.surface,
+    },
+    categoryChipActive: {
+      backgroundColor: t.colors.primary,
+      borderColor: t.colors.primary,
+    },
+    categoryChipText: {
+      ...t.typography.caption,
+      color: t.colors.textSecondary,
+    },
+    categoryChipTextActive: {
+      color: t.colors.textInverse,
+    },
+    submitButton: {
+      backgroundColor: t.colors.primary,
+      borderRadius: borderRadius.lg,
+      paddingVertical: 14,
+      alignItems: 'center',
+      marginTop: spacing.xl,
+    },
+    submitButtonDisabled: {
+      opacity: 0.6,
+    },
+    submitText: {
+      ...t.typography.body,
+      color: t.colors.textInverse,
+      fontWeight: '700',
+    },
+  });
 
 export default ServiceEditScreen;

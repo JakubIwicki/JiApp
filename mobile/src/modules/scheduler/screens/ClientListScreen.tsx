@@ -10,7 +10,9 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import useClients from '../hooks/useClients';
-import { colors, typography, spacing, borderRadius } from '../../../styles/theme';
+import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
+import type { Theme } from '../../../styles/theme';
+import { spacing, borderRadius } from '../../../styles/theme';
 import type { SchedulerStackParamList } from '../types/navigation';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { Client } from '../types/api';
@@ -23,23 +25,29 @@ interface Section {
   data: Client[];
 }
 
-const ClientRow: React.FC<{ item: Client; onPress: () => void }> = ({ item, onPress }) => (
-  <Pressable
-    style={({ pressed }) => [styles.clientItem, pressed && { opacity: 0.7 }]}
-    onPress={onPress}
-  >
-    <Text style={styles.clientName}>{item.name}</Text>
-    {item.phone ? (
-      <Text style={styles.clientPhone}>{item.phone}</Text>
-    ) : null}
-  </Pressable>
-);
+const ClientRow: React.FC<{ item: Client; onPress: () => void }> = ({
+  item,
+  onPress,
+}) => {
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <Pressable
+      style={({ pressed }) => [styles.clientItem, pressed && { opacity: 0.7 }]}
+      onPress={onPress}
+    >
+      <Text style={styles.clientName}>{item.name}</Text>
+      {item.phone ? <Text style={styles.clientPhone}>{item.phone}</Text> : null}
+    </Pressable>
+  );
+};
 
 const ClientListScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<ClientListRoute>();
   const { boardId } = route.params;
   const clients = useClients(boardId);
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [query, setQuery] = useState('');
   const [showCreateInput, setShowCreateInput] = useState(false);
   const [newName, setNewName] = useState('');
@@ -59,7 +67,7 @@ const ClientListScreen: React.FC = () => {
   const sections = useMemo(() => {
     const map = new Map<string, Client[]>();
     const data = query.trim() ? clients.clients : clients.clients;
-    data.forEach((client) => {
+    data.forEach(client => {
       const letter = client.name.charAt(0).toUpperCase();
       if (!map.has(letter)) map.set(letter, []);
       map.get(letter)!.push(client);
@@ -89,7 +97,10 @@ const ClientListScreen: React.FC = () => {
       setNewName('');
       setShowCreateInput(false);
     } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to create client');
+      Alert.alert(
+        'Error',
+        err instanceof Error ? err.message : 'Failed to create client',
+      );
     }
   }, [newName, clients]);
 
@@ -113,7 +124,7 @@ const ClientListScreen: React.FC = () => {
       ) : sections.length > 0 ? (
         <SectionList
           sections={sections}
-          keyExtractor={(item) => String(item.id)}
+          keyExtractor={item => String(item.id)}
           contentContainerStyle={styles.listContent}
           renderItem={renderClientItem}
           renderSectionHeader={({ section: { title } }) => (
@@ -139,7 +150,10 @@ const ClientListScreen: React.FC = () => {
           />
           <View style={styles.createActions}>
             <Pressable
-              style={({ pressed }) => [styles.createSubmit, pressed && { opacity: 0.7 }]}
+              style={({ pressed }) => [
+                styles.createSubmit,
+                pressed && { opacity: 0.7 },
+              ]}
               onPress={handleCreate}
               disabled={!newName.trim()}
             >
@@ -170,118 +184,119 @@ const ClientListScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  searchContainer: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-  },
-  searchInput: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 10,
-    ...typography.body,
-    color: colors.textPrimary,
-  },
-  listContent: {
-    paddingBottom: 80,
-  },
-  clientItem: {
-    backgroundColor: colors.surface,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.separator,
-  },
-  clientName: {
-    ...typography.body,
-    color: colors.textPrimary,
-    fontWeight: '600',
-  },
-  clientPhone: {
-    ...typography.caption,
-    color: colors.textTertiary,
-    marginTop: 2,
-  },
-  sectionHeader: {
-    ...typography.label,
-    color: colors.textSecondary,
-    backgroundColor: colors.background,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.xs,
-    fontWeight: '700',
-  },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loadingText: {
-    ...typography.body,
-    color: colors.textSecondary,
-  },
-  emptyText: {
-    ...typography.body,
-    color: colors.textTertiary,
-  },
-  createContainer: {
-    padding: spacing.lg,
-    backgroundColor: colors.surface,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
-  },
-  createInput: {
-    backgroundColor: colors.background,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 10,
-    ...typography.body,
-    color: colors.textPrimary,
-  },
-  createActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: spacing.sm,
-    gap: spacing.md,
-  },
-  createSubmit: {
-    backgroundColor: colors.primary,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.sm,
-  },
-  createSubmitText: {
-    ...typography.bodySmall,
-    color: colors.textInverse,
-    fontWeight: '600',
-  },
-  cancelText: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-  },
-  fab: {
-    position: 'absolute',
-    right: spacing.xl,
-    bottom: spacing.xl,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: '0 2px 4px rgba(43,33,24,0.25)',
-  },
-  fabText: {
-    fontSize: 28,
-    color: colors.textInverse,
-    lineHeight: 30,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: t.colors.background,
+    },
+    searchContainer: {
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.sm,
+    },
+    searchInput: {
+      backgroundColor: t.colors.surface,
+      borderRadius: borderRadius.md,
+      borderWidth: 1,
+      borderColor: t.colors.border,
+      paddingHorizontal: spacing.md,
+      paddingVertical: 10,
+      ...t.typography.body,
+      color: t.colors.textPrimary,
+    },
+    listContent: {
+      paddingBottom: 80,
+    },
+    clientItem: {
+      backgroundColor: t.colors.surface,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: 14,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: t.colors.separator,
+    },
+    clientName: {
+      ...t.typography.body,
+      color: t.colors.textPrimary,
+      fontWeight: '600',
+    },
+    clientPhone: {
+      ...t.typography.caption,
+      color: t.colors.textTertiary,
+      marginTop: 2,
+    },
+    sectionHeader: {
+      ...t.typography.label,
+      color: t.colors.textSecondary,
+      backgroundColor: t.colors.background,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.xs,
+      fontWeight: '700',
+    },
+    center: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    loadingText: {
+      ...t.typography.body,
+      color: t.colors.textSecondary,
+    },
+    emptyText: {
+      ...t.typography.body,
+      color: t.colors.textTertiary,
+    },
+    createContainer: {
+      padding: spacing.lg,
+      backgroundColor: t.colors.surface,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: t.colors.border,
+    },
+    createInput: {
+      backgroundColor: t.colors.background,
+      borderRadius: borderRadius.md,
+      paddingHorizontal: spacing.md,
+      paddingVertical: 10,
+      ...t.typography.body,
+      color: t.colors.textPrimary,
+    },
+    createActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: spacing.sm,
+      gap: spacing.md,
+    },
+    createSubmit: {
+      backgroundColor: t.colors.primary,
+      borderRadius: borderRadius.md,
+      paddingHorizontal: spacing.xl,
+      paddingVertical: spacing.sm,
+    },
+    createSubmitText: {
+      ...t.typography.bodySmall,
+      color: t.colors.textInverse,
+      fontWeight: '600',
+    },
+    cancelText: {
+      ...t.typography.bodySmall,
+      color: t.colors.textSecondary,
+    },
+    fab: {
+      position: 'absolute',
+      right: spacing.xl,
+      bottom: spacing.xl,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: t.colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+      boxShadow: '0 2px 4px rgba(43,33,24,0.25)',
+    },
+    fabText: {
+      fontSize: 28,
+      color: t.colors.textInverse,
+      lineHeight: 30,
+    },
+  });
 
 export default ClientListScreen;

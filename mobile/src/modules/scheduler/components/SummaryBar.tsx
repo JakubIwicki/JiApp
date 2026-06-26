@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, typography, spacing, borderRadius } from '../../../styles/theme';
+import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
+import type { Theme } from '../../../styles/theme';
+import { spacing, borderRadius } from '../../../styles/theme';
 import type { DayTotal } from '../types/api';
 
 interface SummaryBarProps {
@@ -14,7 +16,12 @@ function formatCurrency(amount: number): string {
   return `${prefix}${abs.toFixed(0)} PLN`;
 }
 
-const SummaryBar: React.FC<SummaryBarProps> = ({ saturdayTotal, sundayTotal }) => {
+const SummaryBar: React.FC<SummaryBarProps> = ({
+  saturdayTotal,
+  sundayTotal,
+}) => {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const total = {
     appointments: 0, // We don't compute this here; derived from props
     revenue: saturdayTotal.revenue + sundayTotal.revenue,
@@ -44,7 +51,9 @@ const SummaryBar: React.FC<SummaryBarProps> = ({ saturdayTotal, sundayTotal }) =
         />
         <SummaryCell
           label="Weekend"
-          value={`${saturdayTotal.revenue.toFixed(0)} / ${sundayTotal.revenue.toFixed(0)}`}
+          value={`${saturdayTotal.revenue.toFixed(
+            0,
+          )} / ${sundayTotal.revenue.toFixed(0)}`}
           color={colors.textSecondary}
         />
       </View>
@@ -58,39 +67,43 @@ interface SummaryCellProps {
   color: string;
 }
 
-const SummaryCell: React.FC<SummaryCellProps> = ({ label, value, color }) => (
-  <View style={styles.cell}>
-    <Text style={styles.cellLabel}>{label}</Text>
-    <Text style={[styles.cellValue, { color }]}>{value}</Text>
-  </View>
-);
+const SummaryCell: React.FC<SummaryCellProps> = ({ label, value, color }) => {
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <View style={styles.cell}>
+      <Text style={styles.cellLabel}>{label}</Text>
+      <Text style={[styles.cellValue, { color }]}>{value}</Text>
+    </View>
+  );
+};
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.surface,
-    marginHorizontal: spacing.lg,
-    marginVertical: spacing.sm,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-  },
-  row: {
-    flexDirection: 'row',
-    marginBottom: spacing.sm,
-  },
-  cell: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: spacing.xs,
-  },
-  cellLabel: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    marginBottom: 2,
-  },
-  cellValue: {
-    ...typography.body,
-    fontWeight: '700',
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: t.colors.surface,
+      marginHorizontal: spacing.lg,
+      marginVertical: spacing.sm,
+      borderRadius: borderRadius.lg,
+      padding: spacing.md,
+    },
+    row: {
+      flexDirection: 'row',
+      marginBottom: spacing.sm,
+    },
+    cell: {
+      flex: 1,
+      alignItems: 'center',
+      paddingVertical: spacing.xs,
+    },
+    cellLabel: {
+      ...t.typography.caption,
+      color: t.colors.textSecondary,
+      marginBottom: 2,
+    },
+    cellValue: {
+      ...t.typography.body,
+      fontWeight: '700',
+    },
+  });
 
 export default SummaryBar;
