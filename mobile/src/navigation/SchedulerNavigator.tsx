@@ -13,24 +13,15 @@ import ServiceListScreen from '../modules/scheduler/screens/ServiceListScreen';
 import ServiceEditScreen from '../modules/scheduler/screens/ServiceEditScreen';
 import ReportsScreen from '../modules/scheduler/screens/ReportsScreen';
 import BoardManagementScreen from '../modules/scheduler/screens/BoardManagementScreen';
-import { colors, spacing, typography } from '../styles/theme';
+import { spacing } from '../styles/theme';
+import type { Theme } from '../styles/theme';
+import { useThemedStyles, useTheme } from '../context/ThemeContext';
 import type { SchedulerStackParamList } from '../modules/scheduler/types/navigation';
 import type { RootStackParamList } from './types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 
 const Stack = createNativeStackNavigator<SchedulerStackParamList>();
-
-const stackScreenOptions = {
-  headerStyle: {
-    backgroundColor: colors.background,
-  },
-  headerTintColor: colors.textPrimary,
-  headerTitleStyle: {
-    fontWeight: '600' as const,
-    fontSize: 17,
-  },
-};
 
 type WeekendGridNavigationProp = CompositeNavigationProp<
   NativeStackNavigationProp<SchedulerStackParamList, 'WeekendGrid'>,
@@ -40,6 +31,7 @@ type WeekendGridNavigationProp = CompositeNavigationProp<
 const SwitchModuleButton: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<WeekendGridNavigationProp>();
+  const styles = useThemedStyles(makeStyles);
 
   const handlePress = useCallback(() => {
     navigation.navigate('ModuleSelection');
@@ -64,6 +56,7 @@ const BoardsButton: React.FC = () => {
     useNavigation<
       NativeStackNavigationProp<SchedulerStackParamList, 'WeekendGrid'>
     >();
+  const styles = useThemedStyles(makeStyles);
 
   const handlePress = useCallback(() => {
     navigation.navigate('BoardManagement');
@@ -87,10 +80,22 @@ const renderBoardsButton = () => <BoardsButton />;
 
 const SchedulerNavigator: React.FC = () => {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+
+  const screenOptions = {
+    headerStyle: {
+      backgroundColor: colors.background,
+    },
+    headerTintColor: colors.textPrimary,
+    headerTitleStyle: {
+      fontWeight: '600' as const,
+      fontSize: 17,
+    },
+  };
 
   return (
     <BoardProvider>
-      <Stack.Navigator screenOptions={stackScreenOptions}>
+      <Stack.Navigator screenOptions={screenOptions}>
         <Stack.Screen
           name="WeekendGrid"
           component={WeekendGridScreen}
@@ -123,21 +128,22 @@ const SchedulerNavigator: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  headerBtn: {
-    minHeight: 44,
-    minWidth: 44,
-    paddingHorizontal: spacing.sm,
-    justifyContent: 'center',
-  },
-  headerBtnText: {
-    ...typography.link,
-    color: colors.primary,
-    fontWeight: '600',
-  },
-  pressed: {
-    opacity: 0.6,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    headerBtn: {
+      minHeight: 44,
+      minWidth: 44,
+      paddingHorizontal: spacing.sm,
+      justifyContent: 'center',
+    },
+    headerBtnText: {
+      ...t.typography.link,
+      color: t.colors.primary,
+      fontWeight: '600',
+    },
+    pressed: {
+      opacity: 0.6,
+    },
+  });
 
 export default SchedulerNavigator;

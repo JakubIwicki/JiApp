@@ -22,13 +22,9 @@ import useKeepAwake from '../hooks/useKeepAwake';
 import useSearch from '../hooks/useSearch';
 import useScreenTitle from '../hooks/useScreenTitle';
 import { RECENT_SEARCHES_LIMIT } from '../constants/app';
-import {
-  colors,
-  commonStyles,
-  spacing,
-  borderRadius,
-  typography,
-} from '../styles/theme';
+import { spacing, borderRadius } from '../styles/theme';
+import type { Theme } from '../styles/theme';
+import { useThemedStyles, useTheme } from '../context/ThemeContext';
 
 type SearchNavigationProp = NativeStackNavigationProp<
   MainStackParamList,
@@ -51,54 +47,63 @@ const SearchResultsView: React.FC<{
   backLabel,
   ListFooterComponent,
   onEndReached,
-}) => (
-  <View style={styles.resultsContainer}>
-    <Text style={styles.backButton} onPress={onBack}>
-      {'← ' + backLabel}
-    </Text>
-    <FlatList
-      data={results}
-      keyExtractor={keyExtractor}
-      renderItem={renderVideoItem}
-      contentContainerStyle={styles.listContent}
-      keyboardShouldPersistTaps="handled"
-      onEndReached={onEndReached}
-      onEndReachedThreshold={0.5}
-      ListFooterComponent={ListFooterComponent}
-      testID="search-results-flatlist"
-    />
-  </View>
-);
+}) => {
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <View style={styles.resultsContainer}>
+      <Text style={styles.backButton} onPress={onBack}>
+        {'← ' + backLabel}
+      </Text>
+      <FlatList
+        data={results}
+        keyExtractor={keyExtractor}
+        renderItem={renderVideoItem}
+        contentContainerStyle={styles.listContent}
+        keyboardShouldPersistTaps="handled"
+        onEndReached={onEndReached}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={ListFooterComponent}
+        testID="search-results-flatlist"
+      />
+    </View>
+  );
+};
 
 const SearchRecentView: React.FC<{
   recentSearches: SearchHistoryItem[];
   onItemPress: (text: string) => void;
   onSearch: (text: string) => void;
   title: string;
-}> = ({ recentSearches, onItemPress, title }) => (
-  <View style={styles.recentContainer}>
-    <Text style={styles.recentTitle}>{title}</Text>
-    {recentSearches.map(item => (
-      <Text
-        key={item.id}
-        style={styles.recentItem}
-        onPress={() => onItemPress(item.searchText)}
-      >
-        {item.searchText}
-      </Text>
-    ))}
-  </View>
-);
+}> = ({ recentSearches, onItemPress, title }) => {
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <View style={styles.recentContainer}>
+      <Text style={styles.recentTitle}>{title}</Text>
+      {recentSearches.map(item => (
+        <Text
+          key={item.id}
+          style={styles.recentItem}
+          onPress={() => onItemPress(item.searchText)}
+        >
+          {item.searchText}
+        </Text>
+      ))}
+    </View>
+  );
+};
 
 const SearchInitialEmptyView: React.FC<{ emptyText: string }> = ({
   emptyText,
-}) => (
-  <View style={styles.initialEmptyContainer}>
-    <FloatingParticles count={6} />
-    <Text style={styles.emptyEmoji}>🎵</Text>
-    <Text style={styles.emptyDescription}>{emptyText}</Text>
-  </View>
-);
+}) => {
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <View style={styles.initialEmptyContainer}>
+      <FloatingParticles count={6} />
+      <Text style={styles.emptyEmoji}>🎵</Text>
+      <Text style={styles.emptyDescription}>{emptyText}</Text>
+    </View>
+  );
+};
 
 const SearchScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -114,6 +119,8 @@ const SearchScreen: React.FC = () => {
     clearResults,
   } = useSearch();
   const lastQueryRef = useRef<string>('');
+  const styles = useThemedStyles(makeStyles);
+  const { colors, commonStyles } = useTheme();
 
   useScreenTitle('search.title');
 
@@ -248,73 +255,74 @@ const SearchScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  content: {
-    flex: 1,
-  },
-  resultsContainer: {
-    flex: 1,
-  },
-  backButton: {
-    ...typography.caption,
-    color: colors.primary,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.sm,
-  },
-  logoContainer: {
-    alignItems: 'center',
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.md,
-  },
-  listContent: {
-    paddingVertical: spacing.sm,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xxl,
-  },
-  initialEmptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xxl,
-  },
-  emptyEmoji: {
-    fontSize: 64,
-    opacity: 0.25,
-    marginBottom: spacing.lg,
-  },
-  emptyDescription: {
-    fontSize: 15,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  recentContainer: {
-    padding: spacing.lg,
-  },
-  recentTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textTertiary,
-    marginBottom: spacing.md,
-  },
-  footerLoader: {
-    paddingVertical: spacing.lg,
-  },
-  recentItem: {
-    fontSize: 14,
-    color: colors.primary,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    marginBottom: 6,
-    overflow: 'hidden',
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    content: {
+      flex: 1,
+    },
+    resultsContainer: {
+      flex: 1,
+    },
+    backButton: {
+      ...t.typography.caption,
+      color: t.colors.primary,
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.md,
+      paddingBottom: spacing.sm,
+    },
+    logoContainer: {
+      alignItems: 'center',
+      paddingTop: spacing.lg,
+      paddingBottom: spacing.md,
+    },
+    listContent: {
+      paddingVertical: spacing.sm,
+    },
+    emptyState: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: spacing.xxl,
+    },
+    initialEmptyContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: spacing.xxl,
+    },
+    emptyEmoji: {
+      fontSize: 64,
+      opacity: 0.25,
+      marginBottom: spacing.lg,
+    },
+    emptyDescription: {
+      fontSize: 15,
+      color: t.colors.textSecondary,
+      textAlign: 'center',
+      lineHeight: 22,
+    },
+    recentContainer: {
+      padding: spacing.lg,
+    },
+    recentTitle: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: t.colors.textTertiary,
+      marginBottom: spacing.md,
+    },
+    footerLoader: {
+      paddingVertical: spacing.lg,
+    },
+    recentItem: {
+      fontSize: 14,
+      color: t.colors.primary,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+      backgroundColor: t.colors.surface,
+      borderRadius: borderRadius.md,
+      marginBottom: 6,
+      overflow: 'hidden',
+    },
+  });
 
 export default SearchScreen;

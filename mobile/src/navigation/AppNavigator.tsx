@@ -1,6 +1,7 @@
 import React, { use, useState, useEffect, useCallback } from 'react';
 import { View, ActivityIndicator, BackHandler, StyleSheet } from 'react-native';
-import { colors } from '../styles/theme';
+import type { Theme } from '../styles/theme';
+import { useThemedStyles, useTheme } from '../context/ThemeContext';
 import { AuthProvider, AuthContext } from '../context/AuthContext';
 import { ToastProvider } from '../context/ToastContext';
 import ToastContainer from '../components/ToastContainer';
@@ -22,6 +23,8 @@ const AppContent: React.FC = () => {
     dismissWelcome,
     dismissFarewell,
   } = use(AuthContext);
+  const styles = useThemedStyles(makeStyles);
+  const { colors } = useTheme();
 
   const [showWakeScreen, setShowWakeScreen] = useState(() => !__DEV__);
   const [connectionFailed, setConnectionFailed] = useState(false);
@@ -105,13 +108,14 @@ const AppNavigator: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: t.colors.background,
+    },
+  });
 
 export default AppNavigator;

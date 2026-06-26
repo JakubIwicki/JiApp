@@ -11,13 +11,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Circle, Line, Path, Polyline, Rect } from 'react-native-svg';
 import useAuth from '../hooks/useAuth';
-import {
-  animation,
-  borderRadius,
-  colors,
-  spacing,
-  typography,
-} from '../styles/theme';
+import { animation, borderRadius, spacing } from '../styles/theme';
+import type { Theme } from '../styles/theme';
+import { useThemedStyles, useTheme } from '../context/ThemeContext';
 import type { ModuleId } from '../navigation/types';
 
 interface ModuleSelectionScreenProps {
@@ -31,22 +27,6 @@ interface ModuleMeta {
   readonly descriptionKey: string;
   readonly accent: string;
 }
-
-// Order here defines the visual order of the cards.
-const MODULE_META: readonly ModuleMeta[] = [
-  {
-    id: 'YtDownloader',
-    nameKey: 'modules.ytDownloader.name',
-    descriptionKey: 'modules.ytDownloader.description',
-    accent: colors.info,
-  },
-  {
-    id: 'Scheduler',
-    nameKey: 'modules.scheduler.name',
-    descriptionKey: 'modules.scheduler.description',
-    accent: colors.success,
-  },
-];
 
 const GLYPH_SIZE = 26;
 
@@ -131,17 +111,20 @@ const ModuleGlyph: React.FC<{ id: ModuleId; color: string }> = ({
   );
 };
 
-const ChevronGlyph: React.FC = () => (
-  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-    <Polyline
-      points="9 6 15 12 9 18"
-      stroke={colors.textTertiary}
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
+const ChevronGlyph: React.FC = () => {
+  const { colors } = useTheme();
+  return (
+    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+      <Polyline
+        points="9 6 15 12 9 18"
+        stroke={colors.textTertiary}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
 
 interface ModuleCardProps {
   readonly meta: ModuleMeta;
@@ -158,6 +141,7 @@ const ModuleCard: React.FC<ModuleCardProps> = ({
   description,
   onPress,
 }) => {
+  const styles = useThemedStyles(makeStyles);
   const scale = useSharedValue(1);
   const enter = useSharedValue(0);
 
@@ -219,10 +203,30 @@ const ModuleSelectionScreen: React.FC<ModuleSelectionScreenProps> = ({
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { availableModules, displayName } = useAuth();
+  const styles = useThemedStyles(makeStyles);
+  const { colors } = useTheme();
+
+  const moduleMeta = useMemo<readonly ModuleMeta[]>(
+    () => [
+      {
+        id: 'YtDownloader',
+        nameKey: 'modules.ytDownloader.name',
+        descriptionKey: 'modules.ytDownloader.description',
+        accent: colors.info,
+      },
+      {
+        id: 'Scheduler',
+        nameKey: 'modules.scheduler.name',
+        descriptionKey: 'modules.scheduler.description',
+        accent: colors.success,
+      },
+    ],
+    [colors.info, colors.success],
+  );
 
   const grantedMeta = useMemo(
-    () => MODULE_META.filter(m => availableModules.includes(m.id)),
-    [availableModules],
+    () => moduleMeta.filter(m => availableModules.includes(m.id)),
+    [availableModules, moduleMeta],
   );
 
   const handleSelect = useCallback(
@@ -275,76 +279,77 @@ const ModuleSelectionScreen: React.FC<ModuleSelectionScreenProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.xxl,
-  },
-  header: {
-    marginBottom: spacing.xxl,
-  },
-  greeting: {
-    ...typography.title,
-    marginBottom: spacing.sm,
-  },
-  subtitle: {
-    ...typography.body,
-    color: colors.textSecondary,
-  },
-  cards: {
-    gap: spacing.lg,
-  },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.lg,
-    minHeight: 80,
-    boxShadow: '0 6px 16px rgba(43,33,24,0.10)',
-  },
-  cardPressed: {
-    opacity: 0.9,
-  },
-  glyphWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: borderRadius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.lg,
-  },
-  cardText: {
-    flex: 1,
-  },
-  cardTitle: {
-    ...typography.heading,
-    marginBottom: spacing.xs,
-  },
-  cardDescription: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: spacing.xxl,
-  },
-  emptyTitle: {
-    ...typography.heading,
-    color: colors.textSecondary,
-    marginBottom: spacing.sm,
-  },
-  emptyMessage: {
-    ...typography.bodySmall,
-    color: colors.textTertiary,
-    textAlign: 'center',
-    paddingHorizontal: spacing.xl,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: t.colors.background,
+    },
+    content: {
+      paddingHorizontal: spacing.xl,
+      paddingBottom: spacing.xxl,
+    },
+    header: {
+      marginBottom: spacing.xxl,
+    },
+    greeting: {
+      ...t.typography.title,
+      marginBottom: spacing.sm,
+    },
+    subtitle: {
+      ...t.typography.body,
+      color: t.colors.textSecondary,
+    },
+    cards: {
+      gap: spacing.lg,
+    },
+    card: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: t.colors.surface,
+      borderRadius: borderRadius.lg,
+      paddingVertical: spacing.lg,
+      paddingHorizontal: spacing.lg,
+      minHeight: 80,
+      boxShadow: '0 6px 16px rgba(43,33,24,0.10)',
+    },
+    cardPressed: {
+      opacity: 0.9,
+    },
+    glyphWrap: {
+      width: 48,
+      height: 48,
+      borderRadius: borderRadius.lg,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: spacing.lg,
+    },
+    cardText: {
+      flex: 1,
+    },
+    cardTitle: {
+      ...t.typography.heading,
+      marginBottom: spacing.xs,
+    },
+    cardDescription: {
+      ...t.typography.bodySmall,
+      color: t.colors.textSecondary,
+    },
+    emptyState: {
+      alignItems: 'center',
+      paddingVertical: spacing.xxl,
+    },
+    emptyTitle: {
+      ...t.typography.heading,
+      color: t.colors.textSecondary,
+      marginBottom: spacing.sm,
+    },
+    emptyMessage: {
+      ...t.typography.bodySmall,
+      color: t.colors.textTertiary,
+      textAlign: 'center',
+      paddingHorizontal: spacing.xl,
+    },
+  });
 
 export default ModuleSelectionScreen;

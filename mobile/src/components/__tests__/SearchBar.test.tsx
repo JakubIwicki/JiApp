@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, fireEvent, act } from '@testing-library/react-native';
 import SearchBar from '../SearchBar';
+import { lavenderLight } from '../../styles/theme';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -23,17 +24,13 @@ describe('SearchBar', () => {
   });
 
   it('renders with placeholder text from i18n', () => {
-    const { getByPlaceholderText } = render(
-      <SearchBar onSearch={jest.fn()} />,
-    );
+    const { getByPlaceholderText } = render(<SearchBar onSearch={jest.fn()} />);
     expect(getByPlaceholderText('Search YouTube...')).toBeTruthy();
   });
 
   it('calls onSearch after 500ms debounce', () => {
     const onSearch = jest.fn();
-    const { getByPlaceholderText } = render(
-      <SearchBar onSearch={onSearch} />,
-    );
+    const { getByPlaceholderText } = render(<SearchBar onSearch={onSearch} />);
 
     fireEvent.changeText(
       getByPlaceholderText('Search YouTube...'),
@@ -52,9 +49,7 @@ describe('SearchBar', () => {
 
   it('does not call onSearch before debounce timeout', () => {
     const onSearch = jest.fn();
-    const { getByPlaceholderText } = render(
-      <SearchBar onSearch={onSearch} />,
-    );
+    const { getByPlaceholderText } = render(<SearchBar onSearch={onSearch} />);
 
     fireEvent.changeText(
       getByPlaceholderText('Search YouTube...'),
@@ -124,9 +119,7 @@ describe('SearchBar', () => {
       <SearchBar onSearch={jest.fn()} initialValue="initial text" />,
     );
 
-    rerender(
-      <SearchBar onSearch={jest.fn()} initialValue="updated text" />,
-    );
+    rerender(<SearchBar onSearch={jest.fn()} initialValue="updated text" />);
 
     const input = getByPlaceholderText('Search YouTube...');
     expect(input.props.value).toBe('updated text');
@@ -144,7 +137,7 @@ describe('SearchBar', () => {
     const rowStyles = inputRow.props.style;
     const flatStyles = Array.isArray(rowStyles) ? rowStyles : [rowStyles];
     const hasPrimaryBorder = flatStyles.some(
-      (s: Record<string, unknown>) => s.borderColor === '#8B7E74',
+      (s: Record<string, unknown>) => s.borderColor === lavenderLight.primary,
     );
     expect(hasPrimaryBorder).toBe(true);
   });
@@ -162,7 +155,7 @@ describe('SearchBar', () => {
     const rowStyles = inputRow.props.style;
     const flatStyles = Array.isArray(rowStyles) ? rowStyles : [rowStyles];
     const hasDefaultBorder = flatStyles.some(
-      (s: Record<string, unknown>) => s.borderColor === '#DDD6CE',
+      (s: Record<string, unknown>) => s.borderColor === lavenderLight.border,
     );
     expect(hasDefaultBorder).toBe(true);
   });

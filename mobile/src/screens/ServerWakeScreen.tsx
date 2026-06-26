@@ -16,14 +16,9 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import useKeepAwake from '../hooks/useKeepAwake';
 import { API_BASE_URL, WAKE_API_URL } from '../config';
-import {
-  animation,
-  borderRadius,
-  colors,
-  spacing,
-  typography,
-  zIndexScale,
-} from '../styles/theme';
+import { animation, borderRadius, spacing, zIndexScale } from '../styles/theme';
+import type { Theme } from '../styles/theme';
+import { useThemedStyles, useTheme } from '../context/ThemeContext';
 
 const WAKE_POLL_INTERVAL = 3000;
 const WAKE_POLL_TIMEOUT = 10000;
@@ -36,6 +31,8 @@ interface Props {
 const ServerWakeScreen: React.FC<Props> = ({ onComplete }) => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const styles = useThemedStyles(makeStyles);
+  const { colors } = useTheme();
 
   const [phase, setPhase] = useState<'waking' | 'polling' | 'unavailable'>(
     'waking',
@@ -246,80 +243,81 @@ const ServerWakeScreen: React.FC<Props> = ({ onComplete }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: zIndexScale.overlay,
-  },
-  background: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: colors.background,
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing.xl,
-  },
-  warningIcon: {
-    fontSize: 48,
-    textAlign: 'center',
-    marginBottom: spacing.lg,
-  },
-  title: {
-    fontSize: typography.heading.fontSize,
-    fontWeight: typography.heading.fontWeight,
-    color: colors.textPrimary,
-    textAlign: 'center',
-    marginBottom: spacing.sm,
-    marginTop: spacing.lg,
-  },
-  message: {
-    fontSize: typography.bodySmall.fontSize,
-    color: colors.textTertiary,
-    textAlign: 'center',
-    marginBottom: spacing.xl,
-    marginTop: spacing.sm,
-  },
-  buttonGroup: {
-    gap: spacing.md,
-    alignItems: 'center',
-  },
-  button: {
-    borderRadius: borderRadius.md,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    minWidth: 200,
-    alignItems: 'center',
-    minHeight: 44,
-    justifyContent: 'center',
-  },
-  retryButton: {
-    backgroundColor: colors.primary,
-  },
-  closeButton: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  buttonText: {
-    color: colors.textInverse,
-    fontSize: typography.body.fontSize,
-    fontWeight: '600',
-  },
-  closeButtonText: {
-    color: colors.textPrimary,
-    fontSize: typography.body.fontSize,
-    fontWeight: '600',
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    container: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      zIndex: zIndexScale.overlay,
+    },
+    background: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: t.colors.background,
+    },
+    content: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: spacing.xl,
+    },
+    warningIcon: {
+      fontSize: 48,
+      textAlign: 'center',
+      marginBottom: spacing.lg,
+    },
+    title: {
+      fontSize: t.typography.heading.fontSize,
+      fontWeight: t.typography.heading.fontWeight,
+      color: t.colors.textPrimary,
+      textAlign: 'center',
+      marginBottom: spacing.sm,
+      marginTop: spacing.lg,
+    },
+    message: {
+      fontSize: t.typography.bodySmall.fontSize,
+      color: t.colors.textTertiary,
+      textAlign: 'center',
+      marginBottom: spacing.xl,
+      marginTop: spacing.sm,
+    },
+    buttonGroup: {
+      gap: spacing.md,
+      alignItems: 'center',
+    },
+    button: {
+      borderRadius: borderRadius.md,
+      paddingHorizontal: 24,
+      paddingVertical: 12,
+      minWidth: 200,
+      alignItems: 'center',
+      minHeight: 44,
+      justifyContent: 'center',
+    },
+    retryButton: {
+      backgroundColor: t.colors.primary,
+    },
+    closeButton: {
+      backgroundColor: t.colors.surface,
+      borderWidth: 1,
+      borderColor: t.colors.border,
+    },
+    buttonText: {
+      color: t.colors.textInverse,
+      fontSize: t.typography.body.fontSize,
+      fontWeight: '600',
+    },
+    closeButtonText: {
+      color: t.colors.textPrimary,
+      fontSize: t.typography.body.fontSize,
+      fontWeight: '600',
+    },
+  });
 
 export default ServerWakeScreen;

@@ -11,7 +11,9 @@ import ChatMessageList from '../components/chat/ChatMessageList';
 import ChatInputBar from '../components/chat/ChatInputBar';
 import useChat from '../hooks/useChat';
 import useScreenTitle from '../hooks/useScreenTitle';
-import { colors, commonStyles, spacing, borderRadius } from '../styles/theme';
+import { spacing, borderRadius } from '../styles/theme';
+import type { Theme } from '../styles/theme';
+import { useThemedStyles, useTheme } from '../context/ThemeContext';
 
 type ChatNavigationProp = NativeStackNavigationProp<ChatStackParamList, 'Chat'>;
 
@@ -19,29 +21,34 @@ const ChatEmptyState: React.FC<{
   greeting: string;
   examples: string[];
   onExamplePress: (text: string) => void;
-}> = ({ greeting, examples, onExamplePress }) => (
-  <View style={styles.emptyContainer}>
-    <Text style={styles.emptyEmoji}>{'💬'}</Text>
-    <Text style={styles.emptyGreeting}>{greeting}</Text>
-    <View style={styles.exampleRow}>
-      {examples.map(example => (
-        <Text
-          key={example}
-          style={styles.exampleChip}
-          onPress={() => onExamplePress(example)}
-        >
-          {example}
-        </Text>
-      ))}
+}> = ({ greeting, examples, onExamplePress }) => {
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <View style={styles.emptyContainer}>
+      <Text style={styles.emptyEmoji}>{'💬'}</Text>
+      <Text style={styles.emptyGreeting}>{greeting}</Text>
+      <View style={styles.exampleRow}>
+        {examples.map(example => (
+          <Text
+            key={example}
+            style={styles.exampleChip}
+            onPress={() => onExamplePress(example)}
+          >
+            {example}
+          </Text>
+        ))}
+      </View>
     </View>
-  </View>
-);
+  );
+};
 
 const ChatScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<ChatNavigationProp>();
   const { messages, isStreaming, error, send, confirmDownload } = useChat();
   const headerHeight = useHeaderHeight();
+  const styles = useThemedStyles(makeStyles);
+  const { commonStyles } = useTheme();
 
   useScreenTitle('chat.title');
 
@@ -96,45 +103,46 @@ const ChatScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing.xxl,
-    paddingTop: 80,
-  },
-  emptyEmoji: {
-    fontSize: 64,
-    opacity: 0.25,
-    marginBottom: spacing.lg,
-  },
-  emptyGreeting: {
-    fontSize: 15,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: spacing.xl,
-  },
-  exampleRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: spacing.sm,
-  },
-  exampleChip: {
-    fontSize: 13,
-    color: colors.primary,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    backgroundColor: colors.primaryLight,
-    borderRadius: borderRadius.xl,
-    overflow: 'hidden',
-  },
-  errorBanner: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    emptyContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: spacing.xxl,
+      paddingTop: 80,
+    },
+    emptyEmoji: {
+      fontSize: 64,
+      opacity: 0.25,
+      marginBottom: spacing.lg,
+    },
+    emptyGreeting: {
+      fontSize: 15,
+      color: t.colors.textSecondary,
+      textAlign: 'center',
+      lineHeight: 22,
+      marginBottom: spacing.xl,
+    },
+    exampleRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      gap: spacing.sm,
+    },
+    exampleChip: {
+      fontSize: 13,
+      color: t.colors.primary,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+      backgroundColor: t.colors.primaryLight,
+      borderRadius: borderRadius.xl,
+      overflow: 'hidden',
+    },
+    errorBanner: {
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.sm,
+    },
+  });
 
 export default ChatScreen;

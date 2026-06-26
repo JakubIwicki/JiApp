@@ -14,13 +14,9 @@ import AudioPreviewPlayer from '../components/AudioPreviewPlayer';
 import useDownload from '../hooks/useDownload';
 import useKeepAwake from '../hooks/useKeepAwake';
 import useScreenTitle from '../hooks/useScreenTitle';
-import {
-  colors,
-  commonStyles,
-  spacing,
-  typography,
-  borderRadius,
-} from '../styles/theme';
+import { spacing, borderRadius } from '../styles/theme';
+import type { Theme } from '../styles/theme';
+import { useThemedStyles, useTheme } from '../context/ThemeContext';
 
 type DownloadNavigationProp = NativeStackNavigationProp<
   MainStackParamList & MainTabParamList,
@@ -32,26 +28,33 @@ const DownloadPendingView: React.FC<{
   videoId: string;
   onDownload: () => void;
   downloadLabel: string;
-}> = ({ videoId, onDownload, downloadLabel }) => (
-  <View style={styles.buttonWrapper}>
-    <AudioPreviewPlayer videoId={videoId} />
-    <Button title={downloadLabel} onPress={onDownload} />
-  </View>
-);
+}> = ({ videoId, onDownload, downloadLabel }) => {
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <View style={styles.buttonWrapper}>
+      <AudioPreviewPlayer videoId={videoId} />
+      <Button title={downloadLabel} onPress={onDownload} />
+    </View>
+  );
+};
 
 const DownloadingView: React.FC<{
   title: string;
   downloadingText: string;
   pleaseWaitText: string;
-}> = ({ title, downloadingText, pleaseWaitText }) => (
-  <View style={commonStyles.centerContent}>
-    <LoadingSpinner text={downloadingText} />
-    <Text style={styles.downloadingTitle} numberOfLines={1}>
-      {title}
-    </Text>
-    <Text style={commonStyles.statusText}>{pleaseWaitText}</Text>
-  </View>
-);
+}> = ({ title, downloadingText, pleaseWaitText }) => {
+  const styles = useThemedStyles(makeStyles);
+  const { commonStyles } = useTheme();
+  return (
+    <View style={commonStyles.centerContent}>
+      <LoadingSpinner text={downloadingText} />
+      <Text style={styles.downloadingTitle} numberOfLines={1}>
+        {title}
+      </Text>
+      <Text style={commonStyles.statusText}>{pleaseWaitText}</Text>
+    </View>
+  );
+};
 
 const DownloadSuccessView: React.FC<{
   localFilePath: string;
@@ -73,41 +76,50 @@ const DownloadSuccessView: React.FC<{
   onGoBack,
   onViewHistory,
   onPlay,
-}) => (
-  <View style={commonStyles.centerContent}>
-    <SuccessCheckmark size={64} />
-    <Text style={styles.successTitle}>{successLabel}</Text>
-    <Text style={styles.fileSavedLabel}>{fileSavedLabel}</Text>
-    <Text style={styles.filePath} testID="file-path">
-      {localFilePath}
-    </Text>
-    <View style={styles.successButtons}>
-      <Button title={openInPlayerLabel} onPress={onPlay} />
-      <Button
-        title={viewHistoryLabel}
-        onPress={onViewHistory}
-        variant="outline"
-      />
-      <Button title={goBackLabel} onPress={onGoBack} variant="outline" />
+}) => {
+  const styles = useThemedStyles(makeStyles);
+  const { commonStyles } = useTheme();
+  return (
+    <View style={commonStyles.centerContent}>
+      <SuccessCheckmark size={64} />
+      <Text style={styles.successTitle}>{successLabel}</Text>
+      <Text style={styles.fileSavedLabel}>{fileSavedLabel}</Text>
+      <Text style={styles.filePath} testID="file-path">
+        {localFilePath}
+      </Text>
+      <View style={styles.successButtons}>
+        <Button title={openInPlayerLabel} onPress={onPlay} />
+        <Button
+          title={viewHistoryLabel}
+          onPress={onViewHistory}
+          variant="outline"
+        />
+        <Button title={goBackLabel} onPress={onGoBack} variant="outline" />
+      </View>
     </View>
-  </View>
-);
+  );
+};
 
 const DownloadErrorView: React.FC<{
   error: string;
   onRetry: () => void;
   failedLabel: string;
-}> = ({ error, onRetry, failedLabel }) => (
-  <View style={commonStyles.centerContent}>
-    <ErrorMessage message={failedLabel + ': ' + error} onRetry={onRetry} />
-  </View>
-);
+}> = ({ error, onRetry, failedLabel }) => {
+  const { commonStyles } = useTheme();
+  return (
+    <View style={commonStyles.centerContent}>
+      <ErrorMessage message={failedLabel + ': ' + error} onRetry={onRetry} />
+    </View>
+  );
+};
 
 const DownloadScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<DownloadNavigationProp>();
   const route = useRoute<DownloadRouteProp>();
   const { videoId, title, description, imageUrl, videoUrl } = route.params;
+  const styles = useThemedStyles(makeStyles);
+  const { commonStyles } = useTheme();
 
   useScreenTitle('download.title');
 
@@ -204,78 +216,79 @@ const DownloadScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  scrollContent: {
-    padding: spacing.lg,
-  },
-  thumbnail: {
-    width: 120,
-    height: 80,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.placeholder,
-    alignSelf: 'center',
-  },
-  placeholder: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.placeholderDark,
-  },
-  infoContainer: {
-    marginTop: spacing.lg,
-    marginBottom: spacing.xl,
-    alignItems: 'center',
-  },
-  title: {
-    ...typography.heading,
-    textAlign: 'center',
-    marginBottom: spacing.sm,
-  },
-  description: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 20,
-    paddingHorizontal: spacing.lg,
-  },
-  buttonWrapper: {
-    marginTop: spacing.sm,
-  },
-  downloadingTitle: {
-    ...typography.body,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    textAlign: 'center',
-    maxWidth: '80%',
-    marginTop: spacing.md,
-  },
-  successTitle: {
-    ...typography.heading,
-    color: colors.success,
-    marginTop: spacing.lg,
-    marginBottom: spacing.xs,
-  },
-  fileSavedLabel: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginBottom: spacing.xs,
-  },
-  filePath: {
-    ...typography.monospace,
-    color: colors.textTertiary,
-    marginBottom: spacing.xl,
-    paddingHorizontal: spacing.lg,
-  },
-  successButtons: {
-    paddingHorizontal: spacing.lg,
-    gap: spacing.md,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  successButtonWrapper: {
-    flex: 1,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    scrollContent: {
+      padding: spacing.lg,
+    },
+    thumbnail: {
+      width: 120,
+      height: 80,
+      borderRadius: borderRadius.md,
+      backgroundColor: t.colors.placeholder,
+      alignSelf: 'center',
+    },
+    placeholder: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: t.colors.placeholderDark,
+    },
+    infoContainer: {
+      marginTop: spacing.lg,
+      marginBottom: spacing.xl,
+      alignItems: 'center',
+    },
+    title: {
+      ...t.typography.heading,
+      textAlign: 'center',
+      marginBottom: spacing.sm,
+    },
+    description: {
+      ...t.typography.bodySmall,
+      color: t.colors.textSecondary,
+      textAlign: 'center',
+      lineHeight: 20,
+      paddingHorizontal: spacing.lg,
+    },
+    buttonWrapper: {
+      marginTop: spacing.sm,
+    },
+    downloadingTitle: {
+      ...t.typography.body,
+      fontWeight: '600',
+      color: t.colors.textPrimary,
+      textAlign: 'center',
+      maxWidth: '80%',
+      marginTop: spacing.md,
+    },
+    successTitle: {
+      ...t.typography.heading,
+      color: t.colors.success,
+      marginTop: spacing.lg,
+      marginBottom: spacing.xs,
+    },
+    fileSavedLabel: {
+      fontSize: 13,
+      color: t.colors.textSecondary,
+      marginBottom: spacing.xs,
+    },
+    filePath: {
+      ...t.typography.monospace,
+      color: t.colors.textTertiary,
+      marginBottom: spacing.xl,
+      paddingHorizontal: spacing.lg,
+    },
+    successButtons: {
+      paddingHorizontal: spacing.lg,
+      gap: spacing.md,
+    },
+    buttonRow: {
+      flexDirection: 'row',
+      gap: spacing.md,
+    },
+    successButtonWrapper: {
+      flex: 1,
+    },
+  });
 
 export default DownloadScreen;

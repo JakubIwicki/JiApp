@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import FormInput from '../FormInput';
+import { lavenderLight } from '../../styles/theme';
 
 describe('FormInput', () => {
   it('renders with placeholder', () => {
@@ -44,7 +45,7 @@ describe('FormInput', () => {
     const styles = input.props.style;
     const flatStyles = Array.isArray(styles) ? styles : [styles];
     const hasErrorBorder = flatStyles.some(
-      (s: Record<string, unknown>) => s.borderColor === '#C1440E',
+      (s: Record<string, unknown>) => s.borderColor === lavenderLight.error,
     );
     expect(hasErrorBorder).toBe(true);
   });
@@ -98,11 +99,13 @@ describe('FormInput', () => {
     expect(queryByText('Password too short')).toBeNull();
   });
 
-  it('uses wabi-sabi placeholder color', () => {
+  it('uses placeholder color', () => {
     const { getByPlaceholderText } = render(
       <FormInput value="" onChangeText={jest.fn()} placeholder="Username" />,
     );
     const input = getByPlaceholderText('Username');
-    expect(input.props.placeholderTextColor).toBe('#DDD6CE');
+    expect(input.props.placeholderTextColor).toBe(
+      lavenderLight.placeholderDark,
+    );
   });
 });
