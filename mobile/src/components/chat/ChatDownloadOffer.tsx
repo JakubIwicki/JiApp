@@ -3,7 +3,9 @@ import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import VideoCard from '../VideoCard';
 import Button from '../Button';
-import { colors, spacing } from '../../styles/theme';
+import { useThemedStyles } from '../../context/ThemeContext';
+import type { Theme } from '../../styles/theme';
+import { spacing } from '../../styles/theme';
 import type { VideoItem } from '../../types/api';
 import type { DownloadOfferData } from '../../types/chat';
 
@@ -19,6 +21,7 @@ const ChatDownloadOffer: React.FC<ChatDownloadOfferProps> = ({
   onConfirm,
 }) => {
   const { t } = useTranslation();
+  const styles = useThemedStyles(makeStyles);
 
   const syntheticVideo: VideoItem = {
     videoId: offer.videoId,
@@ -58,20 +61,21 @@ const ChatDownloadOffer: React.FC<ChatDownloadOfferProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    marginTop: spacing.sm,
-  },
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.separator,
-    marginHorizontal: spacing.lg,
-    marginBottom: spacing.sm,
-  },
-  buttonRow: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    container: {
+      marginTop: spacing.sm,
+    },
+    divider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: t.colors.separator,
+      marginHorizontal: spacing.lg,
+      marginBottom: spacing.sm,
+    },
+    buttonRow: {
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.sm,
+    },
+  });
 
 export default ChatDownloadOffer;

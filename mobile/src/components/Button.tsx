@@ -1,12 +1,13 @@
 import React, { useCallback } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-} from 'react-native';
-import Animated, { useSharedValue, withSpring, useAnimatedStyle } from 'react-native-reanimated';
-import { animation, colors } from '../styles/theme';
+import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
+import Animated, {
+  useSharedValue,
+  withSpring,
+  useAnimatedStyle,
+} from 'react-native-reanimated';
+import { useTheme, useThemedStyles } from '../context/ThemeContext';
+import type { Theme } from '../styles/theme';
+import { animation } from '../styles/theme';
 
 interface ButtonProps {
   title: string;
@@ -25,6 +26,8 @@ const Button: React.FC<ButtonProps> = ({
 }) => {
   const isDisabled = disabled || loading;
   const scaleValue = useSharedValue(1);
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   const handlePressIn = useCallback(() => {
     scaleValue.value = withSpring(0.96, animation.spring.bouncy);
@@ -58,44 +61,49 @@ const Button: React.FC<ButtonProps> = ({
       >
         {loading ? (
           <ActivityIndicator
-            color={variant === 'outline' ? colors.primary : '#FFFFFF'}
+            color={variant === 'outline' ? colors.primary : colors.textInverse}
             testID="button-loading"
             size="small"
           />
         ) : (
-          <Text style={[styles.text, variant === 'outline' && styles.outlineText]}>{title}</Text>
+          <Text
+            style={[styles.text, variant === 'outline' && styles.outlineText]}
+          >
+            {title}
+          </Text>
         )}
       </Animated.View>
     </Pressable>
   );
 };
 
-const styles = StyleSheet.create({
-  button: {
-    width: '100%',
-    height: 48,
-    backgroundColor: colors.primary,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-  },
-  disabled: {
-    opacity: 0.5,
-  },
-  outlineButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-  },
-  outlineText: {
-    color: colors.primary,
-  },
-  text: {
-    color: colors.surface,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    button: {
+      width: '100%',
+      height: 48,
+      backgroundColor: t.colors.primary,
+      borderRadius: 8,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+    },
+    disabled: {
+      opacity: 0.5,
+    },
+    outlineButton: {
+      backgroundColor: 'transparent',
+      borderWidth: 1.5,
+      borderColor: t.colors.primary,
+    },
+    outlineText: {
+      color: t.colors.primary,
+    },
+    text: {
+      color: t.colors.surface,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+  });
 
 export default Button;

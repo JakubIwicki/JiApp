@@ -18,7 +18,7 @@ import ErrorMessage from '../components/ErrorMessage';
 import useKeepAwake from '../hooks/useKeepAwake';
 import useScreenTitle from '../hooks/useScreenTitle';
 import useToast from '../hooks/useToast';
-import { colors, commonStyles } from '../styles/theme';
+import { useTheme } from '../context/ThemeContext';
 
 type DownloadsNavigationProp = NativeStackNavigationProp<
   MainStackParamList,
@@ -86,6 +86,7 @@ const DownloadsScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<DownloadsNavigationProp>();
   useScreenTitle('nav.downloads');
+  const { commonStyles } = useTheme();
 
   // Keep screen awake while this screen is visible
   useKeepAwake(true);

@@ -1,10 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -19,18 +14,33 @@ import ErrorMessage from '../components/ErrorMessage';
 import useHistory from '../hooks/useHistory';
 import useScreenTitle from '../hooks/useScreenTitle';
 import { HISTORY_PAGE_SIZE } from '../constants/app';
-import { colors, commonStyles, spacing } from '../styles/theme';
+import { spacing } from '../styles/theme';
+import type { Theme } from '../styles/theme';
+import { useThemedStyles, useTheme } from '../context/ThemeContext';
 
-type HistoryNavigationProp = NativeStackNavigationProp<MainStackParamList, 'History'>;
+type HistoryNavigationProp = NativeStackNavigationProp<
+  MainStackParamList,
+  'History'
+>;
 
 const HistoryScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<HistoryNavigationProp>();
   useScreenTitle('history.title');
   const [filterQuery, setFilterQuery] = useState('');
+  const styles = useThemedStyles(makeStyles);
+  const { commonStyles } = useTheme();
 
-  const { searches, downloads, isLoading, error, loadHistory, refresh, archiveSearch, archiveDownload } =
-    useHistory();
+  const {
+    searches,
+    downloads,
+    isLoading,
+    error,
+    loadHistory,
+    refresh,
+    archiveSearch,
+    archiveDownload,
+  } = useHistory();
 
   useFocusEffect(
     useCallback(() => {
@@ -90,12 +100,12 @@ const HistoryScreen: React.FC = () => {
   );
 
   const filteredSearches = filterQuery
-    ? searches.filter((s) =>
+    ? searches.filter(s =>
         s.searchText.toLowerCase().includes(filterQuery.toLowerCase()),
       )
     : searches;
   const filteredDownloads = filterQuery
-    ? downloads.filter((d) =>
+    ? downloads.filter(d =>
         d.videoTitle.toLowerCase().includes(filterQuery.toLowerCase()),
       )
     : downloads;
@@ -155,25 +165,26 @@ const HistoryScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  separator: {
-    height: 1,
-    backgroundColor: colors.separator,
-    marginHorizontal: spacing.lg,
-    marginVertical: spacing.sm,
-  },
-  errorBanner: {
-    marginHorizontal: spacing.lg,
-    marginBottom: spacing.md,
-    padding: spacing.sm,
-    backgroundColor: colors.errorLight,
-    borderRadius: 8,
-  },
-  errorBannerText: {
-    fontSize: 13,
-    color: colors.error,
-    textAlign: 'center',
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    separator: {
+      height: 1,
+      backgroundColor: t.colors.separator,
+      marginHorizontal: spacing.lg,
+      marginVertical: spacing.sm,
+    },
+    errorBanner: {
+      marginHorizontal: spacing.lg,
+      marginBottom: spacing.md,
+      padding: spacing.sm,
+      backgroundColor: t.colors.errorLight,
+      borderRadius: 8,
+    },
+    errorBannerText: {
+      fontSize: 13,
+      color: t.colors.error,
+      textAlign: 'center',
+    },
+  });
 
 export default HistoryScreen;

@@ -1,14 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { Circle, Line } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
-import { colors, spacing } from '../styles/theme';
+import { useTheme, useThemedStyles } from '../context/ThemeContext';
+import type { Theme } from '../styles/theme';
+import { spacing } from '../styles/theme';
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
@@ -30,8 +26,11 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const [isFocused, setIsFocused] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevInitialRef = useRef(initialValue);
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
-  const displayValue = controlledValue !== undefined ? controlledValue : internalValue;
+  const displayValue =
+    controlledValue !== undefined ? controlledValue : internalValue;
 
   const debouncedSearch = useCallback(
     (text: string) => {
@@ -76,7 +75,10 @@ const SearchBar: React.FC<SearchBarProps> = ({
   }, []);
 
   // Sync initialValue for uncontrolled mode when prop changes (render-time pattern)
-  if (controlledValue === undefined && initialValue !== prevInitialRef.current) {
+  if (
+    controlledValue === undefined &&
+    initialValue !== prevInitialRef.current
+  ) {
     prevInitialRef.current = initialValue;
     setInternalValue(initialValue);
   }
@@ -96,7 +98,16 @@ const SearchBar: React.FC<SearchBarProps> = ({
         style={[styles.inputRow, isFocused && styles.inputRowFocused]}
         testID="search-input-row"
       >
-        <Svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={isFocused ? colors.primary : colors.textTertiary} strokeWidth="2" strokeLinecap="round" style={styles.searchIcon}>
+        <Svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke={isFocused ? colors.primary : colors.textTertiary}
+          strokeWidth="2"
+          strokeLinecap="round"
+          style={styles.searchIcon}
+        >
           <Circle cx="11" cy="11" r="8" />
           <Line x1="21" y1="21" x2="16.65" y2="16.65" />
         </Svg>
@@ -132,48 +143,49 @@ const SearchBar: React.FC<SearchBarProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.background,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.md,
-    height: 44,
-  },
-  inputRowFocused: {
-    borderColor: colors.primary,
-  },
-  searchIcon: {
-    marginRight: spacing.sm,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    color: colors.textPrimary,
-    paddingVertical: 0,
-  },
-  clearButton: {
-    marginLeft: spacing.sm,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.border,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  clearButtonText: {
-    color: colors.textTertiary,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    container: {
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.md,
+      backgroundColor: t.colors.background,
+    },
+    inputRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: t.colors.surface,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: t.colors.border,
+      paddingHorizontal: spacing.md,
+      height: 44,
+    },
+    inputRowFocused: {
+      borderColor: t.colors.primary,
+    },
+    searchIcon: {
+      marginRight: spacing.sm,
+    },
+    input: {
+      flex: 1,
+      fontSize: 16,
+      color: t.colors.textPrimary,
+      paddingVertical: 0,
+    },
+    clearButton: {
+      marginLeft: spacing.sm,
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      backgroundColor: t.colors.border,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    clearButtonText: {
+      color: t.colors.textTertiary,
+      fontSize: 12,
+      fontWeight: '700',
+    },
+  });
 
 export default SearchBar;

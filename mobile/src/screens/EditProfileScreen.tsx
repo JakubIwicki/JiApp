@@ -8,7 +8,7 @@ import ChangePasswordSection from './ChangePasswordSection';
 import useAuth from '../hooks/useAuth';
 import useScreenTitle from '../hooks/useScreenTitle';
 import useToast from '../hooks/useToast';
-import { commonStyles } from '../styles/theme';
+import { useTheme } from '../context/ThemeContext';
 
 const PASSWORD_MIN_LENGTH = 8;
 const DISPLAY_NAME_MAX_LENGTH = 50;
@@ -167,6 +167,7 @@ const EditProfileScreen: React.FC = () => {
   const { showSuccess } = useToast();
 
   useScreenTitle('settings.editProfile');
+  const { commonStyles } = useTheme();
 
   const [form, dispatch] = useReducer(
     editProfileFormReducer,

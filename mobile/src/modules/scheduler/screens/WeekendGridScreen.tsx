@@ -1,5 +1,12 @@
 import React, { useCallback } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  StyleSheet,
+  ActivityIndicator,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import WeekendNavigator from '../components/WeekendNavigator';
 import SummaryBar from '../components/SummaryBar';
@@ -7,7 +14,9 @@ import DayColumn from '../components/DayColumn';
 import useWeekendGrid from '../hooks/useWeekendGrid';
 import { useBoard } from '../hooks/useBoard';
 import BoardSelector from '../components/BoardSelector';
-import { colors, typography, spacing, borderRadius } from '../../../styles/theme';
+import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
+import type { Theme } from '../../../styles/theme';
+import { spacing, borderRadius } from '../../../styles/theme';
 import type { Appointment } from '../types/api';
 import type { SchedulerStackParamList } from '../types/navigation';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -31,12 +40,17 @@ const WeekendGridScreen: React.FC = () => {
     isLoading,
   } = useWeekendGrid(boardId);
 
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   const isSaturdayToday = saturday === getTodayString();
   const isSundayToday = sunday === getTodayString();
 
   const handleAppointmentPress = useCallback(
     (appointment: Appointment) => {
-      navigation.navigate('AppointmentDetail', { appointmentId: appointment.id });
+      navigation.navigate('AppointmentDetail', {
+        appointmentId: appointment.id,
+      });
     },
     [navigation],
   );
@@ -60,7 +74,9 @@ const WeekendGridScreen: React.FC = () => {
     return (
       <View style={styles.center}>
         <Text style={styles.emptyTitle}>No board selected</Text>
-        <Text style={styles.emptySubtitle}>Select or create a board to get started</Text>
+        <Text style={styles.emptySubtitle}>
+          Select or create a board to get started
+        </Text>
         <BoardSelector />
       </View>
     );
@@ -84,7 +100,9 @@ const WeekendGridScreen: React.FC = () => {
       <View style={styles.pillRow}>
         <Pressable
           style={({ pressed }) => [styles.pill, pressed && { opacity: 0.7 }]}
-          onPress={() => navigation.navigate('ClientList', { boardId: selectedBoardId })}
+          onPress={() =>
+            navigation.navigate('ClientList', { boardId: selectedBoardId })
+          }
         >
           <Text style={styles.pillText}>Clients</Text>
         </Pressable>
@@ -96,13 +114,18 @@ const WeekendGridScreen: React.FC = () => {
         </Pressable>
         <Pressable
           style={({ pressed }) => [styles.pill, pressed && { opacity: 0.7 }]}
-          onPress={() => navigation.navigate('Reports', { boardId: selectedBoardId })}
+          onPress={() =>
+            navigation.navigate('Reports', { boardId: selectedBoardId })
+          }
         >
           <Text style={styles.pillText}>Reports</Text>
         </Pressable>
       </View>
 
-      <ScrollView style={styles.scrollArea} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        style={styles.scrollArea}
+        contentContainerStyle={styles.scrollContent}
+      >
         <View style={styles.columnsContainer}>
           <DayColumn
             label="Saturday"
@@ -146,74 +169,75 @@ function getTodayString(): string {
   return `${y}-${m}-${day}`;
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  pillRow: {
-    flexDirection: 'row',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    gap: spacing.sm,
-  },
-  pill: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.xl,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  pillText: {
-    ...typography.caption,
-    color: colors.primary,
-    fontWeight: '600',
-  },
-  scrollArea: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingVertical: spacing.sm,
-  },
-  columnsContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: spacing.md,
-  },
-  fab: {
-    position: 'absolute',
-    right: spacing.xl,
-    bottom: spacing.xl,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: '0 2px 4px rgba(43,33,24,0.25)',
-  },
-  fabText: {
-    fontSize: 28,
-    color: colors.textInverse,
-    lineHeight: 30,
-  },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.background,
-  },
-  emptyTitle: {
-    ...typography.body,
-    color: colors.textPrimary,
-    fontWeight: '600',
-    marginBottom: spacing.xs,
-  },
-  emptySubtitle: {
-    ...typography.bodySmall,
-    color: colors.textTertiary,
-    marginBottom: spacing.lg,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: t.colors.background,
+    },
+    pillRow: {
+      flexDirection: 'row',
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.sm,
+      gap: spacing.sm,
+    },
+    pill: {
+      backgroundColor: t.colors.surface,
+      borderRadius: borderRadius.xl,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.sm,
+      borderWidth: 1,
+      borderColor: t.colors.border,
+    },
+    pillText: {
+      ...t.typography.caption,
+      color: t.colors.primary,
+      fontWeight: '600',
+    },
+    scrollArea: {
+      flex: 1,
+    },
+    scrollContent: {
+      paddingVertical: spacing.sm,
+    },
+    columnsContainer: {
+      flexDirection: 'row',
+      paddingHorizontal: spacing.md,
+    },
+    fab: {
+      position: 'absolute',
+      right: spacing.xl,
+      bottom: spacing.xl,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: t.colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+      boxShadow: '0 2px 4px rgba(43,33,24,0.25)',
+    },
+    fabText: {
+      fontSize: 28,
+      color: t.colors.textInverse,
+      lineHeight: 30,
+    },
+    center: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: t.colors.background,
+    },
+    emptyTitle: {
+      ...t.typography.body,
+      color: t.colors.textPrimary,
+      fontWeight: '600',
+      marginBottom: spacing.xs,
+    },
+    emptySubtitle: {
+      ...t.typography.bodySmall,
+      color: t.colors.textTertiary,
+      marginBottom: spacing.lg,
+    },
+  });
 
 export default WeekendGridScreen;

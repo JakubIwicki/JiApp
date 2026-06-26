@@ -1,10 +1,10 @@
 import { StyleSheet } from 'react-native';
 
 // ─── Color Palette Types ─────────────────────────────────────────────────────
-export type ColorPalette = { readonly [K in keyof typeof colorsLight]: string };
+export type ColorPalette = { readonly [K in keyof typeof wabiLight]: string };
 
-// ─── Light Palette (Wabi-Sabi) ───────────────────────────────────────────────
-export const colorsLight = {
+// ─── Wabi-Sabi Light Palette ──────────────────────────────────────────────────
+export const wabiLight = {
   // Core
   primary: '#8B7E74',
   primaryDark: '#6B5F52',
@@ -39,8 +39,8 @@ export const colorsLight = {
   cardShadow: '#2B2118',
 } as const;
 
-// ─── Dark Palette (Midnight Wabi-Sabi) ───────────────────────────────────────
-export const colorsDark: ColorPalette = {
+// ─── Wabi-Sabi Dark Palette ───────────────────────────────────────────────────
+export const wabiDark: ColorPalette = {
   // Core — brand slightly lightened for dark bg visibility
   primary: '#A09080',
   primaryDark: '#8B7E74',
@@ -75,53 +75,110 @@ export const colorsDark: ColorPalette = {
   cardShadow: '#000000',
 };
 
-// ─── Backwards-compatible default export ─────────────────────────────────────
-export const colors = colorsLight;
-
-// ─── Typography ──────────────────────────────────────────────────────────────
-export const typography = {
-  title: {
-    fontSize: 28,
-    fontWeight: '700' as const,
-    color: colors.textPrimary,
-  },
-  heading: {
-    fontSize: 18,
-    fontWeight: '700' as const,
-    color: colors.textPrimary,
-  },
-  body: {
-    fontSize: 16,
-    color: colors.textPrimary,
-  },
-  bodySmall: {
-    fontSize: 14,
-    color: colors.textTertiary,
-  },
-  caption: {
-    fontSize: 13,
-    color: colors.textSecondary,
-  },
-  label: {
-    fontSize: 12,
-    color: colors.textSecondary,
-  },
-  link: {
-    fontSize: 14,
-    color: colors.primary,
-  },
-  error: {
-    fontSize: 14,
-    color: colors.error,
-    textAlign: 'center' as const,
-  },
-  monospace: {
-    fontSize: 13,
-    color: colors.textTertiary,
-    fontFamily: 'monospace',
-    textAlign: 'center' as const,
-  },
+// ─── Lavender Light Palette ───────────────────────────────────────────────────
+export const lavenderLight = {
+  primary: '#7C6F9B',
+  primaryDark: '#5C5278',
+  primaryLight: '#ECE8F3',
+  background: '#F4F1F9',
+  surface: '#FFFFFF',
+  success: '#6F9B82',
+  successLight: '#EAF1EC',
+  error: '#C2415A',
+  errorLight: '#FBECEF',
+  info: '#5B6FA5',
+  warning: '#B8860B',
+  textPrimary: '#2A2433',
+  textSecondary: '#837C90',
+  textTertiary: '#9A93A6',
+  textDescription: '#837C90',
+  textInverse: '#FFFFFF',
+  border: '#DDD6E8',
+  separator: '#E7E1F0',
+  placeholder: '#ECE8F3',
+  placeholderDark: '#DDD6E8',
+  cardShadow: '#2A2433',
 } as const;
+
+// ─── Lavender Dark Palette ────────────────────────────────────────────────────
+export const lavenderDark: ColorPalette = {
+  primary: '#A99FC8',
+  primaryDark: '#8478A8',
+  primaryLight: '#36304A',
+  background: '#17141F',
+  surface: '#272235',
+  success: '#8BAE96',
+  successLight: '#2A3A2E',
+  error: '#D45A78',
+  errorLight: '#3A1622',
+  info: '#7C8FC0',
+  warning: '#D4A020',
+  textPrimary: '#ECE6F3',
+  textSecondary: '#A99FC0',
+  textTertiary: '#7A7090',
+  textDescription: '#A99FC0',
+  textInverse: '#17141F',
+  border: '#38324C',
+  separator: '#322C44',
+  placeholder: '#272235',
+  placeholderDark: '#38324C',
+  cardShadow: '#000000',
+} as const;
+
+// ─── Palette Registry ─────────────────────────────────────────────────────────
+export const palettes = {
+  wabisabi: { light: wabiLight, dark: wabiDark },
+  lavender: { light: lavenderLight, dark: lavenderDark },
+} as const;
+
+export type PaletteName = keyof typeof palettes;
+export const DEFAULT_PALETTE: PaletteName = 'lavender';
+
+// ─── Factory: Typography ──────────────────────────────────────────────────────
+export const makeTypography = (c: ColorPalette) =>
+  ({
+    title: {
+      fontSize: 28,
+      fontWeight: '700' as const,
+      color: c.textPrimary,
+    },
+    heading: {
+      fontSize: 18,
+      fontWeight: '700' as const,
+      color: c.textPrimary,
+    },
+    body: {
+      fontSize: 16,
+      color: c.textPrimary,
+    },
+    bodySmall: {
+      fontSize: 14,
+      color: c.textTertiary,
+    },
+    caption: {
+      fontSize: 13,
+      color: c.textSecondary,
+    },
+    label: {
+      fontSize: 12,
+      color: c.textSecondary,
+    },
+    link: {
+      fontSize: 14,
+      color: c.primary,
+    },
+    error: {
+      fontSize: 14,
+      color: c.error,
+      textAlign: 'center' as const,
+    },
+    monospace: {
+      fontSize: 13,
+      color: c.textTertiary,
+      fontFamily: 'monospace',
+      textAlign: 'center' as const,
+    },
+  } as const);
 
 // ─── Spacing ─────────────────────────────────────────────────────────────────
 export const spacing = {
@@ -175,115 +232,137 @@ export const animation = {
   },
 } as const;
 
-// ─── Tab Bar ─────────────────────────────────────────────────────────────────
-export const tabBar = {
-  activeColor: colors.primary,
-  inactiveColor: '#C0B8AE',
-  height: 56,
-  iconSize: 22,
-  labelSize: 9,
-} as const;
+// ─── Factory: Tab Bar ────────────────────────────────────────────────────────
+export const makeTabBar = (c: ColorPalette) =>
+  ({
+    activeColor: c.primary,
+    inactiveColor: c.textTertiary,
+    height: 56,
+    iconSize: 22,
+    labelSize: 9,
+  } as const);
 
-// ─── Common Styles ───────────────────────────────────────────────────────────
-export const commonStyles = StyleSheet.create({
-  // Screen-level containers
-  screenContainer: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scrollContent: {
-    paddingVertical: spacing.lg,
-  },
-  authScrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.xxl,
-  },
+// ─── Factory: Common Styles ──────────────────────────────────────────────────
+export const makeCommonStyles = (c: ColorPalette) =>
+  StyleSheet.create({
+    // Screen-level containers
+    screenContainer: {
+      flex: 1,
+      backgroundColor: c.background,
+    },
+    scrollContent: {
+      paddingVertical: spacing.lg,
+    },
+    authScrollContent: {
+      flexGrow: 1,
+      justifyContent: 'center',
+      paddingHorizontal: spacing.xl,
+      paddingVertical: spacing.xxl,
+    },
 
-  // Cards
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    marginHorizontal: spacing.lg,
-    overflow: 'hidden',
-  },
-  cardRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: 14,
-  },
-  cardSeparator: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.separator,
-    marginLeft: spacing.lg,
-  },
+    // Cards
+    card: {
+      backgroundColor: c.surface,
+      borderRadius: borderRadius.lg,
+      marginHorizontal: spacing.lg,
+      overflow: 'hidden',
+    },
+    cardRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: spacing.lg,
+      paddingVertical: 14,
+    },
+    cardSeparator: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: c.separator,
+      marginLeft: spacing.lg,
+    },
 
-  // Section headers
-  sectionHeader: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginHorizontal: spacing.lg,
-    marginBottom: spacing.sm,
-    marginTop: spacing.sm,
-  },
-  sectionContainer: {
-    marginBottom: spacing.lg,
-  },
+    // Section headers
+    sectionHeader: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: c.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      marginHorizontal: spacing.lg,
+      marginBottom: spacing.sm,
+      marginTop: spacing.sm,
+    },
+    sectionContainer: {
+      marginBottom: spacing.lg,
+    },
 
-  // Empty state
-  emptyState: {
-    paddingVertical: 24,
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
+    // Empty state
+    emptyState: {
+      paddingVertical: 24,
+      alignItems: 'center',
+    },
+    emptyText: {
+      fontSize: 14,
+      color: c.textSecondary,
+    },
 
-  // Error
-  apiError: {
-    color: colors.error,
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: spacing.md,
-  },
+    // Error
+    apiError: {
+      color: c.error,
+      fontSize: 14,
+      textAlign: 'center',
+      marginBottom: spacing.md,
+    },
 
-  // Links
-  linkContainer: {
-    marginTop: 20,
-    alignItems: 'center',
-  },
-  linkText: {
-    color: colors.primary,
-    fontSize: 14,
-  },
+    // Links
+    linkContainer: {
+      marginTop: 20,
+      alignItems: 'center',
+    },
+    linkText: {
+      color: c.primary,
+      fontSize: 14,
+    },
 
-  // Center content
-  centerContent: {
-    alignItems: 'center',
-    paddingVertical: spacing.xxl,
-  },
-  statusText: {
-    marginTop: spacing.md,
-    fontSize: 14,
-    color: colors.textDescription,
-  },
+    // Center content
+    centerContent: {
+      alignItems: 'center',
+      paddingVertical: spacing.xxl,
+    },
+    statusText: {
+      marginTop: spacing.md,
+      fontSize: 14,
+      color: c.textDescription,
+    },
 
-  // Action buttons row
-  actionButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  linkButton: {
-    backgroundColor: colors.primary,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-  },
-});
+    // Action buttons row
+    actionButtons: {
+      flexDirection: 'row',
+      gap: 12,
+    },
+    linkButton: {
+      backgroundColor: c.primary,
+      borderRadius: borderRadius.md,
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+    },
+  });
+
+// ─── Theme Type ──────────────────────────────────────────────────────────────
+export interface Theme {
+  colors: ColorPalette;
+  typography: ReturnType<typeof makeTypography>;
+  commonStyles: ReturnType<typeof makeCommonStyles>;
+  tabBar: ReturnType<typeof makeTabBar>;
+  spacing: typeof spacing;
+  borderRadius: typeof borderRadius;
+}
+
+// ─── Backwards-compatible static exports (built from default light palette) ──
+export const colors = lavenderLight;
+export const typography = makeTypography(colors);
+export const commonStyles = makeCommonStyles(colors);
+export const tabBar = makeTabBar(colors);
+
+// ─── Backwards-compatible legacy aliases (existing tests + stories reference these) ──
+export const colorsLight = wabiLight;
+export const colorsDark = wabiDark;

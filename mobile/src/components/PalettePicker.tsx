@@ -1,67 +1,74 @@
 import React, { useCallback } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import * as storageService from '../services/storageService';
-import { useThemedStyles } from '../context/ThemeContext';
+import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import type { Theme } from '../styles/theme';
 
-const LanguagePicker: React.FC = () => {
-  const { i18n, t } = useTranslation();
+const PalettePicker: React.FC = () => {
+  const { t } = useTranslation();
+  const { palette, setPalette } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
-  const currentLanguage = i18n.language?.startsWith('pl') ? 'pl' : 'en';
-
-  const toggleLanguage = useCallback(async () => {
-    const newLanguage = currentLanguage === 'pl' ? 'en' : 'pl';
-    await i18n.changeLanguage(newLanguage);
-    await storageService.saveLanguage(newLanguage);
-  }, [currentLanguage, i18n]);
+  const selectPalette = useCallback(
+    async (name: 'lavender' | 'wabisabi') => {
+      await setPalette(name);
+    },
+    [setPalette],
+  );
 
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        <Text style={styles.labelText}>{t('settings.language')}</Text>
-        <View style={styles.togglePill} testID="language-picker-button">
+        <Text style={styles.labelText}>{t('settings.theme')}</Text>
+        <View style={styles.togglePill} testID="palette-picker-button">
           <Pressable
-            onPress={currentLanguage !== 'pl' ? toggleLanguage : undefined}
+            onPress={
+              palette !== 'lavender'
+                ? () => selectPalette('lavender')
+                : undefined
+            }
             accessibilityRole="button"
-            accessibilityLabel={t('settings.languagePolish')}
+            accessibilityLabel={t('settings.themeLavender')}
             style={({ pressed }) => [
               styles.pillOption,
-              currentLanguage === 'pl' && styles.pillActive,
-              pressed && currentLanguage !== 'pl' && { opacity: 0.7 },
+              palette === 'lavender' && styles.pillActive,
+              pressed && palette !== 'lavender' && { opacity: 0.7 },
             ]}
           >
             <Text
               style={[
                 styles.pillText,
-                currentLanguage === 'pl'
+                palette === 'lavender'
                   ? styles.pillTextActive
                   : styles.pillTextInactive,
               ]}
             >
-              PL
+              {t('settings.themeLavender')}
             </Text>
           </Pressable>
           <Pressable
-            onPress={currentLanguage !== 'en' ? toggleLanguage : undefined}
+            onPress={
+              palette !== 'wabisabi'
+                ? () => selectPalette('wabisabi')
+                : undefined
+            }
             accessibilityRole="button"
-            accessibilityLabel={t('settings.languageEnglish')}
+            accessibilityLabel={t('settings.themeEarthy')}
             style={({ pressed }) => [
               styles.pillOption,
-              currentLanguage === 'en' && styles.pillActive,
-              pressed && currentLanguage !== 'en' && { opacity: 0.7 },
+              palette === 'wabisabi' && styles.pillActive,
+              pressed && palette !== 'wabisabi' && { opacity: 0.7 },
             ]}
           >
             <Text
               style={[
                 styles.pillText,
-                currentLanguage === 'en'
+                palette === 'wabisabi'
                   ? styles.pillTextActive
                   : styles.pillTextInactive,
               ]}
             >
-              EN
+              {t('settings.themeEarthy')}
             </Text>
           </Pressable>
         </View>
@@ -81,7 +88,7 @@ const makeStyles = (t: Theme) =>
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      paddingHorizontal: 16,
+      paddingHorizontal: t.spacing.lg,
       paddingVertical: 14,
     },
     labelText: {
@@ -114,4 +121,4 @@ const makeStyles = (t: Theme) =>
     },
   });
 
-export default LanguagePicker;
+export default PalettePicker;

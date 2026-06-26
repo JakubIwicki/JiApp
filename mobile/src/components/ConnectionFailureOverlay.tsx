@@ -7,14 +7,9 @@ import Animated, {
   useAnimatedStyle,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  animation,
-  borderRadius,
-  colors,
-  spacing,
-  typography,
-  zIndexScale,
-} from '../styles/theme';
+import { useThemedStyles } from '../context/ThemeContext';
+import type { Theme } from '../styles/theme';
+import { animation, borderRadius, spacing, zIndexScale } from '../styles/theme';
 
 interface Props {
   visible: boolean;
@@ -24,6 +19,7 @@ interface Props {
 const ConnectionFailureOverlay: React.FC<Props> = ({ visible, onTimeout }) => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const styles = useThemedStyles(makeStyles);
   const bgOpacity = useSharedValue(0);
   const textOpacity = useSharedValue(0);
   const textSlide = useSharedValue(12);
@@ -128,60 +124,61 @@ const ConnectionFailureOverlay: React.FC<Props> = ({ visible, onTimeout }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: zIndexScale.overlay + 10,
-  },
-  background: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: colors.background,
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing.xl,
-  },
-  warningIcon: {
-    fontSize: 48,
-    textAlign: 'center',
-    marginBottom: spacing.lg,
-  },
-  title: {
-    fontSize: typography.heading.fontSize,
-    fontWeight: typography.heading.fontWeight,
-    color: colors.textPrimary,
-    textAlign: 'center',
-    marginBottom: spacing.sm,
-  },
-  message: {
-    fontSize: typography.bodySmall.fontSize,
-    color: colors.textTertiary,
-    textAlign: 'center',
-    marginBottom: spacing.xl,
-  },
-  button: {
-    backgroundColor: colors.error,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    minWidth: 160,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: colors.textInverse,
-    fontSize: typography.body.fontSize,
-    fontWeight: '600',
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    container: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      zIndex: zIndexScale.overlay + 10,
+    },
+    background: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: t.colors.background,
+    },
+    content: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: spacing.xl,
+    },
+    warningIcon: {
+      fontSize: 48,
+      textAlign: 'center',
+      marginBottom: spacing.lg,
+    },
+    title: {
+      fontSize: t.typography.heading.fontSize,
+      fontWeight: t.typography.heading.fontWeight,
+      color: t.colors.textPrimary,
+      textAlign: 'center',
+      marginBottom: spacing.sm,
+    },
+    message: {
+      fontSize: t.typography.bodySmall.fontSize,
+      color: t.colors.textTertiary,
+      textAlign: 'center',
+      marginBottom: spacing.xl,
+    },
+    button: {
+      backgroundColor: t.colors.error,
+      borderRadius: borderRadius.md,
+      paddingHorizontal: 24,
+      paddingVertical: 12,
+      minWidth: 160,
+      alignItems: 'center',
+    },
+    buttonText: {
+      color: t.colors.textInverse,
+      fontSize: t.typography.body.fontSize,
+      fontWeight: '600',
+    },
+  });
 
 export default ConnectionFailureOverlay;

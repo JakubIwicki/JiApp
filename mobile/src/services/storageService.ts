@@ -8,6 +8,7 @@ const DISPLAY_NAME_KEY = 'auth_display_name';
 const USERNAME_KEY = 'auth_username';
 const CREDENTIALS_KEY = 'saved_credentials';
 const LANGUAGE_KEY = 'app_language';
+const PALETTE_KEY = 'app_palette';
 const SELECTED_BOARD_KEY = 'selected_board_id';
 const SELECTED_MODULE_KEY = 'selected_module';
 const WELCOME_SEEN_KEY = 'jiapp_welcome_seen';
@@ -141,6 +142,15 @@ export const getSelectedModule = async (): Promise<ModuleId | null> => {
 export const clearSelectedModule = async (): Promise<void> => {
   await AsyncStorage.removeItem(SELECTED_MODULE_KEY);
 };
+
+// --- Palette ---
+
+export const savePalette = async (name: string): Promise<void> => {
+  await AsyncStorage.setItem(PALETTE_KEY, name);
+};
+
+export const getPalette = async (): Promise<string | null> =>
+  AsyncStorage.getItem(PALETTE_KEY);
 
 // --- Welcome Overlay ---
 

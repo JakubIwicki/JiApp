@@ -7,7 +7,9 @@ import {
   FlatList,
   StyleSheet,
 } from 'react-native';
-import { colors, typography, spacing, borderRadius } from '../../../styles/theme';
+import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
+import type { Theme } from '../../../styles/theme';
+import { spacing, borderRadius } from '../../../styles/theme';
 import type { Client } from '../types/api';
 
 const ClientPickerRow: React.FC<{
@@ -16,25 +18,28 @@ const ClientPickerRow: React.FC<{
   onSelect: (client: Client) => void;
   onClose: () => void;
   onClearQuery: () => void;
-}> = ({ item, selectedClientId, onSelect, onClose, onClearQuery }) => (
-  <Pressable
-    style={({ pressed }) => [
-      styles.clientItem,
-      item.id === selectedClientId && styles.clientItemSelected,
-      pressed && { opacity: 0.7 },
-    ]}
-    onPress={() => {
-      onSelect(item);
-      onClearQuery();
-      onClose();
-    }}
-  >
-    <Text style={styles.clientItemText}>{item.name}</Text>
-    {item.phone ? (
-      <Text style={styles.clientItemPhone}>{item.phone}</Text>
-    ) : null}
-  </Pressable>
-);
+}> = ({ item, selectedClientId, onSelect, onClose, onClearQuery }) => {
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <Pressable
+      style={({ pressed }) => [
+        styles.clientItem,
+        item.id === selectedClientId && styles.clientItemSelected,
+        pressed && { opacity: 0.7 },
+      ]}
+      onPress={() => {
+        onSelect(item);
+        onClearQuery();
+        onClose();
+      }}
+    >
+      <Text style={styles.clientItemText}>{item.name}</Text>
+      {item.phone ? (
+        <Text style={styles.clientItemPhone}>{item.phone}</Text>
+      ) : null}
+    </Pressable>
+  );
+};
 
 interface ClientPickerProps {
   clients: Client[];
@@ -51,16 +56,16 @@ const ClientPicker: React.FC<ClientPickerProps> = ({
   onCreateNew,
   isLoading,
 }) => {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
-  const selectedClient = clients.find((c) => c.id === selectedClientId);
+  const selectedClient = clients.find(c => c.id === selectedClientId);
 
   const filteredClients = query.trim()
-    ? clients.filter((c) =>
-        c.name.toLowerCase().includes(query.toLowerCase()),
-      )
+    ? clients.filter(c => c.name.toLowerCase().includes(query.toLowerCase()))
     : clients;
 
   const handleCreateNew = useCallback(async () => {
@@ -71,7 +76,13 @@ const ClientPicker: React.FC<ClientPickerProps> = ({
     try {
       const newId = await onCreateNew(name);
       if (newId) {
-        onSelect({ id: newId, boardId: 1, name, phone: undefined, notes: undefined });
+        onSelect({
+          id: newId,
+          boardId: 1,
+          name,
+          phone: undefined,
+          notes: undefined,
+        });
         setQuery('');
         setIsOpen(false);
       }
@@ -105,7 +116,9 @@ const ClientPicker: React.FC<ClientPickerProps> = ({
         accessibilityRole="button"
         accessibilityLabel="Select client"
       >
-        <Text style={[styles.selectorText, !selectedClient && styles.placeholder]}>
+        <Text
+          style={[styles.selectorText, !selectedClient && styles.placeholder]}
+        >
           {selectedClient ? selectedClient.name : 'Select a client…'}
         </Text>
         <Text style={styles.chevron}>{isOpen ? '▲' : '▼'}</Text>
@@ -129,7 +142,7 @@ const ClientPicker: React.FC<ClientPickerProps> = ({
           ) : filteredClients.length > 0 ? (
             <FlatList
               data={filteredClients}
-              keyExtractor={(item) => String(item.id)}
+              keyExtractor={item => String(item.id)}
               style={styles.list}
               renderItem={renderClientItem}
             />
@@ -157,102 +170,103 @@ const ClientPicker: React.FC<ClientPickerProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: spacing.md,
-    zIndex: 10,
-  },
-  label: {
-    ...typography.label,
-    color: colors.textSecondary,
-    marginBottom: spacing.xs,
-  },
-  selector: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 12,
-  },
-  selectorText: {
-    ...typography.body,
-    color: colors.textPrimary,
-    flex: 1,
-  },
-  placeholder: {
-    color: colors.textTertiary,
-  },
-  chevron: {
-    fontSize: 10,
-    color: colors.textSecondary,
-    marginLeft: spacing.sm,
-  },
-  dropdown: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginTop: spacing.xs,
-    maxHeight: 280,
-    overflow: 'hidden',
-  },
-  searchInput: {
-    ...typography.body,
-    color: colors.textPrimary,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.separator,
-  },
-  list: {
-    maxHeight: 200,
-  },
-  clientItem: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.separator,
-  },
-  clientItemSelected: {
-    backgroundColor: colors.primaryLight,
-  },
-  clientItemText: {
-    ...typography.body,
-    color: colors.textPrimary,
-  },
-  clientItemPhone: {
-    ...typography.caption,
-    color: colors.textTertiary,
-    marginTop: 2,
-  },
-  centerState: {
-    paddingVertical: spacing.lg,
-    alignItems: 'center',
-  },
-  stateText: {
-    ...typography.caption,
-    color: colors.textTertiary,
-    marginBottom: spacing.sm,
-  },
-  createButton: {
-    backgroundColor: colors.primary,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    marginTop: spacing.sm,
-  },
-  createButtonDisabled: {
-    opacity: 0.5,
-  },
-  createButtonText: {
-    ...typography.bodySmall,
-    color: colors.textInverse,
-    fontWeight: '600',
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    container: {
+      marginBottom: spacing.md,
+      zIndex: 10,
+    },
+    label: {
+      ...t.typography.label,
+      color: t.colors.textSecondary,
+      marginBottom: spacing.xs,
+    },
+    selector: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      backgroundColor: t.colors.background,
+      borderRadius: borderRadius.md,
+      borderWidth: 1,
+      borderColor: t.colors.border,
+      paddingHorizontal: spacing.md,
+      paddingVertical: 12,
+    },
+    selectorText: {
+      ...t.typography.body,
+      color: t.colors.textPrimary,
+      flex: 1,
+    },
+    placeholder: {
+      color: t.colors.textTertiary,
+    },
+    chevron: {
+      fontSize: 10,
+      color: t.colors.textSecondary,
+      marginLeft: spacing.sm,
+    },
+    dropdown: {
+      backgroundColor: t.colors.surface,
+      borderRadius: borderRadius.md,
+      borderWidth: 1,
+      borderColor: t.colors.border,
+      marginTop: spacing.xs,
+      maxHeight: 280,
+      overflow: 'hidden',
+    },
+    searchInput: {
+      ...t.typography.body,
+      color: t.colors.textPrimary,
+      paddingHorizontal: spacing.md,
+      paddingVertical: 10,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: t.colors.separator,
+    },
+    list: {
+      maxHeight: 200,
+    },
+    clientItem: {
+      paddingHorizontal: spacing.md,
+      paddingVertical: 12,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: t.colors.separator,
+    },
+    clientItemSelected: {
+      backgroundColor: t.colors.primaryLight,
+    },
+    clientItemText: {
+      ...t.typography.body,
+      color: t.colors.textPrimary,
+    },
+    clientItemPhone: {
+      ...t.typography.caption,
+      color: t.colors.textTertiary,
+      marginTop: 2,
+    },
+    centerState: {
+      paddingVertical: spacing.lg,
+      alignItems: 'center',
+    },
+    stateText: {
+      ...t.typography.caption,
+      color: t.colors.textTertiary,
+      marginBottom: spacing.sm,
+    },
+    createButton: {
+      backgroundColor: t.colors.primary,
+      borderRadius: borderRadius.md,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.sm,
+      marginTop: spacing.sm,
+    },
+    createButtonDisabled: {
+      opacity: 0.5,
+    },
+    createButtonText: {
+      ...t.typography.bodySmall,
+      color: t.colors.textInverse,
+      fontWeight: '600',
+    },
+  });
 
 export default ClientPicker;

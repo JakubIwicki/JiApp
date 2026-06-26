@@ -11,7 +11,9 @@ import useAuth from '../hooks/useAuth';
 import useScreenTitle from '../hooks/useScreenTitle';
 import useToast from '../hooks/useToast';
 import * as storageService from '../services/storageService';
-import { colors, spacing } from '../styles/theme';
+import { spacing } from '../styles/theme';
+import type { Theme } from '../styles/theme';
+import { useThemedStyles, useTheme } from '../context/ThemeContext';
 import type { ServerAugmentedError } from '../types/api';
 
 type LoginNavigationProp = NativeStackNavigationProp<
@@ -95,6 +97,8 @@ const LoginScreen: React.FC = () => {
   useScreenTitle('auth.loginTitle');
 
   const [form, dispatch] = useReducer(loginFormReducer, initialLoginFormState);
+  const styles = useThemedStyles(makeStyles);
+  const { colors } = useTheme();
 
   // Initialize saved credentials on mount
   useEffect(() => {
@@ -242,17 +246,18 @@ const LoginScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  rememberMeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  rememberMeLabel: {
-    fontSize: 14,
-    color: colors.textTertiary,
-    marginLeft: spacing.sm,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    rememberMeRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: spacing.lg,
+    },
+    rememberMeLabel: {
+      fontSize: 14,
+      color: t.colors.textTertiary,
+      marginLeft: spacing.sm,
+    },
+  });
 
 export default LoginScreen;

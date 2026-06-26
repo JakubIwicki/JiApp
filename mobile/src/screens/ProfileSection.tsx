@@ -1,8 +1,8 @@
 import React from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import FormInput from '../components/FormInput';
-import { colors, commonStyles } from '../styles/theme';
-import editProfileStyles from './editProfileStyles';
+import { useThemedStyles, useTheme } from '../context/ThemeContext';
+import { makeEditProfileStyles } from './editProfileStyles';
 
 interface ProfileSectionProps {
   displayName: string;
@@ -27,6 +27,8 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
   onSave,
   t,
 }) => {
+  const { colors, commonStyles } = useTheme();
+  const editProfileStyles = useThemedStyles(makeEditProfileStyles);
   return (
     <View style={commonStyles.sectionContainer}>
       <Text style={commonStyles.sectionHeader}>

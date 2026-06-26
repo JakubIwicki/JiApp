@@ -12,7 +12,7 @@ import DownloadsScreen from '../screens/DownloadsScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
-import { colors, tabBar } from '../styles/theme';
+import { useTheme } from '../context/ThemeContext';
 import type {
   MainTabParamList,
   MainStackParamList,
@@ -29,53 +29,72 @@ const SettingsStack = createNativeStackNavigator<SettingsStackParamList>();
 const DownloadsStack = createNativeStackNavigator<MainStackParamList>();
 const ChatStack = createNativeStackNavigator<ChatStackParamList>();
 
-const stackScreenOptions = {
-  headerStyle: {
-    backgroundColor: colors.background,
-  },
-  headerTintColor: colors.textPrimary,
-  headerTitleStyle: {
-    fontWeight: '600' as const,
-    fontSize: 17,
-  },
+const useStackScreenOptions = () => {
+  const { colors } = useTheme();
+  return {
+    headerStyle: {
+      backgroundColor: colors.background,
+    },
+    headerTintColor: colors.textPrimary,
+    headerTitleStyle: {
+      fontWeight: '600' as const,
+      fontSize: 17,
+    },
+  };
 };
 
-const SearchStackScreen: React.FC = () => (
-  <SearchStack.Navigator screenOptions={stackScreenOptions}>
-    <SearchStack.Screen name="Search" component={SearchScreen} />
-    <SearchStack.Screen name="Download" component={DownloadScreen} />
-  </SearchStack.Navigator>
-);
+const SearchStackScreen: React.FC = () => {
+  const screenOptions = useStackScreenOptions();
+  return (
+    <SearchStack.Navigator screenOptions={screenOptions}>
+      <SearchStack.Screen name="Search" component={SearchScreen} />
+      <SearchStack.Screen name="Download" component={DownloadScreen} />
+    </SearchStack.Navigator>
+  );
+};
 
-const HistoryStackScreen: React.FC = () => (
-  <HistoryStack.Navigator screenOptions={stackScreenOptions}>
-    <HistoryStack.Screen name="History" component={HistoryScreen} />
-  </HistoryStack.Navigator>
-);
+const HistoryStackScreen: React.FC = () => {
+  const screenOptions = useStackScreenOptions();
+  return (
+    <HistoryStack.Navigator screenOptions={screenOptions}>
+      <HistoryStack.Screen name="History" component={HistoryScreen} />
+    </HistoryStack.Navigator>
+  );
+};
 
-const ChatStackScreen: React.FC = () => (
-  <ChatStack.Navigator screenOptions={stackScreenOptions}>
-    <ChatStack.Screen name="Chat" component={ChatScreen} />
-    <ChatStack.Screen name="Download" component={DownloadScreen} />
-  </ChatStack.Navigator>
-);
+const ChatStackScreen: React.FC = () => {
+  const screenOptions = useStackScreenOptions();
+  return (
+    <ChatStack.Navigator screenOptions={screenOptions}>
+      <ChatStack.Screen name="Chat" component={ChatScreen} />
+      <ChatStack.Screen name="Download" component={DownloadScreen} />
+    </ChatStack.Navigator>
+  );
+};
 
-const DownloadsStackScreen: React.FC = () => (
-  <DownloadsStack.Navigator screenOptions={stackScreenOptions}>
-    <DownloadsStack.Screen name="DownloadsMain" component={DownloadsScreen} />
-  </DownloadsStack.Navigator>
-);
+const DownloadsStackScreen: React.FC = () => {
+  const screenOptions = useStackScreenOptions();
+  return (
+    <DownloadsStack.Navigator screenOptions={screenOptions}>
+      <DownloadsStack.Screen name="DownloadsMain" component={DownloadsScreen} />
+    </DownloadsStack.Navigator>
+  );
+};
 
-const SettingsStackScreen: React.FC = () => (
-  <SettingsStack.Navigator screenOptions={stackScreenOptions}>
-    <SettingsStack.Screen name="Settings" component={SettingsScreen} />
-    <SettingsStack.Screen name="EditProfile" component={EditProfileScreen} />
-  </SettingsStack.Navigator>
-);
+const SettingsStackScreen: React.FC = () => {
+  const screenOptions = useStackScreenOptions();
+  return (
+    <SettingsStack.Navigator screenOptions={screenOptions}>
+      <SettingsStack.Screen name="Settings" component={SettingsScreen} />
+      <SettingsStack.Screen name="EditProfile" component={EditProfileScreen} />
+    </SettingsStack.Navigator>
+  );
+};
 
 const MainNavigator: React.FC = () => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { colors, tabBar } = useTheme();
 
   return (
     <Tab.Navigator

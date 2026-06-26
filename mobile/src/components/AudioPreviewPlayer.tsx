@@ -9,7 +9,9 @@ import {
 import { useTranslation } from 'react-i18next';
 import usePreview from '../hooks/usePreview';
 import useKeepAwake from '../hooks/useKeepAwake';
-import { colors, spacing, borderRadius } from '../styles/theme';
+import { useTheme, useThemedStyles } from '../context/ThemeContext';
+import type { Theme } from '../styles/theme';
+import { spacing, borderRadius } from '../styles/theme';
 
 interface AudioPreviewPlayerProps {
   videoId: string;
@@ -17,6 +19,8 @@ interface AudioPreviewPlayerProps {
 
 const AudioPreviewPlayer = ({ videoId }: AudioPreviewPlayerProps) => {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { isPlaying, isLoading, progress, elapsed, error, play, stop } =
     usePreview();
 
@@ -116,68 +120,69 @@ const AudioPreviewPlayer = ({ videoId }: AudioPreviewPlayerProps) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-  },
-  controls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  playButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  playIcon: {
-    fontSize: 16,
-    color: colors.textInverse,
-  },
-  labelContainer: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textPrimary,
-  },
-  duration: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  counter: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginTop: 2,
-    fontVariant: ['tabular-nums'],
-  },
-  progressTrack: {
-    height: 3,
-    backgroundColor: colors.primaryLight,
-    borderRadius: 2,
-    marginTop: spacing.md,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: colors.primary,
-    borderRadius: 2,
-  },
-  errorText: {
-    color: colors.error,
-    fontSize: 13,
-    marginTop: spacing.sm,
-    textAlign: 'center',
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: t.colors.surface,
+      borderRadius: borderRadius.md,
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing.lg,
+    },
+    controls: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+    },
+    playButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: t.colors.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    playIcon: {
+      fontSize: 16,
+      color: t.colors.textInverse,
+    },
+    labelContainer: {
+      flex: 1,
+      justifyContent: 'center',
+    },
+    label: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: t.colors.textPrimary,
+    },
+    duration: {
+      fontSize: 12,
+      color: t.colors.textSecondary,
+      marginTop: 2,
+    },
+    counter: {
+      fontSize: 12,
+      color: t.colors.textSecondary,
+      marginTop: 2,
+      fontVariant: ['tabular-nums'],
+    },
+    progressTrack: {
+      height: 3,
+      backgroundColor: t.colors.primaryLight,
+      borderRadius: 2,
+      marginTop: spacing.md,
+      overflow: 'hidden',
+    },
+    progressFill: {
+      height: '100%',
+      backgroundColor: t.colors.primary,
+      borderRadius: 2,
+    },
+    errorText: {
+      color: t.colors.error,
+      fontSize: 13,
+      marginTop: spacing.sm,
+      textAlign: 'center',
+    },
+  });
 
 export default AudioPreviewPlayer;

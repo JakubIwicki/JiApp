@@ -1,6 +1,7 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
 import SuccessCheckmark from '../SuccessCheckmark';
+import { lavenderLight } from '../../styles/theme';
 
 describe('SuccessCheckmark', () => {
   it('renders the checkmark', () => {
@@ -35,13 +36,14 @@ describe('SuccessCheckmark', () => {
     expect(hasSize).toBe(true);
   });
 
-  it('uses success color (#7A9A7E) background', () => {
+  it('uses success color background', () => {
     const { getByTestId } = render(<SuccessCheckmark />);
     const container = getByTestId('success-checkmark');
     const style = container.props.style;
     const stylesArray = Array.isArray(style) ? style : [style];
     const hasSuccessBg = stylesArray.some(
-      (s: Record<string, unknown>) => s.backgroundColor === '#7A9A7E',
+      (s: Record<string, unknown>) =>
+        s.backgroundColor === lavenderLight.success,
     );
     expect(hasSuccessBg).toBe(true);
   });

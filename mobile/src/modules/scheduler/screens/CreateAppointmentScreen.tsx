@@ -14,7 +14,9 @@ import ClientPicker from '../components/ClientPicker';
 import useAppointments from '../hooks/useAppointments';
 import useClients from '../hooks/useClients';
 import * as serviceCatalogService from '../services/serviceCatalogService';
-import { colors, typography, spacing, borderRadius } from '../../../styles/theme';
+import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
+import type { Theme } from '../../../styles/theme';
+import { spacing, borderRadius } from '../../../styles/theme';
 import type { ServiceItem } from '../types/api';
 import type { SchedulerStackParamList } from '../types/navigation';
 
@@ -35,6 +37,7 @@ const ServiceItemRow = React.memo<{
   startTime: string;
   onSelect: (serviceId: number, endTime: string) => void;
 }>(({ service, isSelected, startTime, onSelect }) => {
+  const styles = useThemedStyles(makeStyles);
   const endTime = calculateEndTime(startTime, service.baseDuration);
   return (
     <Pressable
@@ -48,7 +51,8 @@ const ServiceItemRow = React.memo<{
       <View>
         <Text style={styles.serviceName}>{service.name}</Text>
         <Text style={styles.serviceDetail}>
-          {service.baseDuration} min | {service.basePrice.amount} {service.basePrice.currency}
+          {service.baseDuration} min | {service.basePrice.amount}{' '}
+          {service.basePrice.currency}
         </Text>
       </View>
     </Pressable>
@@ -98,7 +102,11 @@ function appointmentFormReducer(
     case 'SET_CLIENT':
       return { ...state, selectedClientId: action.clientId };
     case 'SET_SERVICE':
-      return { ...state, selectedServiceId: action.serviceId, endTime: action.endTime };
+      return {
+        ...state,
+        selectedServiceId: action.serviceId,
+        endTime: action.endTime,
+      };
     case 'SET_CATEGORY':
       return { ...state, selectedCategory: action.category };
     case 'SET_START_TIME':
@@ -126,7 +134,13 @@ const CreateAppointmentScreen: React.FC = () => {
   const appointments = useAppointments();
   const clients = useClients(boardId);
 
-  const [form, dispatch] = useReducer(appointmentFormReducer, initialAppointmentFormState);
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
+  const [form, dispatch] = useReducer(
+    appointmentFormReducer,
+    initialAppointmentFormState,
+  );
   const [services, setServices] = useState<ServiceItem[]>([]);
 
   useEffect(() => {
@@ -134,10 +148,12 @@ const CreateAppointmentScreen: React.FC = () => {
   }, [clients.loadAll]);
 
   useEffect(() => {
-    serviceCatalogService.listServices(boardId, form.selectedCategory).then(setServices);
+    serviceCatalogService
+      .listServices(boardId, form.selectedCategory)
+      .then(setServices);
   }, [boardId, form.selectedCategory]);
 
-  const selectedService = services.find((s) => s.id === form.selectedServiceId);
+  const selectedService = services.find(s => s.id === form.selectedServiceId);
 
   const handleServiceSelect = useCallback(
     (serviceId: number, endTime: string) => {
@@ -181,12 +197,18 @@ const CreateAppointmentScreen: React.FC = () => {
         description: form.description || undefined,
         location: form.location,
         price: selectedService
-          ? { amount: selectedService.basePrice.amount, currency: selectedService.basePrice.currency }
+          ? {
+              amount: selectedService.basePrice.amount,
+              currency: selectedService.basePrice.currency,
+            }
           : { amount: 0, currency: 'PLN' },
       });
       navigation.goBack();
     } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to create appointment');
+      Alert.alert(
+        'Error',
+        err instanceof Error ? err.message : 'Failed to create appointment',
+      );
     } finally {
       dispatch({ type: 'SET_SUBMITTING', submitting: false });
     }
@@ -221,7 +243,7 @@ const CreateAppointmentScreen: React.FC = () => {
       <TextInput
         style={styles.input}
         value={form.date}
-        onChangeText={(date) => dispatch({ type: 'SET_DATE', date })}
+        onChangeText={date => dispatch({ type: 'SET_DATE', date })}
         placeholder="YYYY-MM-DD"
         placeholderTextColor={colors.textTertiary}
       />
@@ -230,7 +252,9 @@ const CreateAppointmentScreen: React.FC = () => {
       <ClientPicker
         clients={clients.clients}
         selectedClientId={form.selectedClientId}
-        onSelect={(client) => dispatch({ type: 'SET_CLIENT', clientId: client.id })}
+        onSelect={client =>
+          dispatch({ type: 'SET_CLIENT', clientId: client.id })
+        }
         onCreateNew={handleCreateClient}
         isLoading={clients.isLoading}
       />
@@ -238,7 +262,7 @@ const CreateAppointmentScreen: React.FC = () => {
       {/* Category selector */}
       <Text style={styles.label}>Category</Text>
       <View style={styles.categoryRow}>
-        {SERVICE_CATEGORIES.map((cat) => (
+        {SERVICE_CATEGORIES.map(cat => (
           <Pressable
             key={cat}
             style={({ pressed }) => [
@@ -276,7 +300,7 @@ const CreateAppointmentScreen: React.FC = () => {
           <TextInput
             style={styles.input}
             value={form.startTime}
-            onChangeText={(time) => dispatch({ type: 'SET_START_TIME', time })}
+            onChangeText={time => dispatch({ type: 'SET_START_TIME', time })}
             placeholder="HH:mm"
             placeholderTextColor={colors.textTertiary}
           />
@@ -286,7 +310,7 @@ const CreateAppointmentScreen: React.FC = () => {
           <TextInput
             style={styles.input}
             value={form.endTime}
-            onChangeText={(time) => dispatch({ type: 'SET_END_TIME', time })}
+            onChangeText={time => dispatch({ type: 'SET_END_TIME', time })}
             placeholder="HH:mm"
             placeholderTextColor={colors.textTertiary}
           />
@@ -298,7 +322,7 @@ const CreateAppointmentScreen: React.FC = () => {
       <TextInput
         style={[styles.input, styles.textArea]}
         value={form.description}
-        onChangeText={(text) => dispatch({ type: 'SET_DESCRIPTION', text })}
+        onChangeText={text => dispatch({ type: 'SET_DESCRIPTION', text })}
         placeholder="Notes…"
         placeholderTextColor={colors.textTertiary}
         multiline
@@ -310,14 +334,18 @@ const CreateAppointmentScreen: React.FC = () => {
       <TextInput
         style={styles.input}
         value={form.location}
-        onChangeText={(text) => dispatch({ type: 'SET_LOCATION', text })}
+        onChangeText={text => dispatch({ type: 'SET_LOCATION', text })}
         placeholder="e.g. Salon"
         placeholderTextColor={colors.textTertiary}
       />
 
       {/* Submit */}
       <Pressable
-        style={({ pressed }) => [styles.submitButton, form.isSubmitting && styles.submitButtonDisabled, pressed && { opacity: 0.7 }]}
+        style={({ pressed }) => [
+          styles.submitButton,
+          form.isSubmitting && styles.submitButtonDisabled,
+          pressed && { opacity: 0.7 },
+        ]}
         onPress={handleSubmit}
         disabled={form.isSubmitting}
       >
@@ -337,107 +365,108 @@ function calculateEndTime(startTime: string, durationMinutes: number): string {
   return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xxl,
-  },
-  sectionTitle: {
-    ...typography.heading,
-    marginBottom: spacing.lg,
-  },
-  label: {
-    ...typography.label,
-    color: colors.textSecondary,
-    marginBottom: spacing.xs,
-    marginTop: spacing.md,
-  },
-  input: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 12,
-    ...typography.body,
-    color: colors.textPrimary,
-  },
-  textArea: {
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
-  categoryRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-  },
-  categoryChip: {
-    borderRadius: borderRadius.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    backgroundColor: colors.surface,
-  },
-  categoryChipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  categoryChipText: {
-    ...typography.caption,
-    color: colors.textSecondary,
-  },
-  categoryChipTextActive: {
-    color: colors.textInverse,
-  },
-  serviceItem: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.md,
-    marginBottom: spacing.xs,
-  },
-  serviceItemActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primaryLight,
-  },
-  serviceName: {
-    ...typography.body,
-    color: colors.textPrimary,
-    fontWeight: '600',
-  },
-  serviceDetail: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  timeRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  timeField: {
-    flex: 1,
-  },
-  submitButton: {
-    backgroundColor: colors.primary,
-    borderRadius: borderRadius.lg,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: spacing.xl,
-  },
-  submitButtonDisabled: {
-    opacity: 0.6,
-  },
-  submitText: {
-    ...typography.body,
-    color: colors.textInverse,
-    fontWeight: '700',
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: t.colors.background,
+    },
+    content: {
+      padding: spacing.lg,
+      paddingBottom: spacing.xxl,
+    },
+    sectionTitle: {
+      ...t.typography.heading,
+      marginBottom: spacing.lg,
+    },
+    label: {
+      ...t.typography.label,
+      color: t.colors.textSecondary,
+      marginBottom: spacing.xs,
+      marginTop: spacing.md,
+    },
+    input: {
+      backgroundColor: t.colors.surface,
+      borderRadius: borderRadius.md,
+      borderWidth: 1,
+      borderColor: t.colors.border,
+      paddingHorizontal: spacing.md,
+      paddingVertical: 12,
+      ...t.typography.body,
+      color: t.colors.textPrimary,
+    },
+    textArea: {
+      minHeight: 80,
+      textAlignVertical: 'top',
+    },
+    categoryRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.xs,
+    },
+    categoryChip: {
+      borderRadius: borderRadius.xl,
+      borderWidth: 1,
+      borderColor: t.colors.border,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.xs,
+      backgroundColor: t.colors.surface,
+    },
+    categoryChipActive: {
+      backgroundColor: t.colors.primary,
+      borderColor: t.colors.primary,
+    },
+    categoryChipText: {
+      ...t.typography.caption,
+      color: t.colors.textSecondary,
+    },
+    categoryChipTextActive: {
+      color: t.colors.textInverse,
+    },
+    serviceItem: {
+      backgroundColor: t.colors.surface,
+      borderRadius: borderRadius.md,
+      borderWidth: 1,
+      borderColor: t.colors.border,
+      padding: spacing.md,
+      marginBottom: spacing.xs,
+    },
+    serviceItemActive: {
+      borderColor: t.colors.primary,
+      backgroundColor: t.colors.primaryLight,
+    },
+    serviceName: {
+      ...t.typography.body,
+      color: t.colors.textPrimary,
+      fontWeight: '600',
+    },
+    serviceDetail: {
+      ...t.typography.caption,
+      color: t.colors.textSecondary,
+      marginTop: 2,
+    },
+    timeRow: {
+      flexDirection: 'row',
+      gap: spacing.md,
+    },
+    timeField: {
+      flex: 1,
+    },
+    submitButton: {
+      backgroundColor: t.colors.primary,
+      borderRadius: borderRadius.lg,
+      paddingVertical: 14,
+      alignItems: 'center',
+      marginTop: spacing.xl,
+    },
+    submitButtonDisabled: {
+      opacity: 0.6,
+    },
+    submitText: {
+      ...t.typography.body,
+      color: t.colors.textInverse,
+      fontWeight: '700',
+    },
+  });
 
 export default CreateAppointmentScreen;

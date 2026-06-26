@@ -1,11 +1,8 @@
 import React from 'react';
-import {
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
-import { colors, spacing } from '../styles/theme';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { useTheme, useThemedStyles } from '../context/ThemeContext';
+import type { Theme } from '../styles/theme';
+import { spacing } from '../styles/theme';
 
 interface FormInputProps {
   value: string;
@@ -28,6 +25,9 @@ const FormInput: React.FC<FormInputProps> = ({
   keyboardType = 'default',
   autoCapitalize,
 }) => {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   return (
     <View style={styles.container}>
       {label && <Text style={styles.label}>{label}</Text>}
@@ -47,35 +47,36 @@ const FormInput: React.FC<FormInputProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: spacing.lg,
-    width: '100%',
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    marginBottom: 6,
-  },
-  input: {
-    height: 48,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    paddingHorizontal: spacing.md,
-    fontSize: 16,
-    backgroundColor: colors.surface,
-    color: colors.textPrimary,
-  },
-  inputError: {
-    borderColor: colors.error,
-  },
-  errorText: {
-    color: colors.error,
-    fontSize: 12,
-    marginTop: spacing.xs,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    container: {
+      marginBottom: spacing.lg,
+      width: '100%',
+    },
+    label: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: t.colors.textSecondary,
+      marginBottom: 6,
+    },
+    input: {
+      height: 48,
+      borderWidth: 1,
+      borderColor: t.colors.border,
+      borderRadius: 8,
+      paddingHorizontal: spacing.md,
+      fontSize: 16,
+      backgroundColor: t.colors.surface,
+      color: t.colors.textPrimary,
+    },
+    inputError: {
+      borderColor: t.colors.error,
+    },
+    errorText: {
+      color: t.colors.error,
+      fontSize: 12,
+      marginTop: spacing.xs,
+    },
+  });
 
 export default FormInput;

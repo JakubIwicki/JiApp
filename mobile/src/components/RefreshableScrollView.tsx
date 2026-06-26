@@ -1,10 +1,6 @@
 import React, { useMemo } from 'react';
-import {
-  type ScrollViewProps,
-  RefreshControl,
-  ScrollView,
-} from 'react-native';
-import { colors } from '../styles/theme';
+import { type ScrollViewProps, RefreshControl, ScrollView } from 'react-native';
+import { useTheme } from '../context/ThemeContext';
 
 interface Props extends ScrollViewProps {
   refreshing: boolean;
@@ -19,6 +15,8 @@ const RefreshableScrollView: React.FC<Props> = ({
   children,
   ...scrollViewProps
 }) => {
+  const { colors } = useTheme();
+
   const refreshControl = useMemo(
     () => (
       <RefreshControl
@@ -28,7 +26,7 @@ const RefreshableScrollView: React.FC<Props> = ({
         tintColor={colors.primary}
       />
     ),
-    [refreshing, onRefresh, refreshTestID],
+    [refreshing, onRefresh, refreshTestID, colors],
   );
 
   return (

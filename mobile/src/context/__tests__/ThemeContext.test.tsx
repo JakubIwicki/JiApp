@@ -6,7 +6,7 @@ import { View, Text } from 'react-native';
 // We override it per test via the mock function.
 
 import { ThemeProvider, useTheme } from '../ThemeContext';
-import { colorsLight, colorsDark } from '../../styles/theme';
+import { lavenderLight, lavenderDark } from '../../styles/theme';
 
 // Test component that reads context
 const TestConsumer: React.FC = () => {
@@ -37,10 +37,12 @@ describe('ThemeContext', () => {
   });
 
   it('provides light colors when system color scheme is light', () => {
-    jest.spyOn(
-      require('react-native/Libraries/Utilities/useColorScheme'),
-      'default',
-    ).mockReturnValue('light');
+    jest
+      .spyOn(
+        require('react-native/Libraries/Utilities/useColorScheme'),
+        'default',
+      )
+      .mockReturnValue('light');
 
     render(
       <ThemeProvider>
@@ -50,16 +52,18 @@ describe('ThemeContext', () => {
 
     expect(screen.getByTestId('isDark')).toBeDefined();
     expect(screen.getByText(String(false))).toBeDefined();
-    expect(screen.getByText(colorsLight.background)).toBeDefined();
-    expect(screen.getByText(colorsLight.surface)).toBeDefined();
-    expect(screen.getByText(colorsLight.textPrimary)).toBeDefined();
+    expect(screen.getByText(lavenderLight.background)).toBeDefined();
+    expect(screen.getByText(lavenderLight.surface)).toBeDefined();
+    expect(screen.getByText(lavenderLight.textPrimary)).toBeDefined();
   });
 
   it('provides dark colors when system color scheme is dark', () => {
-    jest.spyOn(
-      require('react-native/Libraries/Utilities/useColorScheme'),
-      'default',
-    ).mockReturnValue('dark');
+    jest
+      .spyOn(
+        require('react-native/Libraries/Utilities/useColorScheme'),
+        'default',
+      )
+      .mockReturnValue('dark');
 
     render(
       <ThemeProvider>
@@ -68,16 +72,18 @@ describe('ThemeContext', () => {
     );
 
     expect(screen.getByText(String(true))).toBeDefined();
-    expect(screen.getByText(colorsDark.background)).toBeDefined();
-    expect(screen.getByText(colorsDark.surface)).toBeDefined();
-    expect(screen.getByText(colorsDark.textPrimary)).toBeDefined();
+    expect(screen.getByText(lavenderDark.background)).toBeDefined();
+    expect(screen.getByText(lavenderDark.surface)).toBeDefined();
+    expect(screen.getByText(lavenderDark.textPrimary)).toBeDefined();
   });
 
   it('defaults to light when useColorScheme returns null', () => {
-    jest.spyOn(
-      require('react-native/Libraries/Utilities/useColorScheme'),
-      'default',
-    ).mockReturnValue(null);
+    jest
+      .spyOn(
+        require('react-native/Libraries/Utilities/useColorScheme'),
+        'default',
+      )
+      .mockReturnValue(null);
 
     render(
       <ThemeProvider>
@@ -86,14 +92,16 @@ describe('ThemeContext', () => {
     );
 
     expect(screen.getByText(String(false))).toBeDefined();
-    expect(screen.getByText(colorsLight.background)).toBeDefined();
+    expect(screen.getByText(lavenderLight.background)).toBeDefined();
   });
 
   it('defaults to light when useColorScheme returns undefined', () => {
-    jest.spyOn(
-      require('react-native/Libraries/Utilities/useColorScheme'),
-      'default',
-    ).mockReturnValue(undefined);
+    jest
+      .spyOn(
+        require('react-native/Libraries/Utilities/useColorScheme'),
+        'default',
+      )
+      .mockReturnValue(undefined);
 
     render(
       <ThemeProvider>
@@ -102,12 +110,12 @@ describe('ThemeContext', () => {
     );
 
     expect(screen.getByText(String(false))).toBeDefined();
-    expect(screen.getByText(colorsLight.background)).toBeDefined();
+    expect(screen.getByText(lavenderLight.background)).toBeDefined();
   });
 
   it('dark palette has different values from light palette', () => {
-    expect(colorsDark.background).not.toBe(colorsLight.background);
-    expect(colorsDark.surface).not.toBe(colorsLight.surface);
-    expect(colorsDark.textPrimary).not.toBe(colorsLight.textPrimary);
+    expect(lavenderDark.background).not.toBe(lavenderLight.background);
+    expect(lavenderDark.surface).not.toBe(lavenderLight.surface);
+    expect(lavenderDark.textPrimary).not.toBe(lavenderLight.textPrimary);
   });
 });

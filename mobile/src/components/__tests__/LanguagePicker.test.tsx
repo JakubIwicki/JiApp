@@ -3,6 +3,7 @@ import { render, fireEvent, act } from '@testing-library/react-native';
 import i18next from '../../i18n/index';
 import LanguagePicker from '../LanguagePicker';
 import * as storageService from '../../services/storageService';
+import { lavenderLight } from '../../styles/theme';
 
 // Mock storageService
 jest.mock('../../services/storageService', () => ({
@@ -57,7 +58,7 @@ describe('LanguagePicker', () => {
     const style = plText.props.style;
     const stylesArray = Array.isArray(style) ? style : [style];
     const hasTertiaryColor = stylesArray.some(
-      (s: Record<string, unknown>) => s.color === '#A0998F',
+      (s: Record<string, unknown>) => s.color === lavenderLight.textTertiary,
     );
     expect(hasTertiaryColor).toBe(true);
   });
@@ -66,7 +67,7 @@ describe('LanguagePicker', () => {
     const { getByText } = render(<LanguagePicker />);
     fireEvent.press(getByText('PL'));
     await act(async () => {
-      await new Promise((r) => setTimeout(r, 0));
+      await new Promise(r => setTimeout(r, 0));
     });
     expect(mockSaveLanguage).toHaveBeenCalledWith('pl');
   });
@@ -75,7 +76,7 @@ describe('LanguagePicker', () => {
     const { getByText } = render(<LanguagePicker />);
     fireEvent.press(getByText('PL'));
     await act(async () => {
-      await new Promise((r) => setTimeout(r, 0));
+      await new Promise(r => setTimeout(r, 0));
     });
     expect(i18next.language.startsWith('pl')).toBe(true);
     expect(mockSaveLanguage).toHaveBeenCalledWith('pl');

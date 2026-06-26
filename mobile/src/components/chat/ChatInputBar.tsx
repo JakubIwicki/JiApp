@@ -1,7 +1,9 @@
 import React, { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { colors, spacing, borderRadius } from '../../styles/theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
+import type { Theme } from '../../styles/theme';
+import { spacing, borderRadius } from '../../styles/theme';
 
 interface ChatInputBarProps {
   readonly onSend: (text: string) => void;
@@ -14,6 +16,8 @@ const ChatInputBar: React.FC<ChatInputBarProps> = ({
 }) => {
   const { t } = useTranslation();
   const [text, setText] = useState('');
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   const handleSend = useCallback(() => {
     const trimmed = text.trim();
@@ -63,50 +67,51 @@ const ChatInputBar: React.FC<ChatInputBarProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    backgroundColor: colors.background,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    color: colors.textPrimary,
-    maxHeight: 100,
-    paddingVertical: spacing.sm,
-  },
-  sendButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: spacing.sm,
-    marginBottom: spacing.xs,
-  },
-  sendButtonDisabled: {
-    backgroundColor: colors.border,
-  },
-  sendIcon: {
-    fontSize: 14,
-    color: colors.textInverse,
-    fontWeight: '700',
-  },
-  sendIconDisabled: {
-    color: colors.textTertiary,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    container: {
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.sm,
+      backgroundColor: t.colors.background,
+    },
+    inputRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      backgroundColor: t.colors.surface,
+      borderRadius: borderRadius.xl,
+      borderWidth: 1,
+      borderColor: t.colors.border,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.xs,
+    },
+    input: {
+      flex: 1,
+      fontSize: 16,
+      color: t.colors.textPrimary,
+      maxHeight: 100,
+      paddingVertical: spacing.sm,
+    },
+    sendButton: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: t.colors.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginLeft: spacing.sm,
+      marginBottom: spacing.xs,
+    },
+    sendButtonDisabled: {
+      backgroundColor: t.colors.border,
+    },
+    sendIcon: {
+      fontSize: 14,
+      color: t.colors.textInverse,
+      fontWeight: '700',
+    },
+    sendIconDisabled: {
+      color: t.colors.textTertiary,
+    },
+  });
 
 export default ChatInputBar;

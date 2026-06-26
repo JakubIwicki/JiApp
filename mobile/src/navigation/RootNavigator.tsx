@@ -7,7 +7,8 @@ import * as storageService from '../services/storageService';
 import ModuleSelectionScreen from '../screens/ModuleSelectionScreen';
 import MainNavigator from './MainNavigator';
 import SchedulerNavigator from './SchedulerNavigator';
-import { colors } from '../styles/theme';
+import type { Theme } from '../styles/theme';
+import { useThemedStyles, useTheme } from '../context/ThemeContext';
 import type { ModuleId, RootStackParamList } from './types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -58,6 +59,8 @@ const RootNavigator: React.FC = () => {
   const { availableModules } = useAuth();
   const [persisted, setPersisted] = useState<ModuleId | null>(null);
   const [resolved, setResolved] = useState(false);
+  const styles = useThemedStyles(makeStyles);
+  const { colors } = useTheme();
 
   useEffect(() => {
     let active = true;
@@ -99,13 +102,14 @@ const RootNavigator: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  loading: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.background,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    loading: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: t.colors.background,
+    },
+  });
 
 export default RootNavigator;

@@ -31,65 +31,69 @@ interface Props {
   onComplete: () => void;
 }
 
-const PARTICLE_COLORS = ['#C0B8AE', '#DDD6CE', '#8B7E74', '#A0988E'];
+const PARTICLE_COLORS = ['#C9C0DD', '#DDD6E8', '#8478A8', '#A99FC0'];
 const PARTICLE_COUNT = 10;
 
 let particleIdCounter = 0;
 
-const ParticleView: React.FC<ParticleViewProps> = React.memo(({ particle, screenHeight }) => {
-  const animY = useSharedValue(Math.random() * 300);
-  const animOpacity = useSharedValue(Math.random() * 0.3 + 0.1);
+const ParticleView: React.FC<ParticleViewProps> = React.memo(
+  ({ particle, screenHeight }) => {
+    const animY = useSharedValue(Math.random() * 300);
+    const animOpacity = useSharedValue(Math.random() * 0.3 + 0.1);
 
-  useEffect(() => {
-    animY.value = withRepeat(
-      withSequence(
-        withDelay(
-          Math.random() * 2000,
-          withTiming(-80, {
-            duration: animation.duration.ambient + Math.random() * 2000,
-          }),
-        ),
-      ),
-      -1,
-      false,
-    );
-    animOpacity.value = withRepeat(
-      withSequence(
-        withDelay(
-          Math.random() * 2000,
-          withSequence(
-            withTiming(0, { duration: animation.duration.ambient * 0.8 }),
-            withTiming(Math.random() * 0.3 + 0.1, { duration: animation.duration.ambient * 0.2 }),
+    useEffect(() => {
+      animY.value = withRepeat(
+        withSequence(
+          withDelay(
+            Math.random() * 2000,
+            withTiming(-80, {
+              duration: animation.duration.ambient + Math.random() * 2000,
+            }),
           ),
         ),
-      ),
-      -1,
-      false,
+        -1,
+        false,
+      );
+      animOpacity.value = withRepeat(
+        withSequence(
+          withDelay(
+            Math.random() * 2000,
+            withSequence(
+              withTiming(0, { duration: animation.duration.ambient * 0.8 }),
+              withTiming(Math.random() * 0.3 + 0.1, {
+                duration: animation.duration.ambient * 0.2,
+              }),
+            ),
+          ),
+        ),
+        -1,
+        false,
+      );
+    }, [animY, animOpacity]);
+
+    const animatedStyle = useAnimatedStyle(() => ({
+      transform: [{ translateY: animY.value }],
+      opacity: animOpacity.value,
+    }));
+
+    return (
+      <View style={[styles.particleWrapper, { left: particle.x }]}>
+        <Animated.View
+          style={[
+            styles.particle,
+            {
+              width: particle.size,
+              height: particle.size,
+              borderRadius: particle.size / 2,
+              backgroundColor: particle.color,
+            },
+            animatedStyle,
+          ]}
+        />
+      </View>
     );
-  }, [animY, animOpacity]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: animY.value }],
-    opacity: animOpacity.value,
-  }));
-
-  return (
-    <View style={[styles.particleWrapper, { left: particle.x }]}>
-      <Animated.View
-        style={[
-          styles.particle,
-          {
-            width: particle.size,
-            height: particle.size,
-            borderRadius: particle.size / 2,
-            backgroundColor: particle.color,
-          },
-          animatedStyle,
-        ]}
-      />
-    </View>
-  );
-});
+  },
+);
 
 const WelcomeOverlay: React.FC<Props> = ({ displayName, type, onComplete }) => {
   const { t } = useTranslation();
@@ -120,7 +124,8 @@ const WelcomeOverlay: React.FC<Props> = ({ displayName, type, onComplete }) => {
           id,
           x: Math.random() * screenWidth,
           size: Math.random() * 6 + 3,
-          color: PARTICLE_COLORS[Math.floor(Math.random() * PARTICLE_COLORS.length)],
+          color:
+            PARTICLE_COLORS[Math.floor(Math.random() * PARTICLE_COLORS.length)],
         } as Particle;
       }),
     [screenWidth],
@@ -137,7 +142,9 @@ const WelcomeOverlay: React.FC<Props> = ({ displayName, type, onComplete }) => {
 
     if (type === 'welcome') {
       // Background fade in
-      schedule(() => { bgOpacity.value = withTiming(1, { duration: 200 }); }, 0);
+      schedule(() => {
+        bgOpacity.value = withTiming(1, { duration: 200 });
+      }, 0);
       // Text fade in + slide
       schedule(() => {
         textOpacity.value = withTiming(1, { duration: 300 });
@@ -149,30 +156,46 @@ const WelcomeOverlay: React.FC<Props> = ({ displayName, type, onComplete }) => {
         nameOpacity.value = withTiming(1, { duration: 400 });
       }, 500);
       // Subtitle
-      schedule(() => { subtitleOpacity.value = withTiming(1, { duration: 250 }); }, 900);
+      schedule(() => {
+        subtitleOpacity.value = withTiming(1, { duration: 250 });
+      }, 900);
       // Hold
       schedule(() => {
         bgOpacity.value = withTiming(0, { duration: 300 });
       }, 1400);
       // Complete
-      schedule(() => { handleComplete(); }, 1700);
+      schedule(() => {
+        handleComplete();
+      }, 1700);
     } else if (type === 'greeting') {
-      schedule(() => { bgOpacity.value = withTiming(1, { duration: 300 }); }, 0);
+      schedule(() => {
+        bgOpacity.value = withTiming(1, { duration: 300 });
+      }, 0);
       schedule(() => {
         textOpacity.value = withTiming(1, { duration: 500 });
         textSlide.value = withTiming(0, { duration: 500 });
       }, 300);
-      schedule(() => { bgOpacity.value = withTiming(0, { duration: 600 }); }, 800);
-      schedule(() => { handleComplete(); }, 1400);
+      schedule(() => {
+        bgOpacity.value = withTiming(0, { duration: 600 });
+      }, 800);
+      schedule(() => {
+        handleComplete();
+      }, 1400);
     } else {
       // Farewell
-      schedule(() => { bgOpacity.value = withTiming(1, { duration: 300 }); }, 0);
+      schedule(() => {
+        bgOpacity.value = withTiming(1, { duration: 300 });
+      }, 0);
       schedule(() => {
         textOpacity.value = withTiming(1, { duration: 500 });
         textSlide.value = withTiming(0, { duration: 500 });
       }, 300);
-      schedule(() => { bgOpacity.value = withTiming(0, { duration: 600 }); }, 800);
-      schedule(() => { handleComplete(); }, 1400);
+      schedule(() => {
+        bgOpacity.value = withTiming(0, { duration: 600 });
+      }, 800);
+      schedule(() => {
+        handleComplete();
+      }, 1400);
     }
 
     return () => {
@@ -180,7 +203,16 @@ const WelcomeOverlay: React.FC<Props> = ({ displayName, type, onComplete }) => {
         clearTimeout(timeouts[i]);
       }
     };
-  }, [type, bgOpacity, textOpacity, textSlide, nameScale, nameOpacity, subtitleOpacity, handleComplete]);
+  }, [
+    type,
+    bgOpacity,
+    textOpacity,
+    textSlide,
+    nameScale,
+    nameOpacity,
+    subtitleOpacity,
+    handleComplete,
+  ]);
 
   const bgAnimatedStyle = useAnimatedStyle(() => ({
     opacity: bgOpacity.value,
@@ -207,7 +239,7 @@ const WelcomeOverlay: React.FC<Props> = ({ displayName, type, onComplete }) => {
       <Animated.View style={[styles.background, bgAnimatedStyle]} />
 
       {/* Particles */}
-      {particles.map((p) => (
+      {particles.map(p => (
         <ParticleView key={p.id} particle={p} screenHeight={0} />
       ))}
 
@@ -215,18 +247,10 @@ const WelcomeOverlay: React.FC<Props> = ({ displayName, type, onComplete }) => {
       <View style={styles.textContainer}>
         {type === 'welcome' ? (
           <>
-            <Animated.Text
-              style={[
-                styles.greeting,
-                textAnimatedStyle,
-              ]}>
+            <Animated.Text style={[styles.greeting, textAnimatedStyle]}>
               {t('welcome.welcomeBack')}
             </Animated.Text>
-            <Animated.Text
-              style={[
-                styles.name,
-                nameAnimatedStyle,
-              ]}>
+            <Animated.Text style={[styles.name, nameAnimatedStyle]}>
               {greeting}
             </Animated.Text>
             <Animated.Text style={[styles.subtitle, subtitleAnimatedStyle]}>
@@ -234,19 +258,11 @@ const WelcomeOverlay: React.FC<Props> = ({ displayName, type, onComplete }) => {
             </Animated.Text>
           </>
         ) : type === 'greeting' ? (
-          <Animated.Text
-            style={[
-              styles.farewell,
-              textAnimatedStyle,
-            ]}>
+          <Animated.Text style={[styles.farewell, textAnimatedStyle]}>
             {t('welcome.greeting')}
           </Animated.Text>
         ) : (
-          <Animated.Text
-            style={[
-              styles.farewell,
-              textAnimatedStyle,
-            ]}>
+          <Animated.Text style={[styles.farewell, textAnimatedStyle]}>
             {t('welcome.farewell')}
           </Animated.Text>
         )}
