@@ -5,6 +5,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import TrackPlayer, { Capability } from 'react-native-track-player';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import AppNavigator from './src/navigation/AppNavigator';
+import { ThemeProvider } from './src/context/ThemeContext';
 import './src/i18n';
 
 const App: React.FC = () => {
@@ -32,9 +33,11 @@ const App: React.FC = () => {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <KeyboardProvider>
         <SafeAreaProvider>
-          <NavigationContainer>
-            <AppNavigator />
-          </NavigationContainer>
+          <ThemeProvider>
+            <NavigationContainer>
+              <AppNavigator />
+            </NavigationContainer>
+          </ThemeProvider>
         </SafeAreaProvider>
       </KeyboardProvider>
     </GestureHandlerRootView>

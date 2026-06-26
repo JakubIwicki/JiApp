@@ -6,14 +6,10 @@ import useAuth from '../hooks/useAuth';
 import useScreenTitle from '../hooks/useScreenTitle';
 import useToast from '../hooks/useToast';
 import LanguagePicker from '../components/LanguagePicker';
+import PalettePicker from '../components/PalettePicker';
 import { APP_VERSION } from '../constants/app';
-import {
-  borderRadius,
-  colors,
-  commonStyles,
-  typography,
-  spacing,
-} from '../styles/theme';
+import { useTheme, useThemedStyles } from '../context/ThemeContext';
+import type { Theme } from '../styles/theme';
 import type {
   RootStackParamList,
   SettingsStackParamList,
@@ -30,11 +26,12 @@ const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<SettingsNavigationProp>();
   const { displayName, username, logout } = useAuth();
   const { showSuccess } = useToast();
+  const { commonStyles } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   useScreenTitle('settings.title');
 
   const handleSwitchModule = useCallback(() => {
-    // The module picker lives on the root stack, above the tab navigator.
     const rootNavigation =
       navigation.getParent<NativeStackNavigationProp<RootStackParamList>>();
     rootNavigation?.navigate('ModuleSelection');
@@ -50,8 +47,15 @@ const SettingsScreen: React.FC = () => {
       contentContainerStyle={commonStyles.scrollContent}
     >
       <View style={commonStyles.sectionContainer}>
+        <Text style={commonStyles.sectionHeader}>{t('settings.theme')}</Text>
+        <View style={styles.pickerWrapper}>
+          <PalettePicker />
+        </View>
+      </View>
+
+      <View style={commonStyles.sectionContainer}>
         <Text style={commonStyles.sectionHeader}>{t('settings.language')}</Text>
-        <View style={styles.languagePickerWrapper}>
+        <View style={styles.pickerWrapper}>
           <LanguagePicker />
         </View>
       </View>
@@ -124,76 +128,77 @@ const SettingsScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  languagePickerWrapper: {
-    marginHorizontal: spacing.lg,
-  },
-  infoLabel: {
-    ...typography.body,
-    color: colors.textPrimary,
-  },
-  infoValue: {
-    ...typography.body,
-    color: colors.textSecondary,
-  },
-  switchSection: {
-    marginTop: spacing.lg,
-    paddingHorizontal: spacing.lg,
-  },
-  switchButton: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    paddingVertical: 14,
-    minHeight: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  switchText: {
-    fontSize: 16,
-    color: colors.primary,
-    fontWeight: '600',
-  },
-  editProfileButton: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    paddingVertical: 14,
-    minHeight: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: spacing.md,
-  },
-  editProfileText: {
-    fontSize: 16,
-    color: colors.primary,
-    fontWeight: '600',
-  },
-  logoutSection: {
-    marginVertical: spacing.lg,
-    paddingHorizontal: spacing.lg,
-  },
-  logoutButton: {
-    backgroundColor: colors.surface,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: colors.error,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  logoutText: {
-    fontSize: 16,
-    color: colors.error,
-    fontWeight: '600',
-  },
-  versionText: {
-    fontSize: 12,
-    color: colors.textTertiary,
-    textAlign: 'center',
-    marginBottom: spacing.xl,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    pickerWrapper: {
+      marginHorizontal: t.spacing.lg,
+    },
+    infoLabel: {
+      ...t.typography.body,
+      color: t.colors.textPrimary,
+    },
+    infoValue: {
+      ...t.typography.body,
+      color: t.colors.textSecondary,
+    },
+    switchSection: {
+      marginTop: t.spacing.lg,
+      paddingHorizontal: t.spacing.lg,
+    },
+    switchButton: {
+      backgroundColor: t.colors.surface,
+      borderRadius: t.borderRadius.lg,
+      borderWidth: 1.5,
+      borderColor: t.colors.primary,
+      paddingVertical: 14,
+      minHeight: 48,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    switchText: {
+      fontSize: 16,
+      color: t.colors.primary,
+      fontWeight: '600',
+    },
+    editProfileButton: {
+      backgroundColor: t.colors.surface,
+      borderRadius: t.borderRadius.lg,
+      borderWidth: 1.5,
+      borderColor: t.colors.primary,
+      paddingVertical: 14,
+      minHeight: 48,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: t.spacing.md,
+    },
+    editProfileText: {
+      fontSize: 16,
+      color: t.colors.primary,
+      fontWeight: '600',
+    },
+    logoutSection: {
+      marginVertical: t.spacing.lg,
+      paddingHorizontal: t.spacing.lg,
+    },
+    logoutButton: {
+      backgroundColor: t.colors.surface,
+      borderRadius: 10,
+      borderWidth: 1.5,
+      borderColor: t.colors.error,
+      paddingVertical: 14,
+      alignItems: 'center',
+    },
+    logoutText: {
+      fontSize: 16,
+      color: t.colors.error,
+      fontWeight: '600',
+    },
+    versionText: {
+      fontSize: 12,
+      color: t.colors.textTertiary,
+      textAlign: 'center',
+      marginBottom: t.spacing.xl,
+    },
+  });
 
 export default SettingsScreen;
