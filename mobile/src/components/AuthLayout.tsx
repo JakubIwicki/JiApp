@@ -7,7 +7,9 @@ import {
   Text,
 } from 'react-native';
 import Button from './Button';
-import { commonStyles, typography, spacing } from '../styles/theme';
+import { useTheme, useThemedStyles } from '../context/ThemeContext';
+import type { Theme } from '../styles/theme';
+import { spacing } from '../styles/theme';
 import { StyleSheet } from 'react-native';
 
 interface AuthLayoutProps {
@@ -31,6 +33,8 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
   footerLinkText,
   onFooterLinkPress,
 }) => {
+  const { commonStyles } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <KeyboardAvoidingView
       style={commonStyles.screenContainer}
@@ -54,7 +58,10 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
 
         <Pressable
           onPress={onFooterLinkPress}
-          style={({ pressed }) => [commonStyles.linkContainer, pressed && { opacity: 0.7 }]}
+          style={({ pressed }) => [
+            commonStyles.linkContainer,
+            pressed && { opacity: 0.7 },
+          ]}
         >
           <Text style={commonStyles.linkText}>{footerLinkText}</Text>
         </Pressable>
@@ -63,12 +70,13 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  title: {
-    ...typography.title,
-    marginBottom: spacing.xxl,
-    textAlign: 'center',
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    title: {
+      ...t.typography.title,
+      marginBottom: spacing.xxl,
+      textAlign: 'center',
+    },
+  });
 
 export default AuthLayout;

@@ -1,14 +1,14 @@
 import React, { useEffect } from 'react';
-import {
-  Image,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import Animated, { useSharedValue, withTiming, useAnimatedStyle } from 'react-native-reanimated';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  useSharedValue,
+  withTiming,
+  useAnimatedStyle,
+} from 'react-native-reanimated';
 import type { VideoItem } from '../types/api';
-import { colors, borderRadius, spacing } from '../styles/theme';
+import { useThemedStyles } from '../context/ThemeContext';
+import type { Theme } from '../styles/theme';
+import { borderRadius, spacing } from '../styles/theme';
 
 interface VideoCardProps {
   video: VideoItem;
@@ -18,6 +18,7 @@ interface VideoCardProps {
 const VideoCard: React.FC<VideoCardProps> = ({ video, onPress }) => {
   const fadeAnim = useSharedValue(0);
   const slideAnim = useSharedValue(8);
+  const styles = useThemedStyles(makeStyles);
 
   useEffect(() => {
     fadeAnim.value = withTiming(1, { duration: 300 });
@@ -40,12 +41,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onPress }) => {
       testID="video-card"
       accessibilityRole="button"
     >
-      <Animated.View
-        style={[
-          styles.card,
-          animatedStyle,
-        ]}
-      >
+      <Animated.View style={[styles.card, animatedStyle]}>
         {video.imageUrl ? (
           <Image
             source={{ uri: video.imageUrl }}
@@ -72,42 +68,43 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onPress }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  card: {
-    flexDirection: 'row',
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    marginHorizontal: spacing.lg,
-    marginVertical: 6,
-    overflow: 'hidden',
-    boxShadow: '0 1px 2px rgba(43,33,24,0.1)',
-  },
-  thumbnail: {
-    width: 120,
-    height: 90,
-    backgroundColor: colors.primaryLight,
-  },
-  placeholder: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.primaryLight,
-  },
-  info: {
-    flex: 1,
-    padding: 10,
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: spacing.xs,
-  },
-  meta: {
-    fontSize: 13,
-    color: colors.textTertiary,
-    marginTop: 2,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    card: {
+      flexDirection: 'row',
+      backgroundColor: t.colors.surface,
+      borderRadius: borderRadius.lg,
+      marginHorizontal: spacing.lg,
+      marginVertical: 6,
+      overflow: 'hidden',
+      boxShadow: '0 1px 2px rgba(43,33,24,0.1)',
+    },
+    thumbnail: {
+      width: 120,
+      height: 90,
+      backgroundColor: t.colors.primaryLight,
+    },
+    placeholder: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: t.colors.primaryLight,
+    },
+    info: {
+      flex: 1,
+      padding: 10,
+      justifyContent: 'center',
+    },
+    title: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: t.colors.textPrimary,
+      marginBottom: spacing.xs,
+    },
+    meta: {
+      fontSize: 13,
+      color: t.colors.textTertiary,
+      marginTop: 2,
+    },
+  });
 
 export default VideoCard;

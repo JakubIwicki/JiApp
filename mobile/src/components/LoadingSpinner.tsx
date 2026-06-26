@@ -1,6 +1,15 @@
 import React from 'react';
-import {ActivityIndicator, StyleProp, StyleSheet, Text, View, ViewStyle} from 'react-native';
-import { colors, spacing, typography } from '../styles/theme';
+import {
+  ActivityIndicator,
+  StyleProp,
+  StyleSheet,
+  Text,
+  View,
+  ViewStyle,
+} from 'react-native';
+import { useTheme, useThemedStyles } from '../context/ThemeContext';
+import type { Theme } from '../styles/theme';
+import { spacing } from '../styles/theme';
 
 interface LoadingSpinnerProps {
   size?: 'small' | 'large';
@@ -11,10 +20,14 @@ interface LoadingSpinnerProps {
 
 const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   size = 'large',
-  color = colors.primary,
+  color: colorProp,
   style,
   text,
 }) => {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const color = colorProp ?? colors.primary;
+
   return (
     <View style={[styles.container, style]} testID="loading-spinner">
       <ActivityIndicator size={size} color={color} testID="loading-indicator" />
@@ -27,17 +40,18 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  text: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-    marginTop: spacing.md,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    text: {
+      ...t.typography.bodySmall,
+      color: t.colors.textSecondary,
+      marginTop: spacing.md,
+    },
+  });
 
 export default LoadingSpinner;

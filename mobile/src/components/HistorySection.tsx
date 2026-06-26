@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, View } from 'react-native';
-import { commonStyles } from '../styles/theme';
+import { useTheme } from '../context/ThemeContext';
 
 interface HistorySectionProps<T> {
   title: string;
@@ -27,6 +27,8 @@ function HistorySection<T>({
   renderItem,
   keyExtractor,
 }: HistorySectionProps<T>): React.ReactElement {
+  const { commonStyles } = useTheme();
+
   return (
     <View style={commonStyles.sectionContainer}>
       <Text style={commonStyles.sectionHeader}>{title}</Text>
@@ -35,7 +37,7 @@ function HistorySection<T>({
           <Text style={commonStyles.emptyText}>{emptyText}</Text>
         </View>
       ) : (
-        items.map((item) => (
+        items.map(item => (
           <HistorySectionItem
             key={keyExtractor(item)}
             item={item}

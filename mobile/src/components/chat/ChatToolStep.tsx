@@ -6,7 +6,9 @@ import Animated, {
   useAnimatedStyle,
 } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
-import { colors, spacing, borderRadius } from '../../styles/theme';
+import { useThemedStyles } from '../../context/ThemeContext';
+import type { Theme } from '../../styles/theme';
+import { spacing, borderRadius } from '../../styles/theme';
 import type { ToolStep } from '../../types/chat';
 
 interface ChatToolStepProps {
@@ -26,6 +28,7 @@ const toolCodeMap: Record<string, string> = {
 
 const ChatToolStep: React.FC<ChatToolStepProps> = ({ step }) => {
   const { t } = useTranslation();
+  const styles = useThemedStyles(makeStyles);
   const isRunning = step.status === 'running';
   const toolKey = toolCodeMap[step.tool] ?? step.tool;
 
@@ -77,51 +80,52 @@ const ChatToolStep: React.FC<ChatToolStepProps> = ({ step }) => {
 
 // ── Styles ─────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    borderRadius: borderRadius.xl,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    marginTop: spacing.xs,
-  },
-  runningPill: {
-    backgroundColor: colors.successLight,
-  },
-  donePill: {
-    backgroundColor: colors.primaryLight,
-  },
-  label: {
-    fontSize: 13,
-  },
-  runningLabel: {
-    color: colors.success,
-  },
-  doneLabel: {
-    color: colors.textSecondary,
-  },
-  checkmark: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginRight: spacing.xs,
-  },
-  dotRow: {
-    flexDirection: 'row',
-    marginLeft: spacing.xs,
-    gap: 2,
-  },
-  dot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.success,
-    opacity: 0.5,
-  },
-  dot1: {},
-  dot2: {},
-  dot3: {},
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    pill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      alignSelf: 'flex-start',
+      borderRadius: borderRadius.xl,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.xs,
+      marginTop: spacing.xs,
+    },
+    runningPill: {
+      backgroundColor: t.colors.successLight,
+    },
+    donePill: {
+      backgroundColor: t.colors.primaryLight,
+    },
+    label: {
+      fontSize: 13,
+    },
+    runningLabel: {
+      color: t.colors.success,
+    },
+    doneLabel: {
+      color: t.colors.textSecondary,
+    },
+    checkmark: {
+      fontSize: 12,
+      color: t.colors.textSecondary,
+      marginRight: spacing.xs,
+    },
+    dotRow: {
+      flexDirection: 'row',
+      marginLeft: spacing.xs,
+      gap: 2,
+    },
+    dot: {
+      width: 4,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: t.colors.success,
+      opacity: 0.5,
+    },
+    dot1: {},
+    dot2: {},
+    dot3: {},
+  });
 
 export default ChatToolStep;

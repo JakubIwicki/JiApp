@@ -2,10 +2,12 @@ import React, { useCallback } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import * as storageService from '../services/storageService';
-import { colors } from '../styles/theme';
+import { useThemedStyles } from '../context/ThemeContext';
+import type { Theme } from '../styles/theme';
 
 const LanguagePicker: React.FC = () => {
   const { i18n, t } = useTranslation();
+  const styles = useThemedStyles(makeStyles);
 
   const currentLanguage = i18n.language?.startsWith('pl') ? 'pl' : 'en';
 
@@ -68,47 +70,48 @@ const LanguagePicker: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.surface,
-    borderRadius: 10,
-    overflow: 'hidden',
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  labelText: {
-    fontSize: 16,
-    color: colors.textPrimary,
-  },
-  togglePill: {
-    flexDirection: 'row',
-    backgroundColor: colors.primaryLight,
-    borderRadius: 10,
-    padding: 3,
-  },
-  pillOption: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  pillActive: {
-    backgroundColor: colors.primary,
-  },
-  pillText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  pillTextActive: {
-    color: colors.textInverse,
-  },
-  pillTextInactive: {
-    color: colors.textTertiary,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: t.colors.surface,
+      borderRadius: 10,
+      overflow: 'hidden',
+    },
+    row: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+    },
+    labelText: {
+      fontSize: 16,
+      color: t.colors.textPrimary,
+    },
+    togglePill: {
+      flexDirection: 'row',
+      backgroundColor: t.colors.primaryLight,
+      borderRadius: 10,
+      padding: 3,
+    },
+    pillOption: {
+      paddingHorizontal: 14,
+      paddingVertical: 6,
+      borderRadius: 8,
+    },
+    pillActive: {
+      backgroundColor: t.colors.primary,
+    },
+    pillText: {
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    pillTextActive: {
+      color: t.colors.textInverse,
+    },
+    pillTextInactive: {
+      color: t.colors.textTertiary,
+    },
+  });
 
 export default LanguagePicker;

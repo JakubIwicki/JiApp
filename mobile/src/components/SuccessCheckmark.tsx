@@ -1,16 +1,21 @@
 import React, { useEffect } from 'react';
 import { StyleSheet, Text } from 'react-native';
-import Animated, { useSharedValue, withSpring, useAnimatedStyle } from 'react-native-reanimated';
-import { animation, colors } from '../styles/theme';
+import Animated, {
+  useSharedValue,
+  withSpring,
+  useAnimatedStyle,
+} from 'react-native-reanimated';
+import { useThemedStyles } from '../context/ThemeContext';
+import type { Theme } from '../styles/theme';
+import { animation } from '../styles/theme';
 
 interface SuccessCheckmarkProps {
   size?: number;
 }
 
-const SuccessCheckmark: React.FC<SuccessCheckmarkProps> = ({
-  size = 64,
-}) => {
+const SuccessCheckmark: React.FC<SuccessCheckmarkProps> = ({ size = 64 }) => {
   const scaleAnim = useSharedValue(0);
+  const styles = useThemedStyles(makeStyles);
 
   useEffect(() => {
     scaleAnim.value = withSpring(1, animation.spring.bouncy);
@@ -38,16 +43,17 @@ const SuccessCheckmark: React.FC<SuccessCheckmarkProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.success,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  checkmark: {
-    color: colors.textInverse,
-    fontWeight: '700',
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: t.colors.success,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    checkmark: {
+      color: t.colors.textInverse,
+      fontWeight: '700',
+    },
+  });
 
 export default SuccessCheckmark;
