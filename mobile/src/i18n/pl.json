@@ -122,7 +122,11 @@
     "passwordChanged": "Hasło zmienione",
     "passwordsMustMatch": "Hasła muszą być zgodne",
     "displayNameMax": "Nazwa wyświetlana może mieć maksymalnie 50 znaków",
-    "emailTaken": "Ten adres e-mail jest już zajęty"
+    "emailTaken": "Ten adres e-mail jest już zajęty",
+    "themeMode": "Tryb wyświetlania",
+    "themeModeSystem": "Systemowy",
+    "themeModeLight": "Jasny",
+    "themeModeDark": "Ciemny"
   },
   "wake": {
     "title": "Budzenie serwera...",

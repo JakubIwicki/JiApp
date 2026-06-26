@@ -152,6 +152,17 @@ export const savePalette = async (name: string): Promise<void> => {
 export const getPalette = async (): Promise<string | null> =>
   AsyncStorage.getItem(PALETTE_KEY);
 
+// --- Theme Mode ---
+
+const THEME_MODE_KEY = 'app_theme_mode';
+
+export const saveThemeMode = async (mode: string): Promise<void> => {
+  await AsyncStorage.setItem(THEME_MODE_KEY, mode);
+};
+
+export const getThemeMode = async (): Promise<string | null> =>
+  AsyncStorage.getItem(THEME_MODE_KEY);
+
 // --- Welcome Overlay ---
 
 export const markWelcomeSeen = async (): Promise<void> => {

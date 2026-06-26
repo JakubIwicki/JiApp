@@ -11,7 +11,9 @@ import Animated, {
   interpolate,
   useAnimatedStyle,
 } from 'react-native-reanimated';
-import { animation, colors, typography } from '../styles/theme';
+import { animation } from '../styles/theme';
+import type { Theme } from '../styles/theme';
+import { useThemedStyles } from '../context/ThemeContext';
 
 interface Particle {
   id: string;
@@ -35,6 +37,16 @@ const PARTICLE_COLORS = ['#C9C0DD', '#DDD6E8', '#8478A8', '#A99FC0'];
 const PARTICLE_COUNT = 10;
 
 let particleIdCounter = 0;
+
+const particleStyles = StyleSheet.create({
+  particleWrapper: {
+    position: 'absolute',
+    bottom: 0,
+  },
+  particle: {
+    position: 'absolute',
+  },
+});
 
 const ParticleView: React.FC<ParticleViewProps> = React.memo(
   ({ particle, screenHeight }) => {
@@ -77,10 +89,10 @@ const ParticleView: React.FC<ParticleViewProps> = React.memo(
     }));
 
     return (
-      <View style={[styles.particleWrapper, { left: particle.x }]}>
+      <View style={[particleStyles.particleWrapper, { left: particle.x }]}>
         <Animated.View
           style={[
-            styles.particle,
+            particleStyles.particle,
             {
               width: particle.size,
               height: particle.size,
@@ -98,6 +110,7 @@ const ParticleView: React.FC<ParticleViewProps> = React.memo(
 const WelcomeOverlay: React.FC<Props> = ({ displayName, type, onComplete }) => {
   const { t } = useTranslation();
   const { width: screenWidth } = useWindowDimensions();
+  const styles = useThemedStyles(makeStyles);
   const bgOpacity = useSharedValue(0);
   const textOpacity = useSharedValue(0);
   const textSlide = useSharedValue(12);
@@ -159,9 +172,12 @@ const WelcomeOverlay: React.FC<Props> = ({ displayName, type, onComplete }) => {
       schedule(() => {
         subtitleOpacity.value = withTiming(1, { duration: 250 });
       }, 900);
-      // Hold
+      // Fade out background + text
       schedule(() => {
         bgOpacity.value = withTiming(0, { duration: 300 });
+        textOpacity.value = withTiming(0, { duration: 300 });
+        nameOpacity.value = withTiming(0, { duration: 300 });
+        subtitleOpacity.value = withTiming(0, { duration: 300 });
       }, 1400);
       // Complete
       schedule(() => {
@@ -177,6 +193,7 @@ const WelcomeOverlay: React.FC<Props> = ({ displayName, type, onComplete }) => {
       }, 300);
       schedule(() => {
         bgOpacity.value = withTiming(0, { duration: 600 });
+        textOpacity.value = withTiming(0, { duration: 600 });
       }, 800);
       schedule(() => {
         handleComplete();
@@ -192,6 +209,7 @@ const WelcomeOverlay: React.FC<Props> = ({ displayName, type, onComplete }) => {
       }, 300);
       schedule(() => {
         bgOpacity.value = withTiming(0, { duration: 600 });
+        textOpacity.value = withTiming(0, { duration: 600 });
       }, 800);
       schedule(() => {
         handleComplete();
@@ -271,60 +289,54 @@ const WelcomeOverlay: React.FC<Props> = ({ displayName, type, onComplete }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 100,
-  },
-  background: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: colors.background,
-  },
-  particleWrapper: {
-    position: 'absolute',
-    bottom: 0,
-  },
-  particle: {
-    position: 'absolute',
-  },
-  textContainer: {
-    alignItems: 'center',
-    paddingHorizontal: 32,
-  },
-  greeting: {
-    fontSize: typography.bodySmall.fontSize,
-    color: colors.textSecondary,
-    letterSpacing: 0.5,
-    marginBottom: 8,
-  },
-  name: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  subtitle: {
-    fontSize: typography.bodySmall.fontSize,
-    color: colors.textTertiary,
-    letterSpacing: 0.3,
-  },
-  farewell: {
-    fontSize: 28,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    letterSpacing: 0.3,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    container: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 100,
+    },
+    background: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: t.colors.background,
+    },
+    textContainer: {
+      alignItems: 'center',
+      paddingHorizontal: 32,
+    },
+    greeting: {
+      fontSize: t.typography.bodySmall.fontSize,
+      color: t.colors.textSecondary,
+      letterSpacing: 0.5,
+      marginBottom: 8,
+    },
+    name: {
+      fontSize: 36,
+      fontWeight: '700',
+      color: t.colors.textPrimary,
+      textAlign: 'center',
+      marginBottom: 16,
+    },
+    subtitle: {
+      fontSize: t.typography.bodySmall.fontSize,
+      color: t.colors.textTertiary,
+      letterSpacing: 0.3,
+    },
+    farewell: {
+      fontSize: 28,
+      fontWeight: '600',
+      color: t.colors.textPrimary,
+      letterSpacing: 0.3,
+    },
+  });
 
 export default WelcomeOverlay;

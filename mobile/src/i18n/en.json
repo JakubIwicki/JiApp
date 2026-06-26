@@ -122,7 +122,11 @@
     "passwordChanged": "Password changed",
     "passwordsMustMatch": "Passwords must match",
     "displayNameMax": "Display name must be 50 characters or fewer",
-    "emailTaken": "That email address is already in use"
+    "emailTaken": "That email address is already in use",
+    "themeMode": "Display mode",
+    "themeModeSystem": "System",
+    "themeModeLight": "Light",
+    "themeModeDark": "Dark"
   },
   "wake": {
     "title": "Waking server...",

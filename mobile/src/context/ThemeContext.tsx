@@ -10,6 +10,7 @@ import { useColorScheme } from 'react-native';
 import {
   palettes,
   DEFAULT_PALETTE,
+  DEFAULT_THEME_MODE,
   makeTypography,
   makeCommonStyles,
   makeTabBar,
@@ -17,6 +18,7 @@ import {
   borderRadius,
   type PaletteName,
   type Theme,
+  type ThemeMode,
 } from '../styles/theme';
 import * as storageService from '../services/storageService';
 
@@ -24,6 +26,8 @@ interface ThemeContextValue extends Theme {
   palette: PaletteName;
   isDark: boolean;
   setPalette: (name: PaletteName) => Promise<void>;
+  themeMode: ThemeMode;
+  setThemeMode: (mode: ThemeMode) => Promise<void>;
 }
 
 const defaultColors = palettes[DEFAULT_PALETTE].light;
@@ -37,6 +41,8 @@ const defaultContextValue: ThemeContextValue = {
   palette: DEFAULT_PALETTE,
   isDark: false,
   setPalette: async () => {},
+  themeMode: DEFAULT_THEME_MODE,
+  setThemeMode: async () => {},
 };
 
 const ThemeContext = createContext<ThemeContextValue>(defaultContextValue);
@@ -45,14 +51,27 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [palette, setPaletteState] = useState<PaletteName>(DEFAULT_PALETTE);
+  const [themeMode, setThemeModeState] =
+    useState<ThemeMode>(DEFAULT_THEME_MODE);
   const systemColorScheme = useColorScheme();
-  const isDark = systemColorScheme === 'dark';
+  const isDark =
+    themeMode === 'system'
+      ? systemColorScheme === 'dark'
+      : themeMode === 'dark';
 
   useEffect(() => {
     const load = async () => {
       const stored = await storageService.getPalette();
       if (stored && stored in palettes) {
         setPaletteState(stored as PaletteName);
+      }
+      const storedMode = await storageService.getThemeMode();
+      if (
+        storedMode === 'system' ||
+        storedMode === 'light' ||
+        storedMode === 'dark'
+      ) {
+        setThemeModeState(storedMode as ThemeMode);
       }
     };
     load();
@@ -77,9 +96,21 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     await storageService.savePalette(name);
   }, []);
 
+  const setThemeMode = useCallback(async (mode: ThemeMode) => {
+    setThemeModeState(mode);
+    await storageService.saveThemeMode(mode);
+  }, []);
+
   const value = useMemo<ThemeContextValue>(
-    () => ({ ...theme, palette, isDark, setPalette }),
-    [theme, palette, isDark, setPalette],
+    () => ({
+      ...theme,
+      palette,
+      isDark,
+      setPalette,
+      themeMode,
+      setThemeMode,
+    }),
+    [theme, palette, isDark, setPalette, themeMode, setThemeMode],
   );
 
   return (

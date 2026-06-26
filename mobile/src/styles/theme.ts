@@ -134,6 +134,9 @@ export const palettes = {
 export type PaletteName = keyof typeof palettes;
 export const DEFAULT_PALETTE: PaletteName = 'lavender';
 
+export type ThemeMode = 'system' | 'light' | 'dark';
+export const DEFAULT_THEME_MODE: ThemeMode = 'system';
+
 // ─── Factory: Typography ──────────────────────────────────────────────────────
 export const makeTypography = (c: ColorPalette) =>
   ({

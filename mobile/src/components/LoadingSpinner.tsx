@@ -46,6 +46,7 @@ const makeStyles = (t: Theme) =>
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
+      backgroundColor: t.colors.background,
     },
     text: {
       ...t.typography.bodySmall,
