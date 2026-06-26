@@ -1,12 +1,43 @@
-import React, { useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import React, { useEffect, useMemo } from 'react';
+import {
+  NavigationContainer,
+  DefaultTheme,
+  DarkTheme,
+} from '@react-navigation/native';
+import type { Theme as NavTheme } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import TrackPlayer, { Capability } from 'react-native-track-player';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import AppNavigator from './src/navigation/AppNavigator';
-import { ThemeProvider } from './src/context/ThemeContext';
+import { ThemeProvider, useTheme } from './src/context/ThemeContext';
+import { palettes, DEFAULT_PALETTE } from './src/styles/theme';
 import './src/i18n';
+
+const ThemedNavigationContainer: React.FC = () => {
+  const { colors, isDark } = useTheme();
+
+  const navTheme: NavTheme = useMemo(
+    () => ({
+      ...(isDark ? DarkTheme : DefaultTheme),
+      colors: {
+        ...(isDark ? DarkTheme : DefaultTheme).colors,
+        background: colors.background,
+        card: colors.surface,
+        text: colors.textPrimary,
+        border: colors.border,
+        primary: colors.primary,
+      },
+    }),
+    [colors, isDark],
+  );
+
+  return (
+    <NavigationContainer theme={navTheme}>
+      <AppNavigator />
+    </NavigationContainer>
+  );
+};
 
 const App: React.FC = () => {
   useEffect(() => {
@@ -30,13 +61,16 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView
+      style={{
+        flex: 1,
+        backgroundColor: palettes[DEFAULT_PALETTE].light.background,
+      }}
+    >
       <KeyboardProvider>
         <SafeAreaProvider>
           <ThemeProvider>
-            <NavigationContainer>
-              <AppNavigator />
-            </NavigationContainer>
+            <ThemedNavigationContainer />
           </ThemeProvider>
         </SafeAreaProvider>
       </KeyboardProvider>

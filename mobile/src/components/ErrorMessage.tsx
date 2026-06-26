@@ -40,6 +40,7 @@ const makeStyles = (t: Theme) =>
       alignItems: 'center',
       justifyContent: 'center',
       padding: 32,
+      backgroundColor: t.colors.background,
     },
     icon: {
       fontSize: 40,

@@ -7,6 +7,7 @@ import useScreenTitle from '../hooks/useScreenTitle';
 import useToast from '../hooks/useToast';
 import LanguagePicker from '../components/LanguagePicker';
 import PalettePicker from '../components/PalettePicker';
+import ThemeModePicker from '../components/ThemeModePicker';
 import { APP_VERSION } from '../constants/app';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import type { Theme } from '../styles/theme';
@@ -46,6 +47,15 @@ const SettingsScreen: React.FC = () => {
       style={commonStyles.screenContainer}
       contentContainerStyle={commonStyles.scrollContent}
     >
+      <View style={commonStyles.sectionContainer}>
+        <Text style={commonStyles.sectionHeader}>
+          {t('settings.themeMode')}
+        </Text>
+        <View style={styles.pickerWrapper}>
+          <ThemeModePicker />
+        </View>
+      </View>
+
       <View style={commonStyles.sectionContainer}>
         <Text style={commonStyles.sectionHeader}>{t('settings.theme')}</Text>
         <View style={styles.pickerWrapper}>
