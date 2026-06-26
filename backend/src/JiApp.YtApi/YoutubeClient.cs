@@ -171,8 +171,10 @@ public sealed class YoutubeClient(
             CreateNoWindow = true,
         };
         startInfo.ArgumentList.Add("--no-playlist");
-        startInfo.ArgumentList.Add("--extractor-args");
-        startInfo.ArgumentList.Add("youtube:player_client=android_vr");
+        // No --extractor-args override: the default (web) client picks up the PO token
+        // from /etc/yt-dlp.conf and streams through WARP, whereas android_vr produces
+        // format URLs that 403 even through the proxy with no fallback in the single-shot
+        // streaming preview.
         startInfo.ArgumentList.Add("-f");
         startInfo.ArgumentList.Add("bestaudio[ext=webm]/bestaudio");
         if (!string.IsNullOrEmpty(cookiesFromBrowser))

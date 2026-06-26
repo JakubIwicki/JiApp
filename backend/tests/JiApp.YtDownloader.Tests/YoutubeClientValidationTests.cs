@@ -45,7 +45,8 @@ public sealed class YoutubeClientValidationTests
         var process = fixture.Sut.BuildPreviewAudioProcess("dQw4w9WgXcQ");
 
         process.StartInfo.ArgumentList.Should().Contain("--no-playlist");
-        process.StartInfo.ArgumentList.Should().Contain("youtube:player_client=android_vr");
+        process.StartInfo.ArgumentList.Should().NotContain("youtube:player_client=android_vr");
+        process.StartInfo.ArgumentList.Should().NotContain("--extractor-args");
         process.StartInfo.ArgumentList.Should().Contain("bestaudio[ext=webm]/bestaudio");
         process.StartInfo.ArgumentList.Should().Contain("-o");
         process.StartInfo.ArgumentList.Should().Contain("-");
