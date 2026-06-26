@@ -9,9 +9,9 @@ public sealed class YoutubeClientValidationTests
     {
         public YoutubeClient Sut { get; }
 
-        public Fixture(string? cookiesFile = null, string? cookiesFromBrowser = null)
+        public Fixture(string? cookiesFile = null, string? cookiesFromBrowser = null, string? proxy = null)
         {
-            Sut = new YoutubeClient("fake-key", "yt-dlp", "ffmpeg", cookiesFile, cookiesFromBrowser);
+            Sut = new YoutubeClient("fake-key", "yt-dlp", "ffmpeg", cookiesFile, cookiesFromBrowser, proxy);
         }
 
         public static Fixture Create(string? cookiesFile = null, string? cookiesFromBrowser = null) =>
@@ -27,14 +27,80 @@ public sealed class YoutubeClientValidationTests
     [InlineData("<script>")] // XSS payload
     [InlineData("../../etc/passwd")] // path traversal
     [InlineData("--exec=rm -rf /")] // argument injection
-    public async Task ResolveAudioUrlAsync_ThrowsArgumentException_ForInvalidVideoId(string invalidVideoId)
+    public void BuildPreviewAudioProcess_ThrowsArgumentException_ForInvalidVideoId(string invalidVideoId)
     {
         var fixture = Fixture.Create();
 
-        var act = async () => await fixture.Sut.ResolveAudioUrlAsync(invalidVideoId);
+        var act = () => fixture.Sut.BuildPreviewAudioProcess(invalidVideoId);
 
-        (await act.Should().ThrowExactlyAsync<ArgumentException>())
+        act.Should().ThrowExactly<ArgumentException>()
             .And.Message.Should().Contain("videoId");
+    }
+
+    [Fact]
+    public void BuildPreviewAudioProcess_ReturnsProcess_WithCorrectArgs()
+    {
+        var fixture = Fixture.Create();
+
+        var process = fixture.Sut.BuildPreviewAudioProcess("dQw4w9WgXcQ");
+
+        process.StartInfo.ArgumentList.Should().Contain("--no-playlist");
+        process.StartInfo.ArgumentList.Should().Contain("youtube:player_client=android_vr");
+        process.StartInfo.ArgumentList.Should().Contain("bestaudio");
+        process.StartInfo.ArgumentList.Should().Contain("-o");
+        process.StartInfo.ArgumentList.Should().Contain("-");
+        process.StartInfo.ArgumentList.Should()
+            .Contain("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+    }
+
+    [Fact]
+    public void BuildPreviewAudioProcess_IncludesCookiesFromBrowser_WhenConfigured()
+    {
+        var fixture = Fixture.Create(cookiesFromBrowser: "madeupbrowser");
+
+        var process = fixture.Sut.BuildPreviewAudioProcess("dQw4w9WgXcQ");
+
+        process.StartInfo.ArgumentList.Should().Contain("--cookies-from-browser");
+        process.StartInfo.ArgumentList.Should().Contain("madeupbrowser");
+        process.StartInfo.ArgumentList.Should().NotContain("--cookies");
+    }
+
+    [Fact]
+    public void BuildPreviewAudioProcess_IncludesCookiesFile_WhenConfigured()
+    {
+        var fixture = Fixture.Create(cookiesFile: "/tmp/cookies.txt");
+
+        var process = fixture.Sut.BuildPreviewAudioProcess("dQw4w9WgXcQ");
+
+        process.StartInfo.ArgumentList.Should().Contain("--cookies");
+        process.StartInfo.ArgumentList.Should().Contain("/tmp/cookies.txt");
+        process.StartInfo.ArgumentList.Should().NotContain("--cookies-from-browser");
+    }
+
+    [Fact]
+    public void BuildPreviewAudioProcess_CookiesFromBrowser_WinsOverCookiesFile()
+    {
+        var fixture = Fixture.Create(
+            cookiesFile: "/tmp/cookies.txt",
+            cookiesFromBrowser: "madeupbrowser");
+
+        var process = fixture.Sut.BuildPreviewAudioProcess("dQw4w9WgXcQ");
+
+        process.StartInfo.ArgumentList.Should().Contain("--cookies-from-browser");
+        process.StartInfo.ArgumentList.Should().Contain("madeupbrowser");
+        process.StartInfo.ArgumentList.Should().NotContain("--cookies");
+        process.StartInfo.ArgumentList.Should().NotContain("/tmp/cookies.txt");
+    }
+
+    [Fact]
+    public void BuildPreviewAudioProcess_IncludesProxy_WhenConfigured()
+    {
+        var fixture = new Fixture(proxy: "socks5://127.0.0.1:1080");
+
+        var process = fixture.Sut.BuildPreviewAudioProcess("dQw4w9WgXcQ");
+
+        process.StartInfo.ArgumentList.Should().Contain("--proxy");
+        process.StartInfo.ArgumentList.Should().Contain("socks5://127.0.0.1:1080");
     }
 
     [Theory]

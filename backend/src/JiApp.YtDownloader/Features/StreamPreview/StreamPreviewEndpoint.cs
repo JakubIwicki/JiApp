@@ -17,7 +17,7 @@ public static class StreamPreviewEndpoint
                 HttpContext httpContext,
                 CancellationToken cancellationToken) =>
             {
-                var result = await handler.HandleAsync(videoId, cancellationToken);
+                var result = handler.HandleAsync(videoId, cancellationToken);
 
                 if (result == StreamPreviewResult.ResolveFailed)
                 {
@@ -30,21 +30,44 @@ public static class StreamPreviewEndpoint
                     return Results.Problem("Unexpected preview state.", statusCode: 500);
                 }
 
+                var ytDlp = stream.YtDlpProcess;
                 var ffmpeg = stream.FfmpegProcess;
 
                 try
                 {
                     ffmpeg.Start();
-                    // Consume stderr on a background thread to prevent pipe deadlock
-                    _ = ffmpeg.StandardError.ReadToEndAsync();
+                    ytDlp.Start();
                 }
                 catch (Exception)
                 {
+                    ytDlp.Dispose();
                     ffmpeg.Dispose();
                     return Results.Json(
                         new ApiErrorResponse(Error: "Failed to start audio stream."),
                         statusCode: StatusCodes.Status502BadGateway);
                 }
+
+                // Drain stderr on background threads to prevent pipe deadlock
+                _ = ytDlp.StandardError.ReadToEndAsync();
+                _ = ffmpeg.StandardError.ReadToEndAsync();
+
+                // Pipe yt-dlp stdout into ffmpeg stdin on a background task
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await ytDlp.StandardOutput.BaseStream.CopyToAsync(
+                            ffmpeg.StandardInput.BaseStream, cancellationToken);
+                    }
+                    catch (IOException)
+                    {
+                        // Broken pipe is expected when ffmpeg stops early after -t N
+                    }
+                    finally
+                    {
+                        ffmpeg.StandardInput.Close();
+                    }
+                }, CancellationToken.None);
 
                 var response = ffmpeg.StandardOutput.BaseStream;
 
@@ -53,15 +76,20 @@ public static class StreamPreviewEndpoint
                 var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
                     cancellationToken, timeoutCts.Token);
 
-                // Single cleanup path: OnCompleted fires when the response completes,
-                // regardless of whether it completed normally or via client disconnect.
-                // The linked CTS handles timeout and cancellation — the ffmpeg process
-                // is killed once in OnCompleted, avoiding a race with Register.
                 httpContext.Response.OnCompleted(() =>
                 {
                     using (timeoutCts)
                     using (linkedCts)
                     {
+                        try
+                        {
+                            if (!ytDlp.HasExited) ytDlp.Kill(entireProcessTree: true);
+                        }
+                        catch
+                        {
+                            // Ignore exceptions from killing the process on completion
+                        }
+
                         try
                         {
                             if (!ffmpeg.HasExited) ffmpeg.Kill(entireProcessTree: true);
@@ -72,6 +100,7 @@ public static class StreamPreviewEndpoint
                         }
                     }
 
+                    ytDlp.Dispose();
                     ffmpeg.Dispose();
                     return Task.CompletedTask;
                 });
@@ -85,9 +114,9 @@ public static class StreamPreviewEndpoint
                 }
                 catch
                 {
-                    // If returning the result fails (e.g. cancellation before response starts),
-                    // ensure ffmpeg is cleaned up. OnCompleted may not fire in this edge case.
+                    if (!ytDlp.HasExited) ytDlp.Kill(entireProcessTree: true);
                     if (!ffmpeg.HasExited) ffmpeg.Kill(entireProcessTree: true);
+                    ytDlp.Dispose();
                     ffmpeg.Dispose();
                     throw;
                 }

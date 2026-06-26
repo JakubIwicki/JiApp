@@ -25,6 +25,8 @@ public interface IYoutubeClient
         CancellationToken cancellationToken = default);
 
     Task<string> ResolveAudioUrlAsync(string videoId, CancellationToken cancellationToken = default);
+
+    Process BuildPreviewAudioProcess(string videoId);
 }
 
 public sealed class YoutubeClient(
@@ -151,10 +153,15 @@ public sealed class YoutubeClient(
         }
     }
 
-    public async Task<string> ResolveAudioUrlAsync(string videoId, CancellationToken ct = default)
+    private static void ValidateVideoId(string videoId)
     {
         if (string.IsNullOrWhiteSpace(videoId) || !Regex.IsMatch(videoId, @"^[a-zA-Z0-9_-]{11}$"))
             throw new ArgumentException($"Invalid videoId: '{videoId}'", nameof(videoId));
+    }
+
+    public async Task<string> ResolveAudioUrlAsync(string videoId, CancellationToken ct = default)
+    {
+        ValidateVideoId(videoId);
 
         var videoUrl = $"https://www.youtube.com/watch?v={videoId}";
 
@@ -218,6 +225,46 @@ public sealed class YoutubeClient(
         }
 
         return audioUrl;
+    }
+
+    public Process BuildPreviewAudioProcess(string videoId)
+    {
+        ValidateVideoId(videoId);
+
+        var videoUrl = $"https://www.youtube.com/watch?v={videoId}";
+
+        var startInfo = new ProcessStartInfo(ytDlpPath)
+        {
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+        };
+        startInfo.ArgumentList.Add("--no-playlist");
+        startInfo.ArgumentList.Add("--extractor-args");
+        startInfo.ArgumentList.Add("youtube:player_client=android_vr");
+        startInfo.ArgumentList.Add("-f");
+        startInfo.ArgumentList.Add("bestaudio");
+        if (!string.IsNullOrEmpty(cookiesFromBrowser))
+        {
+            startInfo.ArgumentList.Add("--cookies-from-browser");
+            startInfo.ArgumentList.Add(cookiesFromBrowser);
+        }
+        else if (!string.IsNullOrEmpty(cookiesFile))
+        {
+            startInfo.ArgumentList.Add("--cookies");
+            startInfo.ArgumentList.Add(cookiesFile);
+        }
+        if (!string.IsNullOrEmpty(proxy))
+        {
+            startInfo.ArgumentList.Add("--proxy");
+            startInfo.ArgumentList.Add(proxy);
+        }
+        startInfo.ArgumentList.Add("-o");
+        startInfo.ArgumentList.Add("-");
+        startInfo.ArgumentList.Add(videoUrl);
+
+        return new Process { StartInfo = startInfo };
     }
 
     public void Dispose()
