@@ -100,7 +100,14 @@ export function useThemedStyles<T>(factory: (t: Theme) => T): T {
       spacing: ctx.spacing,
       borderRadius: ctx.borderRadius,
     }),
-    [ctx.colors, ctx.typography, ctx.commonStyles, ctx.tabBar],
+    [
+      ctx.colors,
+      ctx.typography,
+      ctx.commonStyles,
+      ctx.tabBar,
+      ctx.spacing,
+      ctx.borderRadius,
+    ],
   );
   return useMemo(() => factory(theme), [theme, factory]);
 }
