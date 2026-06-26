@@ -2,71 +2,35 @@ using JiApp.YtApi;
 using JiApp.YtDownloader.Configuration;
 using JiApp.YtDownloader.Logging;
 using System.Diagnostics;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace JiApp.YtDownloader.Features.StreamPreview;
 
 public sealed class StreamPreviewHandler(
     IYoutubeClient youtubeClient,
-    IMemoryCache cache,
     ILogger<StreamPreviewHandler> logger,
     Settings settings)
 {
-    private const int CacheDurationMinutes = 30;
-    private const string CacheKeyPrefix = "youtube:audio-url";
-
-    private static string CacheKey(string videoId) =>
-        $"{CacheKeyPrefix}:{videoId}";
-
-    public async Task<StreamPreviewResult> HandleAsync(
-        string videoId, CancellationToken cancellationToken = default)
+    public StreamPreviewResult Handle(string videoId)
     {
-        string audioUrl;
-
-        var key = CacheKey(videoId);
-        if (!cache.TryGetValue(key, out string? cachedUrl))
+        Process ytDlp;
+        try
         {
-            logger.PreviewCacheMiss(videoId);
-            try
-            {
-                audioUrl = await youtubeClient.ResolveAudioUrlAsync(videoId, cancellationToken);
-                cache.Set(key, audioUrl, new MemoryCacheEntryOptions
-                {
-                    Size = 1,
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheDurationMinutes)
-                });
-            }
-            catch (OperationCanceledException)
-            {
-                logger.PreviewResolveFailed(new OperationCanceledException("Request was cancelled"), videoId);
-                return StreamPreviewResult.ResolveFailed;
-            }
-            catch (Exception ex)
-            {
-                logger.PreviewResolveFailed(ex, videoId);
-                return StreamPreviewResult.ResolveFailed;
-            }
+            ytDlp = youtubeClient.BuildPreviewAudioProcess(videoId);
         }
-        else
+        catch (ArgumentException ex)
         {
-            logger.PreviewCacheHit(videoId);
-            audioUrl = cachedUrl!;
-        }
-
-        if (!Uri.TryCreate(audioUrl, UriKind.Absolute, out var uri) ||
-            uri.Scheme is not ("http" or "https"))
-        {
-            logger.PreviewResolveFailed(new InvalidOperationException($"Invalid audio URL: {audioUrl}"), videoId);
+            logger.PreviewResolveFailed(ex, videoId);
             return StreamPreviewResult.ResolveFailed;
         }
 
-        var process = new Process
+        var ffmpeg = new Process
         {
             StartInfo = new ProcessStartInfo
             {
                 FileName = "ffmpeg",
-                Arguments = BuildFfmpegArguments(audioUrl, settings.App!.PreviewDurationSeconds),
+                Arguments = BuildFfmpegArguments(settings.App!.PreviewDurationSeconds),
+                RedirectStandardInput = true,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -75,16 +39,16 @@ public sealed class StreamPreviewHandler(
             EnableRaisingEvents = true,
         };
 
-        return new StreamPreviewResult.StreamReady(process);
+        return new StreamPreviewResult.StreamReady(ytDlp, ffmpeg);
     }
 
-    internal static string BuildFfmpegArguments(string audioUrl, int previewDurationSeconds) =>
-        $"-i \"{audioUrl}\" -t {previewDurationSeconds} -loglevel quiet -f mp3 -";
+    internal static string BuildFfmpegArguments(int previewDurationSeconds) =>
+        $"-i pipe:0 -t {previewDurationSeconds} -loglevel quiet -f mp3 -";
 }
 
 public abstract record StreamPreviewResult
 {
-    public sealed record StreamReady(Process FfmpegProcess) : StreamPreviewResult;
+    public sealed record StreamReady(Process YtDlpProcess, Process FfmpegProcess) : StreamPreviewResult;
 
     public static readonly StreamPreviewResult ResolveFailed = new ResolveFailedRecord();
 
