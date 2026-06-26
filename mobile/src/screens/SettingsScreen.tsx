@@ -165,6 +165,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: spacing.md,
+    marginHorizontal: spacing.lg,
   },
   editProfileText: {
     fontSize: 16,
