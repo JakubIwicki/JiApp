@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, fireEvent, act } from '@testing-library/react-native';
 import SearchBar from '../SearchBar';
-import { lavenderLight } from '../../styles/theme';
+import { claudeLight } from '../../styles/theme';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -137,7 +137,7 @@ describe('SearchBar', () => {
     const rowStyles = inputRow.props.style;
     const flatStyles = Array.isArray(rowStyles) ? rowStyles : [rowStyles];
     const hasPrimaryBorder = flatStyles.some(
-      (s: Record<string, unknown>) => s.borderColor === lavenderLight.primary,
+      (s: Record<string, unknown>) => s.borderColor === claudeLight.primary,
     );
     expect(hasPrimaryBorder).toBe(true);
   });
@@ -155,7 +155,7 @@ describe('SearchBar', () => {
     const rowStyles = inputRow.props.style;
     const flatStyles = Array.isArray(rowStyles) ? rowStyles : [rowStyles];
     const hasDefaultBorder = flatStyles.some(
-      (s: Record<string, unknown>) => s.borderColor === lavenderLight.border,
+      (s: Record<string, unknown>) => s.borderColor === claudeLight.border,
     );
     expect(hasDefaultBorder).toBe(true);
   });

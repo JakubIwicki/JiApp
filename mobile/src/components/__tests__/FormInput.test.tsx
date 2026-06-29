@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import FormInput from '../FormInput';
-import { lavenderLight } from '../../styles/theme';
+import { claudeLight } from '../../styles/theme';
 
 describe('FormInput', () => {
   it('renders with placeholder', () => {
@@ -45,7 +45,7 @@ describe('FormInput', () => {
     const styles = input.props.style;
     const flatStyles = Array.isArray(styles) ? styles : [styles];
     const hasErrorBorder = flatStyles.some(
-      (s: Record<string, unknown>) => s.borderColor === lavenderLight.error,
+      (s: Record<string, unknown>) => s.borderColor === claudeLight.error,
     );
     expect(hasErrorBorder).toBe(true);
   });
@@ -104,8 +104,6 @@ describe('FormInput', () => {
       <FormInput value="" onChangeText={jest.fn()} placeholder="Username" />,
     );
     const input = getByPlaceholderText('Username');
-    expect(input.props.placeholderTextColor).toBe(
-      lavenderLight.placeholderDark,
-    );
+    expect(input.props.placeholderTextColor).toBe(claudeLight.placeholderDark);
   });
 });

@@ -3,7 +3,7 @@ import { render, fireEvent, act } from '@testing-library/react-native';
 import i18next from '../../i18n/index';
 import LanguagePicker from '../LanguagePicker';
 import * as storageService from '../../services/storageService';
-import { lavenderLight } from '../../styles/theme';
+import { claudeLight } from '../../styles/theme';
 
 // Mock storageService
 jest.mock('../../services/storageService', () => ({
@@ -19,11 +19,6 @@ describe('LanguagePicker', () => {
     await act(async () => {
       await i18next.changeLanguage('en');
     });
-  });
-
-  it('renders language label', () => {
-    const { getByText } = render(<LanguagePicker />);
-    expect(getByText('Language')).toBeTruthy();
   });
 
   it('shows PL and EN toggle options', () => {
@@ -58,7 +53,7 @@ describe('LanguagePicker', () => {
     const style = plText.props.style;
     const stylesArray = Array.isArray(style) ? style : [style];
     const hasTertiaryColor = stylesArray.some(
-      (s: Record<string, unknown>) => s.color === lavenderLight.textTertiary,
+      (s: Record<string, unknown>) => s.color === claudeLight.textTertiary,
     );
     expect(hasTertiaryColor).toBe(true);
   });

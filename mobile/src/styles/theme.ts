@@ -125,14 +125,87 @@ export const lavenderDark: ColorPalette = {
   cardShadow: '#000000',
 } as const;
 
+// ─── Claude Light Palette ─────────────────────────────────────────────────────
+export const claudeLight: ColorPalette = {
+  // Core
+  primary: '#3578C8',
+  primaryDark: '#2A5E9E',
+  primaryLight: '#E6F0FB',
+
+  // Surfaces
+  background: '#F5F5F5',
+  surface: '#FFFFFF',
+
+  // Semantic
+  success: '#4F9D69',
+  successLight: '#EAF3EC',
+  error: '#D6455F',
+  errorLight: '#FBECEF',
+  info: '#8A63C8',
+  warning: '#B8860B',
+
+  // Text
+  textPrimary: '#1A1A1A',
+  textSecondary: '#5F5F5F',
+  textTertiary: '#838383',
+  textDescription: '#5F5F5F',
+  textInverse: '#FFFFFF',
+
+  // Borders & separators
+  border: '#D8D8D8',
+  separator: '#E8E8E8',
+  placeholder: '#EDEDED',
+  placeholderDark: '#D8D8D8',
+
+  // Misc
+  cardShadow: '#1A1A1A',
+};
+
+// ─── Claude Dark Palette ──────────────────────────────────────────────────────
+export const claudeDark: ColorPalette = {
+  // Core
+  primary: '#AFD7FF',
+  primaryDark: '#7FB5E8',
+  primaryLight: '#1E2733',
+
+  // Surfaces
+  background: '#09090B',
+  surface: '#161617',
+
+  // Semantic
+  success: '#87D787',
+  successLight: '#1B2A1B',
+  error: '#FF5F87',
+  errorLight: '#2E1620',
+  info: '#D7AFFF',
+  warning: '#D7AF5F',
+
+  // Text
+  textPrimary: '#EDEDED',
+  textSecondary: '#838383',
+  textTertiary: '#5F5F5F',
+  textDescription: '#838383',
+  textInverse: '#09090B',
+
+  // Borders & separators
+  border: '#3A3A3A',
+  separator: '#2E2E2E',
+  placeholder: '#2E2E2E',
+  placeholderDark: '#3A3A3A',
+
+  // Misc
+  cardShadow: '#000000',
+};
+
 // ─── Palette Registry ─────────────────────────────────────────────────────────
 export const palettes = {
+  claude: { light: claudeLight, dark: claudeDark },
   wabisabi: { light: wabiLight, dark: wabiDark },
   lavender: { light: lavenderLight, dark: lavenderDark },
 } as const;
 
 export type PaletteName = keyof typeof palettes;
-export const DEFAULT_PALETTE: PaletteName = 'lavender';
+export const DEFAULT_PALETTE: PaletteName = 'claude';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
 export const DEFAULT_THEME_MODE: ThemeMode = 'system';
