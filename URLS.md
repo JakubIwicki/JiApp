@@ -306,6 +306,17 @@ All origins accepted. Same policy on all services.
 | POST | `/api/v1/lovingboards/boards/{id:long}/members` | `AddBoardMemberEndpoint.cs` | 🟢 Live |
 | DELETE | `/api/v1/lovingboards/boards/{id:long}/members/{userId:long}` | `RemoveBoardMemberEndpoint.cs` | 🟢 Live |
 
+#### Items
+
+| Method | Path | Handler | Status |
+|--------|------|---------|--------|
+| POST | `/api/v1/lovingboards/boards/{boardId:long}/items` | `CreateItemEndpoint.cs` | 🟢 Live |
+| PUT | `/api/v1/lovingboards/boards/{boardId:long}/items/{itemId:long}` | `UpdateItemEndpoint.cs` | 🟢 Live |
+| PUT | `/api/v1/lovingboards/boards/{boardId:long}/items/{itemId:long}/status` | `SetItemStatusEndpoint.cs` | 🟢 Live |
+| DELETE | `/api/v1/lovingboards/boards/{boardId:long}/items/{itemId:long}` | `DeleteItemEndpoint.cs` | 🟢 Live |
+| POST | `/api/v1/lovingboards/boards/{boardId:long}/items/clear-completed` | `ClearCompletedEndpoint.cs` | 🟢 Live |
+| POST | `/api/v1/lovingboards/boards/{boardId:long}/items/reset-weekly` | `ResetWeeklyItemsEndpoint.cs` | 🟢 Live |
+
 #### Health
 
 | Method | Path | Handler | Status |

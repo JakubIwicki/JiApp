@@ -16,6 +16,7 @@ using api.JiApp.LovingBoards.Features.Boards.UpdateBoard;
 using api.JiApp.LovingBoards.Features.Items.ClearCompleted;
 using api.JiApp.LovingBoards.Features.Items.CreateItem;
 using api.JiApp.LovingBoards.Features.Items.DeleteItem;
+using api.JiApp.LovingBoards.Features.Items.ResetWeeklyItems;
 using api.JiApp.LovingBoards.Features.Items.SetItemStatus;
 using api.JiApp.LovingBoards.Features.Items.UpdateItem;
 using api.JiApp.LovingBoards.Persistence;
@@ -121,6 +122,7 @@ public class Startup(LovingBoardsSettings settings)
         services.AddScoped<SetItemStatusHandler>();
         services.AddScoped<DeleteItemHandler>();
         services.AddScoped<ClearCompletedHandler>();
+        services.AddScoped<ResetWeeklyItemsHandler>();
 
         // Item validators
         services.AddScoped<IValidator<CreateItemRequest>, CreateItemValidator>();
@@ -185,5 +187,6 @@ public class Startup(LovingBoardsSettings settings)
         lovingboards.MapSetItemStatus();
         lovingboards.MapDeleteItem();
         lovingboards.MapClearCompleted();
+        lovingboards.MapResetWeeklyItems();
     }
 }

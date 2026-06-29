@@ -508,4 +508,91 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
         AssertSuccess(result);
         result.Value!.Items.Should().BeEmpty();
     }
+
+    // Weekly lazy reset
+
+    [Fact]
+    public async Task GetBoard_LazyReset_FlipsRecurringCompletedAndRemovedToNeeded()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
+        var board = Db.Find<Board>(boardId);
+        board!.LastWeeklyResetAt = DateTime.UtcNow.AddDays(-14);
+        await DbContext.SaveChangesAsync();
+        StoreInDb(new BoardItem { BoardId = boardId, Title = "Recurring Completed", IsRecurring = true, Status = BoardItemStatus.Completed, CompletedByUserId = 2L, AddedByUserId = 1L });
+        StoreInDb(new BoardItem { BoardId = boardId, Title = "Recurring Removed", IsRecurring = true, Status = BoardItemStatus.Removed, AddedByUserId = 1L });
+        StoreInDb(new BoardItem { BoardId = boardId, Title = "NonRecurring Completed", IsRecurring = false, Status = BoardItemStatus.Completed, CompletedByUserId = 2L, AddedByUserId = 1L });
+        StoreInDb(new BoardItem { BoardId = boardId, Title = "Recurring Needed", IsRecurring = true, Status = BoardItemStatus.Needed, AddedByUserId = 1L });
+        var sut = fixture.GetBoard;
+        var before = DateTime.UtcNow;
+
+        var result = await sut.HandleAsync(boardId, CancellationToken.None);
+
+        AssertSuccess(result);
+        // Recurring Completed → Needed (visible)
+        var rc = result.Value!.Items.Single(i => i.Title == "Recurring Completed");
+        rc.Status.Should().Be("Needed");
+        rc.CompletedByUserId.Should().BeNull();
+        // Recurring Removed → Needed (visible now)
+        var rr = result.Value.Items.Single(i => i.Title == "Recurring Removed");
+        rr.Status.Should().Be("Needed");
+        rr.RemovedAt.Should().BeNull();
+        // Non-recurring Completed stays Completed
+        var nc = result.Value.Items.Single(i => i.Title == "NonRecurring Completed");
+        nc.Status.Should().Be("Completed");
+        nc.CompletedByUserId.Should().Be(2L);
+        // Recurring Needed stays Needed
+        var rn = result.Value.Items.Single(i => i.Title == "Recurring Needed");
+        rn.Status.Should().Be("Needed");
+        // Board.LastWeeklyResetAt bumped
+        var updatedBoard = Db.Find<Board>(boardId);
+        updatedBoard!.LastWeeklyResetAt.Should().NotBeNull();
+        updatedBoard.LastWeeklyResetAt!.Value.Should().BeOnOrAfter(before);
+    }
+
+    [Fact]
+    public async Task GetBoard_LazyReset_IsIdempotentWithinSameWeek()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
+        var board = Db.Find<Board>(boardId);
+        board!.LastWeeklyResetAt = DateTime.UtcNow.AddDays(-14);
+        await DbContext.SaveChangesAsync();
+        StoreInDb(new BoardItem { BoardId = boardId, Title = "Item", IsRecurring = true, Status = BoardItemStatus.Completed, AddedByUserId = 1L });
+        var sut = fixture.GetBoard;
+
+        var first = await sut.HandleAsync(boardId, CancellationToken.None);
+        var firstResetAt = Db.Find<Board>(boardId)!.LastWeeklyResetAt;
+
+        // Manually revert the item back to Completed to see if a second call resets again
+        var item = await Db.Query<BoardItem>().FirstAsync(i => i.Title == "Item");
+        item.Status = BoardItemStatus.Completed;
+        item.CompletedByUserId = 2L;
+        await DbContext.SaveChangesAsync();
+
+        var second = await sut.HandleAsync(boardId, CancellationToken.None);
+        var secondResetAt = Db.Find<Board>(boardId)!.LastWeeklyResetAt;
+
+        AssertSuccess(first);
+        AssertSuccess(second);
+        // Second call should NOT reset — same ISO week
+        var secondItem = second.Value!.Items.Single(i => i.Title == "Item");
+        secondItem.Status.Should().Be("Completed"); // still Completed, not flipped
+        secondResetAt.Should().Be(firstResetAt);    // LastWeeklyResetAt unchanged
+    }
+
+    [Fact]
+    public async Task GetBoard_LazyReset_DoesNotFireWhenResetNotDue()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
+        var board = Db.Find<Board>(boardId);
+        board!.LastWeeklyResetAt = DateTime.UtcNow; // within current week
+        await DbContext.SaveChangesAsync();
+        StoreInDb(new BoardItem { BoardId = boardId, Title = "Item", IsRecurring = true, Status = BoardItemStatus.Completed, AddedByUserId = 1L });
+        var sut = fixture.GetBoard;
+
+        var result = await sut.HandleAsync(boardId, CancellationToken.None);
+
+        AssertSuccess(result);
+        var item = result.Value!.Items.Single(i => i.Title == "Item");
+        item.Status.Should().Be("Completed"); // unchanged
+    }
 }

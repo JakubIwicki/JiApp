@@ -1,6 +1,7 @@
 using JiApp.Common.Abstractions;
 using JiApp.Common.Services;
 using api.JiApp.LovingBoards.Domain;
+using api.JiApp.LovingBoards.Features.Common;
 using api.JiApp.LovingBoards.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,9 +20,21 @@ public sealed class GetBoardHandler(ILovingBoardsDbContext db, ICurrentUserServi
             return Result<GetBoardResponse>.Failure("Access denied", ResultCategories.AccessDenied);
 
         var items = await db.BoardItems
-            .Where(i => i.BoardId == id && i.Status != BoardItemStatus.Removed)
+            .Where(i => i.BoardId == id)
             .OrderBy(i => i.Category)
             .ThenBy(i => i.CreatedAt)
+            .ToListAsync(ct);
+
+        var now = DateTime.UtcNow;
+        if (WeeklyReset.IsResetDue(board.LastWeeklyResetAt, now))
+        {
+            WeeklyReset.ResetRecurring(items, now);
+            board.LastWeeklyResetAt = now;
+            await db.SaveChangesAsync(ct);
+        }
+
+        var itemDtos = items
+            .Where(i => i.Status != BoardItemStatus.Removed)
             .Select(i => new ItemDto(
                 i.Id,
                 i.BoardId,
@@ -38,7 +51,7 @@ public sealed class GetBoardHandler(ILovingBoardsDbContext db, ICurrentUserServi
                 i.CreatedAt,
                 i.UpdatedAt,
                 i.RemovedAt))
-            .ToListAsync(ct);
+            .ToList();
 
         var response = new GetBoardResponse(
             board.Id,
@@ -46,7 +59,7 @@ public sealed class GetBoardHandler(ILovingBoardsDbContext db, ICurrentUserServi
             board.OwnerUserId,
             board.MemberUserIds,
             board.CreatedAt,
-            items);
+            itemDtos);
 
         return Result<GetBoardResponse>.Success(response);
     }
