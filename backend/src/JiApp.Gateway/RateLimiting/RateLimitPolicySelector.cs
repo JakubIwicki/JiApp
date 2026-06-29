@@ -49,11 +49,13 @@ public sealed class RateLimitPolicySelector(RequestDelegate next, RateLimitPolic
         ["/api/v1/yt/health"] = RateLimitPolicyNames.HealthPolicy,
         ["/api/v1/imagetools/health"] = RateLimitPolicyNames.HealthPolicy,
         ["/api/v1/scheduler/health"] = RateLimitPolicyNames.HealthPolicy,
+        ["/api/v1/lovingboards/health"] = RateLimitPolicyNames.HealthPolicy,
 
         // Proxied routes without specific rate limits (YARP catch-all).
         // Pass through with no rate limiting applied.
         ["/api/v1/imagetools"] = null,
         ["/api/v1/scheduler"] = RateLimitPolicyNames.SchedulerPolicy,
+        ["/api/v1/lovingboards"] = RateLimitPolicyNames.LovingBoardsPolicy,
     };
 
     // Longest-prefix-first ordering ensures more specific paths (e.g.

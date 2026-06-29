@@ -30,6 +30,14 @@ services:
     volumes:
       - scheduler-data:/app/data
 
+  lovingboards:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS="http://*:6705"
+      - ConnectionString=Data Source=/app/data/lovingboards_dev.db
+    volumes:
+      - lovingboards-data:/app/data
+
   gateway:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
@@ -39,3 +47,4 @@ volumes:
   identity-data:
   ytdownloader-data:
   scheduler-data:
+  lovingboards-data:

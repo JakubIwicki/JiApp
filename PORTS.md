@@ -12,11 +12,11 @@ Mobile App / Client
 │         API Gateway (6700)           │
 │  JWT Auth · Rate Limit · CORS        │
 │  Health Dashboard · Correlation ID   │
-└───┬────────┬────────┬────────┬───────┘
-    │        │        │        │
-    ▼        ▼        ▼        ▼
- Identity  YT DL    ImgTools  Scheduler
-  6701     6702      6703      6704
+└───┬────────┬────────┬────────┬───────────┐
+    │        │        │        │           │
+    ▼        ▼        ▼        ▼           ▼
+ Identity  YT DL    ImgTools  Scheduler  LovingBoards
+  6701     6702      6703      6704       6705
 ```
 
 ## Port Table
@@ -28,6 +28,7 @@ Mobile App / Client
 | **6702** | YtDownloader | HTTP | Internal | YouTube search, MP3 download, audio preview |
 | **6703** | ImageTools | HTTP | Internal | Image processing (placeholder) |
 | **6704** | Scheduler | HTTP | Internal | Weekend appointments, clients, expenses, reports |
+| **6705** | LovingBoards | HTTP | Internal | Shared live collaborative boards |
 | 5432 | PostgreSQL | TCP | Internal | Production database (Docker only) |
 
 ## Routing
@@ -40,6 +41,7 @@ The Gateway routes by URL prefix:
 | `/api/v1/yt/*` | `http://ytdownloader:6702` | YtDownloader |
 | `/api/v1/imagetools/*` | `http://imagetools:6703` | ImageTools |
 | `/api/v1/scheduler/*` | `http://scheduler:6704` | Scheduler |
+| `/api/v1/lovingboards/*` | `http://lovingboards:6705` | LovingBoards |
 
 ## Development
 
@@ -54,6 +56,7 @@ dotnet run --project backend/src/JiApp.Identity   --urls http://0.0.0.0:6701
 dotnet run --project backend/src/JiApp.YtDownloader --urls http://0.0.0.0:6702
 dotnet run --project backend/src/JiApp.ImageTools  --urls http://0.0.0.0:6703
 dotnet run --project backend/src/JiApp.Scheduler   --urls http://0.0.0.0:6704
+dotnet run --project backend/src/api.JiApp.LovingBoards --urls http://0.0.0.0:6705
 dotnet run --project backend/src/JiApp.Gateway     --urls http://0.0.0.0:6700
 ```
 
