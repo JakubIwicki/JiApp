@@ -17,7 +17,7 @@ export interface CreateItemPayload {
 }
 
 export interface UpdateItemPayload {
-  title: string;
+  title?: string;
   quantity?: string | null;
   category?: string | null;
   note?: string | null;

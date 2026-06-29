@@ -128,21 +128,74 @@ const ItemFormContent: React.FC<ItemFormContentProps> = ({
 
     dispatch({ type: 'SET_SAVING', value: true });
     try {
-      const payload = {
-        title: trimmedTitle,
-        quantity: form.quantity.trim() || null,
-        category: form.category.trim() || null,
-        note: form.note.trim() || null,
-        assigneeUserId: form.assigneeUserId.trim()
-          ? Number(form.assigneeUserId.trim())
-          : null,
-        expiryDate: form.dueDate.trim() || null,
-        isRecurring: form.isRecurring,
-      };
+      if (isEditing && itemId !== undefined && existingItem) {
+        // Edit mode — diff payload with only changed fields
+        const diff: UpdateItemPayload = {};
 
-      if (isEditing && itemId !== undefined) {
-        await updateItem(itemId, payload);
+        if (trimmedTitle !== existingItem.title) {
+          diff.title = trimmedTitle;
+        }
+
+        const normalizedQuantity = (form.quantity.trim() || null) as
+          | string
+          | null;
+        const existingQuantity = (existingItem.quantity || null) as
+          | string
+          | null;
+        if (normalizedQuantity !== existingQuantity) {
+          diff.quantity = normalizedQuantity;
+        }
+
+        const normalizedCategory = (form.category.trim() || null) as
+          | string
+          | null;
+        const existingCategory = (existingItem.category || null) as
+          | string
+          | null;
+        if (normalizedCategory !== existingCategory) {
+          diff.category = normalizedCategory;
+        }
+
+        const normalizedNote = (form.note.trim() || null) as string | null;
+        const existingNote = (existingItem.note || null) as string | null;
+        if (normalizedNote !== existingNote) {
+          diff.note = normalizedNote;
+        }
+
+        const normalizedAssignee: number | null = form.assigneeUserId.trim()
+          ? Number(form.assigneeUserId.trim())
+          : null;
+        if (normalizedAssignee !== (existingItem.assigneeUserId ?? null)) {
+          diff.assigneeUserId = normalizedAssignee;
+        }
+
+        const normalizedDate: string | null = form.dueDate.trim() || null;
+        const existingDate: string | null =
+          existingItem.expiryDate?.split('T')[0] ?? null;
+        if (normalizedDate !== existingDate) {
+          diff.expiryDate = normalizedDate;
+        }
+
+        if (form.isRecurring !== existingItem.isRecurring) {
+          diff.isRecurring = form.isRecurring;
+        }
+
+        if (Object.keys(diff).length > 0) {
+          await updateItem(itemId, diff);
+        }
       } else {
+        // Create mode — full payload
+        const payload: CreateItemPayload = {
+          title: trimmedTitle,
+          quantity: form.quantity.trim() || null,
+          category: form.category.trim() || null,
+          note: form.note.trim() || null,
+          assigneeUserId: form.assigneeUserId.trim()
+            ? Number(form.assigneeUserId.trim())
+            : null,
+          expiryDate: form.dueDate.trim() || null,
+          isRecurring: form.isRecurring,
+        };
         await addItem(payload);
       }
       onDismiss();
@@ -155,6 +208,7 @@ const ItemFormContent: React.FC<ItemFormContentProps> = ({
     form,
     isEditing,
     itemId,
+    existingItem,
     addItem,
     updateItem,
     onDismiss,
