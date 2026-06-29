@@ -4,6 +4,7 @@ using api.JiApp.LovingBoards.Configuration;
 using api.JiApp.LovingBoards.Domain;
 using api.JiApp.LovingBoards.Features.Common;
 using api.JiApp.LovingBoards.Persistence;
+using api.JiApp.LovingBoards.Realtime;
 using Microsoft.EntityFrameworkCore;
 
 namespace api.JiApp.LovingBoards.Features.Items.CreateItem;
@@ -11,7 +12,8 @@ namespace api.JiApp.LovingBoards.Features.Items.CreateItem;
 public sealed class CreateItemHandler(
     ILovingBoardsDbContext db,
     LovingBoardsSettings settings,
-    ICurrentUserService currentUser)
+    ICurrentUserService currentUser,
+    IBoardBroadcaster broadcaster)
 {
     public async Task<Result<long>> HandleAsync(long boardId, CreateItemRequest request, CancellationToken ct)
     {
@@ -42,6 +44,9 @@ public sealed class CreateItemHandler(
         };
         db.BoardItems.Add(item);
         await db.SaveChangesAsync(ct);
+
+        broadcaster.Publish(boardId, new BoardEvent(BoardEventNames.ItemAdded, new { itemId = item.Id }));
+
         return Result<long>.Success(item.Id);
     }
 }

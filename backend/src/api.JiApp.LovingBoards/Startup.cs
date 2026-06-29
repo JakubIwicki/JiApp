@@ -12,6 +12,7 @@ using api.JiApp.LovingBoards.Features.Boards.DeleteBoard;
 using api.JiApp.LovingBoards.Features.Boards.GetBoard;
 using api.JiApp.LovingBoards.Features.Boards.ListBoards;
 using api.JiApp.LovingBoards.Features.Boards.RemoveBoardMember;
+using api.JiApp.LovingBoards.Features.Boards.StreamBoard;
 using api.JiApp.LovingBoards.Features.Boards.UpdateBoard;
 using api.JiApp.LovingBoards.Features.Items.ClearCompleted;
 using api.JiApp.LovingBoards.Features.Items.CreateItem;
@@ -20,6 +21,7 @@ using api.JiApp.LovingBoards.Features.Items.ResetWeeklyItems;
 using api.JiApp.LovingBoards.Features.Items.SetItemStatus;
 using api.JiApp.LovingBoards.Features.Items.UpdateItem;
 using api.JiApp.LovingBoards.Persistence;
+using api.JiApp.LovingBoards.Realtime;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -102,6 +104,9 @@ public class Startup(LovingBoardsSettings settings)
         services.AddSingleton(settings);
         services.AddHttpContextAccessor();
 
+        // Realtime
+        services.AddSingleton<IBoardBroadcaster, BoardBroadcaster>();
+
         // Board handlers
         services.AddScoped<CreateBoardHandler>();
         services.AddScoped<GetBoardHandler>();
@@ -180,6 +185,7 @@ public class Startup(LovingBoardsSettings settings)
         lovingboards.MapListBoards();
         lovingboards.MapAddBoardMember();
         lovingboards.MapRemoveBoardMember();
+        lovingboards.MapStreamBoard();
 
         // Item endpoints
         lovingboards.MapCreateItem();

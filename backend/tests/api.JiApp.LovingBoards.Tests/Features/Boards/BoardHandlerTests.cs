@@ -8,7 +8,9 @@ using api.JiApp.LovingBoards.Features.Boards.GetBoard;
 using api.JiApp.LovingBoards.Features.Boards.ListBoards;
 using api.JiApp.LovingBoards.Features.Boards.RemoveBoardMember;
 using api.JiApp.LovingBoards.Features.Boards.UpdateBoard;
+using api.JiApp.LovingBoards.Realtime;
 using api.JiApp.LovingBoards.Tests.Bases;
+using api.JiApp.LovingBoards.Tests.Realtime;
 
 namespace api.JiApp.LovingBoards.Tests.Features.Boards;
 
@@ -29,6 +31,7 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
         private readonly TestDb _testDb;
         private readonly ICurrentUserService _currentUser;
         private readonly LovingBoardsSettings _settings;
+        private readonly IBoardBroadcaster _broadcaster;
 
         private Fixture(ILovingBoardsDbContext dbContext, TestDb testDb)
         {
@@ -36,15 +39,16 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
             _testDb = testDb;
             _currentUser = MockCurrentUserService.GetSuccessful().Mock.Object;
             _settings = DefaultSettings;
+            _broadcaster = new NoOpBoardBroadcaster();
         }
 
         public CreateBoardHandler Sut => new(_dbContext, _settings, _currentUser);
-        public GetBoardHandler GetBoard => new(_dbContext, _currentUser);
-        public UpdateBoardHandler UpdateBoard => new(_dbContext, _currentUser);
+        public GetBoardHandler GetBoard => new(_dbContext, _currentUser, _broadcaster);
+        public UpdateBoardHandler UpdateBoard => new(_dbContext, _currentUser, _broadcaster);
         public DeleteBoardHandler DeleteBoard => new(_dbContext, _currentUser);
         public ListBoardsHandler ListBoards => new(_dbContext, _settings, _currentUser);
-        public AddBoardMemberHandler AddBoardMember => new(_dbContext, _currentUser);
-        public RemoveBoardMemberHandler RemoveBoardMember => new(_dbContext, _currentUser);
+        public AddBoardMemberHandler AddBoardMember => new(_dbContext, _currentUser, _broadcaster);
+        public RemoveBoardMemberHandler RemoveBoardMember => new(_dbContext, _currentUser, _broadcaster);
 
         public static Fixture Init(ILovingBoardsDbContext dbContext, TestDb testDb) => new(dbContext, testDb);
 
@@ -594,5 +598,87 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
         AssertSuccess(result);
         var item = result.Value!.Items.Single(i => i.Title == "Item");
         item.Status.Should().Be("Completed"); // unchanged
+    }
+
+    // Publish events
+
+    [Fact]
+    public async Task UpdateBoard_PublishesBoardUpdated()
+    {
+        var capturing = new CapturingBoardBroadcaster();
+        var handler = new UpdateBoardHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing);
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
+
+        await handler.HandleAsync(boardId, new UpdateBoardRequest("New Name"), CancellationToken.None);
+
+        capturing.Published.Should().ContainSingle();
+        capturing.Published[0].Ev.Event.Should().Be(BoardEventNames.BoardUpdated);
+    }
+
+    [Fact]
+    public async Task AddBoardMember_PublishesMemberChanged()
+    {
+        var capturing = new CapturingBoardBroadcaster();
+        var handler = new AddBoardMemberHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing);
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
+
+        await handler.HandleAsync(boardId, new AddBoardMemberRequest(2L), CancellationToken.None);
+
+        capturing.Published.Should().ContainSingle();
+        capturing.Published[0].Ev.Event.Should().Be(BoardEventNames.MemberChanged);
+    }
+
+    [Fact]
+    public async Task AddBoardMember_AlreadyMember_DoesNotPublishMemberChanged()
+    {
+        var capturing = new CapturingBoardBroadcaster();
+        var handler = new AddBoardMemberHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing);
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
+
+        var result = await handler.HandleAsync(boardId, new AddBoardMemberRequest(1L), CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        capturing.Published.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task RemoveBoardMember_PublishesMemberChanged()
+    {
+        var capturing = new CapturingBoardBroadcaster();
+        var handler = new RemoveBoardMemberHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing);
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [1L, 2L]);
+
+        await handler.HandleAsync(boardId, 2L, CancellationToken.None);
+
+        capturing.Published.Should().ContainSingle();
+        capturing.Published[0].Ev.Event.Should().Be(BoardEventNames.MemberChanged);
+    }
+
+    [Fact]
+    public async Task GetBoard_LazyResetFires_PublishesRecurringReset()
+    {
+        var capturing = new CapturingBoardBroadcaster();
+        var handler = new GetBoardHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing);
+        var board = new Board { Name = "Test", OwnerUserId = 1L, MemberUserIds = [1L], LastWeeklyResetAt = DateTime.UtcNow.AddDays(-14) };
+        StoreInDb(board);
+        StoreInDb(new BoardItem { BoardId = board.Id, Title = "Item", IsRecurring = true, Status = BoardItemStatus.Completed, AddedByUserId = 1L });
+
+        await handler.HandleAsync(board.Id, CancellationToken.None);
+
+        capturing.Published.Should().ContainSingle();
+        capturing.Published[0].Ev.Event.Should().Be(BoardEventNames.RecurringReset);
+    }
+
+    [Fact]
+    public async Task GetBoard_NoResetDue_PublishesNothing()
+    {
+        var capturing = new CapturingBoardBroadcaster();
+        var handler = new GetBoardHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing);
+        var board = new Board { Name = "Test", OwnerUserId = 1L, MemberUserIds = [1L], LastWeeklyResetAt = DateTime.UtcNow };
+        StoreInDb(board);
+
+        await handler.HandleAsync(board.Id, CancellationToken.None);
+
+        capturing.Published.Should().BeEmpty();
     }
 }

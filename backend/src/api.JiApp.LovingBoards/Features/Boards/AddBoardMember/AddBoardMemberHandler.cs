@@ -2,10 +2,11 @@ using JiApp.Common.Abstractions;
 using JiApp.Common.Services;
 using api.JiApp.LovingBoards.Features.Common;
 using api.JiApp.LovingBoards.Persistence;
+using api.JiApp.LovingBoards.Realtime;
 
 namespace api.JiApp.LovingBoards.Features.Boards.AddBoardMember;
 
-public sealed class AddBoardMemberHandler(ILovingBoardsDbContext db, ICurrentUserService currentUser)
+public sealed class AddBoardMemberHandler(ILovingBoardsDbContext db, ICurrentUserService currentUser, IBoardBroadcaster broadcaster)
 {
     public async Task<Result<long>> HandleAsync(long boardId, AddBoardMemberRequest request, CancellationToken ct)
     {
@@ -19,6 +20,9 @@ public sealed class AddBoardMemberHandler(ILovingBoardsDbContext db, ICurrentUse
 
         board.MemberUserIds.Add(request.UserId);
         await db.SaveChangesAsync(ct);
+
+        broadcaster.Publish(boardId, new BoardEvent(BoardEventNames.MemberChanged, new { boardId }));
+
         return Result<long>.Success(board.Id);
     }
 }

@@ -305,6 +305,7 @@ All origins accepted. Same policy on all services.
 | DELETE | `/api/v1/lovingboards/boards/{id:long}` | `DeleteBoardEndpoint.cs` | 🟢 Live |
 | POST | `/api/v1/lovingboards/boards/{id:long}/members` | `AddBoardMemberEndpoint.cs` | 🟢 Live |
 | DELETE | `/api/v1/lovingboards/boards/{id:long}/members/{userId:long}` | `RemoveBoardMemberEndpoint.cs` | 🟢 Live |
+| GET | `/api/v1/lovingboards/boards/{id:long}/stream` | `StreamBoardEndpoint.cs` | 🟢 Live |
 
 #### Items
 

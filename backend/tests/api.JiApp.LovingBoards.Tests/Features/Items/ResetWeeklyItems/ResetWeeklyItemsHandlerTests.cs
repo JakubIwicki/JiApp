@@ -1,7 +1,10 @@
 using JiApp.Common.Abstractions;
 using JiApp.Common.Services;
+using api.JiApp.LovingBoards.Domain;
 using api.JiApp.LovingBoards.Features.Items.ResetWeeklyItems;
+using api.JiApp.LovingBoards.Realtime;
 using api.JiApp.LovingBoards.Tests.Bases;
+using api.JiApp.LovingBoards.Tests.Realtime;
 
 namespace api.JiApp.LovingBoards.Tests.Features.Items.ResetWeeklyItems;
 
@@ -12,15 +15,17 @@ public sealed class ResetWeeklyItemsHandlerTests : LovingBoardsHandlerTestBase
         private readonly ILovingBoardsDbContext _dbContext;
         private readonly TestDb _testDb;
         private readonly ICurrentUserService _currentUser;
+        private readonly IBoardBroadcaster _broadcaster;
 
         private Fixture(ILovingBoardsDbContext dbContext, TestDb testDb)
         {
             _dbContext = dbContext;
             _testDb = testDb;
             _currentUser = MockCurrentUserService.GetSuccessful().Mock.Object;
+            _broadcaster = new NoOpBoardBroadcaster();
         }
 
-        public ResetWeeklyItemsHandler Sut => new(_dbContext, _currentUser);
+        public ResetWeeklyItemsHandler Sut => new(_dbContext, _currentUser, _broadcaster);
 
         public static Fixture Init(ILovingBoardsDbContext dbContext, TestDb testDb) => new(dbContext, testDb);
 
@@ -132,5 +137,22 @@ public sealed class ResetWeeklyItemsHandlerTests : LovingBoardsHandlerTestBase
         var result = await sut.HandleAsync(999L, CancellationToken.None);
 
         AssertNotFound(result);
+    }
+
+    // Publish events
+
+    [Fact]
+    public async Task ForceReset_PublishesRecurringReset()
+    {
+        var capturing = new CapturingBoardBroadcaster();
+        var handler = new ResetWeeklyItemsHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing);
+        var board = new Board { Name = "Test", OwnerUserId = 1L, MemberUserIds = [1L] };
+        StoreInDb(board);
+        StoreInDb(new BoardItem { BoardId = board.Id, Title = "Item", IsRecurring = true, Status = BoardItemStatus.Completed, AddedByUserId = 1L });
+
+        await handler.HandleAsync(board.Id, CancellationToken.None);
+
+        capturing.Published.Should().ContainSingle();
+        capturing.Published[0].Ev.Event.Should().Be(BoardEventNames.RecurringReset);
     }
 }

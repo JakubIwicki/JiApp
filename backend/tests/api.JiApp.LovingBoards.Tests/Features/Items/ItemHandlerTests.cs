@@ -6,7 +6,9 @@ using api.JiApp.LovingBoards.Features.Items.CreateItem;
 using api.JiApp.LovingBoards.Features.Items.DeleteItem;
 using api.JiApp.LovingBoards.Features.Items.SetItemStatus;
 using api.JiApp.LovingBoards.Features.Items.UpdateItem;
+using api.JiApp.LovingBoards.Realtime;
 using api.JiApp.LovingBoards.Tests.Bases;
+using api.JiApp.LovingBoards.Tests.Realtime;
 
 namespace api.JiApp.LovingBoards.Tests.Features.Items;
 
@@ -32,6 +34,7 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
         private readonly TestDb _testDb;
         private readonly ICurrentUserService _currentUser;
         private readonly LovingBoardsSettings _settings;
+        private readonly IBoardBroadcaster _broadcaster;
 
         private Fixture(ILovingBoardsDbContext dbContext, TestDb testDb)
         {
@@ -39,13 +42,14 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
             _testDb = testDb;
             _currentUser = MockCurrentUserService.GetSuccessful().Mock.Object;
             _settings = DefaultSettings;
+            _broadcaster = new NoOpBoardBroadcaster();
         }
 
-        public CreateItemHandler CreateItem => new(_dbContext, _settings, _currentUser);
-        public UpdateItemHandler UpdateItem => new(_dbContext, _currentUser);
-        public SetItemStatusHandler SetItemStatus => new(_dbContext, _currentUser);
-        public DeleteItemHandler DeleteItem => new(_dbContext, _currentUser);
-        public ClearCompletedHandler ClearCompleted => new(_dbContext, _currentUser);
+        public CreateItemHandler CreateItem => new(_dbContext, _settings, _currentUser, _broadcaster);
+        public UpdateItemHandler UpdateItem => new(_dbContext, _currentUser, _broadcaster);
+        public SetItemStatusHandler SetItemStatus => new(_dbContext, _currentUser, _broadcaster);
+        public DeleteItemHandler DeleteItem => new(_dbContext, _currentUser, _broadcaster);
+        public ClearCompletedHandler ClearCompleted => new(_dbContext, _currentUser, _broadcaster);
 
         public static Fixture Init(ILovingBoardsDbContext dbContext, TestDb testDb) => new(dbContext, testDb);
 
@@ -423,5 +427,101 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
         var result = await sut.HandleAsync(boardId, CancellationToken.None);
 
         AssertAccessDenied(result);
+    }
+
+    // Publish events
+
+    [Fact]
+    public async Task CreateItem_PublishesItemAdded()
+    {
+        var capturing = new CapturingBoardBroadcaster();
+        var handler = new CreateItemHandler(DbContext, DefaultSettings, MockCurrentUserService.GetSuccessful().Mock.Object, capturing);
+        StoreInDb(new Board { Name = "Test", OwnerUserId = 1L, MemberUserIds = [1L] });
+        var boardId = Db.Query<Board>().First().Id;
+
+        await handler.HandleAsync(boardId, new CreateItemRequest("Milk"), CancellationToken.None);
+
+        capturing.Published.Should().ContainSingle();
+        capturing.Published[0].BoardId.Should().Be(boardId);
+        capturing.Published[0].Ev.Event.Should().Be(BoardEventNames.ItemAdded);
+    }
+
+    [Fact]
+    public async Task UpdateItem_PublishesItemUpdated()
+    {
+        var capturing = new CapturingBoardBroadcaster();
+        var handler = new UpdateItemHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing);
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId).WithItem(out var itemId, boardId);
+
+        await handler.HandleAsync(boardId, itemId, new UpdateItemRequest("Updated"), CancellationToken.None);
+
+        capturing.Published.Should().ContainSingle();
+        capturing.Published[0].Ev.Event.Should().Be(BoardEventNames.ItemUpdated);
+    }
+
+    [Fact]
+    public async Task SetItemStatus_ActualChange_PublishesItemStatus()
+    {
+        var capturing = new CapturingBoardBroadcaster();
+        var handler = new SetItemStatusHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing);
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId).WithItem(out var itemId, boardId, status: BoardItemStatus.Needed);
+
+        await handler.HandleAsync(boardId, itemId, new SetItemStatusRequest("Completed"), CancellationToken.None);
+
+        capturing.Published.Should().ContainSingle();
+        capturing.Published[0].Ev.Event.Should().Be(BoardEventNames.ItemStatus);
+    }
+
+    [Fact]
+    public async Task SetItemStatus_IdempotentSameStatus_PublishesNothing()
+    {
+        var capturing = new CapturingBoardBroadcaster();
+        var handler = new SetItemStatusHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing);
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId).WithItem(out var itemId, boardId, status: BoardItemStatus.Completed);
+
+        await handler.HandleAsync(boardId, itemId, new SetItemStatusRequest("Completed"), CancellationToken.None);
+
+        capturing.Published.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task DeleteItem_PublishesItemRemoved()
+    {
+        var capturing = new CapturingBoardBroadcaster();
+        var handler = new DeleteItemHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing);
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId).WithItem(out var itemId, boardId);
+
+        await handler.HandleAsync(boardId, itemId, CancellationToken.None);
+
+        capturing.Published.Should().ContainSingle();
+        capturing.Published[0].Ev.Event.Should().Be(BoardEventNames.ItemRemoved);
+    }
+
+    [Fact]
+    public async Task ClearCompleted_HasCompletedItems_PublishesItemsClearedWithIds()
+    {
+        var capturing = new CapturingBoardBroadcaster();
+        var handler = new ClearCompletedHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing);
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
+        fixture.WithItem(boardId, "C1", BoardItemStatus.Completed);
+        fixture.WithItem(boardId, "C2", BoardItemStatus.Completed);
+
+        await handler.HandleAsync(boardId, CancellationToken.None);
+
+        capturing.Published.Should().ContainSingle();
+        capturing.Published[0].Ev.Event.Should().Be(BoardEventNames.ItemsCleared);
+    }
+
+    [Fact]
+    public async Task ClearCompleted_ZeroCompleted_PublishesNothing()
+    {
+        var capturing = new CapturingBoardBroadcaster();
+        var handler = new ClearCompletedHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing);
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
+        fixture.WithItem(boardId, "N1", BoardItemStatus.Needed);
+
+        await handler.HandleAsync(boardId, CancellationToken.None);
+
+        capturing.Published.Should().BeEmpty();
     }
 }

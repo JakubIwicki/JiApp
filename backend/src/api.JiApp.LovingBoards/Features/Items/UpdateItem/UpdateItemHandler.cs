@@ -2,11 +2,12 @@ using JiApp.Common.Abstractions;
 using JiApp.Common.Services;
 using api.JiApp.LovingBoards.Features.Common;
 using api.JiApp.LovingBoards.Persistence;
+using api.JiApp.LovingBoards.Realtime;
 using Microsoft.EntityFrameworkCore;
 
 namespace api.JiApp.LovingBoards.Features.Items.UpdateItem;
 
-public sealed class UpdateItemHandler(ILovingBoardsDbContext db, ICurrentUserService currentUser)
+public sealed class UpdateItemHandler(ILovingBoardsDbContext db, ICurrentUserService currentUser, IBoardBroadcaster broadcaster)
 {
     public async Task<Result<long>> HandleAsync(long boardId, long itemId, UpdateItemRequest request, CancellationToken ct)
     {
@@ -30,6 +31,9 @@ public sealed class UpdateItemHandler(ILovingBoardsDbContext db, ICurrentUserSer
         item.UpdatedAt = DateTime.UtcNow;
 
         await db.SaveChangesAsync(ct);
+
+        broadcaster.Publish(boardId, new BoardEvent(BoardEventNames.ItemUpdated, new { itemId = item.Id }));
+
         return Result<long>.Success(item.Id);
     }
 }

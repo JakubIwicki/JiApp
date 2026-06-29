@@ -3,11 +3,12 @@ using JiApp.Common.Services;
 using api.JiApp.LovingBoards.Domain;
 using api.JiApp.LovingBoards.Features.Common;
 using api.JiApp.LovingBoards.Persistence;
+using api.JiApp.LovingBoards.Realtime;
 using Microsoft.EntityFrameworkCore;
 
 namespace api.JiApp.LovingBoards.Features.Items.SetItemStatus;
 
-public sealed class SetItemStatusHandler(ILovingBoardsDbContext db, ICurrentUserService currentUser)
+public sealed class SetItemStatusHandler(ILovingBoardsDbContext db, ICurrentUserService currentUser, IBoardBroadcaster broadcaster)
 {
     public async Task<Result<long>> HandleAsync(long boardId, long itemId, SetItemStatusRequest request, CancellationToken ct)
     {
@@ -44,6 +45,9 @@ public sealed class SetItemStatusHandler(ILovingBoardsDbContext db, ICurrentUser
         }
 
         await db.SaveChangesAsync(ct);
+
+        broadcaster.Publish(boardId, new BoardEvent(BoardEventNames.ItemStatus, new { itemId = item.Id, status = status.ToString() }));
+
         return Result<long>.Success(item.Id);
     }
 }

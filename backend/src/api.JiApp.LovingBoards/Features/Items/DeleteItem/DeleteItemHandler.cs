@@ -2,11 +2,12 @@ using JiApp.Common.Abstractions;
 using JiApp.Common.Services;
 using api.JiApp.LovingBoards.Features.Common;
 using api.JiApp.LovingBoards.Persistence;
+using api.JiApp.LovingBoards.Realtime;
 using Microsoft.EntityFrameworkCore;
 
 namespace api.JiApp.LovingBoards.Features.Items.DeleteItem;
 
-public sealed class DeleteItemHandler(ILovingBoardsDbContext db, ICurrentUserService currentUser)
+public sealed class DeleteItemHandler(ILovingBoardsDbContext db, ICurrentUserService currentUser, IBoardBroadcaster broadcaster)
 {
     public async Task<Result<long>> HandleAsync(long boardId, long itemId, CancellationToken ct)
     {
@@ -22,6 +23,9 @@ public sealed class DeleteItemHandler(ILovingBoardsDbContext db, ICurrentUserSer
 
         db.BoardItems.Remove(item);
         await db.SaveChangesAsync(ct);
+
+        broadcaster.Publish(boardId, new BoardEvent(BoardEventNames.ItemRemoved, new { itemId }));
+
         return Result<long>.Success(itemId);
     }
 }

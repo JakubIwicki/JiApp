@@ -3,11 +3,12 @@ using JiApp.Common.Services;
 using api.JiApp.LovingBoards.Domain;
 using api.JiApp.LovingBoards.Features.Common;
 using api.JiApp.LovingBoards.Persistence;
+using api.JiApp.LovingBoards.Realtime;
 using Microsoft.EntityFrameworkCore;
 
 namespace api.JiApp.LovingBoards.Features.Boards.GetBoard;
 
-public sealed class GetBoardHandler(ILovingBoardsDbContext db, ICurrentUserService currentUser)
+public sealed class GetBoardHandler(ILovingBoardsDbContext db, ICurrentUserService currentUser, IBoardBroadcaster broadcaster)
 {
     public async Task<Result<GetBoardResponse>> HandleAsync(long id, CancellationToken ct)
     {
@@ -28,9 +29,11 @@ public sealed class GetBoardHandler(ILovingBoardsDbContext db, ICurrentUserServi
         var now = DateTime.UtcNow;
         if (WeeklyReset.IsResetDue(board.LastWeeklyResetAt, now))
         {
-            WeeklyReset.ResetRecurring(items, now);
+            var resetCount = WeeklyReset.ResetRecurring(items, now);
             board.LastWeeklyResetAt = now;
             await db.SaveChangesAsync(ct);
+
+            broadcaster.Publish(id, new BoardEvent(BoardEventNames.RecurringReset, new { reset = resetCount }));
         }
 
         var itemDtos = items
