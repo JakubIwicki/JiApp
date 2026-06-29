@@ -35,6 +35,15 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
 
+  lovingboards:
+    build:
+      context: .
+      dockerfile: ./src/api.JiApp.LovingBoards/Dockerfile
+    ports:
+      - "6705:6705"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+
   gateway:
     build:
       context: .
@@ -46,3 +55,4 @@ services:
       - ytdownloader
       - imagetools
       - scheduler
+      - lovingboards

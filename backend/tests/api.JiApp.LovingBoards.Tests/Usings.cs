@@ -1,0 +1,13 @@
+global using FluentAssertions;
+global using Moq;
+global using JiApp.Common.Abstractions;
+global using JiApp.Common.Services;
+global using api.JiApp.LovingBoards.Common;
+global using api.JiApp.LovingBoards.Domain;
+global using api.JiApp.LovingBoards.Persistence;
+global using Microsoft.EntityFrameworkCore;
+global using JiApp.Testing.Common.Assertions;
+global using JiApp.Testing.Common.Bases;
+global using JiApp.Testing.Common.Data;
+global using JiApp.Testing.Common.Mocking;
+global using static JiApp.Testing.Common.Assertions.ResultAssertions;
