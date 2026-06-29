@@ -43,8 +43,8 @@
   font-family: var(--font-heading);
   font-size: 0.6875rem;
   font-weight: 500;
-  color: var(--color-accent);
-  background: var(--color-accent-subtle);
+  color: var(--color-accent-2);
+  background: var(--color-accent-2-subtle);
   padding: 2px 8px;
   border-radius: var(--radius-sm);
   white-space: nowrap;
@@ -66,7 +66,7 @@
 }
 
 .link:hover {
-  color: var(--color-accent);
+  color: var(--color-accent-2);
 }
 
 .arrow {
