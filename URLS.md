@@ -24,6 +24,7 @@ graph TD
     YT["🎵 YtDownloader<br/>:6702"]
     IMG["🖼️ ImageTools<br/>:6703"]
     SCH["📅 Scheduler<br/>:6704"]
+    LB["💝 LovingBoards<br/>:6705"]
 
     %% Mobile → Gateway
     Mobile -->|"HTTPS :6700<br/>/api/v1/*"| GW
@@ -33,17 +34,20 @@ graph TD
     GW -->|"/api/v1/yt/* → :6702"| YT
     GW -->|"/api/v1/imagetools/* → :6703"| IMG
     GW -->|"/api/v1/scheduler/* → :6704"| SCH
+    GW -->|"/api/v1/lovingboards/* → :6705"| LB
 
     %% Gateway health probes
     GW -.->|"health check"| ID
     GW -.->|"health check"| YT
     GW -.->|"health check"| IMG
     GW -.->|"health check"| SCH
+    GW -.->|"health check"| LB
 
     %% Service → DB
     ID ---|"jiapp_identity"| DB
     YT ---|"jiapp_ytdownloader"| DB
     SCH ---|"jiapp_scheduler"| DB
+    LB ---|"jiapp_lovingboards"| DB
 
     %% Wake-up flow (production)
     Mobile -->|"POST /start"| APIGW
@@ -58,7 +62,7 @@ graph TD
     classDef live fill:#4a9,stroke:#333,color:#fff
     classDef infra fill:#48b,stroke:#333,color:#fff
     classDef external fill:#e83,stroke:#333,color:#fff
-    class GW,ID,YT,IMG,SCH live
+    class GW,ID,YT,IMG,SCH,LB live
     class DB,GW,Lambda,APIGW infra
     class YouTube,YtDlp,Mobile external
 ```
@@ -76,6 +80,7 @@ graph TD
 | **YtDownloader** | `https://*:6702` | `http://*:6702` (internal) | 6702 |
 | **ImageTools** | `https://*:6703` | `http://*:6703` (internal) | 6703 |
 | **Scheduler** | `https://*:6704` | `http://*:6704` (internal) | 6704 |
+| **LovingBoards** | `https://*:6705` | `http://*:6705` (internal) | 6705 |
 
 **Production notes:** Only the Gateway is publicly exposed (HTTPS on :6700 with baked CA cert). Internal services use HTTP. Production uses SQLite (no PostgreSQL).
 
@@ -104,6 +109,7 @@ See `deployment_plan/DEPLOYMENT_PLAN.md` for full architecture.
 | Gateway → YtDownloader | YARP destination | `http://ytdownloader:6702` |
 | Gateway → ImageTools | YARP destination | `http://imagetools:6703` |
 | Gateway → Scheduler | YARP destination | `http://scheduler:6704` |
+| Gateway → LovingBoards | YARP destination | `http://lovingboards:6705` |
 | All services → DB | PostgreSQL | `Host=postgres;Port=5432;Database=jiapp_{service}` |
 
 ---
@@ -118,6 +124,7 @@ See `deployment_plan/DEPLOYMENT_PLAN.md` for full architecture.
 | `/api/v1/yt/{**catch-all}` | yt-cluster | `https://localhost:6702` | `http://ytdownloader:6702` |
 | `/api/v1/imagetools/{**catch-all}` | imagetools-cluster | `https://localhost:6703` | `http://imagetools:6703` |
 | `/api/v1/scheduler/{**catch-all}` | scheduler-cluster | `https://localhost:6704` | `http://scheduler:6704` |
+| `/api/v1/lovingboards/{**catch-all}` | lovingboards-cluster | `https://localhost:6705` | `http://lovingboards:6705` |
 
 ### Health Endpoints
 
@@ -283,7 +290,31 @@ All origins accepted. Same policy on all services.
 
 ---
 
-## 7. Mobile App (React Native)
+## 7. LovingBoards Service (port 6705) — prefix `/api/v1/lovingboards`
+
+> Authorization: every `/api/v1/lovingboards/**` endpoint (except `/health`) requires the `module` claim with value `LovingBoards`. A valid JWT lacking this claim is rejected with **403**.
+
+#### Boards
+
+| Method | Path | Handler | Status |
+|--------|------|---------|--------|
+| GET | `/api/v1/lovingboards/boards` | `ListBoardsEndpoint.cs` | 🟢 Live |
+| POST | `/api/v1/lovingboards/boards` | `CreateBoardEndpoint.cs` | 🟢 Live |
+| GET | `/api/v1/lovingboards/boards/{id:long}` | `GetBoardEndpoint.cs` | 🟢 Live |
+| PUT | `/api/v1/lovingboards/boards/{id:long}` | `UpdateBoardEndpoint.cs` | 🟢 Live |
+| DELETE | `/api/v1/lovingboards/boards/{id:long}` | `DeleteBoardEndpoint.cs` | 🟢 Live |
+| POST | `/api/v1/lovingboards/boards/{id:long}/members` | `AddBoardMemberEndpoint.cs` | 🟢 Live |
+| DELETE | `/api/v1/lovingboards/boards/{id:long}/members/{userId:long}` | `RemoveBoardMemberEndpoint.cs` | 🟢 Live |
+
+#### Health
+
+| Method | Path | Handler | Status |
+|--------|------|---------|--------|
+| GET | `/api/v1/lovingboards/health` | `Startup.cs` | 🟢 Live |
+
+---
+
+## 8. Mobile App (React Native)
 
 ### API Base URL
 
@@ -477,7 +508,8 @@ Custom CA cert `jiapp_dev_ca` trusted for HTTPS with self-signed dev certificate
 :6701  →  Identity (auth)
 :6702  →  YtDownloader (YouTube search/download/preview)
 :6703  →  ImageTools
-:6704  →  Scheduler (boards, clients)
+:6704  →  Scheduler (boards, clients, expenses, reports)
+:6705  →  LovingBoards (shared collaborative boards)
 :5432  →  PostgreSQL
 ```
 
@@ -489,6 +521,7 @@ Identity:    GET /api/v1/auth/health
 YtDownloader: GET /api/v1/yt/health
 ImageTools:  GET /api/v1/imagetools/health
 Scheduler:   GET /api/v1/scheduler/health
+LovingBoards: GET /api/v1/lovingboards/health
 ```
 
 ### Base URLs
@@ -506,6 +539,7 @@ Scheduler:   GET /api/v1/scheduler/health
 /api/v1/yt/*         →  YtDownloader Service
 /api/v1/imagetools/* →  ImageTools Service
 /api/v1/scheduler/*  →  Scheduler Service
+/api/v1/lovingboards/* → LovingBoards Service
 ```
 
 ### Legend
