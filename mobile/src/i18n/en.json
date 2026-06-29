@@ -253,7 +253,9 @@
       "qty": "×{{qty}}",
       "empty": "No items yet. Add your first one!",
       "undo": "Undo",
-      "removed": "Removed"
+      "removed": "Removed",
+      "online": "{{count}} online",
+      "online_plural": "{{count}} online"
     },
     "itemSheet": {
       "addTitle": "New item",
@@ -297,7 +299,8 @@
       "resetWeekly": "Failed to reset weekly items",
       "updateBoard": "Failed to update board",
       "addMember": "Failed to add member",
-      "removeMember": "Failed to remove member"
+      "removeMember": "Failed to remove member",
+      "stream": "Live updates unavailable"
     }
   }
 }

@@ -10,6 +10,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import useBoard from '../hooks/useBoard';
+import PresenceAvatars from '../components/PresenceAvatars';
 import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
 import type { Theme } from '../../../styles/theme';
 import { spacing, borderRadius } from '../../../styles/theme';
@@ -294,6 +295,7 @@ const BoardDetailScreen: React.FC<Props> = ({ route }) => {
     items,
     isLoading,
     error,
+    presence,
     refetch,
     setItemStatus,
     clearCompleted,
@@ -493,16 +495,17 @@ const BoardDetailScreen: React.FC<Props> = ({ route }) => {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
+        <View style={styles.headerTopRow}>
           <Text style={styles.boardName}>{board.name}</Text>
-          <Text style={styles.headerMeta}>
-            {t('lovingBoards.boardList.memberCount', {
-              count: board.memberUserIds.length,
-            })}
-            {' · '}
-            {t('lovingBoards.boardList.itemCount', { count: allNeeded.length })}
-          </Text>
+          <PresenceAvatars userIds={presence} />
         </View>
+        <Text style={styles.headerMeta}>
+          {t('lovingBoards.boardList.memberCount', {
+            count: board.memberUserIds.length,
+          })}
+          {' · '}
+          {t('lovingBoards.boardList.itemCount', { count: allNeeded.length })}
+        </Text>
         <View style={styles.headerActions}>
           <Pressable
             style={({ pressed }) => [
@@ -706,8 +709,10 @@ const makeStyles = (t: Theme) =>
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: t.colors.separator,
     },
-    headerLeft: {
-      gap: spacing.xs,
+    headerTopRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
       marginBottom: spacing.sm,
     },
     boardName: {

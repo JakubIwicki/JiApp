@@ -2,6 +2,10 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import * as boardService from '../services/boardService';
 import * as itemService from '../services/itemService';
+import {
+  openBoardStream,
+  type BoardStreamHandle,
+} from '../services/boardStreamService';
 import type { Board, Item, BoardItemStatus } from '../types/api';
 import type {
   CreateItemPayload,
@@ -13,6 +17,8 @@ interface UseBoardResult {
   items: Item[];
   isLoading: boolean;
   error: string | null;
+  presence: number[];
+  isLive: boolean;
   refetch: () => Promise<void>;
   addItem: (payload: CreateItemPayload) => Promise<number | undefined>;
   updateItem: (itemId: number, payload: UpdateItemPayload) => Promise<void>;
@@ -25,15 +31,24 @@ interface UseBoardResult {
   removeMember: (userId: number) => Promise<void>;
 }
 
+const DEBOUNCE_MS = 300;
+
 const useBoard = (boardId: number): UseBoardResult => {
   const [board, setBoard] = useState<Board | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [presence, setPresence] = useState<number[]>([]);
+  const [isLive, setIsLive] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const streamRef = useRef<BoardStreamHandle | null>(null);
+  const boardRef = useRef(board);
+  boardRef.current = board;
 
   useEffect(() => {
     return () => {
       abortRef.current?.abort();
+      if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, []);
 
@@ -64,7 +79,40 @@ const useBoard = (boardId: number): UseBoardResult => {
   useFocusEffect(
     useCallback(() => {
       loadBoard();
-    }, [loadBoard]),
+
+      const handle = openBoardStream({
+        boardId,
+        onChange: () => {
+          if (debounceRef.current) clearTimeout(debounceRef.current);
+          debounceRef.current = setTimeout(() => {
+            loadBoard();
+          }, DEBOUNCE_MS);
+        },
+        onPresence: (userIds: number[]) => {
+          setPresence(userIds);
+        },
+        onOpen: () => {
+          loadBoard();
+          setIsLive(true);
+        },
+        onError: () => {
+          if (!boardRef.current) {
+            setError('lovingBoards.errors.stream');
+          }
+          setIsLive(false);
+        },
+      });
+      streamRef.current = handle;
+
+      return () => {
+        handle.close();
+        setPresence([]);
+        setIsLive(false);
+        if (debounceRef.current) {
+          clearTimeout(debounceRef.current);
+        }
+      };
+    }, [boardId, loadBoard]),
   );
 
   const addItem = useCallback(
@@ -241,6 +289,8 @@ const useBoard = (boardId: number): UseBoardResult => {
     items,
     isLoading,
     error,
+    presence,
+    isLive,
     refetch: loadBoard,
     addItem,
     updateItem,

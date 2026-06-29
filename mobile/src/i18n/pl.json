@@ -253,7 +253,9 @@
       "qty": "×{{qty}}",
       "empty": "Brak elementów. Dodaj pierwszy!",
       "undo": "Cofnij",
-      "removed": "Usunięto"
+      "removed": "Usunięto",
+      "online": "{{count}} online",
+      "online_plural": "{{count}} online"
     },
     "itemSheet": {
       "addTitle": "Nowy element",
@@ -297,7 +299,8 @@
       "resetWeekly": "Nie udało się zresetować tygodniowych",
       "updateBoard": "Nie udało się zaktualizować tablicy",
       "addMember": "Nie udało się dodać członka",
-      "removeMember": "Nie udało się usunąć członka"
+      "removeMember": "Nie udało się usunąć członka",
+      "stream": "Aktualizacje na żywo niedostępne"
     }
   }
 }
