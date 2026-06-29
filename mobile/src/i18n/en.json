@@ -271,6 +271,7 @@
       "unassigned": "Unassigned",
       "dueDate": "Due date",
       "dueDatePlaceholder": "YYYY-MM-DD",
+      "dueDateInvalid": "Invalid date format (use YYYY-MM-DD)",
       "repeatWeekly": "Repeat weekly",
       "save": "Save",
       "delete": "Delete",
@@ -283,6 +284,20 @@
       "remove": "Remove",
       "owner": "Owner",
       "ownerCannotRemove": "Cannot remove the board owner"
+    },
+    "errors": {
+      "loadBoards": "Failed to load boards",
+      "createBoard": "Failed to create board",
+      "loadBoard": "Failed to load board",
+      "createItem": "Failed to create item",
+      "updateItem": "Failed to update item",
+      "itemStatus": "Failed to update item status",
+      "deleteItem": "Failed to delete item",
+      "clearCompleted": "Failed to clear completed items",
+      "resetWeekly": "Failed to reset weekly items",
+      "updateBoard": "Failed to update board",
+      "addMember": "Failed to add member",
+      "removeMember": "Failed to remove member"
     }
   }
 }

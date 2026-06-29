@@ -76,7 +76,7 @@ const BoardListScreen: React.FC = () => {
     return (
       <View style={styles.center}>
         <Text style={styles.errorText}>
-          {t('lovingBoards.boardList.loadError')}
+          {error ? t(error) : t('lovingBoards.boardList.loadError')}
         </Text>
         <Pressable
           style={({ pressed }) => [styles.retryBtn, pressed && styles.pressed]}
@@ -121,10 +121,6 @@ const BoardListScreen: React.FC = () => {
                 <Text style={styles.boardMeta}>
                   {t('lovingBoards.boardList.memberCount', {
                     count: board.memberUserIds.length,
-                  })}
-                  {'  ·  '}
-                  {t('lovingBoards.boardList.itemCount', {
-                    count: board.items.length,
                   })}
                 </Text>
               </View>

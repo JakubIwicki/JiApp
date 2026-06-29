@@ -1,9 +1,10 @@
 import apiClient from '../../../services/apiClient';
 import type { Item } from '../types/api';
+import { z } from 'zod';
 
-interface IdResponse {
-  id: number;
-}
+const IdResponseSchema = z.object({ id: z.number() });
+const ClearedResponseSchema = z.object({ cleared: z.number() });
+const ResetResponseSchema = z.object({ reset: z.number() });
 
 export interface CreateItemPayload {
   title: string;
@@ -28,12 +29,12 @@ export interface UpdateItemPayload {
 export const createItem = async (
   boardId: number,
   payload: CreateItemPayload,
-): Promise<IdResponse> => {
-  const response = await apiClient.post<IdResponse>(
+): Promise<{ id: number }> => {
+  const response = await apiClient.post(
     `/lovingboards/boards/${boardId}/items`,
     payload,
   );
-  return response.data;
+  return IdResponseSchema.parse(response.data);
 };
 
 export const updateItem = async (
@@ -68,17 +69,17 @@ export const deleteItem = async (
 export const clearCompleted = async (
   boardId: number,
 ): Promise<{ cleared: number }> => {
-  const response = await apiClient.post<{ cleared: number }>(
+  const response = await apiClient.post(
     `/lovingboards/boards/${boardId}/items/clear-completed`,
   );
-  return response.data;
+  return ClearedResponseSchema.parse(response.data);
 };
 
 export const resetWeekly = async (
   boardId: number,
 ): Promise<{ reset: number }> => {
-  const response = await apiClient.post<{ reset: number }>(
+  const response = await apiClient.post(
     `/lovingboards/boards/${boardId}/items/reset-weekly`,
   );
-  return response.data;
+  return ResetResponseSchema.parse(response.data);
 };

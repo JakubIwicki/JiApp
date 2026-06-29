@@ -32,11 +32,10 @@ const useBoard = (boardId: number): UseBoardResult => {
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    const controller = abortRef.current;
     return () => {
-      controller?.abort();
+      abortRef.current?.abort();
     };
-  }, [abortRef]);
+  }, []);
 
   const loadBoard = useCallback(async () => {
     abortRef.current?.abort();
@@ -53,7 +52,7 @@ const useBoard = (boardId: number): UseBoardResult => {
       setBoard(data);
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') return;
-      setError(err instanceof Error ? err.message : 'Failed to load board');
+      setError('lovingBoards.errors.loadBoard');
       setBoard(null);
     } finally {
       if (!controller.signal.aborted) {
@@ -76,7 +75,7 @@ const useBoard = (boardId: number): UseBoardResult => {
         await loadBoard();
         return result.id;
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to create item');
+        setError('lovingBoards.errors.createItem');
         throw err;
       }
     },
@@ -90,7 +89,7 @@ const useBoard = (boardId: number): UseBoardResult => {
         await itemService.updateItem(boardId, itemId, payload);
         await loadBoard();
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to update item');
+        setError('lovingBoards.errors.updateItem');
         throw err;
       }
     },
@@ -100,7 +99,7 @@ const useBoard = (boardId: number): UseBoardResult => {
   const setItemStatus = useCallback(
     async (itemId: number, status: BoardItemStatus) => {
       setError(null);
-      const previous = board;
+      const priorStatus = board?.items.find(i => i.id === itemId)?.status;
       setBoard(prev => {
         if (!prev) return prev;
         return {
@@ -111,10 +110,19 @@ const useBoard = (boardId: number): UseBoardResult => {
       try {
         await itemService.setItemStatus(boardId, itemId, status);
       } catch (err) {
-        setBoard(previous);
-        setError(
-          err instanceof Error ? err.message : 'Failed to update item status',
-        );
+        if (priorStatus) {
+          setBoard(prev =>
+            prev
+              ? {
+                  ...prev,
+                  items: prev.items.map(i =>
+                    i.id === itemId ? { ...i, status: priorStatus } : i,
+                  ),
+                }
+              : prev,
+          );
+        }
+        setError('lovingBoards.errors.itemStatus');
         throw err;
       }
     },
@@ -124,7 +132,7 @@ const useBoard = (boardId: number): UseBoardResult => {
   const deleteItem = useCallback(
     async (itemId: number) => {
       setError(null);
-      const previous = board;
+      const removedItem = board?.items.find(i => i.id === itemId);
       setBoard(prev => {
         if (!prev) return prev;
         return {
@@ -135,8 +143,12 @@ const useBoard = (boardId: number): UseBoardResult => {
       try {
         await itemService.deleteItem(boardId, itemId);
       } catch (err) {
-        setBoard(previous);
-        setError(err instanceof Error ? err.message : 'Failed to delete item');
+        if (removedItem) {
+          setBoard(prev =>
+            prev ? { ...prev, items: [...prev.items, removedItem] } : prev,
+          );
+        }
+        setError('lovingBoards.errors.deleteItem');
         throw err;
       }
     },
@@ -145,7 +157,6 @@ const useBoard = (boardId: number): UseBoardResult => {
 
   const clearCompleted = useCallback(async () => {
     setError(null);
-    const previous = board;
     setBoard(prev => {
       if (!prev) return prev;
       return {
@@ -157,13 +168,11 @@ const useBoard = (boardId: number): UseBoardResult => {
       await itemService.clearCompleted(boardId);
       await loadBoard();
     } catch (err) {
-      setBoard(previous);
-      setError(
-        err instanceof Error ? err.message : 'Failed to clear completed items',
-      );
+      await loadBoard();
+      setError('lovingBoards.errors.clearCompleted');
       throw err;
     }
-  }, [boardId, board, loadBoard]);
+  }, [boardId, loadBoard]);
 
   const resetWeekly = useCallback(async () => {
     setError(null);
@@ -171,9 +180,7 @@ const useBoard = (boardId: number): UseBoardResult => {
       await itemService.resetWeekly(boardId);
       await loadBoard();
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Failed to reset weekly items',
-      );
+      setError('lovingBoards.errors.resetWeekly');
       throw err;
     }
   }, [boardId, loadBoard]);
@@ -181,7 +188,7 @@ const useBoard = (boardId: number): UseBoardResult => {
   const updateBoard = useCallback(
     async (name: string) => {
       setError(null);
-      const previous = board;
+      const priorName = board?.name;
       setBoard(prev => {
         if (!prev) return prev;
         return { ...prev, name };
@@ -189,8 +196,10 @@ const useBoard = (boardId: number): UseBoardResult => {
       try {
         await boardService.updateBoard(boardId, name);
       } catch (err) {
-        setBoard(previous);
-        setError(err instanceof Error ? err.message : 'Failed to update board');
+        if (priorName) {
+          setBoard(prev => (prev ? { ...prev, name: priorName } : prev));
+        }
+        setError('lovingBoards.errors.updateBoard');
         throw err;
       }
     },
@@ -204,7 +213,7 @@ const useBoard = (boardId: number): UseBoardResult => {
         await boardService.addMember(boardId, userId);
         await loadBoard();
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to add member');
+        setError('lovingBoards.errors.addMember');
         throw err;
       }
     },
@@ -218,9 +227,7 @@ const useBoard = (boardId: number): UseBoardResult => {
         await boardService.removeMember(boardId, userId);
         await loadBoard();
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'Failed to remove member',
-        );
+        setError('lovingBoards.errors.removeMember');
         throw err;
       }
     },

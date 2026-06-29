@@ -17,6 +17,11 @@ import type { Theme } from '../../../styles/theme';
 import { spacing, borderRadius } from '../../../styles/theme';
 import type { LovingBoardsStackParamList } from '../../../navigation/types';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { Item, Board } from '../types/api';
+import type {
+  CreateItemPayload,
+  UpdateItemPayload,
+} from '../services/itemService';
 
 type Props = NativeStackScreenProps<LovingBoardsStackParamList, 'ItemSheet'>;
 
@@ -48,17 +53,30 @@ function formReducer(state: FormState, action: FormAction): FormState {
   }
 }
 
-const ItemSheet: React.FC<Props> = ({ route, navigation }) => {
-  const { boardId, itemId } = route.params;
-  const isEditing = itemId !== undefined;
+interface ItemFormContentProps {
+  existingItem: Item | undefined;
+  board: Board | null;
+  isEditing: boolean;
+  itemId: number | undefined;
+  addItem: (payload: CreateItemPayload) => Promise<number | undefined>;
+  updateItem: (itemId: number, payload: UpdateItemPayload) => Promise<void>;
+  deleteItem: (itemId: number) => Promise<void>;
+  onDismiss: () => void;
+}
+
+const ItemFormContent: React.FC<ItemFormContentProps> = ({
+  existingItem,
+  board,
+  isEditing,
+  itemId,
+  addItem,
+  updateItem,
+  deleteItem: deleteItemFn,
+  onDismiss,
+}) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const { board, addItem, updateItem, deleteItem } = useBoard(boardId);
-
-  const existingItem = isEditing
-    ? board?.items.find(i => i.id === itemId)
-    : undefined;
 
   const initialState: FormState = {
     title: existingItem?.title ?? '',
@@ -73,6 +91,7 @@ const ItemSheet: React.FC<Props> = ({ route, navigation }) => {
 
   const [form, dispatch] = useReducer(formReducer, initialState);
   const [titleError, setTitleError] = useState<string | undefined>();
+  const [dueDateError, setDueDateError] = useState<string | undefined>();
 
   const setField = useCallback(
     (field: keyof FormState, value: string | boolean) => {
@@ -80,9 +99,23 @@ const ItemSheet: React.FC<Props> = ({ route, navigation }) => {
       if (field === 'title' && typeof value === 'string' && value.trim()) {
         setTitleError(undefined);
       }
+      if (field === 'dueDate') {
+        setDueDateError(undefined);
+      }
     },
     [],
   );
+
+  const validateDueDate = useCallback((): boolean => {
+    const raw = form.dueDate.trim();
+    if (!raw) return true;
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(raw) || Number.isNaN(new Date(raw).getTime())) {
+      setDueDateError(t('lovingBoards.itemSheet.dueDateInvalid'));
+      return false;
+    }
+    return true;
+  }, [form.dueDate, t]);
 
   const handleSave = useCallback(async () => {
     const trimmedTitle = form.title.trim();
@@ -90,6 +123,8 @@ const ItemSheet: React.FC<Props> = ({ route, navigation }) => {
       setTitleError(t('lovingBoards.itemSheet.titleRequired'));
       return;
     }
+
+    if (!validateDueDate()) return;
 
     dispatch({ type: 'SET_SAVING', value: true });
     try {
@@ -110,13 +145,22 @@ const ItemSheet: React.FC<Props> = ({ route, navigation }) => {
       } else {
         await addItem(payload);
       }
-      navigation.goBack();
+      onDismiss();
     } catch {
       // error handled by hook
     } finally {
       dispatch({ type: 'SET_SAVING', value: false });
     }
-  }, [form, isEditing, itemId, addItem, updateItem, navigation, t]);
+  }, [
+    form,
+    isEditing,
+    itemId,
+    addItem,
+    updateItem,
+    onDismiss,
+    t,
+    validateDueDate,
+  ]);
 
   const handleDelete = useCallback(() => {
     if (!isEditing || itemId === undefined) return;
@@ -130,8 +174,8 @@ const ItemSheet: React.FC<Props> = ({ route, navigation }) => {
           style: 'destructive',
           onPress: async () => {
             try {
-              await deleteItem(itemId);
-              navigation.goBack();
+              await deleteItemFn(itemId);
+              onDismiss();
             } catch {
               // error handled by hook
             }
@@ -139,7 +183,7 @@ const ItemSheet: React.FC<Props> = ({ route, navigation }) => {
         },
       ],
     );
-  }, [isEditing, itemId, deleteItem, navigation, t]);
+  }, [isEditing, itemId, deleteItemFn, onDismiss, t]);
 
   const memberIds = board?.memberUserIds ?? [];
 
@@ -262,7 +306,7 @@ const ItemSheet: React.FC<Props> = ({ route, navigation }) => {
       {/* Due Date */}
       <Text style={styles.label}>{t('lovingBoards.itemSheet.dueDate')}</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, dueDateError && styles.inputError]}
         placeholder={t('lovingBoards.itemSheet.dueDatePlaceholder')}
         placeholderTextColor={colors.textTertiary}
         value={form.dueDate}
@@ -270,6 +314,7 @@ const ItemSheet: React.FC<Props> = ({ route, navigation }) => {
         maxLength={10}
         testID="item-duedate-input"
       />
+      {dueDateError && <Text style={styles.errorMsg}>{dueDateError}</Text>}
 
       {/* Repeat Weekly */}
       <View style={styles.switchRow}>
@@ -310,7 +355,7 @@ const ItemSheet: React.FC<Props> = ({ route, navigation }) => {
 
         <Pressable
           style={({ pressed }) => [styles.cancelBtn, pressed && styles.pressed]}
-          onPress={() => navigation.goBack()}
+          onPress={onDismiss}
           accessibilityRole="button"
           accessibilityLabel={t('common.cancel')}
           testID="item-cancel-button"
@@ -336,6 +381,97 @@ const ItemSheet: React.FC<Props> = ({ route, navigation }) => {
         )}
       </View>
     </ScrollView>
+  );
+};
+
+const makeLoadingStyles = (t: Theme) =>
+  StyleSheet.create({
+    center: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: t.colors.background,
+      gap: spacing.md,
+    },
+    errorText: {
+      ...t.typography.body,
+      color: t.colors.error,
+      textAlign: 'center',
+      paddingHorizontal: spacing.xl,
+    },
+    retryBtn: {
+      minHeight: MIN_TOUCH,
+      minWidth: MIN_TOUCH,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.sm,
+    },
+    retryText: {
+      ...t.typography.link,
+      color: t.colors.primary,
+    },
+    pressed: {
+      opacity: 0.7,
+    },
+  });
+
+const ItemSheet: React.FC<Props> = ({ route, navigation }) => {
+  const { boardId, itemId } = route.params;
+  const isEditing = itemId !== undefined;
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+  const loadingStyles = useThemedStyles(makeLoadingStyles);
+  const { board, isLoading, addItem, updateItem, deleteItem } =
+    useBoard(boardId);
+
+  const existingItem = isEditing
+    ? board?.items.find(i => i.id === itemId)
+    : undefined;
+
+  // Edit mode: wait for board to load so existingItem is populated
+  if (isEditing && isLoading) {
+    return (
+      <View style={loadingStyles.center}>
+        <ActivityIndicator
+          size="large"
+          color={colors.primary}
+          testID="item-sheet-loading"
+        />
+      </View>
+    );
+  }
+
+  // Edit mode: board loaded but item not found
+  if (isEditing && board && !existingItem) {
+    return (
+      <View style={loadingStyles.center}>
+        <Text style={loadingStyles.errorText}>{t('common.error')}</Text>
+        <Pressable
+          style={({ pressed }) => [
+            loadingStyles.retryBtn,
+            pressed && loadingStyles.pressed,
+          ]}
+          onPress={() => navigation.goBack()}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.cancel')}
+          testID="item-sheet-back"
+        >
+          <Text style={loadingStyles.retryText}>{t('common.cancel')}</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  return (
+    <ItemFormContent
+      existingItem={existingItem}
+      board={board}
+      isEditing={isEditing}
+      itemId={itemId}
+      addItem={addItem}
+      updateItem={updateItem}
+      deleteItem={deleteItem}
+      onDismiss={() => navigation.goBack()}
+    />
   );
 };
 

@@ -313,11 +313,10 @@ const BoardDetailScreen: React.FC<Props> = ({ route }) => {
   );
 
   React.useEffect(() => {
-    const timer = undoTimeoutRef.current;
     return () => {
-      if (timer) clearTimeout(timer);
+      if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
     };
-  }, [undoTimeoutRef]);
+  }, []);
 
   // Group items by category
   const { activeByCategory, completedItems, uncategorizedActive } =
@@ -463,7 +462,9 @@ const BoardDetailScreen: React.FC<Props> = ({ route }) => {
   if (error && !board) {
     return (
       <View style={styles.center}>
-        <Text style={styles.errorText}>{error}</Text>
+        <Text style={styles.errorText}>
+          {error ? t(error) : t('common.error')}
+        </Text>
         <Pressable
           style={({ pressed }) => [styles.retryBtn, pressed && styles.pressed]}
           onPress={refetch}

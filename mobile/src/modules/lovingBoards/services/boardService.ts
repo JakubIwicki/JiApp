@@ -1,10 +1,9 @@
 import apiClient from '../../../services/apiClient';
 import { ListBoardsResponseSchema, BoardSchema } from '../types/api';
 import type { ListBoardsResponse, Board } from '../types/api';
+import { z } from 'zod';
 
-interface IdResponse {
-  id: number;
-}
+const IdResponseSchema = z.object({ id: z.number() });
 
 export const listBoards = async (): Promise<ListBoardsResponse> => {
   const response = await apiClient.get('/lovingboards/boards');
@@ -16,11 +15,9 @@ export const getBoard = async (id: number): Promise<Board> => {
   return BoardSchema.parse(response.data);
 };
 
-export const createBoard = async (name: string): Promise<IdResponse> => {
-  const response = await apiClient.post<IdResponse>('/lovingboards/boards', {
-    name,
-  });
-  return response.data;
+export const createBoard = async (name: string): Promise<{ id: number }> => {
+  const response = await apiClient.post('/lovingboards/boards', { name });
+  return IdResponseSchema.parse(response.data);
 };
 
 export const updateBoard = async (id: number, name: string): Promise<void> => {

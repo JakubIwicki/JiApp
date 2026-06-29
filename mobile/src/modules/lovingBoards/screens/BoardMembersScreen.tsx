@@ -25,7 +25,8 @@ const BoardMembersScreen: React.FC<Props> = ({ route }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const { board, isLoading, addMember, removeMember } = useBoard(boardId);
+  const { board, isLoading, error, addMember, removeMember } =
+    useBoard(boardId);
   const [userIdInput, setUserIdInput] = useState('');
 
   const handleAddMember = useCallback(async () => {
@@ -66,7 +67,9 @@ const BoardMembersScreen: React.FC<Props> = ({ route }) => {
   if (!board) {
     return (
       <View style={styles.center}>
-        <Text style={styles.errorText}>{t('common.error')}</Text>
+        <Text style={styles.errorText}>
+          {error ? t(error) : t('common.error')}
+        </Text>
       </View>
     );
   }

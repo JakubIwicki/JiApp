@@ -271,6 +271,7 @@
       "unassigned": "Nieprzypisane",
       "dueDate": "Termin",
       "dueDatePlaceholder": "RRRR-MM-DD",
+      "dueDateInvalid": "Nieprawidłowy format daty (użyj RRRR-MM-DD)",
       "repeatWeekly": "Powtarzaj co tydzień",
       "save": "Zapisz",
       "delete": "Usuń",
@@ -283,6 +284,20 @@
       "remove": "Usuń",
       "owner": "Właściciel",
       "ownerCannotRemove": "Nie można usunąć właściciela tablicy"
+    },
+    "errors": {
+      "loadBoards": "Nie udało się załadować tablic",
+      "createBoard": "Nie udało się utworzyć tablicy",
+      "loadBoard": "Nie udało się załadować tablicy",
+      "createItem": "Nie udało się utworzyć elementu",
+      "updateItem": "Nie udało się zaktualizować elementu",
+      "itemStatus": "Nie udało się zaktualizować statusu elementu",
+      "deleteItem": "Nie udało się usunąć elementu",
+      "clearCompleted": "Nie udało się wyczyścić ukończonych",
+      "resetWeekly": "Nie udało się zresetować tygodniowych",
+      "updateBoard": "Nie udało się zaktualizować tablicy",
+      "addMember": "Nie udało się dodać członka",
+      "removeMember": "Nie udało się usunąć członka"
     }
   }
 }

@@ -20,11 +20,10 @@ const useBoards = (): UseBoardsResult => {
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    const controller = abortRef.current;
     return () => {
-      controller?.abort();
+      abortRef.current?.abort();
     };
-  }, [abortRef]);
+  }, []);
 
   const loadBoards = useCallback(async () => {
     abortRef.current?.abort();
@@ -42,7 +41,7 @@ const useBoards = (): UseBoardsResult => {
       setHasMore(data.hasMore);
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') return;
-      setError(err instanceof Error ? err.message : 'Failed to load boards');
+      setError('lovingBoards.errors.loadBoards');
       setBoards([]);
     } finally {
       if (!controller.signal.aborted) {
@@ -65,7 +64,7 @@ const useBoards = (): UseBoardsResult => {
         await loadBoards();
         return result.id;
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to create board');
+        setError('lovingBoards.errors.createBoard');
         throw err;
       }
     },
