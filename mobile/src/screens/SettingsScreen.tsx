@@ -180,6 +180,7 @@ const makeStyles = (t: Theme) =>
       alignItems: 'center',
       justifyContent: 'center',
       marginTop: t.spacing.md,
+      marginHorizontal: t.spacing.lg,
     },
     editProfileText: {
       fontSize: 16,
