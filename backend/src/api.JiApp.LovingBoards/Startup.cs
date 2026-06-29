@@ -106,6 +106,7 @@ public class Startup(LovingBoardsSettings settings)
 
         // Realtime
         services.AddSingleton<IBoardBroadcaster, BoardBroadcaster>();
+        services.AddSingleton<Common.BoardWriteLock>();
 
         // Board handlers
         services.AddScoped<CreateBoardHandler>();

@@ -1,5 +1,6 @@
 using JiApp.Common.Abstractions;
 using JiApp.Common.Services;
+using api.JiApp.LovingBoards.Common;
 using api.JiApp.LovingBoards.Configuration;
 using api.JiApp.LovingBoards.Features.Items.ClearCompleted;
 using api.JiApp.LovingBoards.Features.Items.CreateItem;
@@ -200,7 +201,11 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
         var sut = fixture.UpdateItem;
         var before = DateTime.UtcNow;
 
-        var result = await sut.HandleAsync(boardId, itemId, new UpdateItemRequest("Updated", "3x", "NewCat", "Note"), CancellationToken.None);
+        var result = await sut.HandleAsync(boardId, itemId, new UpdateItemRequest(
+            Title: new Optional<string>("Updated"),
+            Quantity: new Optional<string?>("3x"),
+            Category: new Optional<string?>("NewCat"),
+            Note: new Optional<string?>("Note")), CancellationToken.None);
 
         AssertSuccess(result);
         var updated = Db.Find<BoardItem>(itemId);
@@ -217,7 +222,7 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
         var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId).WithItem(out var itemId, boardId, status: BoardItemStatus.Completed);
         var sut = fixture.UpdateItem;
 
-        var result = await sut.HandleAsync(boardId, itemId, new UpdateItemRequest("Updated"), CancellationToken.None);
+        var result = await sut.HandleAsync(boardId, itemId, new UpdateItemRequest(Title: new Optional<string>("Updated")), CancellationToken.None);
 
         AssertSuccess(result);
         var updated = Db.Find<BoardItem>(itemId);
@@ -230,7 +235,7 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
         var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
         var sut = fixture.UpdateItem;
 
-        var result = await sut.HandleAsync(boardId, 999L, new UpdateItemRequest("Updated"), CancellationToken.None);
+        var result = await sut.HandleAsync(boardId, 999L, new UpdateItemRequest(Title: new Optional<string>("Updated")), CancellationToken.None);
 
         AssertNotFound(result);
     }
@@ -244,7 +249,7 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
         fixture.WithItem(out var itemId, boardId2);
         var sut = fixture.UpdateItem;
 
-        var result = await sut.HandleAsync(boardId1, itemId, new UpdateItemRequest("Updated"), CancellationToken.None);
+        var result = await sut.HandleAsync(boardId1, itemId, new UpdateItemRequest(Title: new Optional<string>("Updated")), CancellationToken.None);
 
         AssertNotFound(result);
     }
@@ -255,9 +260,147 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
         var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L]);
         var sut = fixture.UpdateItem;
 
-        var result = await sut.HandleAsync(boardId, 1L, new UpdateItemRequest("Updated"), CancellationToken.None);
+        var result = await sut.HandleAsync(boardId, 1L, new UpdateItemRequest(Title: new Optional<string>("Updated")), CancellationToken.None);
 
         AssertAccessDenied(result);
+    }
+
+    [Fact]
+    public async Task UpdateItem_PartialUpdate_PreservesUnsetFields()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId).WithItem(out var itemId, boardId);
+        // Set all optional fields on the existing item
+        var item = Db.Find<BoardItem>(itemId);
+        item!.Quantity = "2L";
+        item.Category = "Dairy";
+        item.Note = "Low fat";
+        item.AssigneeUserId = 2L;
+        item.ExpiryDate = DateTime.UtcNow.AddDays(7);
+        item.IsRecurring = true;
+        await DbContext.SaveChangesAsync();
+        ((LovingBoardsDbContext)DbContext).ChangeTracker.Clear();
+
+        var sut = fixture.UpdateItem;
+
+        // Patch only Title — all other fields should remain unchanged
+        var result = await sut.HandleAsync(boardId, itemId, new UpdateItemRequest(Title: new Optional<string>("New Title")), CancellationToken.None);
+
+        AssertSuccess(result);
+        var updated = Db.Find<BoardItem>(itemId);
+        updated!.Title.Should().Be("New Title");
+        updated.Quantity.Should().Be("2L");
+        updated.Category.Should().Be("Dairy");
+        updated.Note.Should().Be("Low fat");
+        updated.AssigneeUserId.Should().Be(2L);
+        updated.ExpiryDate.Should().NotBeNull();
+        updated.IsRecurring.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task UpdateItem_ExplicitNull_ClearsNullableField()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId).WithItem(out var itemId, boardId);
+        var item = Db.Find<BoardItem>(itemId);
+        item!.Quantity = "2L";
+        await DbContext.SaveChangesAsync();
+        ((LovingBoardsDbContext)DbContext).ChangeTracker.Clear();
+
+        var sut = fixture.UpdateItem;
+
+        // Patch Quantity to null explicitly
+        var result = await sut.HandleAsync(boardId, itemId, new UpdateItemRequest(
+            Title: new Optional<string>("Title"),
+            Quantity: new Optional<string?>(null)), CancellationToken.None);
+
+        AssertSuccess(result);
+        var updated = Db.Find<BoardItem>(itemId);
+        updated!.Quantity.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task UpdateItem_PartialUpdate_BumpsUpdatedAt()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId).WithItem(out var itemId, boardId);
+        var before = DateTime.UtcNow;
+        var sut = fixture.UpdateItem;
+
+        var result = await sut.HandleAsync(boardId, itemId, new UpdateItemRequest(Title: new Optional<string>("X")), CancellationToken.None);
+
+        AssertSuccess(result);
+        var updated = Db.Find<BoardItem>(itemId);
+        updated!.UpdatedAt.Should().BeOnOrAfter(before);
+    }
+
+    [Fact]
+    public async Task UpdateItem_PatchOneField_DoesNotClobberOthers()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId).WithItem(out var itemId, boardId);
+        var item = Db.Find<BoardItem>(itemId);
+        item!.Quantity = "500g";
+        item.Category = "Bakery";
+        item.Note = "Fresh";
+        item.AssigneeUserId = 3L;
+        item.IsRecurring = true;
+        await DbContext.SaveChangesAsync();
+        ((LovingBoardsDbContext)DbContext).ChangeTracker.Clear();
+
+        var sut = fixture.UpdateItem;
+
+        // Patch only Quantity — Title, Category, Note, Assignee, IsRecurring must survive
+        var result = await sut.HandleAsync(boardId, itemId, new UpdateItemRequest(
+            Title: new Optional<string>("Title"),
+            Quantity: new Optional<string?>("1kg")), CancellationToken.None);
+
+        AssertSuccess(result);
+        var updated = Db.Find<BoardItem>(itemId);
+        updated!.Quantity.Should().Be("1kg");
+        updated.Title.Should().Be("Title");
+        updated.Category.Should().Be("Bakery");
+        updated.Note.Should().Be("Fresh");
+        updated.AssigneeUserId.Should().Be(3L);
+        updated.IsRecurring.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task UpdateItem_AllFieldsSet_BehavesAsFullUpdate()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId).WithItem(out var itemId, boardId);
+        var sut = fixture.UpdateItem;
+        var expiry = DateTime.UtcNow.AddDays(1);
+
+        var result = await sut.HandleAsync(boardId, itemId, new UpdateItemRequest(
+            Title: new Optional<string>("Full"),
+            Quantity: new Optional<string?>("3x"),
+            Category: new Optional<string?>("Cat"),
+            Note: new Optional<string?>("Note"),
+            AssigneeUserId: new Optional<long?>(2L),
+            ExpiryDate: new Optional<DateTime?>(expiry),
+            IsRecurring: new Optional<bool>(true)), CancellationToken.None);
+
+        AssertSuccess(result);
+        var updated = Db.Find<BoardItem>(itemId);
+        updated!.Title.Should().Be("Full");
+        updated.Quantity.Should().Be("3x");
+        updated.Category.Should().Be("Cat");
+        updated.Note.Should().Be("Note");
+        updated.AssigneeUserId.Should().Be(2L);
+        updated.ExpiryDate.Should().Be(expiry);
+        updated.IsRecurring.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task UpdateItem_NoFieldsSet_OnlyBumpsUpdatedAt()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId).WithItem(out var itemId, boardId, title: "Original");
+        var before = DateTime.UtcNow;
+        var sut = fixture.UpdateItem;
+
+        var result = await sut.HandleAsync(boardId, itemId, new UpdateItemRequest(), CancellationToken.None);
+
+        AssertSuccess(result);
+        var updated = Db.Find<BoardItem>(itemId);
+        updated!.Title.Should().Be("Original");
+        updated.UpdatedAt.Should().BeOnOrAfter(before);
     }
 
     // SetItemStatus
@@ -453,7 +596,7 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
         var handler = new UpdateItemHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing);
         var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId).WithItem(out var itemId, boardId);
 
-        await handler.HandleAsync(boardId, itemId, new UpdateItemRequest("Updated"), CancellationToken.None);
+        await handler.HandleAsync(boardId, itemId, new UpdateItemRequest(Title: new Optional<string>("Updated")), CancellationToken.None);
 
         capturing.Published.Should().ContainSingle();
         capturing.Published[0].Ev.Event.Should().Be(BoardEventNames.ItemUpdated);

@@ -21,13 +21,13 @@ public sealed class UpdateItemHandler(ILovingBoardsDbContext db, ICurrentUserSer
         if (item is null)
             return Result<long>.Failure("Item not found", ResultCategories.NotFound);
 
-        item.Title = request.Title;
-        item.Quantity = request.Quantity;
-        item.Category = request.Category;
-        item.Note = request.Note;
-        item.AssigneeUserId = request.AssigneeUserId;
-        item.ExpiryDate = request.ExpiryDate;
-        item.IsRecurring = request.IsRecurring;
+        if (request.Title.IsSet) item.Title = request.Title.Value!;
+        if (request.Quantity.IsSet) item.Quantity = request.Quantity.Value;
+        if (request.Category.IsSet) item.Category = request.Category.Value;
+        if (request.Note.IsSet) item.Note = request.Note.Value;
+        if (request.AssigneeUserId.IsSet) item.AssigneeUserId = request.AssigneeUserId.Value;
+        if (request.ExpiryDate.IsSet) item.ExpiryDate = request.ExpiryDate.Value;
+        if (request.IsRecurring.IsSet) item.IsRecurring = request.IsRecurring.Value;
         item.UpdatedAt = DateTime.UtcNow;
 
         await db.SaveChangesAsync(ct);

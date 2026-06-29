@@ -2,6 +2,7 @@ global using FluentAssertions;
 global using Moq;
 global using JiApp.Common.Abstractions;
 global using JiApp.Common.Services;
+global using api.JiApp.LovingBoards.Common;
 global using api.JiApp.LovingBoards.Domain;
 global using api.JiApp.LovingBoards.Persistence;
 global using Microsoft.EntityFrameworkCore;

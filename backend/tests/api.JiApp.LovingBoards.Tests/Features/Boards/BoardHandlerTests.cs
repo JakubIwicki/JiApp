@@ -47,8 +47,8 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
         public UpdateBoardHandler UpdateBoard => new(_dbContext, _currentUser, _broadcaster);
         public DeleteBoardHandler DeleteBoard => new(_dbContext, _currentUser, _broadcaster);
         public ListBoardsHandler ListBoards => new(_dbContext, _settings, _currentUser);
-        public AddBoardMemberHandler AddBoardMember => new(_dbContext, _currentUser, _broadcaster);
-        public RemoveBoardMemberHandler RemoveBoardMember => new(_dbContext, _currentUser, _broadcaster);
+        public AddBoardMemberHandler AddBoardMember => new(_dbContext, _currentUser, _broadcaster, new BoardWriteLock());
+        public RemoveBoardMemberHandler RemoveBoardMember => new(_dbContext, _currentUser, _broadcaster, new BoardWriteLock());
 
         public static Fixture Init(ILovingBoardsDbContext dbContext, TestDb testDb) => new(dbContext, testDb);
 
@@ -619,7 +619,7 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
     public async Task AddBoardMember_PublishesMemberChanged()
     {
         var capturing = new CapturingBoardBroadcaster();
-        var handler = new AddBoardMemberHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing);
+        var handler = new AddBoardMemberHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing, new BoardWriteLock());
         var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
 
         await handler.HandleAsync(boardId, new AddBoardMemberRequest(2L), CancellationToken.None);
@@ -632,7 +632,7 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
     public async Task AddBoardMember_AlreadyMember_DoesNotPublishMemberChanged()
     {
         var capturing = new CapturingBoardBroadcaster();
-        var handler = new AddBoardMemberHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing);
+        var handler = new AddBoardMemberHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing, new BoardWriteLock());
         var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
 
         var result = await handler.HandleAsync(boardId, new AddBoardMemberRequest(1L), CancellationToken.None);
@@ -645,7 +645,7 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
     public async Task RemoveBoardMember_PublishesMemberChanged()
     {
         var capturing = new CapturingBoardBroadcaster();
-        var handler = new RemoveBoardMemberHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing);
+        var handler = new RemoveBoardMemberHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing, new BoardWriteLock());
         var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [1L, 2L]);
 
         await handler.HandleAsync(boardId, 2L, CancellationToken.None);
