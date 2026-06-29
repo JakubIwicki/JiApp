@@ -32,12 +32,12 @@ public static class HealthDashboardEndpoint
                                                  """;
 
     public static void MapHealthDashboard(this IEndpointRouteBuilder endpoints,
-        string identityUrl, string ytUrl, string? imageToolsUrl = null, string? schedulerUrl = null)
+        string identityUrl, string ytUrl, string? imageToolsUrl = null, string? schedulerUrl = null, string? lovingBoardsUrl = null)
     {
         endpoints.MapGet("/health/dashboard", async (HttpContext context) =>
         {
             var html = await BuildDashboardHtml(
-                context.RequestServices, identityUrl, ytUrl, imageToolsUrl, schedulerUrl,
+                context.RequestServices, identityUrl, ytUrl, imageToolsUrl, schedulerUrl, lovingBoardsUrl,
                 context.RequestAborted);
             context.Response.ContentType = "text/html; charset=utf-8";
             await context.Response.WriteAsync(html, context.RequestAborted);
@@ -46,7 +46,7 @@ public static class HealthDashboardEndpoint
 
     private static async Task<string> BuildDashboardHtml(
         IServiceProvider sp, string identityUrl, string ytUrl, string? imageToolsUrl, string? schedulerUrl,
-        CancellationToken ct)
+        string? lovingBoardsUrl, CancellationToken ct)
     {
         var http = sp.GetRequiredService<IHttpClientFactory>().CreateClient("healthCheck");
         http.Timeout = TimeSpan.FromSeconds(5);
@@ -63,6 +63,9 @@ public static class HealthDashboardEndpoint
 
         if (schedulerUrl is not null)
             tasks.Add(CheckService(http, logger, "Scheduler", $"{schedulerUrl}/api/v1/scheduler/health", ct));
+
+        if (lovingBoardsUrl is not null)
+            tasks.Add(CheckService(http, logger, "LovingBoards", $"{lovingBoardsUrl}/api/v1/lovingboards/health", ct));
 
         var results = await Task.WhenAll(tasks);
 

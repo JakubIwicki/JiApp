@@ -27,7 +27,7 @@ public sealed class GatewaySettingsTests
             {
                 "Login", "Register", "Refresh", "Logout", "Health", "DownloadFile",
                 "SearchVideos", "SearchHistory", "DownloadHistory", "GetHistory",
-                "Me", "GetDownloadLink", "Preview", "Scheduler", "Assistant"
+                "Me", "GetDownloadLink", "Preview", "Scheduler", "LovingBoards", "Assistant"
             };
 
             return policies.ToDictionary(p => p, _ => ValidPolicy);
@@ -172,6 +172,7 @@ public sealed class GatewaySettingsTests
             .WithMessage("*RateLimiting:GetDownloadLink is not configured.*")
             .WithMessage("*RateLimiting:Preview is not configured.*")
             .WithMessage("*RateLimiting:Scheduler is not configured.*")
+            .WithMessage("*RateLimiting:LovingBoards is not configured.*")
             .WithMessage("*RateLimiting:Assistant is not configured.*");
     }
 

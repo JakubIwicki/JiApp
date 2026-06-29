@@ -33,6 +33,9 @@ public static class RateLimitPolicyNames
     // Scheduler
     public const string SchedulerPolicy = "SchedulerPolicy";
 
+    // LovingBoards
+    public const string LovingBoardsPolicy = "LovingBoardsPolicy";
+
     // Dev-only (error testing)
     public const string ThrowPolicy = "ThrowPolicy";
 }
