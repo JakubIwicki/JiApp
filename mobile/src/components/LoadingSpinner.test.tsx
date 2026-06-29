@@ -1,7 +1,7 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
 import LoadingSpinner from './LoadingSpinner';
-import { lavenderLight } from '../styles/theme';
+import { claudeLight } from '../styles/theme';
 
 describe('LoadingSpinner', () => {
   it('renders an ActivityIndicator', () => {
@@ -17,6 +17,6 @@ describe('LoadingSpinner', () => {
   it('uses primary color by default', () => {
     const { getByTestId } = render(<LoadingSpinner />);
     const indicator = getByTestId('loading-indicator');
-    expect(indicator.props.color).toBe(lavenderLight.primary);
+    expect(indicator.props.color).toBe(claudeLight.primary);
   });
 });

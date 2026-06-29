@@ -11,7 +11,12 @@ import { View, Text, Pressable } from 'react-native';
 // We override it per test via the mock function.
 
 import { ThemeProvider, useTheme } from '../ThemeContext';
-import { lavenderLight, lavenderDark } from '../../styles/theme';
+import {
+  claudeLight,
+  claudeDark,
+  lavenderLight,
+  lavenderDark,
+} from '../../styles/theme';
 import * as storageService from '../../services/storageService';
 
 // Test component that reads context
@@ -84,9 +89,9 @@ describe('ThemeContext', () => {
 
     expect(screen.getByTestId('isDark')).toBeDefined();
     expect(screen.getByText(String(false))).toBeDefined();
-    expect(screen.getByText(lavenderLight.background)).toBeDefined();
-    expect(screen.getByText(lavenderLight.surface)).toBeDefined();
-    expect(screen.getByText(lavenderLight.textPrimary)).toBeDefined();
+    expect(screen.getByText(claudeLight.background)).toBeDefined();
+    expect(screen.getByText(claudeLight.surface)).toBeDefined();
+    expect(screen.getByText(claudeLight.textPrimary)).toBeDefined();
   });
 
   it('provides dark colors when system color scheme is dark', () => {
@@ -104,9 +109,9 @@ describe('ThemeContext', () => {
     );
 
     expect(screen.getByText(String(true))).toBeDefined();
-    expect(screen.getByText(lavenderDark.background)).toBeDefined();
-    expect(screen.getByText(lavenderDark.surface)).toBeDefined();
-    expect(screen.getByText(lavenderDark.textPrimary)).toBeDefined();
+    expect(screen.getByText(claudeDark.background)).toBeDefined();
+    expect(screen.getByText(claudeDark.surface)).toBeDefined();
+    expect(screen.getByText(claudeDark.textPrimary)).toBeDefined();
   });
 
   it('defaults to light when useColorScheme returns null', () => {
@@ -124,7 +129,7 @@ describe('ThemeContext', () => {
     );
 
     expect(screen.getByText(String(false))).toBeDefined();
-    expect(screen.getByText(lavenderLight.background)).toBeDefined();
+    expect(screen.getByText(claudeLight.background)).toBeDefined();
   });
 
   it('defaults to light when useColorScheme returns undefined', () => {
@@ -142,7 +147,7 @@ describe('ThemeContext', () => {
     );
 
     expect(screen.getByText(String(false))).toBeDefined();
-    expect(screen.getByText(lavenderLight.background)).toBeDefined();
+    expect(screen.getByText(claudeLight.background)).toBeDefined();
   });
 
   it('dark palette has different values from light palette', () => {
@@ -169,7 +174,7 @@ describe('ThemeContext', () => {
     await waitFor(() => {
       expect(screen.getByText(String(true))).toBeDefined();
     });
-    expect(screen.getByText(lavenderDark.background)).toBeDefined();
+    expect(screen.getByText(claudeDark.background)).toBeDefined();
   });
 
   it('manual light mode overrides a dark system scheme', async () => {
@@ -190,7 +195,7 @@ describe('ThemeContext', () => {
     await waitFor(() => {
       expect(screen.getByText(String(false))).toBeDefined();
     });
-    expect(screen.getByText(lavenderLight.background)).toBeDefined();
+    expect(screen.getByText(claudeLight.background)).toBeDefined();
   });
 
   it('system mode follows the OS (dark)', async () => {
