@@ -2,12 +2,20 @@ import type { NavigatorScreenParams } from '@react-navigation/native';
 import type { VideoItem } from '../types/api';
 
 /** Canonical module identifiers — must match the backend exactly. */
-export type ModuleId = 'YtDownloader' | 'Scheduler';
+export type ModuleId = 'YtDownloader' | 'Scheduler' | 'LovingBoards';
 
 export type RootStackParamList = {
   ModuleSelection: undefined;
   YtDownloader: undefined;
   Scheduler: undefined;
+  LovingBoards: undefined;
+};
+
+export type LovingBoardsStackParamList = {
+  BoardList: undefined;
+  BoardDetail: { boardId: number };
+  BoardMembers: { boardId: number };
+  ItemSheet: { boardId: number; itemId?: number };
 };
 
 export type AuthStackParamList = {

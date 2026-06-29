@@ -7,6 +7,7 @@ import * as storageService from '../services/storageService';
 import ModuleSelectionScreen from '../screens/ModuleSelectionScreen';
 import MainNavigator from './MainNavigator';
 import SchedulerNavigator from './SchedulerNavigator';
+import LovingBoardsNavigator from './LovingBoardsNavigator';
 import type { Theme } from '../styles/theme';
 import { useThemedStyles, useTheme } from '../context/ThemeContext';
 import type { ModuleId, RootStackParamList } from './types';
@@ -20,6 +21,7 @@ type RootNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const MODULE_ROUTE: Record<ModuleId, keyof RootStackParamList> = {
   YtDownloader: 'YtDownloader',
   Scheduler: 'Scheduler',
+  LovingBoards: 'LovingBoards',
 };
 
 /**
@@ -98,6 +100,7 @@ const RootNavigator: React.FC = () => {
       <Stack.Screen name="ModuleSelection" component={ModuleSelectionRoute} />
       <Stack.Screen name="YtDownloader" component={MainNavigator} />
       <Stack.Screen name="Scheduler" component={SchedulerNavigator} />
+      <Stack.Screen name="LovingBoards" component={LovingBoardsNavigator} />
     </Stack.Navigator>
   );
 };
