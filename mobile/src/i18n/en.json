@@ -155,6 +155,10 @@
       "name": "Appointments",
       "description": "Weekend grid and clients"
     },
+    "lovingBoards": {
+      "name": "LovingBoards",
+      "description": "Shared checklists and recurring tasks"
+    },
     "emptyTitle": "No modules available",
     "emptyMessage": "Your account doesn't have access to any modules yet. Please contact your administrator."
   },
@@ -218,5 +222,67 @@
     "createError": "Failed to create board",
     "deleteError": "Failed to delete board",
     "memberError": "Failed to update members"
+  },
+  "lovingBoards": {
+    "boardList": {
+      "title": "Boards",
+      "empty": "No boards yet. Create your first one!",
+      "newBoard": "New board",
+      "createPrompt": "Board name",
+      "create": "Create",
+      "memberCount": "{{count}} member",
+      "memberCount_plural": "{{count}} members",
+      "itemCount": "{{count}} item",
+      "itemCount_plural": "{{count}} items",
+      "loadError": "Failed to load boards",
+      "createError": "Failed to create board"
+    },
+    "boardDetail": {
+      "members": "Members",
+      "resetWeekly": "Reset weekly",
+      "addItem": "Add item",
+      "clearCompleted": "Clear completed",
+      "done": "Done",
+      "uncategorized": "Other",
+      "assignedTo": "For #{{id}}",
+      "recurring": "Recurring",
+      "dueSoon": "Due soon",
+      "overdue": "Overdue",
+      "addedBy": "Added by #{{id}}",
+      "boughtBy": "Bought by #{{id}}",
+      "qty": "×{{qty}}",
+      "empty": "No items yet. Add your first one!",
+      "undo": "Undo",
+      "removed": "Removed"
+    },
+    "itemSheet": {
+      "addTitle": "New item",
+      "editTitle": "Edit item",
+      "titleLabel": "Title",
+      "titlePlaceholder": "What do we need?",
+      "titleRequired": "Title is required",
+      "quantity": "Quantity",
+      "quantityPlaceholder": "e.g. 2 kg",
+      "category": "Category",
+      "categoryPlaceholder": "e.g. Groceries",
+      "note": "Note",
+      "notePlaceholder": "Optional note",
+      "assignee": "Assignee",
+      "unassigned": "Unassigned",
+      "dueDate": "Due date",
+      "dueDatePlaceholder": "YYYY-MM-DD",
+      "repeatWeekly": "Repeat weekly",
+      "save": "Save",
+      "delete": "Delete",
+      "deleteConfirm": "Delete this item?"
+    },
+    "boardMembers": {
+      "title": "Members",
+      "addMember": "Add member",
+      "userIdPlaceholder": "User ID",
+      "remove": "Remove",
+      "owner": "Owner",
+      "ownerCannotRemove": "Cannot remove the board owner"
+    }
   }
 }

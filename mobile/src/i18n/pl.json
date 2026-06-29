@@ -155,6 +155,10 @@
       "name": "Wizyty",
       "description": "Grafik weekendowy i klienci"
     },
+    "lovingBoards": {
+      "name": "LovingBoards",
+      "description": "Wspólne listy i zadania cykliczne"
+    },
     "emptyTitle": "Brak dostępnych modułów",
     "emptyMessage": "Twoje konto nie ma jeszcze dostępu do żadnych modułów. Skontaktuj się z administratorem."
   },
@@ -218,5 +222,67 @@
     "createError": "Nie udało się utworzyć tablicy",
     "deleteError": "Nie udało się usunąć tablicy",
     "memberError": "Nie udało się zaktualizować członków"
+  },
+  "lovingBoards": {
+    "boardList": {
+      "title": "Tablice",
+      "empty": "Brak tablic. Utwórz pierwszą!",
+      "newBoard": "Nowa tablica",
+      "createPrompt": "Nazwa tablicy",
+      "create": "Utwórz",
+      "memberCount": "{{count}} członek",
+      "memberCount_plural": "{{count}} członków",
+      "itemCount": "{{count}} element",
+      "itemCount_plural": "{{count}} elementów",
+      "loadError": "Nie udało się załadować tablic",
+      "createError": "Nie udało się utworzyć tablicy"
+    },
+    "boardDetail": {
+      "members": "Członkowie",
+      "resetWeekly": "Reset tygodnia",
+      "addItem": "Dodaj element",
+      "clearCompleted": "Wyczyść ukończone",
+      "done": "Zrobione",
+      "uncategorized": "Inne",
+      "assignedTo": "Dla #{{id}}",
+      "recurring": "Cykliczne",
+      "dueSoon": "Na dniach",
+      "overdue": "Po terminie",
+      "addedBy": "Dodał(a) #{{id}}",
+      "boughtBy": "Kupił(a) #{{id}}",
+      "qty": "×{{qty}}",
+      "empty": "Brak elementów. Dodaj pierwszy!",
+      "undo": "Cofnij",
+      "removed": "Usunięto"
+    },
+    "itemSheet": {
+      "addTitle": "Nowy element",
+      "editTitle": "Edytuj element",
+      "titleLabel": "Nazwa",
+      "titlePlaceholder": "Czego potrzebujemy?",
+      "titleRequired": "Nazwa jest wymagana",
+      "quantity": "Ilość",
+      "quantityPlaceholder": "np. 2 kg",
+      "category": "Kategoria",
+      "categoryPlaceholder": "np. Zakupy",
+      "note": "Notatka",
+      "notePlaceholder": "Opcjonalna notatka",
+      "assignee": "Przypisana osoba",
+      "unassigned": "Nieprzypisane",
+      "dueDate": "Termin",
+      "dueDatePlaceholder": "RRRR-MM-DD",
+      "repeatWeekly": "Powtarzaj co tydzień",
+      "save": "Zapisz",
+      "delete": "Usuń",
+      "deleteConfirm": "Usunąć ten element?"
+    },
+    "boardMembers": {
+      "title": "Członkowie",
+      "addMember": "Dodaj członka",
+      "userIdPlaceholder": "ID użytkownika",
+      "remove": "Usuń",
+      "owner": "Właściciel",
+      "ownerCannotRemove": "Nie można usunąć właściciela tablicy"
+    }
   }
 }

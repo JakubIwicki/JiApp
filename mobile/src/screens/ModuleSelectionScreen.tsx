@@ -70,6 +70,44 @@ const ModuleGlyph: React.FC<{ id: ModuleId; color: string }> = ({
     );
   }
 
+  if (id === 'LovingBoards') {
+    return (
+      <Svg
+        width={GLYPH_SIZE}
+        height={GLYPH_SIZE}
+        viewBox="0 0 24 24"
+        fill="none"
+        testID="module-glyph-LovingBoards"
+      >
+        <Path
+          d="M12 21C12 21 3 14.5 3 8.5C3 5.5 5.5 3 8.5 3C10.5 3 12 4.5 12 4.5C12 4.5 13.5 3 15.5 3C18.5 3 21 5.5 21 8.5C21 14.5 12 21 12 21Z"
+          stroke={color}
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <Line
+          x1={9}
+          y1={11}
+          x2={11}
+          y2={13}
+          stroke={color}
+          strokeWidth={2}
+          strokeLinecap="round"
+        />
+        <Line
+          x1={11}
+          y1={13}
+          x2={16}
+          y2={8}
+          stroke={color}
+          strokeWidth={2}
+          strokeLinecap="round"
+        />
+      </Svg>
+    );
+  }
+
   return (
     <Svg
       width={GLYPH_SIZE}
@@ -220,8 +258,14 @@ const ModuleSelectionScreen: React.FC<ModuleSelectionScreenProps> = ({
         descriptionKey: 'modules.scheduler.description',
         accent: colors.success,
       },
+      {
+        id: 'LovingBoards',
+        nameKey: 'modules.lovingBoards.name',
+        descriptionKey: 'modules.lovingBoards.description',
+        accent: colors.primary,
+      },
     ],
-    [colors.info, colors.success],
+    [colors.info, colors.success, colors.primary],
   );
 
   const grantedMeta = useMemo(
