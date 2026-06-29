@@ -8,9 +8,11 @@ public sealed class LovingBoardsDbContext(DbContextOptions<LovingBoardsDbContext
     : DbContext(options), ILovingBoardsDbContext
 {
     public DbSet<Board> Boards => Set<Board>();
+    public DbSet<BoardItem> BoardItems => Set<BoardItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration(new BoardConfiguration());
+        modelBuilder.ApplyConfiguration(new BoardItemConfiguration());
     }
 }

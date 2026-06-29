@@ -13,6 +13,11 @@ using api.JiApp.LovingBoards.Features.Boards.GetBoard;
 using api.JiApp.LovingBoards.Features.Boards.ListBoards;
 using api.JiApp.LovingBoards.Features.Boards.RemoveBoardMember;
 using api.JiApp.LovingBoards.Features.Boards.UpdateBoard;
+using api.JiApp.LovingBoards.Features.Items.ClearCompleted;
+using api.JiApp.LovingBoards.Features.Items.CreateItem;
+using api.JiApp.LovingBoards.Features.Items.DeleteItem;
+using api.JiApp.LovingBoards.Features.Items.SetItemStatus;
+using api.JiApp.LovingBoards.Features.Items.UpdateItem;
 using api.JiApp.LovingBoards.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -109,6 +114,18 @@ public class Startup(LovingBoardsSettings settings)
         services.AddScoped<IValidator<CreateBoardRequest>, CreateBoardValidator>();
         services.AddScoped<IValidator<UpdateBoardRequest>, UpdateBoardValidator>();
         services.AddScoped<IValidator<AddBoardMemberRequest>, AddBoardMemberValidator>();
+
+        // Item handlers
+        services.AddScoped<CreateItemHandler>();
+        services.AddScoped<UpdateItemHandler>();
+        services.AddScoped<SetItemStatusHandler>();
+        services.AddScoped<DeleteItemHandler>();
+        services.AddScoped<ClearCompletedHandler>();
+
+        // Item validators
+        services.AddScoped<IValidator<CreateItemRequest>, CreateItemValidator>();
+        services.AddScoped<IValidator<UpdateItemRequest>, UpdateItemValidator>();
+        services.AddScoped<IValidator<SetItemStatusRequest>, SetItemStatusValidator>();
     }
 
     public static void Configure(WebApplication app)
@@ -161,5 +178,12 @@ public class Startup(LovingBoardsSettings settings)
         lovingboards.MapListBoards();
         lovingboards.MapAddBoardMember();
         lovingboards.MapRemoveBoardMember();
+
+        // Item endpoints
+        lovingboards.MapCreateItem();
+        lovingboards.MapUpdateItem();
+        lovingboards.MapSetItemStatus();
+        lovingboards.MapDeleteItem();
+        lovingboards.MapClearCompleted();
     }
 }

@@ -9,6 +9,11 @@ public sealed class LovingBoardsSettings
     public int MaxBoardsPerUser { get; set; } = 50;
     public int DefaultPageSize { get; set; } = 50;
     public int MaxBoardNameLength { get; set; } = 200;
+    public int MaxItemsPerBoard { get; set; } = 200;
+    public int MaxItemTitleLength { get; set; } = 200;
+    public int MaxQuantityLength { get; set; } = 50;
+    public int MaxCategoryLength { get; set; } = 100;
+    public int MaxNoteLength { get; set; } = 1000;
 
     public void Validate()
     {

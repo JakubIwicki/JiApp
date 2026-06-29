@@ -22,7 +22,7 @@ public sealed class ListBoardsHandler(
         var userBoards = boards
             .Where(b => b.MemberUserIds.Contains(currentUser.UserId))
             .OrderBy(b => b.CreatedAt)
-            .Select(b => new GetBoardResponse(b.Id, b.Name, b.OwnerUserId, b.MemberUserIds, b.CreatedAt))
+            .Select(b => new GetBoardResponse(b.Id, b.Name, b.OwnerUserId, b.MemberUserIds, b.CreatedAt, []))
             .ToList();
 
         // Seeding: if user has zero boards, create defaults
@@ -40,7 +40,7 @@ public sealed class ListBoardsHandler(
             await db.SaveChangesAsync(ct);
 
             userBoards = defaults
-                .Select(b => new GetBoardResponse(b.Id, b.Name, b.OwnerUserId, b.MemberUserIds, b.CreatedAt))
+                .Select(b => new GetBoardResponse(b.Id, b.Name, b.OwnerUserId, b.MemberUserIds, b.CreatedAt, []))
                 .ToList();
         }
 

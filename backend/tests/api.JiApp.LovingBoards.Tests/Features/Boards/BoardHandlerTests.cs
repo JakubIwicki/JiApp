@@ -434,4 +434,78 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
 
         AssertConflict(result);
     }
+
+    // GetBoard with items
+
+    [Fact]
+    public async Task GetBoard_IncludesNonRemovedItems()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
+        StoreInDb(new BoardItem { BoardId = boardId, Title = "Item 1", Status = BoardItemStatus.Needed, AddedByUserId = 1L });
+        StoreInDb(new BoardItem { BoardId = boardId, Title = "Item 2", Status = BoardItemStatus.Completed, AddedByUserId = 1L });
+        StoreInDb(new BoardItem { BoardId = boardId, Title = "Item 3", Status = BoardItemStatus.Removed, AddedByUserId = 1L });
+        var sut = fixture.GetBoard;
+
+        var result = await sut.HandleAsync(boardId, CancellationToken.None);
+
+        AssertSuccess(result);
+        result.Value!.Items.Should().HaveCount(2);
+        result.Value.Items.Select(i => i.Title).Should().Contain(["Item 1", "Item 2"]);
+        result.Value.Items.Select(i => i.Title).Should().NotContain("Item 3");
+    }
+
+    [Fact]
+    public async Task GetBoard_ItemsIncludeAttributionAndStatus()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
+        StoreInDb(new BoardItem
+        {
+            BoardId = boardId,
+            Title = "Milk",
+            Status = BoardItemStatus.Completed,
+            AddedByUserId = 1L,
+            CompletedByUserId = 2L,
+            Category = "Dairy",
+            Quantity = "2L"
+        });
+        var sut = fixture.GetBoard;
+
+        var result = await sut.HandleAsync(boardId, CancellationToken.None);
+
+        AssertSuccess(result);
+        var item = result.Value!.Items.Should().ContainSingle().Subject;
+        item.Title.Should().Be("Milk");
+        item.Status.Should().Be("Completed");
+        item.AddedByUserId.Should().Be(1L);
+        item.CompletedByUserId.Should().Be(2L);
+        item.Category.Should().Be("Dairy");
+        item.Quantity.Should().Be("2L");
+    }
+
+    [Fact]
+    public async Task GetBoard_ItemsOrderedByCategoryThenCreatedAt()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
+        StoreInDb(new BoardItem { BoardId = boardId, Title = "B", Category = "Z", Status = BoardItemStatus.Needed, AddedByUserId = 1L });
+        StoreInDb(new BoardItem { BoardId = boardId, Title = "A", Category = "A", Status = BoardItemStatus.Needed, AddedByUserId = 1L });
+        StoreInDb(new BoardItem { BoardId = boardId, Title = "C", Category = "A", Status = BoardItemStatus.Needed, AddedByUserId = 1L });
+        var sut = fixture.GetBoard;
+
+        var result = await sut.HandleAsync(boardId, CancellationToken.None);
+
+        AssertSuccess(result);
+        result.Value!.Items.Select(i => i.Title).Should().Equal(["A", "C", "B"]);
+    }
+
+    [Fact]
+    public async Task GetBoard_EmptyItems_ReturnsEmptyList()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
+        var sut = fixture.GetBoard;
+
+        var result = await sut.HandleAsync(boardId, CancellationToken.None);
+
+        AssertSuccess(result);
+        result.Value!.Items.Should().BeEmpty();
+    }
 }
