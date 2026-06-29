@@ -14,6 +14,9 @@ public abstract class LovingBoardsHandlerTestBase : IDisposable
     {
         _connection = new SqliteConnection("DataSource=:memory:");
         _connection.Open();
+        using var pragmaCmd = _connection.CreateCommand();
+        pragmaCmd.CommandText = "PRAGMA foreign_keys = ON;";
+        pragmaCmd.ExecuteNonQuery();
         var options = new DbContextOptionsBuilder<LovingBoardsDbContext>()
             .UseSqlite(_connection)
             .Options;

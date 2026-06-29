@@ -15,5 +15,6 @@ public sealed class BoardItemConfiguration : IEntityTypeConfiguration<BoardItem>
         builder.Property(x => x.Note).HasMaxLength(1000);
         builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(20);
         builder.HasIndex(x => x.BoardId);
+        builder.HasOne<Board>().WithMany().HasForeignKey(x => x.BoardId).OnDelete(DeleteBehavior.Cascade);
     }
 }

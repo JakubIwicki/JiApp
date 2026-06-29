@@ -45,7 +45,7 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
         public CreateBoardHandler Sut => new(_dbContext, _settings, _currentUser);
         public GetBoardHandler GetBoard => new(_dbContext, _currentUser, _broadcaster);
         public UpdateBoardHandler UpdateBoard => new(_dbContext, _currentUser, _broadcaster);
-        public DeleteBoardHandler DeleteBoard => new(_dbContext, _currentUser);
+        public DeleteBoardHandler DeleteBoard => new(_dbContext, _currentUser, _broadcaster);
         public ListBoardsHandler ListBoards => new(_dbContext, _settings, _currentUser);
         public AddBoardMemberHandler AddBoardMember => new(_dbContext, _currentUser, _broadcaster);
         public RemoveBoardMemberHandler RemoveBoardMember => new(_dbContext, _currentUser, _broadcaster);
@@ -419,7 +419,7 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
     [Fact]
     public async Task RemoveBoardMember_WhenLastMember_ReturnsFailure()
     {
-        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, ownerUserId: 2L, memberUserIds: [1L]);
         var sut = fixture.RemoveBoardMember;
 
         var result = await sut.HandleAsync(boardId, 1L, CancellationToken.None);
@@ -431,7 +431,7 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
     [Fact]
     public async Task RemoveBoardMember_WhenLastMember_ReturnsConflictErrorCategory()
     {
-        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, ownerUserId: 2L, memberUserIds: [1L]);
         var sut = fixture.RemoveBoardMember;
 
         var result = await sut.HandleAsync(boardId, 1L, CancellationToken.None);
@@ -680,5 +680,94 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
         await handler.HandleAsync(board.Id, CancellationToken.None);
 
         capturing.Published.Should().BeEmpty();
+    }
+
+    // Fix 1 — persistence after clearing change tracker
+
+    [Fact]
+    public async Task AddBoardMember_PersistsAfterChangeTrackerClear()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
+        var sut = fixture.AddBoardMember;
+
+        await sut.HandleAsync(boardId, new AddBoardMemberRequest(2L), CancellationToken.None);
+
+        // Clear the change tracker to force a fresh load from the database
+        ((LovingBoardsDbContext)DbContext).ChangeTracker.Clear();
+
+        var reloaded = await DbContext.Boards.FindAsync(boardId);
+        reloaded!.MemberUserIds.Should().Contain([1L, 2L]);
+    }
+
+    [Fact]
+    public async Task RemoveBoardMember_PersistsAfterChangeTrackerClear()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [1L, 2L]);
+        var sut = fixture.RemoveBoardMember;
+
+        await sut.HandleAsync(boardId, 2L, CancellationToken.None);
+
+        ((LovingBoardsDbContext)DbContext).ChangeTracker.Clear();
+
+        var reloaded = await DbContext.Boards.FindAsync(boardId);
+        reloaded!.MemberUserIds.Should().ContainSingle().Which.Should().Be(1L);
+        reloaded.MemberUserIds.Should().NotContain(2L);
+    }
+
+    // Fix 2 — DeleteBoard removes items + publishes board.deleted
+
+    [Fact]
+    public async Task DeleteBoard_RemovesAssociatedItems()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
+        StoreInDb(new BoardItem { BoardId = boardId, Title = "Item 1", Status = BoardItemStatus.Needed, AddedByUserId = 1L });
+        StoreInDb(new BoardItem { BoardId = boardId, Title = "Item 2", Status = BoardItemStatus.Completed, AddedByUserId = 1L });
+
+        var capturing = new CapturingBoardBroadcaster();
+        var handler = new DeleteBoardHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing);
+        await handler.HandleAsync(boardId, CancellationToken.None);
+
+        ((LovingBoardsDbContext)DbContext).ChangeTracker.Clear();
+
+        var items = await DbContext.BoardItems.Where(i => i.BoardId == boardId).ToListAsync();
+        items.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task DeleteBoard_PublishesBoardDeleted()
+    {
+        var capturing = new CapturingBoardBroadcaster();
+        var handler = new DeleteBoardHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing);
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
+
+        await handler.HandleAsync(boardId, CancellationToken.None);
+
+        capturing.Published.Should().ContainSingle();
+        capturing.Published[0].Ev.Event.Should().Be(BoardEventNames.BoardDeleted);
+    }
+
+    // Fix 3 — owner cannot be removed
+
+    [Fact]
+    public async Task RemoveBoardMember_Owner_ReturnsFailure()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, ownerUserId: 1L, memberUserIds: [1L, 2L]);
+        var sut = fixture.RemoveBoardMember;
+
+        var result = await sut.HandleAsync(boardId, 1L, CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be("The board owner cannot be removed");
+    }
+
+    [Fact]
+    public async Task RemoveBoardMember_Owner_ReturnsConflictErrorCategory()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, ownerUserId: 1L, memberUserIds: [1L, 2L]);
+        var sut = fixture.RemoveBoardMember;
+
+        var result = await sut.HandleAsync(boardId, 1L, CancellationToken.None);
+
+        AssertConflict(result);
     }
 }

@@ -12,5 +12,6 @@ public static class BoardEventNames
     public const string BoardUpdated = "board.updated";
     public const string MemberChanged = "member.changed";
     public const string RecurringReset = "recurring.reset";
+    public const string BoardDeleted = "board.deleted";
     public const string Presence = "presence";
 }

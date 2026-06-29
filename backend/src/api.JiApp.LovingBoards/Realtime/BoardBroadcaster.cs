@@ -35,6 +35,35 @@ public sealed class BoardBroadcaster : IBoardBroadcaster
             subscriber.Channel.Writer.TryWrite(ev);
     }
 
+    public void Disconnect(long boardId, long userId)
+    {
+        if (!_boards.TryGetValue(boardId, out var boardSubscribers))
+            return;
+
+        foreach (var (subscriberId, subscriber) in boardSubscribers)
+        {
+            if (subscriber.UserId == userId)
+            {
+                subscriber.Channel.Writer.TryComplete();
+                boardSubscribers.TryRemove(subscriberId, out _);
+            }
+        }
+
+        if (boardSubscribers.IsEmpty)
+            _boards.TryRemove(boardId, out _);
+
+        BroadcastPresence(boardId);
+    }
+
+    public void DisconnectAll(long boardId)
+    {
+        if (!_boards.TryRemove(boardId, out var boardSubscribers))
+            return;
+
+        foreach (var (_, subscriber) in boardSubscribers)
+            subscriber.Channel.Writer.TryComplete();
+    }
+
     private void BroadcastPresence(long boardId)
     {
         if (!_boards.TryGetValue(boardId, out var boardSubscribers))
@@ -56,7 +85,8 @@ public sealed class BoardBroadcaster : IBoardBroadcaster
         if (!_boards.TryGetValue(boardId, out var boardSubscribers))
             return;
 
-        boardSubscribers.TryRemove(subscriberId, out _);
+        if (boardSubscribers.TryRemove(subscriberId, out var removed))
+            removed.Channel.Writer.TryComplete();
 
         if (boardSubscribers.IsEmpty)
             _boards.TryRemove(boardId, out _);

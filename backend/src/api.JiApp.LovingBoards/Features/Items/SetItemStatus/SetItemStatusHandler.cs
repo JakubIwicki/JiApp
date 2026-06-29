@@ -35,9 +35,11 @@ public sealed class SetItemStatusHandler(ILovingBoardsDbContext db, ICurrentUser
         {
             case BoardItemStatus.Completed:
                 item.CompletedByUserId = currentUser.UserId;
+                item.RemovedAt = null;
                 break;
             case BoardItemStatus.Needed:
                 item.CompletedByUserId = null;
+                item.RemovedAt = null;
                 break;
             case BoardItemStatus.Removed:
                 item.RemovedAt = DateTime.UtcNow;

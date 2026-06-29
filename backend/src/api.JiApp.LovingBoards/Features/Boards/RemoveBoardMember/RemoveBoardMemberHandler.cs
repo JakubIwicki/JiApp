@@ -18,6 +18,9 @@ public sealed class RemoveBoardMemberHandler(ILovingBoardsDbContext db, ICurrent
         if (!board.MemberUserIds.Contains(userId))
             return Result<long>.Failure("Member not found", ResultCategories.NotFound);
 
+        if (userId == board.OwnerUserId)
+            return Result<long>.Failure("The board owner cannot be removed", ResultCategories.Conflict);
+
         if (board.MemberUserIds.Count == 1)
             return Result<long>.Failure("Cannot remove the last member", ResultCategories.Conflict);
 
@@ -25,6 +28,7 @@ public sealed class RemoveBoardMemberHandler(ILovingBoardsDbContext db, ICurrent
         await db.SaveChangesAsync(ct);
 
         broadcaster.Publish(boardId, new BoardEvent(BoardEventNames.MemberChanged, new { boardId }));
+        broadcaster.Disconnect(boardId, userId);
 
         return Result<long>.Success(boardId);
     }

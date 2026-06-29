@@ -11,4 +11,14 @@ public sealed class NoOpBoardBroadcaster : IBoardBroadcaster
     {
         // no-op
     }
+
+    public void Disconnect(long boardId, long userId)
+    {
+        // no-op
+    }
+
+    public void DisconnectAll(long boardId)
+    {
+        // no-op
+    }
 }

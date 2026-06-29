@@ -13,4 +13,14 @@ public sealed class CapturingBoardBroadcaster : IBoardBroadcaster
 
     public void Publish(long boardId, BoardEvent ev) =>
         _published.Add((boardId, ev));
+
+    public void Disconnect(long boardId, long userId)
+    {
+        // capturing only — no-op
+    }
+
+    public void DisconnectAll(long boardId)
+    {
+        // capturing only — no-op
+    }
 }

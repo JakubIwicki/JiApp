@@ -176,6 +176,100 @@ public sealed class BoardBroadcasterTests
         firstEv.Should().NotBeNull();
     }
 
+    // Fix 5 — Disconnect
+
+    [Fact]
+    public async Task Disconnect_EndsSubscriptionStream()
+    {
+        var broadcaster = new BoardBroadcaster();
+        using var sub = broadcaster.Subscribe(1L, 100L);
+
+        // Consume initial presence
+        await ReadNextAsync(sub);
+
+        broadcaster.Disconnect(1L, 100L);
+
+        // The stream should complete (ReadAllAsync enumeration ends)
+        var ev = await ReadNextAsync(sub);
+        ev.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Disconnect_UpdatesPresenceForOtherSubscribers()
+    {
+        var broadcaster = new BoardBroadcaster();
+        using var sub1 = broadcaster.Subscribe(1L, 100L);
+        using var sub2 = broadcaster.Subscribe(1L, 200L);
+
+        // Consume initial presence events
+        await ReadNextAsync(sub1);
+        await ReadNextAsync(sub1); // second subscribe triggered another presence
+        await ReadNextAsync(sub2); // initial presence for sub2
+
+        broadcaster.Disconnect(1L, 100L);
+
+        // sub2 should receive updated presence (only 200L now)
+        var presenceEvent = await ReadNextAsync(sub2);
+        presenceEvent.Should().NotBeNull();
+        presenceEvent!.Event.Should().Be(BoardEventNames.Presence);
+    }
+
+    [Fact]
+    public async Task Disconnect_OtherUsersUnaffected()
+    {
+        var broadcaster = new BoardBroadcaster();
+        using var sub1 = broadcaster.Subscribe(1L, 100L);
+        using var sub2 = broadcaster.Subscribe(1L, 200L);
+
+        // Consume initial presence events
+        await ReadNextAsync(sub1);
+        await ReadNextAsync(sub1); // second subscribe triggered another presence
+        await ReadNextAsync(sub2); // initial presence for sub2
+
+        broadcaster.Disconnect(1L, 100L);
+
+        // sub1's stream should be done
+        var ev1 = await ReadNextAsync(sub1);
+        ev1.Should().BeNull();
+
+        // sub2 receives an updated presence after the disconnect
+        var presenceEvent = await ReadNextAsync(sub2);
+        presenceEvent.Should().NotBeNull();
+        presenceEvent!.Event.Should().Be(BoardEventNames.Presence);
+
+        // sub2 should still receive subsequent events
+        broadcaster.Publish(1L, new BoardEvent("test.event", new { }));
+        var ev2 = await ReadNextAsync(sub2);
+        ev2.Should().NotBeNull();
+        ev2!.Event.Should().Be("test.event");
+    }
+
+    [Fact]
+    public async Task DisconnectAll_EndsAllSubscriptionsOnBoard()
+    {
+        var broadcaster = new BoardBroadcaster();
+        using var sub1 = broadcaster.Subscribe(1L, 100L);
+        using var sub2 = broadcaster.Subscribe(1L, 200L);
+
+        // Consume initial presence events
+        await ReadNextAsync(sub1);
+        await ReadNextAsync(sub1); // second subscribe triggered another presence
+        await ReadNextAsync(sub2); // initial presence for sub2
+
+        broadcaster.DisconnectAll(1L);
+
+        var ev1 = await ReadNextAsync(sub1);
+        var ev2 = await ReadNextAsync(sub2);
+        ev1.Should().BeNull();
+        ev2.Should().BeNull();
+
+        // Publishing after disconnect should be a no-op (board entry removed)
+        broadcaster.Publish(1L, new BoardEvent("test.event", new { }));
+        using var sub3 = broadcaster.Subscribe(1L, 300L);
+        var ev3 = await ReadNextAsync(sub3);
+        ev3!.Event.Should().Be(BoardEventNames.Presence);
+    }
+
     private static async Task<BoardEvent?> ReadNextAsync(IBoardSubscription sub, CancellationToken ct = default)
     {
         await foreach (var ev in sub.ReadAllAsync(ct))

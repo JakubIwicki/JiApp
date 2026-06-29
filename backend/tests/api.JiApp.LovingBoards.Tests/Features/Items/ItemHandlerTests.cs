@@ -524,4 +524,40 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
 
         capturing.Published.Should().BeEmpty();
     }
+
+    // Fix 4 — revival from Removed clears RemovedAt
+
+    [Fact]
+    public async Task SetItemStatus_RemovedToNeeded_ClearsRemovedAt()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId).WithItem(out var itemId, boardId, status: BoardItemStatus.Removed);
+        var item = Db.Find<BoardItem>(itemId);
+        item!.RemovedAt = DateTime.UtcNow.AddDays(-1);
+        await DbContext.SaveChangesAsync();
+        var sut = fixture.SetItemStatus;
+
+        var result = await sut.HandleAsync(boardId, itemId, new SetItemStatusRequest("Needed"), CancellationToken.None);
+
+        AssertSuccess(result);
+        var updated = Db.Find<BoardItem>(itemId);
+        updated!.Status.Should().Be(BoardItemStatus.Needed);
+        updated.RemovedAt.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task SetItemStatus_RemovedToCompleted_ClearsRemovedAt()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId).WithItem(out var itemId, boardId, status: BoardItemStatus.Removed);
+        var item = Db.Find<BoardItem>(itemId);
+        item!.RemovedAt = DateTime.UtcNow.AddDays(-1);
+        await DbContext.SaveChangesAsync();
+        var sut = fixture.SetItemStatus;
+
+        var result = await sut.HandleAsync(boardId, itemId, new SetItemStatusRequest("Completed"), CancellationToken.None);
+
+        AssertSuccess(result);
+        var updated = Db.Find<BoardItem>(itemId);
+        updated!.Status.Should().Be(BoardItemStatus.Completed);
+        updated.RemovedAt.Should().BeNull();
+    }
 }
