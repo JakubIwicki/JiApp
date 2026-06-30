@@ -389,4 +389,32 @@ public sealed class BoardHandlerTests : HandlerTestBase
 
         AssertAccessDenied(result);
     }
+
+    [Fact]
+    public async Task AddBoardMember_PersistsAcrossChangeTrackerClear()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
+        var sut = fixture.AddBoardMember;
+
+        var result = await sut.HandleAsync(boardId, new AddBoardMemberRequest(2L), CancellationToken.None);
+
+        AssertSuccess(result);
+        ((SchedulerDbContext)DbContext).ChangeTracker.Clear();
+        var reloaded = await Db.Query<Board>().FirstAsync(b => b.Id == boardId);
+        reloaded.MemberUserIds.Should().Contain([1L, 2L]);
+    }
+
+    [Fact]
+    public async Task RemoveBoardMember_PersistsAcrossChangeTrackerClear()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [1L, 2L]);
+        var sut = fixture.RemoveBoardMember;
+
+        var result = await sut.HandleAsync(boardId, 2L, CancellationToken.None);
+
+        AssertSuccess(result);
+        ((SchedulerDbContext)DbContext).ChangeTracker.Clear();
+        var reloaded = await Db.Query<Board>().FirstAsync(b => b.Id == boardId);
+        reloaded.MemberUserIds.Should().ContainSingle().Which.Should().Be(1L);
+    }
 }
