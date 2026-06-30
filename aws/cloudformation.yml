@@ -133,6 +133,17 @@ Resources:
         LifecyclePolicyText: |
           { "rules": [{ "rulePriority": 1, "description": "Keep last 5 images", "selection": { "tagStatus": "any", "countType": "imageCountMoreThan", "countNumber": 5 }, "action": { "type": "expire" } }] }
 
+  EcrLovingBoards:
+    Type: AWS::ECR::Repository
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      RepositoryName: jiapp/lovingboards
+      ImageTagMutability: IMMUTABLE
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          { "rules": [{ "rulePriority": 1, "description": "Keep last 5 images", "selection": { "tagStatus": "any", "countType": "imageCountMoreThan", "countNumber": 5 }, "action": { "type": "expire" } }] }
+
   # ── Security Group ──────────────────────────────────────
 
   SecurityGroup:
