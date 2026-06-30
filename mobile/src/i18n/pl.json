@@ -227,6 +227,7 @@
     "boardList": {
       "title": "Tablice",
       "empty": "Brak tablic. Utwórz pierwszą!",
+      "emptyHint": "Utwórz swoją pierwszą tablicę",
       "newBoard": "Nowa tablica",
       "createPrompt": "Nazwa tablicy",
       "create": "Utwórz",
@@ -255,7 +256,15 @@
       "undo": "Cofnij",
       "removed": "Usunięto",
       "online": "{{count}} online",
-      "online_plural": "{{count}} online"
+      "online_plural": "{{count}} online",
+      "progress": "{{done}} z {{total}} kupionych",
+      "dueTomorrow": "Jutro",
+      "edit": "Edytuj",
+      "remove": "Usuń",
+      "emptyDetail": "Jeszcze nic tu nie ma",
+      "emptyDetailHint": "Dotknij ＋ aby dodać pierwszy element",
+      "cleared": "Wyczyszczono",
+      "clearedWithCount": "Wyczyszczono {{count}} elementów"
     },
     "itemSheet": {
       "addTitle": "Nowy element",

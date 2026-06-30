@@ -227,6 +227,7 @@
     "boardList": {
       "title": "Boards",
       "empty": "No boards yet. Create your first one!",
+      "emptyHint": "Create your first board",
       "newBoard": "New board",
       "createPrompt": "Board name",
       "create": "Create",
@@ -255,7 +256,15 @@
       "undo": "Undo",
       "removed": "Removed",
       "online": "{{count}} online",
-      "online_plural": "{{count}} online"
+      "online_plural": "{{count}} online",
+      "progress": "{{done}} of {{total}} bought",
+      "dueTomorrow": "Tomorrow",
+      "edit": "Edit",
+      "remove": "Remove",
+      "emptyDetail": "Nothing here yet",
+      "emptyDetailHint": "Tap ＋ to add your first item",
+      "cleared": "Cleared",
+      "clearedWithCount": "Cleared {{count}} items"
     },
     "itemSheet": {
       "addTitle": "New item",

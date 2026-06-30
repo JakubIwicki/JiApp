@@ -14,6 +14,7 @@ import useBoards from '../hooks/useBoards';
 import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
 import type { Theme } from '../../../styles/theme';
 import { spacing, borderRadius } from '../../../styles/theme';
+import EmptyState from '../components/EmptyState';
 import type { LovingBoardsStackParamList } from '../../../navigation/types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -99,11 +100,14 @@ const BoardListScreen: React.FC = () => {
         testID="board-list-screen"
       >
         {boards.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>
-              {t('lovingBoards.boardList.empty')}
-            </Text>
-          </View>
+          <EmptyState
+            emoji="💝"
+            title={t('lovingBoards.boardList.empty')}
+            subtitle={t('lovingBoards.boardList.emptyHint')}
+            actionLabel={t('lovingBoards.boardList.newBoard')}
+            onAction={() => setShowCreate(true)}
+            testID="board-list-empty"
+          />
         ) : (
           boards.map(board => (
             <Pressable
