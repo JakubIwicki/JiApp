@@ -42,10 +42,12 @@ services:
     image: \${ECR_BASE}/imagetools:\${IMAGE_TAG}
   scheduler:
     image: \${ECR_BASE}/scheduler:\${IMAGE_TAG}
+  lovingboards:
+    image: \${ECR_BASE}/lovingboards:\${IMAGE_TAG}
   gateway:
     image: \${ECR_BASE}/gateway:\${IMAGE_TAG}
     ports: ["6700:6700"]
-    depends_on: [identity, ytdownloader, imagetools, scheduler]
+    depends_on: [identity, ytdownloader, imagetools, scheduler, lovingboards]
 COMPOSE
 
 aws s3 cp /tmp/jiapp-compose.yml "s3://${BUCKET}/ec2/docker-compose.yml" --region "$REGION"
