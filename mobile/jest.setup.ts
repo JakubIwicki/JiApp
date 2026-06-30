@@ -176,3 +176,7 @@ jest.mock('react-native-keyboard-controller', () => {
     useWindowDimensions: jest.fn(() => ({ width: 390, height: 844 })),
   };
 });
+
+// @notifee/react-native is mocked via moduleNameMapper in jest.config.js
+// (import-time crash prevention — the real module creates a native instance
+// at module scope).

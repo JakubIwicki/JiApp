@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import * as boardService from '../services/boardService';
 import * as itemService from '../services/itemService';
@@ -11,6 +11,7 @@ import type {
   CreateItemPayload,
   UpdateItemPayload,
 } from '../services/itemService';
+import useItemReminders from './useItemReminders';
 
 interface UseBoardResult {
   board: Board | null;
@@ -283,6 +284,12 @@ const useBoard = (boardId: number): UseBoardResult => {
   );
 
   const items = board?.items ?? [];
+
+  const itemsForReminders = useMemo(
+    () => items.filter(i => i.expiryDate !== null),
+    [items],
+  );
+  useItemReminders(itemsForReminders, board?.name);
 
   return {
     board,
