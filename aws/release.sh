@@ -108,6 +108,20 @@ echo ""
 echo "==> Uploading source + configs (deploy.sh --source --no-start)..."
 "${SCRIPT_DIR}/deploy.sh" --source --no-start "$TAG" "$INSTANCE_ID"
 
+# ── 3b. Refresh EC2 helper scripts so a changed build-and-push.sh takes effect ─
+
+echo ""
+echo "==> Refreshing EC2 helper scripts from S3 before build..."
+SYNC_CMD="for f in build-and-push.sh startup.sh stop-watchdog.sh backup.sh jiapp-health.sh; do aws s3 cp s3://${BUCKET}/ec2/\$f /opt/jiapp/\$f --region ${REGION} 2>/dev/null || true; done; chmod +x /opt/jiapp/*.sh"
+SYNC_ID=$(aws ssm send-command --region "$REGION" --instance-ids "$INSTANCE_ID" \
+    --document-name "AWS-RunShellScript" \
+    --comment "JiApp refresh helper scripts $TAG" \
+    --parameters "commands=[\"${SYNC_CMD}\"]" \
+    --query "Command.CommandId" --output text)
+echo "    SSM sync command: $SYNC_ID — waiting for it to finish..."
+aws ssm wait command-executed --region "$REGION" --command-id "$SYNC_ID" --instance-id "$INSTANCE_ID" 2>/dev/null || true
+echo "    EC2 helper scripts refreshed."
+
 # ── 4. Build on EC2 (skip if --no-build) ─────────────────────
 
 if ! $NO_BUILD; then

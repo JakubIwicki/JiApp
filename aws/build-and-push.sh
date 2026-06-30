@@ -46,21 +46,22 @@ echo "[$(date)] Source extracted"
 # ── 2. Build images ──
 echo "[$(date)] Building Docker images..."
 cd "${WORK_DIR}/backend"
-declare -A SVC_DIR=(
-    [identity]=Identity
-    [ytdownloader]=YtDownloader
-    [imagetools]=ImageTools
-    [scheduler]=Scheduler
-    [gateway]=Gateway
+declare -A SVC_DOCKERFILE=(
+    [identity]=./src/JiApp.Identity/Dockerfile
+    [ytdownloader]=./src/JiApp.YtDownloader/Dockerfile
+    [imagetools]=./src/JiApp.ImageTools/Dockerfile
+    [scheduler]=./src/JiApp.Scheduler/Dockerfile
+    [gateway]=./src/JiApp.Gateway/Dockerfile
+    [lovingboards]=./src/api.JiApp.LovingBoards/Dockerfile
 )
+SERVICES=(identity ytdownloader imagetools scheduler gateway lovingboards)
 
-for svc in identity ytdownloader imagetools scheduler gateway; do
-    dir="${SVC_DIR[$svc]}"
+for svc in "${SERVICES[@]}"; do
     echo "  → Building jiapp/${svc}..."
     docker build \
         -t "${ECR_BASE}/${svc}:${TAG}" \
         -t "${ECR_BASE}/${svc}:latest" \
-        -f "./src/JiApp.${dir}/Dockerfile" \
+        -f "${SVC_DOCKERFILE[$svc]}" \
         .
 done
 echo "[$(date)] Build complete"
@@ -70,7 +71,7 @@ echo "[$(date)] Pushing to ECR..."
 aws ecr get-login-password --region "${REGION}" \
     | docker login --username AWS --password-stdin "${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"
 
-for svc in identity ytdownloader imagetools scheduler gateway; do
+for svc in "${SERVICES[@]}"; do
     echo "  → Pushing ${svc}:${TAG}..."
     docker push "${ECR_BASE}/${svc}:${TAG}"
 done
