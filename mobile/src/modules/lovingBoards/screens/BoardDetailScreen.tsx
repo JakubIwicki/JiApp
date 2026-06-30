@@ -1,4 +1,10 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useMemo,
+  useState,
+  useRef,
+  useEffect,
+} from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -10,279 +16,61 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import useBoard from '../hooks/useBoard';
-import PresenceAvatars from '../components/PresenceAvatars';
+import useAuth from '../../../hooks/useAuth';
 import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
 import type { Theme } from '../../../styles/theme';
-import { spacing, borderRadius } from '../../../styles/theme';
+import { spacing, borderRadius, zIndexScale } from '../../../styles/theme';
 import type { LovingBoardsStackParamList } from '../../../navigation/types';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { Item, BoardItemStatus } from '../types/api';
+import type { CategoryTint } from '../components/CategoryCard';
+import ProgressStrip from '../components/ProgressStrip';
+import CategoryCard from '../components/CategoryCard';
+import ItemRow from '../components/ItemRow';
+import Snackbar from '../components/Snackbar';
+import EmptyState from '../components/EmptyState';
 
 type Props = NativeStackScreenProps<LovingBoardsStackParamList, 'BoardDetail'>;
 type NavigationProp = Props['navigation'];
 
 const MIN_TOUCH = 44;
 
-interface RemovedItemState {
-  itemId: number;
-  previousStatus: BoardItemStatus;
-}
+// ── Category metadata ──────────────────────────────────────────────────────────
 
-function parseDueDate(expiryDate: string | null): Date | null {
-  if (!expiryDate) return null;
-  const d = new Date(expiryDate);
-  return Number.isNaN(d.getTime()) ? null : d;
-}
-
-function getDueUrgency(expiryDate: string | null): 'none' | 'soon' | 'overdue' {
-  const due = parseDueDate(expiryDate);
-  if (!due) return 'none';
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-  due.setHours(0, 0, 0, 0);
-  if (due < now) return 'overdue';
-  const twoDays = new Date(now);
-  twoDays.setDate(twoDays.getDate() + 2);
-  if (due <= twoDays) return 'soon';
-  return 'none';
-}
-
-function fmtDueDate(expiryDate: string | null): string {
-  const due = parseDueDate(expiryDate);
-  if (!due) return '';
-  const y = due.getFullYear();
-  const m = String(due.getMonth() + 1).padStart(2, '0');
-  const d = String(due.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
-interface ItemRowProps {
-  readonly item: Item;
-  readonly onToggle: (item: Item) => void;
-  readonly onEdit: (item: Item) => void;
-  readonly onRemove: (item: Item) => void;
-  readonly colors: ReturnType<typeof useTheme>['colors'];
-}
-
-const ItemRow: React.FC<ItemRowProps> = ({
-  item,
-  onToggle,
-  onEdit,
-  onRemove,
-  colors,
-}) => {
-  const { t } = useTranslation();
-  const styles = useThemedStyles(makeItemRowStyles);
-  const isCompleted = item.status === 'Completed';
-  const urgency = getDueUrgency(item.expiryDate);
-
-  const dueColor =
-    urgency === 'overdue'
-      ? colors.error
-      : urgency === 'soon'
-      ? colors.warning
-      : colors.textTertiary;
-
-  const handleRemove = useCallback(() => {
-    onRemove(item);
-  }, [item, onRemove]);
-
-  return (
-    <Pressable
-      style={({ pressed }) => [
-        styles.row,
-        isCompleted && styles.rowCompleted,
-        pressed && styles.pressed,
-      ]}
-      onPress={() => onEdit(item)}
-      accessibilityRole="button"
-      accessibilityLabel={item.title}
-      testID={`item-row-${item.id}`}
-    >
-      {/* Checkbox */}
-      <Pressable
-        style={styles.checkHitArea}
-        onPress={() => onToggle(item)}
-        accessibilityRole="checkbox"
-        accessibilityState={{ checked: isCompleted }}
-        accessibilityLabel={item.title}
-        testID={`item-check-${item.id}`}
-      >
-        <View
-          style={[
-            styles.checkbox,
-            isCompleted && {
-              backgroundColor: colors.success,
-              borderColor: colors.success,
-            },
-          ]}
-        >
-          {isCompleted && <Text style={styles.checkmark}>✓</Text>}
-        </View>
-      </Pressable>
-
-      {/* Content */}
-      <View style={styles.itemBody}>
-        <View style={styles.itemTitleRow}>
-          <Text
-            style={[styles.itemTitle, isCompleted && styles.itemTitleDone]}
-            numberOfLines={2}
-          >
-            {item.title}
-          </Text>
-          {item.isRecurring && (
-            <Text
-              style={styles.recurringBadge}
-              accessibilityLabel={t('lovingBoards.boardDetail.recurring')}
-            >
-              🔁
-            </Text>
-          )}
-        </View>
-
-        <View style={styles.chips}>
-          {item.quantity && (
-            <View style={styles.chip}>
-              <Text style={styles.chipText}>
-                {t('lovingBoards.boardDetail.qty', { qty: item.quantity })}
-              </Text>
-            </View>
-          )}
-          {item.expiryDate && (
-            <View style={[styles.chip, { borderColor: dueColor }]}>
-              <Text style={[styles.chipText, { color: dueColor }]}>
-                {fmtDueDate(item.expiryDate)}
-              </Text>
-            </View>
-          )}
-          {item.assigneeUserId !== null && (
-            <View style={styles.chip}>
-              <Text style={styles.chipText}>
-                {t('lovingBoards.boardDetail.assignedTo', {
-                  id: item.assigneeUserId,
-                })}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        <Text style={styles.mutedCaption}>
-          {item.completedByUserId
-            ? t('lovingBoards.boardDetail.boughtBy', {
-                id: item.completedByUserId,
-              })
-            : t('lovingBoards.boardDetail.addedBy', { id: item.addedByUserId })}
-        </Text>
-      </View>
-
-      {/* Remove affordance */}
-      <Pressable
-        style={styles.removeHitArea}
-        onPress={handleRemove}
-        accessibilityRole="button"
-        accessibilityLabel={`Remove ${item.title}`}
-        testID={`item-remove-${item.id}`}
-      >
-        <Text style={styles.removeIcon}>✕</Text>
-      </Pressable>
-    </Pressable>
-  );
+const CATEGORY_EMOJI: Record<string, string> = {
+  dairy: '🥛',
+  vegetables: '🥬',
+  bakery: '🍞',
+  meat: '🥩',
+  fruits: '🍎',
+  frozen: '❄️',
+  beverages: '🥤',
+  household: '🏠',
+  cleaning: '🧹',
+  personal: '🧴',
+  snacks: '🍿',
+  canned: '🥫',
+  spices: '🌿',
+  grains: '🌾',
 };
 
-const makeItemRowStyles = (t: Theme) =>
-  StyleSheet.create({
-    row: {
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-      backgroundColor: t.colors.surface,
-      borderRadius: borderRadius.md,
-      paddingVertical: spacing.md,
-      paddingLeft: spacing.sm,
-      paddingRight: spacing.xs,
-      minHeight: 64,
-      boxShadow: '0 1px 3px rgba(43,33,24,0.05)',
-    },
-    rowCompleted: {
-      opacity: 0.55,
-    },
-    checkHitArea: {
-      minWidth: MIN_TOUCH,
-      minHeight: MIN_TOUCH,
-      alignItems: 'center',
-      justifyContent: 'flex-start',
-      paddingTop: 2,
-    },
-    checkbox: {
-      width: 22,
-      height: 22,
-      borderRadius: 4,
-      borderWidth: 2,
-      borderColor: t.colors.border,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    checkmark: {
-      color: t.colors.textInverse,
-      fontSize: 14,
-      fontWeight: '700',
-      lineHeight: 16,
-    },
-    itemBody: {
-      flex: 1,
-      gap: spacing.xs,
-    },
-    itemTitleRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.xs,
-    },
-    itemTitle: {
-      ...t.typography.body,
-      color: t.colors.textPrimary,
-      flexShrink: 1,
-    },
-    itemTitleDone: {
-      textDecorationLine: 'line-through',
-      color: t.colors.textTertiary,
-    },
-    recurringBadge: {
-      fontSize: 14,
-    },
-    chips: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: spacing.xs,
-    },
-    chip: {
-      borderWidth: 1,
-      borderColor: t.colors.border,
-      borderRadius: borderRadius.sm,
-      paddingHorizontal: spacing.sm,
-      paddingVertical: 2,
-    },
-    chipText: {
-      ...t.typography.label,
-      color: t.colors.textSecondary,
-    },
-    mutedCaption: {
-      ...t.typography.label,
-      color: t.colors.textTertiary,
-    },
-    removeHitArea: {
-      minWidth: MIN_TOUCH,
-      minHeight: MIN_TOUCH,
-      alignItems: 'center',
-      justifyContent: 'flex-start',
-      paddingTop: 2,
-    },
-    removeIcon: {
-      fontSize: 14,
-      color: t.colors.textTertiary,
-    },
-    pressed: {
-      opacity: 0.7,
-    },
-  });
+const CATEGORY_TINTS: Record<string, CategoryTint> = {
+  dairy: 'info',
+  vegetables: 'success',
+  bakery: 'warning',
+};
+
+function getCategoryEmoji(category: string): string {
+  const key = category.toLowerCase().trim();
+  return CATEGORY_EMOJI[key] ?? '📦';
+}
+
+function getCategoryTint(category: string): CategoryTint {
+  const key = category.toLowerCase().trim();
+  return CATEGORY_TINTS[key] ?? 'primary';
+}
+
+// ── Screen ─────────────────────────────────────────────────────────────────────
 
 const BoardDetailScreen: React.FC<Props> = ({ route }) => {
   const { boardId } = route.params;
@@ -290,12 +78,12 @@ const BoardDetailScreen: React.FC<Props> = ({ route }) => {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const navigation = useNavigation<NavigationProp>();
+  const { userId } = useAuth();
   const {
     board,
     items,
     isLoading,
     error,
-    presence,
     refetch,
     setItemStatus,
     clearCompleted,
@@ -306,21 +94,30 @@ const BoardDetailScreen: React.FC<Props> = ({ route }) => {
     new Set(),
   );
   const [doneExpanded, setDoneExpanded] = useState(false);
-  const [removedItem, setRemovedItem] = useState<RemovedItemState | null>(null);
   const [clearing, setClearing] = useState(false);
 
-  // Undo timer ref — clear undo after a few seconds
-  const undoTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
+  // ── Undo snackbar state ────────────────────────────────────────────────────
+  interface UndoState {
+    itemId: number;
+    previousStatus: BoardItemStatus;
+  }
+  const [undoState, setUndoState] = useState<UndoState | null>(null);
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  React.useEffect(() => {
+  // ── Cleared snackbar ───────────────────────────────────────────────────────
+  const [clearedMessage, setClearedMessage] = useState<string | null>(null);
+  const clearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const timer = undoTimerRef.current;
+    const clearTimer = clearTimerRef.current;
     return () => {
-      if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
+      if (timer) clearTimeout(timer);
+      if (clearTimer) clearTimeout(clearTimer);
     };
-  }, []);
+  }, [undoTimerRef, clearTimerRef]);
 
-  // Group items by category
+  // ── Group items by category ────────────────────────────────────────────────
   const { activeByCategory, completedItems, uncategorizedActive } =
     useMemo(() => {
       const active: Item[] = [];
@@ -357,6 +154,16 @@ const BoardDetailScreen: React.FC<Props> = ({ route }) => {
     return names;
   }, [activeByCategory, uncategorizedActive]);
 
+  const allNeeded = useMemo(
+    () => items.filter(i => i.status === 'Needed'),
+    [items],
+  );
+  const completedCount = completedItems.length;
+  const progressDone = completedCount;
+  const progressTotal = allNeeded.length + completedCount;
+
+  // ── Callbacks ──────────────────────────────────────────────────────────────
+
   const toggleCategory = useCallback((cat: string) => {
     setCollapsedCategories(prev => {
       const next = new Set(prev);
@@ -390,48 +197,62 @@ const BoardDetailScreen: React.FC<Props> = ({ route }) => {
     async (item: Item) => {
       const previousStatus = item.status;
       try {
-        // Capture first, then set status
-        setRemovedItem({ itemId: item.id, previousStatus });
+        setUndoState({ itemId: item.id, previousStatus });
         await setItemStatus(item.id, 'Removed');
 
-        // Auto-dismiss undo after 5 seconds
-        if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
-        undoTimeoutRef.current = setTimeout(() => {
-          setRemovedItem(null);
+        if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+        undoTimerRef.current = setTimeout(() => {
+          setUndoState(null);
         }, 5000);
       } catch {
-        setRemovedItem(null);
+        setUndoState(null);
       }
     },
     [setItemStatus],
   );
 
   const handleUndo = useCallback(async () => {
-    if (!removedItem) return;
+    if (!undoState) return;
     try {
-      await setItemStatus(removedItem.itemId, removedItem.previousStatus);
+      await setItemStatus(undoState.itemId, undoState.previousStatus);
     } catch {
       // error handled by hook
     } finally {
-      setRemovedItem(null);
-      if (undoTimeoutRef.current) {
-        clearTimeout(undoTimeoutRef.current);
-        undoTimeoutRef.current = null;
+      setUndoState(null);
+      if (undoTimerRef.current) {
+        clearTimeout(undoTimerRef.current);
+        undoTimerRef.current = null;
       }
     }
-  }, [removedItem, setItemStatus]);
+  }, [undoState, setItemStatus]);
+
+  const handleDismissSnackbar = useCallback(() => {
+    setUndoState(null);
+    if (undoTimerRef.current) {
+      clearTimeout(undoTimerRef.current);
+      undoTimerRef.current = null;
+    }
+  }, []);
 
   const handleClearCompleted = useCallback(async () => {
+    const count = completedCount;
     setClearing(true);
     try {
       await clearCompleted();
       setDoneExpanded(false);
+      setClearedMessage(
+        t('lovingBoards.boardDetail.clearedWithCount', { count }),
+      );
+      if (clearTimerRef.current) clearTimeout(clearTimerRef.current);
+      clearTimerRef.current = setTimeout(() => {
+        setClearedMessage(null);
+      }, 4000);
     } catch {
       // error handled by hook
     } finally {
       setClearing(false);
     }
-  }, [clearCompleted]);
+  }, [clearCompleted, completedCount, t]);
 
   const handleResetWeekly = useCallback(async () => {
     try {
@@ -448,6 +269,8 @@ const BoardDetailScreen: React.FC<Props> = ({ route }) => {
   const handleMembersPress = useCallback(() => {
     navigation.navigate('BoardMembers', { boardId });
   }, [navigation, boardId]);
+
+  // ── Render guards ─────────────────────────────────────────────────────────
 
   if (isLoading && !board) {
     return (
@@ -488,17 +311,14 @@ const BoardDetailScreen: React.FC<Props> = ({ route }) => {
     );
   }
 
-  const allNeeded = items.filter(i => i.status === 'Needed');
-  const hasCompleted = completedItems.length > 0;
+  const hasItems = allNeeded.length > 0 || completedCount > 0;
+  const hasCompleted = completedCount > 0;
 
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.headerTopRow}>
-          <Text style={styles.boardName}>{board.name}</Text>
-          <PresenceAvatars userIds={presence} />
-        </View>
+        <Text style={styles.boardName}>{board.name}</Text>
         <Text style={styles.headerMeta}>
           {t('lovingBoards.boardList.memberCount', {
             count: board.memberUserIds.length,
@@ -538,23 +358,36 @@ const BoardDetailScreen: React.FC<Props> = ({ route }) => {
         </View>
       </View>
 
-      {/* Undo banner */}
-      {removedItem && (
-        <View style={styles.undoBanner}>
-          <Text style={styles.undoText}>
-            {t('lovingBoards.boardDetail.removed')}
-          </Text>
-          <Pressable
-            style={({ pressed }) => [styles.undoBtn, pressed && styles.pressed]}
-            onPress={handleUndo}
-            accessibilityRole="button"
-            accessibilityLabel={t('lovingBoards.boardDetail.undo')}
-            testID="board-detail-undo"
-          >
-            <Text style={styles.undoBtnText}>
-              {t('lovingBoards.boardDetail.undo')}
-            </Text>
-          </Pressable>
+      {/* Progress strip */}
+      <ProgressStrip done={progressDone} total={progressTotal} />
+
+      {/* Undo snackbar */}
+      {undoState && (
+        <View style={styles.snackbarContainer}>
+          <Snackbar
+            message={t('lovingBoards.boardDetail.removed')}
+            actionLabel={t('lovingBoards.boardDetail.undo')}
+            onAction={handleUndo}
+            onDismiss={handleDismissSnackbar}
+            durationMs={5000}
+          />
+        </View>
+      )}
+
+      {/* Cleared snackbar */}
+      {clearedMessage && !undoState && (
+        <View style={styles.snackbarContainer}>
+          <Snackbar
+            message={clearedMessage}
+            onDismiss={() => {
+              setClearedMessage(null);
+              if (clearTimerRef.current) {
+                clearTimeout(clearTimerRef.current);
+                clearTimerRef.current = null;
+              }
+            }}
+            durationMs={4000}
+          />
         </View>
       )}
 
@@ -563,12 +396,15 @@ const BoardDetailScreen: React.FC<Props> = ({ route }) => {
         contentContainerStyle={styles.scrollContent}
         testID="board-detail-screen"
       >
-        {allNeeded.length === 0 && completedItems.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>
-              {t('lovingBoards.boardDetail.empty')}
-            </Text>
-          </View>
+        {!hasItems ? (
+          <EmptyState
+            emoji="📝"
+            title={t('lovingBoards.boardDetail.emptyDetail')}
+            subtitle={t('lovingBoards.boardDetail.emptyDetailHint')}
+            actionLabel={t('lovingBoards.boardDetail.addItem')}
+            onAction={handleAddItem}
+            testID="board-detail-empty"
+          />
         ) : (
           <>
             {/* Active items by category */}
@@ -585,99 +421,81 @@ const BoardDetailScreen: React.FC<Props> = ({ route }) => {
               if (catItems.length === 0) return null;
 
               return (
-                <View key={cat} style={styles.category}>
-                  <Pressable
-                    style={styles.categoryHeader}
-                    onPress={() => toggleCategory(cat)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${catLabel} (${catItems.length})`}
-                    testID={`category-header-${cat}`}
-                  >
-                    <Text style={styles.categoryTitle}>
-                      {catLabel}{' '}
-                      <Text style={styles.categoryCount}>
-                        ({catItems.length})
-                      </Text>
-                    </Text>
-                    <Text style={styles.chevron}>
-                      {isCollapsed ? '▸' : '▾'}
-                    </Text>
-                  </Pressable>
-                  {!isCollapsed &&
-                    catItems.map(item => (
-                      <ItemRow
-                        key={item.id}
-                        item={item}
-                        onToggle={handleToggleItem}
-                        onEdit={handleEditItem}
-                        onRemove={handleRemoveItem}
-                        colors={colors}
-                      />
-                    ))}
-                </View>
-              );
-            })}
-
-            {/* Completed (Done) section */}
-            {hasCompleted && (
-              <View style={styles.category}>
-                <Pressable
-                  style={styles.categoryHeader}
-                  onPress={() => setDoneExpanded(prev => !prev)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${t('lovingBoards.boardDetail.done')} (${
-                    completedItems.length
-                  })`}
-                  testID="done-section-header"
+                <CategoryCard
+                  key={cat}
+                  categoryName={catLabel}
+                  categoryEmoji={isUncategorized ? '📦' : getCategoryEmoji(cat)}
+                  itemCount={catItems.length}
+                  tint={isUncategorized ? 'primary' : getCategoryTint(cat)}
+                  isCollapsed={isCollapsed}
+                  onToggle={() => toggleCategory(cat)}
+                  accessibilityLabel={`${catLabel} (${catItems.length})`}
                 >
-                  <Text style={styles.categoryTitle}>
-                    {t('lovingBoards.boardDetail.done')}{' '}
-                    <Text style={styles.categoryCount}>
-                      ({completedItems.length})
-                    </Text>
-                  </Text>
-                  <View style={styles.doneActions}>
-                    <Pressable
-                      style={({ pressed }) => [
-                        styles.clearBtn,
-                        pressed && styles.pressed,
-                      ]}
-                      onPress={handleClearCompleted}
-                      disabled={clearing}
-                      accessibilityRole="button"
-                      accessibilityLabel={t(
-                        'lovingBoards.boardDetail.clearCompleted',
-                      )}
-                      testID="clear-completed-button"
-                    >
-                      {clearing ? (
-                        <ActivityIndicator
-                          size="small"
-                          color={colors.textTertiary}
-                        />
-                      ) : (
-                        <Text style={styles.clearBtnText}>
-                          {t('lovingBoards.boardDetail.clearCompleted')}
-                        </Text>
-                      )}
-                    </Pressable>
-                    <Text style={styles.chevron}>
-                      {doneExpanded ? '▾' : '▸'}
-                    </Text>
-                  </View>
-                </Pressable>
-                {doneExpanded &&
-                  completedItems.map(item => (
+                  {catItems.map(item => (
                     <ItemRow
                       key={item.id}
                       item={item}
+                      currentUserId={userId ?? undefined}
                       onToggle={handleToggleItem}
                       onEdit={handleEditItem}
                       onRemove={handleRemoveItem}
-                      colors={colors}
                     />
                   ))}
-              </View>
+                </CategoryCard>
+              );
+            })}
+
+            {/* Done section */}
+            {hasCompleted && (
+              <CategoryCard
+                categoryName={`${t(
+                  'lovingBoards.boardDetail.done',
+                )} · ${completedCount}`}
+                categoryEmoji="✅"
+                itemCount={completedCount}
+                tint="success"
+                isCollapsed={!doneExpanded}
+                onToggle={() => setDoneExpanded(prev => !prev)}
+                accessibilityLabel={`${t(
+                  'lovingBoards.boardDetail.done',
+                )} (${completedCount})`}
+              >
+                {/* Clear button inside done section */}
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.clearBtn,
+                    pressed && styles.pressed,
+                  ]}
+                  onPress={handleClearCompleted}
+                  disabled={clearing}
+                  accessibilityRole="button"
+                  accessibilityLabel={t(
+                    'lovingBoards.boardDetail.clearCompleted',
+                  )}
+                  testID="clear-completed-button"
+                >
+                  {clearing ? (
+                    <ActivityIndicator
+                      size="small"
+                      color={colors.textTertiary}
+                    />
+                  ) : (
+                    <Text style={styles.clearBtnText}>
+                      {t('lovingBoards.boardDetail.clearCompleted')}
+                    </Text>
+                  )}
+                </Pressable>
+                {completedItems.map(item => (
+                  <ItemRow
+                    key={item.id}
+                    item={item}
+                    currentUserId={userId ?? undefined}
+                    onToggle={handleToggleItem}
+                    onEdit={handleEditItem}
+                    onRemove={handleRemoveItem}
+                  />
+                ))}
+              </CategoryCard>
             )}
           </>
         )}
@@ -689,6 +507,7 @@ const BoardDetailScreen: React.FC<Props> = ({ route }) => {
         onPress={handleAddItem}
         accessibilityRole="button"
         accessibilityLabel={t('lovingBoards.boardDetail.addItem')}
+        accessibilityHint={t('lovingBoards.boardDetail.emptyDetailHint')}
         testID="board-detail-add-item"
       >
         <Text style={styles.fabText}>＋</Text>
@@ -709,18 +528,14 @@ const makeStyles = (t: Theme) =>
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: t.colors.separator,
     },
-    headerTopRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
-      marginBottom: spacing.sm,
-    },
     boardName: {
       ...t.typography.heading,
+      marginBottom: spacing.xs,
     },
     headerMeta: {
       ...t.typography.caption,
       color: t.colors.textTertiary,
+      marginBottom: spacing.sm,
     },
     headerActions: {
       flexDirection: 'row',
@@ -741,31 +556,12 @@ const makeStyles = (t: Theme) =>
       ...t.typography.link,
       color: t.colors.primary,
     },
-    undoBanner: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingVertical: spacing.sm,
-      paddingHorizontal: spacing.lg,
-      backgroundColor: t.colors.warning,
-      gap: spacing.md,
-    },
-    undoText: {
-      ...t.typography.caption,
-      color: t.colors.textInverse,
-    },
-    undoBtn: {
-      minHeight: MIN_TOUCH,
-      minWidth: MIN_TOUCH,
-      paddingHorizontal: spacing.md,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    undoBtnText: {
-      ...t.typography.link,
-      color: t.colors.textInverse,
-      fontWeight: '700',
-      textDecorationLine: 'underline',
+    snackbarContainer: {
+      position: 'absolute',
+      bottom: 76,
+      left: 0,
+      right: 0,
+      zIndex: zIndexScale.toast,
     },
     scroll: {
       flex: 1,
@@ -775,45 +571,18 @@ const makeStyles = (t: Theme) =>
       gap: spacing.md,
       paddingBottom: 80,
     },
-    category: {
-      gap: spacing.xs,
-    },
-    categoryHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingVertical: spacing.sm,
-      minHeight: MIN_TOUCH,
-    },
-    categoryTitle: {
-      ...t.typography.body,
-      fontWeight: '600',
-      color: t.colors.textPrimary,
-    },
-    categoryCount: {
-      ...t.typography.caption,
-      color: t.colors.textTertiary,
-      fontWeight: '400',
-    },
-    chevron: {
-      fontSize: 14,
-      color: t.colors.textTertiary,
-    },
-    doneActions: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.sm,
-    },
     clearBtn: {
+      alignSelf: 'flex-end',
       minHeight: MIN_TOUCH,
       minWidth: MIN_TOUCH,
       paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.xs,
       alignItems: 'center',
       justifyContent: 'center',
     },
     clearBtnText: {
       ...t.typography.caption,
-      color: t.colors.textTertiary,
+      color: t.colors.error,
     },
     fab: {
       position: 'absolute',
@@ -857,14 +626,6 @@ const makeStyles = (t: Theme) =>
     retryText: {
       ...t.typography.link,
       color: t.colors.primary,
-    },
-    emptyState: {
-      paddingVertical: spacing.xxl,
-      alignItems: 'center',
-    },
-    emptyText: {
-      ...t.typography.body,
-      color: t.colors.textSecondary,
     },
     pressed: {
       opacity: 0.7,
