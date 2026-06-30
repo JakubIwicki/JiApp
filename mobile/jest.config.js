@@ -18,6 +18,7 @@ module.exports = {
     '^react-native($|/.*)': `${path.dirname(
       require.resolve('react-native'),
     )}/$1`,
+    '^@notifee/react-native$': '<rootDir>/__mocks__/notifee-stub.ts',
   },
   haste: {
     defaultPlatform: 'ios',

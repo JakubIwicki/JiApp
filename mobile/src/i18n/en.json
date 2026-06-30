@@ -287,6 +287,10 @@
       "owner": "Owner",
       "ownerCannotRemove": "Cannot remove the board owner"
     },
+    "reminders": {
+      "channelName": "LovingBoards reminders",
+      "notificationTitle": "⏰ {{itemTitle}} on {{boardName}} is due tomorrow"
+    },
     "errors": {
       "loadBoards": "Failed to load boards",
       "createBoard": "Failed to create board",

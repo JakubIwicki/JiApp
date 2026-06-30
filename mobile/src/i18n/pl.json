@@ -287,6 +287,10 @@
       "owner": "Właściciel",
       "ownerCannotRemove": "Nie można usunąć właściciela tablicy"
     },
+    "reminders": {
+      "channelName": "Przypomnienia LovingBoards",
+      "notificationTitle": "⏰ {{itemTitle}} na tablicy {{boardName}} ma jutro termin"
+    },
     "errors": {
       "loadBoards": "Nie udało się załadować tablic",
       "createBoard": "Nie udało się utworzyć tablicy",
