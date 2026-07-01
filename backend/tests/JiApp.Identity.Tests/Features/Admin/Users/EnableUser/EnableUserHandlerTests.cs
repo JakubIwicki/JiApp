@@ -1,5 +1,6 @@
 using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
+using JiApp.Identity.Features.Admin.Common;
 using JiApp.Identity.Features.Admin.Users.EnableUser;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
@@ -29,11 +30,16 @@ public sealed class EnableUserHandlerTests
 			Mock.Of<IServiceProvider>(),
 			Mock.Of<ILogger<UserManager<User>>>());
 
+		public Mock<ICurrentUserService> CurrentUserMock { get; } = new();
+
+		public AdminAccessGuard Guard { get; }
 		public EnableUserHandler Sut { get; }
 
 		public Fixture()
 		{
-			Sut = new EnableUserHandler(UserManagerMock.Object);
+			CurrentUserMock.Setup(x => x.UserId).Returns(9999);
+			Guard = new AdminAccessGuard(UserManagerMock.Object, CurrentUserMock.Object);
+			Sut = new EnableUserHandler(UserManagerMock.Object, Guard);
 		}
 
 		public Fixture WithExistingUser()
@@ -49,6 +55,12 @@ public sealed class EnableUserHandlerTests
 		{
 			UserManagerMock.Setup(x => x.FindByIdAsync("999"))
 				.ReturnsAsync((User?)null);
+			return this;
+		}
+
+		public Fixture WithSelfTarget()
+		{
+			CurrentUserMock.Setup(x => x.UserId).Returns(1);
 			return this;
 		}
 	}
@@ -72,5 +84,15 @@ public sealed class EnableUserHandlerTests
 		var result = await fixture.Sut.HandleAsync(999);
 
 		AssertNotFound(result);
+	}
+
+	[Fact]
+	public async Task HandleAsync_ReturnsAccessDenied_WhenSelfTargeting()
+	{
+		var fixture = new Fixture().WithSelfTarget();
+
+		var result = await fixture.Sut.HandleAsync(1);
+
+		AssertAccessDenied(result);
 	}
 }

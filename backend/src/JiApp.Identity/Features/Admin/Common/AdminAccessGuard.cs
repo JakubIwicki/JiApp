@@ -24,15 +24,21 @@ public sealed class AdminAccessGuard(
 		if (user is null || !await userManager.IsInRoleAsync(user, RoleNames.Admin))
 			return Result<bool>.Success(true);
 
+		// If the target is already locked out, this action can't reduce the count of effective admins.
+		if (await userManager.IsLockedOutAsync(user))
+			return Result<bool>.Success(true);
+
 		var admins = await userManager.GetUsersInRoleAsync(RoleNames.Admin);
-		var effectiveAdmins = new List<User>(admins.Count);
+		var otherEffectiveAdmins = new List<User>(admins.Count);
 		foreach (var admin in admins)
 		{
+			if (admin.Id == targetUserId)
+				continue;
 			if (!await userManager.IsLockedOutAsync(admin))
-				effectiveAdmins.Add(admin);
+				otherEffectiveAdmins.Add(admin);
 		}
 
-		if (effectiveAdmins.Count <= 1)
+		if (otherEffectiveAdmins.Count == 0)
 			return Result<bool>.Failure(
 				"Cannot remove or disable the last admin user. Assign another admin first.",
 				ResultCategories.AccessDenied);
