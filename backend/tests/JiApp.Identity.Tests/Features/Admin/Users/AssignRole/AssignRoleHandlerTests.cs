@@ -1,5 +1,6 @@
 using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
+using JiApp.Identity.Features.Admin.Common;
 using JiApp.Identity.Features.Admin.Users.AssignRole;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
@@ -35,11 +36,16 @@ public sealed class AssignRoleHandlerTests
 			Mock.Of<IdentityErrorDescriber>(),
 			Mock.Of<ILogger<RoleManager<IdentityRole<long>>>>());
 
+		public Mock<ICurrentUserService> CurrentUserMock { get; } = new();
+
+		public AdminAccessGuard Guard { get; }
 		public AssignRoleHandler Sut { get; }
 
 		public Fixture()
 		{
-			Sut = new AssignRoleHandler(UserManagerMock.Object, RoleManagerMock.Object);
+			CurrentUserMock.Setup(x => x.UserId).Returns(999);
+			Guard = new AdminAccessGuard(UserManagerMock.Object, CurrentUserMock.Object);
+			Sut = new AssignRoleHandler(UserManagerMock.Object, RoleManagerMock.Object, Guard);
 		}
 
 		public Fixture WithExistingUserAndRole()
@@ -57,6 +63,12 @@ public sealed class AssignRoleHandlerTests
 		{
 			RoleManagerMock.Setup(x => x.RoleExistsAsync("FakeRole"))
 				.ReturnsAsync(false);
+			return this;
+		}
+
+		public Fixture WithSelfTarget()
+		{
+			CurrentUserMock.Setup(x => x.UserId).Returns(1);
 			return this;
 		}
 	}
@@ -85,13 +97,39 @@ public sealed class AssignRoleHandlerTests
 	public async Task HandleAsync_ReturnsNotFound_WhenUserDoesNotExist()
 	{
 		var fixture = new Fixture();
-		fixture.UserManagerMock.Setup(x => x.FindByIdAsync("999"))
+		fixture.UserManagerMock.Setup(x => x.FindByIdAsync("9999"))
 			.ReturnsAsync((User?)null);
 		fixture.RoleManagerMock.Setup(x => x.RoleExistsAsync("Admin"))
 			.ReturnsAsync(true);
 
-		var result = await fixture.Sut.HandleAsync(999, new AssignRoleRequest("Admin"));
+		var result = await fixture.Sut.HandleAsync(9999, new AssignRoleRequest("Admin"));
 
 		AssertNotFound(result);
+	}
+
+	[Fact]
+	public async Task HandleAsync_ReturnsAccessDenied_WhenSelfAssigningAdminRole()
+	{
+		var fixture = new Fixture().WithSelfTarget();
+
+		var result = await fixture.Sut.HandleAsync(1, new AssignRoleRequest("Admin"));
+
+		AssertAccessDenied(result);
+	}
+
+	[Fact]
+	public async Task HandleAsync_ReturnsSuccess_WhenSelfAssigningNonAdminRole()
+	{
+		var fixture = new Fixture().WithSelfTarget();
+		fixture.UserManagerMock.Setup(x => x.FindByIdAsync("1"))
+			.ReturnsAsync(new User { Id = 1, UserName = "testuser" });
+		fixture.RoleManagerMock.Setup(x => x.RoleExistsAsync("User"))
+			.ReturnsAsync(true);
+		fixture.UserManagerMock.Setup(x => x.AddToRoleAsync(It.IsAny<User>(), "User"))
+			.ReturnsAsync(IdentityResult.Success);
+
+		var result = await fixture.Sut.HandleAsync(1, new AssignRoleRequest("User"));
+
+		AssertSuccess(result);
 	}
 }

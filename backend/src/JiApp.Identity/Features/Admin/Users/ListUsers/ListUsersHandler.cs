@@ -1,6 +1,7 @@
 using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace JiApp.Identity.Features.Admin.Users.ListUsers;
 
@@ -18,13 +19,11 @@ public sealed class ListUsersHandler(UserManager<User> userManager)
 				(u.Email != null && u.Email.Contains(term)));
 		}
 
-		var allUsers = query.OrderBy(u => u.Id).ToList();
-		var totalCount = allUsers.Count;
-
-		var pagedUsers = allUsers
+		var totalCount = await query.CountAsync();
+		var pagedUsers = await query.OrderBy(u => u.Id)
 			.Skip((page - 1) * pageSize)
 			.Take(pageSize)
-			.ToList();
+			.ToListAsync();
 
 		var summaries = new List<UserSummary>(pagedUsers.Count);
 		foreach (var user in pagedUsers)

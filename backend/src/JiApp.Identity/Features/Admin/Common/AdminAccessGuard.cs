@@ -25,7 +25,14 @@ public sealed class AdminAccessGuard(
 			return Result<bool>.Success(true);
 
 		var admins = await userManager.GetUsersInRoleAsync(RoleNames.Admin);
-		if (admins.Count <= 1)
+		var effectiveAdmins = new List<User>(admins.Count);
+		foreach (var admin in admins)
+		{
+			if (!await userManager.IsLockedOutAsync(admin))
+				effectiveAdmins.Add(admin);
+		}
+
+		if (effectiveAdmins.Count <= 1)
 			return Result<bool>.Failure(
 				"Cannot remove or disable the last admin user. Assign another admin first.",
 				ResultCategories.AccessDenied);

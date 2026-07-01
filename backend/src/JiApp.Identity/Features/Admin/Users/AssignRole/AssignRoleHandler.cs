@@ -1,16 +1,26 @@
 using System.Globalization;
+using JiApp.Common;
 using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
+using JiApp.Identity.Features.Admin.Common;
 using Microsoft.AspNetCore.Identity;
 
 namespace JiApp.Identity.Features.Admin.Users.AssignRole;
 
 public sealed class AssignRoleHandler(
 	UserManager<User> userManager,
-	RoleManager<IdentityRole<long>> roleManager)
+	RoleManager<IdentityRole<long>> roleManager,
+	AdminAccessGuard guard)
 {
 	public async Task<Result<bool>> HandleAsync(long userId, AssignRoleRequest request)
 	{
+		if (request.RoleName == RoleNames.Admin)
+		{
+			var notSelf = guard.EnsureNotSelf(userId);
+			if (!notSelf.IsSuccess)
+				return notSelf;
+		}
+
 		if (!await roleManager.RoleExistsAsync(request.RoleName))
 			return Result<bool>.Failure($"Role '{request.RoleName}' does not exist", ResultCategories.Validation);
 

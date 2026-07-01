@@ -28,13 +28,16 @@ public sealed class RoleSeeder(
 	{
 		foreach (var (name, desiredPermissions) in RoleDefinitions)
 		{
-			await SeedRoleAsync(name, desiredPermissions, ct);
+			if (name == RoleNames.Admin)
+				await SeedAndReconcileRoleAsync(name, desiredPermissions, ct);
+			else
+				await SeedRoleCreateOnlyAsync(name, desiredPermissions, ct);
 		}
 
 		await BootstrapAdminAsync(ct);
 	}
 
-	private async Task SeedRoleAsync(string name, string[] desiredPermissions, CancellationToken ct)
+	private async Task SeedAndReconcileRoleAsync(string name, string[] desiredPermissions, CancellationToken ct)
 	{
 		var role = await roleManager.FindByNameAsync(name);
 		if (role is null)
@@ -76,6 +79,35 @@ public sealed class RoleSeeder(
 				logger.LogInformation("Added permission {Permission} to role {RoleName}", permission, name);
 			}
 		}
+	}
+
+	private async Task SeedRoleCreateOnlyAsync(string name, string[] defaultPermissions, CancellationToken ct)
+	{
+		var role = await roleManager.FindByNameAsync(name);
+		if (role is not null)
+		{
+			logger.LogDebug("Role {RoleName} already exists; skipping seed to preserve admin edits", name);
+			return;
+		}
+
+		role = new IdentityRole<long>(name);
+		var result = await roleManager.CreateAsync(role);
+		if (!result.Succeeded)
+		{
+			logger.LogWarning("Failed to create role {RoleName}: {Errors}", name,
+				string.Join(", ", result.Errors.Select(e => e.Description)));
+			return;
+		}
+
+		logger.LogInformation("Created role {RoleName}", name);
+
+		foreach (var permission in defaultPermissions)
+		{
+			await roleManager.AddClaimAsync(role, new System.Security.Claims.Claim("permission", permission));
+		}
+
+		if (defaultPermissions.Length > 0)
+			logger.LogInformation("Seeded {Count} default permissions for role {RoleName}", defaultPermissions.Length, name);
 	}
 
 	private async Task BootstrapAdminAsync(CancellationToken ct)

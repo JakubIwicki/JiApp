@@ -1,6 +1,7 @@
 using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Identity.Features.Admin.Users.ListUsers;
+using JiApp.Testing.Common.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -45,7 +46,7 @@ public sealed class ListUsersHandlerTests
 				});
 			}
 
-			var queryable = _users.AsQueryable();
+			var queryable = _users.AsAsyncQueryable();
 			UserManagerMock.Setup(x => x.Users).Returns(queryable);
 			UserManagerMock
 				.Setup(x => x.GetRolesAsync(It.IsAny<User>()))
@@ -94,5 +95,18 @@ public sealed class ListUsersHandlerTests
 
 		AssertSuccess(result);
 		result.Value!.Users.Single().IsLockedOut.Should().BeTrue();
+	}
+
+	[Fact]
+	public async Task HandleAsync_ReturnsCorrectPage_WhenMoreUsersThanPageSize()
+	{
+		var fixture = new Fixture().WithUsers(10);
+
+		var result = await fixture.Sut.HandleAsync(null, 2, 3);
+
+		AssertSuccess(result);
+		result.Value!.Users.Should().HaveCount(3);
+		result.Value.TotalCount.Should().Be(10);
+		result.Value.Users[0].Id.Should().Be(4);
 	}
 }
