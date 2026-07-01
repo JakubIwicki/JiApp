@@ -8,7 +8,7 @@ namespace JiApp.Identity.Services;
 
 public interface IJwtTokenService
 {
-    string GenerateToken(long userId, string username, IEnumerable<string> modules);
+    string GenerateToken(long userId, string username, IEnumerable<string> roles, IEnumerable<string> permissions);
     bool IsTokenValid(string token);
     string GetUsernameFromToken(string token);
     long GetUserIdFromToken(string token);
@@ -43,7 +43,7 @@ public sealed class JwtTokenService(
         return CreateValidationParameters(key, issuer, audience);
     }
 
-    public string GenerateToken(long userId, string username, IEnumerable<string> modules)
+    public string GenerateToken(long userId, string username, IEnumerable<string> roles, IEnumerable<string> permissions)
     {
         var keyBytes = Encoding.UTF8.GetBytes(key);
         var signingKey = new SymmetricSecurityKey(keyBytes);
@@ -60,7 +60,8 @@ public sealed class JwtTokenService(
                 ClaimValueTypes.Integer64),
         };
 
-        claims.AddRange(modules.Select(module => new Claim("module", module)));
+        claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
+        claims.AddRange(permissions.Select(p => new Claim("permission", p)));
 
         var token = new JwtSecurityToken(
             issuer: issuer,

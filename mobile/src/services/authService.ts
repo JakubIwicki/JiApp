@@ -19,7 +19,8 @@ export interface ProfileResponse {
   id: number;
   displayName: string;
   email?: string;
-  modules: string[];
+  roles: string[];
+  permissions: string[];
 }
 
 export const login = async (
@@ -34,7 +35,8 @@ export const login = async (
     token: data.accessToken,
     id: data.userId,
     displayName: data.displayName ?? '',
-    modules: data.modules ?? [],
+    roles: data.roles ?? [],
+    permissions: data.permissions ?? [],
   };
 };
 
@@ -62,7 +64,8 @@ export const checkToken = async (token: string): Promise<LoginResponse> => {
     token,
     id: data.id,
     displayName: data.displayName ?? '',
-    modules: data.modules ?? [],
+    roles: data.roles ?? [],
+    permissions: data.permissions ?? [],
   };
 };
 
@@ -73,7 +76,8 @@ export const getProfile = async (): Promise<ProfileResponse> => {
     id: data.id,
     displayName: data.displayName ?? '',
     email: data.email,
-    modules: data.modules ?? [],
+    roles: data.roles ?? [],
+    permissions: data.permissions ?? [],
   };
 };
 
@@ -91,7 +95,8 @@ export const updateProfile = async (
     id: data.id,
     displayName: data.displayName ?? '',
     email: data.email,
-    modules: [],
+    roles: [],
+    permissions: [],
   };
 };
 

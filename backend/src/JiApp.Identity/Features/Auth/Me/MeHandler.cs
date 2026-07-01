@@ -11,7 +11,7 @@ namespace JiApp.Identity.Features.Auth.Me;
 public sealed class MeHandler(
     UserManager<User> userManager,
     ICurrentUserService currentUser,
-    IUserModuleGrantService grantService,
+    IUserAccessService accessService,
     ILogger<MeHandler> logger)
 {
     public async Task<Result<MeResponse>> HandleAsync()
@@ -28,8 +28,9 @@ public sealed class MeHandler(
             return Result<MeResponse>.Failure("User not found");
         }
 
-        var modules = await grantService.GetModulesAsync(userId);
+        var roles = await userManager.GetRolesAsync(user);
+        var permissions = await accessService.GetEffectivePermissionsAsync(userId);
 
-        return Result<MeResponse>.Success(new MeResponse(user.Id, user.DisplayName, username, user.Email, modules));
+        return Result<MeResponse>.Success(new MeResponse(user.Id, user.DisplayName, username, user.Email, [.. roles], permissions));
     }
 }

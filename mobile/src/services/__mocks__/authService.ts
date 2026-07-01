@@ -21,7 +21,8 @@ export const login = async (
     id: 1,
     displayName: 'Mock User',
     token: 'mock-jwt-token',
-    modules: ['YtDownloader', 'Scheduler'],
+    roles: ['User'],
+    permissions: ['ytdownloader.access', 'scheduler.access'],
   };
 };
 
@@ -38,5 +39,6 @@ export const checkToken = async (_token: string): Promise<LoginResponse> => ({
   id: 1,
   displayName: 'Mock User',
   token: _token,
-  modules: ['YtDownloader', 'Scheduler'],
+  roles: ['User'],
+  permissions: ['ytdownloader.access', 'scheduler.access'],
 });

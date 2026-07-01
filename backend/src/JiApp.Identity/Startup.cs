@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using FluentValidation;
+using JiApp.Common;
 using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Identity.Configuration;
@@ -13,6 +14,20 @@ using JiApp.Identity.Features.Auth.Refresh;
 using JiApp.Identity.Features.Auth.ChangePassword;
 using JiApp.Identity.Features.Auth.Register;
 using JiApp.Identity.Features.Auth.UpdateProfile;
+using JiApp.Identity.Features.Admin.Common;
+using JiApp.Identity.Features.Admin.Users.ListUsers;
+using JiApp.Identity.Features.Admin.Users.GetUserDetail;
+using JiApp.Identity.Features.Admin.Users.CreateUser;
+using JiApp.Identity.Features.Admin.Users.DisableUser;
+using JiApp.Identity.Features.Admin.Users.EnableUser;
+using JiApp.Identity.Features.Admin.Users.DeleteUser;
+using JiApp.Identity.Features.Admin.Users.AssignRole;
+using JiApp.Identity.Features.Admin.Users.RemoveRole;
+using JiApp.Identity.Features.Admin.Users.ResetPassword;
+using JiApp.Identity.Features.Admin.Roles.ListRoles;
+using JiApp.Identity.Features.Admin.Roles.CreateRole;
+using JiApp.Identity.Features.Admin.Roles.UpdateRolePermissions;
+using JiApp.Identity.Features.Admin.Roles.DeleteRole;
 using JiApp.Identity.Persistence;
 using JiApp.Identity.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -125,7 +140,8 @@ public class Startup(IdentitySettings settings)
 
         services.AddScoped<ICurrentUserService, CurrentUserService>();
 
-        services.AddScoped<IUserModuleGrantService, UserModuleGrantService>();
+        services.AddScoped<IUserAccessService, UserAccessService>();
+        services.AddScoped<IRoleSeeder, RoleSeeder>();
 
         services.AddHttpContextAccessor();
 
@@ -136,6 +152,22 @@ public class Startup(IdentitySettings settings)
         services.AddScoped<MeHandler>();
         services.AddScoped<UpdateProfileHandler>();
         services.AddScoped<ChangePasswordHandler>();
+
+        // Admin handlers
+        services.AddScoped<AdminAccessGuard>();
+        services.AddScoped<ListUsersHandler>();
+        services.AddScoped<GetUserDetailHandler>();
+        services.AddScoped<CreateUserHandler>();
+        services.AddScoped<DisableUserHandler>();
+        services.AddScoped<EnableUserHandler>();
+        services.AddScoped<DeleteUserHandler>();
+        services.AddScoped<AssignRoleHandler>();
+        services.AddScoped<RemoveRoleHandler>();
+        services.AddScoped<ResetPasswordHandler>();
+        services.AddScoped<ListRolesHandler>();
+        services.AddScoped<CreateRoleHandler>();
+        services.AddScoped<UpdateRolePermissionsHandler>();
+        services.AddScoped<DeleteRoleHandler>();
 
         services.AddValidatorsFromAssemblyContaining<RegisterValidator>();
 
@@ -218,6 +250,21 @@ public class Startup(IdentitySettings settings)
         auth.MapMe();
         auth.MapUpdateProfile();
         auth.MapChangePassword();
+
+        var admin = auth.MapGroup("admin").RequireAuthorization(p => p.RequireRole(RoleNames.Admin));
+        admin.MapListUsers();
+        admin.MapGetUserDetail();
+        admin.MapCreateUser();
+        admin.MapDisableUser();
+        admin.MapEnableUser();
+        admin.MapDeleteUser();
+        admin.MapAssignRole();
+        admin.MapRemoveRole();
+        admin.MapResetPassword();
+        admin.MapListRoles();
+        admin.MapCreateRole();
+        admin.MapUpdateRolePermissions();
+        admin.MapDeleteRole();
 
         auth.MapGet("/health", async (IdentityDbContext db) =>
             {

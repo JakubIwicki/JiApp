@@ -85,16 +85,17 @@ describe('LoginApiRawSchema', () => {
     accessToken: 'jwt-token-123',
     refreshToken: 'refresh-token-456',
     expiresIn: 3600,
-    modules: ['YtDownloader', 'Scheduler'],
+    roles: ['User'],
+    permissions: ['ytdownloader.access', 'scheduler.access'],
   };
 
   it('parses a valid LoginApiRaw', () => {
     expect(() => LoginApiRawSchema.parse(valid)).not.toThrow();
   });
 
-  it('parses without optional modules field', () => {
-    const { modules: _, ...withoutModules } = valid;
-    expect(() => LoginApiRawSchema.parse(withoutModules)).not.toThrow();
+  it('parses without optional roles and permissions fields', () => {
+    const { roles: _, permissions: __, ...withoutOpt } = valid;
+    expect(() => LoginApiRawSchema.parse(withoutOpt)).not.toThrow();
   });
 
   it('parses with displayName: null', () => {
@@ -116,7 +117,8 @@ describe('MeApiRawSchema', () => {
     displayName: 'John Doe',
     username: 'johndoe',
     email: 'john@example.com',
-    modules: ['YtDownloader', 'Scheduler'],
+    roles: ['User'],
+    permissions: ['ytdownloader.access', 'scheduler.access'],
   };
 
   it('parses a valid MeApiRaw', () => {

@@ -1,6 +1,7 @@
 using JiApp.Identity;
 using JiApp.Identity.Configuration;
 using JiApp.Identity.Persistence;
+using JiApp.Identity.Services;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
@@ -19,11 +20,13 @@ startup.ConfigureServices(builder.Services);
 
 var app = builder.Build();
 
-// Auto-apply pending EF migrations on startup (dev: SQLite, prod: PostgreSQL)
+// Auto-apply pending EF migrations on startup (SQLite in all environments today; Npgsql path in Startup.cs exists but is unconfigured)
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
     db.Database.Migrate();
+
+    await scope.ServiceProvider.GetRequiredService<IRoleSeeder>().SeedAsync();
 }
 
 Startup.Configure(app);

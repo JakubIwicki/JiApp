@@ -26,43 +26,58 @@ public sealed class JwtTokenServiceTests
     {
         var sut = new Fixture().Sut;
 
-        var token = sut.GenerateToken(1, "testuser", []);
+        var token = sut.GenerateToken(1, "testuser", [], []);
 
         token.Should().NotBeNullOrEmpty();
         sut.IsTokenValid(token).Should().BeTrue();
     }
 
     [Fact]
-    public void GenerateToken_EmitsModuleClaim_PerGrantedModule()
+    public void GenerateToken_EmitsRoleAndPermissionClaims()
     {
         var sut = new Fixture().Sut;
-        var modules = new[] { "YtDownloader", "Scheduler" };
+        var roles = new[] { "User" };
+        var permissions = new[] { "ytdownloader.access", "scheduler.access" };
 
-        var token = sut.GenerateToken(1, "testuser", modules);
+        var token = sut.GenerateToken(1, "testuser", roles, permissions);
 
-        var moduleClaims = new JwtSecurityTokenHandler()
+        var allClaims = new JwtSecurityTokenHandler()
             .ReadJwtToken(token)
-            .Claims
-            .Where(c => c.Type == "module")
+            .Claims;
+
+        var roleClaims = allClaims
+            .Where(c => c.Type == System.Security.Claims.ClaimTypes.Role)
             .Select(c => c.Value)
             .ToArray();
 
-        moduleClaims.Should().BeEquivalentTo(modules);
+        var permissionClaims = allClaims
+            .Where(c => c.Type == "permission")
+            .Select(c => c.Value)
+            .ToArray();
+
+        roleClaims.Should().BeEquivalentTo(roles);
+        permissionClaims.Should().BeEquivalentTo(permissions);
     }
 
     [Fact]
-    public void GenerateToken_EmitsNoModuleClaims_WhenNoneGranted()
+    public void GenerateToken_EmitsNoRoleOrPermissionClaims_WhenNoneGranted()
     {
         var sut = new Fixture().Sut;
 
-        var token = sut.GenerateToken(1, "testuser", []);
+        var token = sut.GenerateToken(1, "testuser", [], []);
 
-        var moduleClaims = new JwtSecurityTokenHandler()
+        var roleClaims = new JwtSecurityTokenHandler()
             .ReadJwtToken(token)
             .Claims
-            .Where(c => c.Type == "module");
+            .Where(c => c.Type == System.Security.Claims.ClaimTypes.Role);
 
-        moduleClaims.Should().BeEmpty();
+        var permissionClaims = new JwtSecurityTokenHandler()
+            .ReadJwtToken(token)
+            .Claims
+            .Where(c => c.Type == "permission");
+
+        roleClaims.Should().BeEmpty();
+        permissionClaims.Should().BeEmpty();
     }
 
     [Fact]
@@ -78,7 +93,7 @@ public sealed class JwtTokenServiceTests
     {
         var sut = new Fixture().Sut;
 
-        var token = sut.GenerateToken(42, "jakub", []);
+        var token = sut.GenerateToken(42, "jakub", [], []);
         var username = sut.GetUsernameFromToken(token);
 
         username.Should().Be("jakub");
@@ -89,7 +104,7 @@ public sealed class JwtTokenServiceTests
     {
         var sut = new Fixture().Sut;
 
-        var token = sut.GenerateToken(42, "jakub", []);
+        var token = sut.GenerateToken(42, "jakub", [], []);
         var userId = sut.GetUserIdFromToken(token);
 
         userId.Should().Be(42);
@@ -100,8 +115,8 @@ public sealed class JwtTokenServiceTests
     {
         var sut = new Fixture().Sut;
 
-        var t1 = sut.GenerateToken(1, "alice", []);
-        var t2 = sut.GenerateToken(2, "bob", []);
+        var t1 = sut.GenerateToken(1, "alice", [], []);
+        var t2 = sut.GenerateToken(2, "bob", [], []);
 
         t1.Should().NotBe(t2);
     }
@@ -111,7 +126,7 @@ public sealed class JwtTokenServiceTests
     {
         var sut = new Fixture(expireMinutes: -1).Sut;
 
-        var token = sut.GenerateToken(1, "testuser", []);
+        var token = sut.GenerateToken(1, "testuser", [], []);
         new Fixture().Sut.IsTokenValid(token).Should().BeFalse();
     }
 }

@@ -26,7 +26,8 @@ describe('login', () => {
     id: 1,
     displayName: 'John Doe',
     token: 'jwt-token-123',
-    modules: ['YtDownloader', 'Scheduler'],
+    roles: ['User'],
+    permissions: ['ytdownloader.access', 'scheduler.access'],
   };
 
   const mockApiRaw = {
@@ -35,7 +36,8 @@ describe('login', () => {
     userId: 1,
     displayName: 'John Doe',
     expiresIn: 3600,
-    modules: ['YtDownloader', 'Scheduler'],
+    roles: ['User'],
+    permissions: ['ytdownloader.access', 'scheduler.access'],
   };
 
   it('calls /auth/login with credentials and returns login data', async () => {
@@ -50,7 +52,7 @@ describe('login', () => {
     expect(result).toEqual(mockLoginResponse);
   });
 
-  it('defaults modules to an empty array when absent from the response', async () => {
+  it('defaults roles and permissions to empty arrays when absent from the response', async () => {
     mockPost.mockResolvedValueOnce({
       data: {
         accessToken: 'jwt-token-123',
@@ -63,7 +65,8 @@ describe('login', () => {
 
     const result = await login(username, password);
 
-    expect(result.modules).toEqual([]);
+    expect(result.roles).toEqual([]);
+    expect(result.permissions).toEqual([]);
   });
 
   it('throws when login fails', async () => {
@@ -123,30 +126,37 @@ describe('checkToken', () => {
   const token = 'valid-jwt-token';
 
   it('calls /auth/me with Bearer header and returns user data', async () => {
-    const mockResponse: LoginResponse = {
+    const mockApiRaw = {
       id: 1,
       displayName: 'John Doe',
-      token,
-      modules: ['YtDownloader', 'Scheduler'],
+      roles: ['User'],
+      permissions: ['ytdownloader.access', 'scheduler.access'],
     };
-    mockGet.mockResolvedValueOnce({ data: mockResponse });
+    mockGet.mockResolvedValueOnce({ data: mockApiRaw });
 
     const result = await checkToken(token);
 
     expect(mockGet).toHaveBeenCalledWith('/auth/me', {
       headers: { Authorization: `Bearer ${token}` },
     });
-    expect(result).toEqual(mockResponse);
+    expect(result).toEqual({
+      id: 1,
+      displayName: 'John Doe',
+      token,
+      roles: ['User'],
+      permissions: ['ytdownloader.access', 'scheduler.access'],
+    });
   });
 
-  it('defaults modules to an empty array when absent from /auth/me', async () => {
+  it('defaults roles and permissions to empty arrays when absent from /auth/me', async () => {
     mockGet.mockResolvedValueOnce({
-      data: { id: 1, displayName: 'John Doe', token },
+      data: { id: 1, displayName: 'John Doe' },
     });
 
     const result = await checkToken(token);
 
-    expect(result.modules).toEqual([]);
+    expect(result.roles).toEqual([]);
+    expect(result.permissions).toEqual([]);
   });
 
   it('throws when token check fails', async () => {

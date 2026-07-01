@@ -10,7 +10,6 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
     : IdentityDbContext<User, IdentityRole<long>, long>(options)
 {
     public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
-    public DbSet<UserModuleGrant> UserModuleGrants { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

@@ -19,6 +19,8 @@ import type { ModuleId } from '../navigation/types';
 interface ModuleSelectionScreenProps {
   /** Called when a granted module card is tapped. */
   readonly onSelectModule?: (moduleId: ModuleId) => void;
+  /** Called when the admin panel card is tapped. */
+  readonly onSelectAdmin?: () => void;
 }
 
 interface ModuleMeta {
@@ -237,10 +239,11 @@ const ModuleCard: React.FC<ModuleCardProps> = ({
 
 const ModuleSelectionScreen: React.FC<ModuleSelectionScreenProps> = ({
   onSelectModule,
+  onSelectAdmin,
 }) => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const { availableModules, displayName } = useAuth();
+  const { availableModules, displayName, isAdmin } = useAuth();
   const styles = useThemedStyles(makeStyles);
   const { colors } = useTheme();
 
@@ -311,9 +314,37 @@ const ModuleSelectionScreen: React.FC<ModuleSelectionScreenProps> = ({
             onPress={handleSelect}
           />
         ))}
+        {isAdmin && onSelectAdmin ? (
+          <Pressable
+            onPress={onSelectAdmin}
+            style={({ pressed }) => [
+              styles.card,
+              pressed && styles.cardPressed,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={t('modules.admin.name')}
+            testID="module-card-Admin"
+          >
+            <View
+              style={[
+                styles.glyphWrap,
+                { backgroundColor: `${colors.warning}1A` },
+              ]}
+            >
+              <Text style={{ fontSize: 20, color: colors.warning }}>⚙</Text>
+            </View>
+            <View style={styles.cardText}>
+              <Text style={styles.cardTitle}>{t('modules.admin.name')}</Text>
+              <Text style={styles.cardDescription}>
+                {t('modules.admin.description')}
+              </Text>
+            </View>
+            <ChevronGlyph />
+          </Pressable>
+        ) : null}
       </View>
 
-      {grantedMeta.length === 0 && (
+      {grantedMeta.length === 0 && !isAdmin && (
         <View style={styles.emptyState} testID="module-selection-empty">
           <Text style={styles.emptyTitle}>{t('modules.emptyTitle')}</Text>
           <Text style={styles.emptyMessage}>{t('modules.emptyMessage')}</Text>

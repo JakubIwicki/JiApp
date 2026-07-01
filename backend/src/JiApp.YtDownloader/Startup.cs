@@ -3,7 +3,9 @@ using System.Text.Json;
 using FluentValidation;
 using JiApp.Common;
 using JiApp.Common.Abstractions;
+using JiApp.Common.Authorization;
 using JiApp.Common.Middleware;
+using Microsoft.AspNetCore.Authorization;
 using JiApp.Common.Services;
 using JiApp.YtApi;
 using JiApp.YtDownloader.Agent;
@@ -82,9 +84,10 @@ public class Startup(Settings settings)
                 };
             });
 
+        services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
         services.AddAuthorizationBuilder()
-            .AddPolicy("module:YtDownloader", policy =>
-                policy.RequireClaim("module", Modules.YtDownloader, Modules.FullAccess));
+            .AddPolicy(Permissions.YtDownloaderAccess, policy =>
+                policy.RequirePermission(Permissions.YtDownloaderAccess));
 
         // CORS — AllowCredentials prevents using AllowAnyOrigin, so we use
         // SetIsOriginAllowed. In production, restrict to configured origins.
@@ -194,10 +197,10 @@ public class Startup(Settings settings)
         // Mapped outside /api/v1/yt — the public Gateway (YARP) only proxies
         // /api/v1/yt/**, so /mcp is unreachable through the public Gateway
         // (internal-network + JWT only). No Gateway route is added for /mcp.
-        app.MapMcp("/mcp").RequireAuthorization("module:YtDownloader");
+        app.MapMcp("/mcp").RequireAuthorization(Permissions.YtDownloaderAccess);
 
         var yt = app.MapGroup("/api/v1/yt")
-            .RequireAuthorization("module:YtDownloader");
+            .RequireAuthorization(Permissions.YtDownloaderAccess);
 
         yt.MapSearchVideos();
         yt.MapSearchHistory();

@@ -6,4 +6,5 @@ public sealed record MeResponse(
     string? DisplayName,
     string? Username,
     string? Email,
-    IReadOnlyList<string> Modules);
+    IReadOnlyList<string> Roles,
+    IReadOnlyList<string> Permissions);

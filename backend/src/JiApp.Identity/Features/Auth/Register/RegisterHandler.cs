@@ -13,7 +13,7 @@ namespace JiApp.Identity.Features.Auth.Register;
 
 public sealed class RegisterHandler(
     UserManager<User> userManager,
-    IUserModuleGrantService grantService,
+    IUserAccessService accessService,
     ILogger<RegisterHandler> logger)
 {
     public async Task<Result<RegisterResponse>> HandleAsync(RegisterRequest request)
@@ -53,14 +53,14 @@ public sealed class RegisterHandler(
 
         try
         {
-            await grantService.GrantAllAsync(user.Id);
+            await accessService.AssignDefaultRoleAsync(user.Id);
         }
         catch (Exception ex)
         {
-            logger.GrantAllocationFailed(user.Id, ex);
+            logger.DefaultRoleAssignmentFailed(user.Id, ex);
             // Compensate: delete the user so registration stays atomic.
             // The caller sees a failure and can retry; no orphaned user
-            // exists without module grants.
+            // exists without a default role assigned.
             await userManager.DeleteAsync(user);
             return Result<RegisterResponse>.Failure("Registration failed");
         }

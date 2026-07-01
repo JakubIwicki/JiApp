@@ -56,8 +56,10 @@ export interface LoginResponse {
   /** Mapped from API `userId` field */
   id: number;
   displayName: string;
-  /** Module ids the user is granted (e.g. ["YtDownloader","Scheduler"]). */
-  modules: string[];
+  /** Role names assigned to the user (e.g. ["Admin","User"]). */
+  roles: string[];
+  /** Permission strings granted to the user (e.g. ["scheduler.access"]). */
+  permissions: string[];
 }
 
 export interface ApiErrorResponse {

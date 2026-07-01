@@ -159,6 +159,10 @@
       "name": "LovingBoards",
       "description": "Wspólne listy i zadania cykliczne"
     },
+    "admin": {
+      "name": "Panel administracyjny",
+      "description": "Zarządzaj użytkownikami, rolami i uprawnieniami"
+    },
     "emptyTitle": "Brak dostępnych modułów",
     "emptyMessage": "Twoje konto nie ma jeszcze dostępu do żadnych modułów. Skontaktuj się z administratorem."
   },
@@ -314,6 +318,85 @@
       "addMember": "Nie udało się dodać członka",
       "removeMember": "Nie udało się usunąć członka",
       "stream": "Aktualizacje na żywo niedostępne"
+    }
+  },
+  "admin": {
+    "userList": {
+      "title": "Użytkownicy",
+      "searchPlaceholder": "Szukaj użytkowników…",
+      "noRoles": "Brak ról",
+      "locked": "Zablokowany",
+      "empty": "Nie znaleziono użytkowników",
+      "createUser": "Utwórz użytkownika",
+      "goToRoles": "Role"
+    },
+    "userDetail": {
+      "title": "Szczegóły użytkownika",
+      "username": "Nazwa użytkownika",
+      "email": "Email",
+      "displayName": "Nazwa wyświetlana",
+      "roles": "Role",
+      "accountStatus": "Status konta",
+      "active": "Aktywne",
+      "lockedOut": "Zablokowane",
+      "lockoutEnd": "Koniec blokady",
+      "assignRole": "Przypisz rolę",
+      "removeRole": "Usuń",
+      "removeRoleConfirm": "Usunąć rolę \"{{role}}\"?",
+      "removeRoleError": "Nie udało się usunąć roli",
+      "roleAssigned": "Rola przypisana",
+      "assignRoleError": "Nie udało się przypisać roli",
+      "noAvailableRoles": "Brak dostępnych ról do przypisania",
+      "permissions": "uprawnień",
+      "disable": "Zablokuj",
+      "enable": "Odblokuj",
+      "disableConfirm": "Zablokować użytkownika \"{{username}}\"?",
+      "enableConfirm": "Odblokować użytkownika \"{{username}}\"?",
+      "toggleLockError": "Nie udało się zaktualizować statusu konta",
+      "deleteUser": "Usuń użytkownika",
+      "deleteConfirm": "Trwale usunąć użytkownika \"{{username}}\"?",
+      "deleteError": "Nie udało się usunąć użytkownika",
+      "resetPassword": "Zresetuj hasło",
+      "newPassword": "Nowe hasło",
+      "passwordReset": "Hasło zresetowane pomyślnie",
+      "passwordResetError": "Nie udało się zresetować hasła",
+      "notFound": "Nie znaleziono użytkownika"
+    },
+    "createUser": {
+      "title": "Utwórz użytkownika",
+      "username": "Nazwa użytkownika",
+      "usernamePlaceholder": "Wprowadź nazwę użytkownika",
+      "email": "Email",
+      "emailPlaceholder": "Wprowadź email",
+      "password": "Hasło",
+      "passwordPlaceholder": "Wprowadź hasło",
+      "displayName": "Nazwa wyświetlana",
+      "displayNamePlaceholder": "Wprowadź nazwę wyświetlaną (opcjonalnie)",
+      "roles": "Role",
+      "create": "Utwórz użytkownika",
+      "success": "Użytkownik utworzony",
+      "createError": "Nie udało się utworzyć użytkownika",
+      "validationError": "Nazwa użytkownika, email i hasło są wymagane"
+    },
+    "roleList": {
+      "title": "Role",
+      "empty": "Nie znaleziono ról",
+      "permissions": "uprawnień",
+      "delete": "Usuń",
+      "deleteConfirm": "Usunąć rolę \"{{name}}\"?",
+      "create": "Utwórz",
+      "createRole": "Utwórz rolę",
+      "createPlaceholder": "Nazwa roli",
+      "goToUsers": "Użytkownicy"
+    },
+    "roleEdit": {
+      "title": "Edytuj rolę",
+      "permissions": "Uprawnienia",
+      "save": "Zapisz",
+      "saved": "Uprawnienia zapisane",
+      "saveError": "Nie udało się zapisać uprawnień",
+      "adminReadonly": "Uprawnienia roli Admin nie mogą być modyfikowane.",
+      "notFound": "Nie znaleziono roli"
     }
   }
 }

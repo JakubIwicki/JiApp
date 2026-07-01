@@ -13,7 +13,7 @@ public sealed class LoginHandler(
     UserManager<User> userManager,
     IJwtTokenService jwtTokenService,
     IRefreshTokenService refreshTokenService,
-    IUserModuleGrantService grantService,
+    IUserAccessService accessService,
     IPasswordHasher<User> passwordHasher,
     IdentitySettings settings,
     ILogger<LoginHandler> logger)
@@ -49,13 +49,14 @@ public sealed class LoginHandler(
             return Result<LoginResponse>.Failure("Invalid username or password");
         }
 
-        var modules = await grantService.GetModulesAsync(user.Id);
-        var accessToken = jwtTokenService.GenerateToken(user.Id, user.UserName!, modules);
+        var roles = await userManager.GetRolesAsync(user);
+        var permissions = await accessService.GetEffectivePermissionsAsync(user.Id);
+        var accessToken = jwtTokenService.GenerateToken(user.Id, user.UserName!, roles, permissions);
         var refreshToken = await refreshTokenService.CreateAsync(user.Id);
         var expiresIn = settings.GetAccessTokenExpireMinutes() * 60;
 
         logger.LoginSuccessful(request.Username);
         return Result<LoginResponse>.Success(new LoginResponse(
-            user.Id, user.DisplayName, accessToken, refreshToken.Token, expiresIn, modules));
+            user.Id, user.DisplayName, accessToken, refreshToken.Token, expiresIn, [.. roles], permissions));
     }
 }

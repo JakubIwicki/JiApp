@@ -243,7 +243,8 @@ describe('AppNavigator', () => {
         id: 1,
         displayName: 'Test User',
         token: 'valid-token',
-        modules: ['YtDownloader'],
+        roles: ['User'],
+        permissions: ['ytdownloader.access'],
       });
 
     const { findByText } = renderWithProviders(<AppNavigator />);
@@ -257,7 +258,8 @@ describe('AppNavigator', () => {
         id: 1,
         displayName: 'Test User',
         token: 'valid-token',
-        modules: ['YtDownloader', 'Scheduler'],
+        roles: ['User'],
+        permissions: ['ytdownloader.access', 'scheduler.access'],
       });
 
     const { findByTestId } = renderWithProviders(<AppNavigator />);
@@ -287,7 +289,8 @@ describe('AppNavigator', () => {
         id: 1,
         displayName: 'Test User',
         token: 'valid-token',
-        modules: ['YtDownloader'],
+        roles: ['User'],
+        permissions: ['ytdownloader.access'],
       });
 
     const { findByText, queryByText } = renderWithProviders(<AppNavigator />);

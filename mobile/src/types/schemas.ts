@@ -35,7 +35,8 @@ export const LoginApiRawSchema = z.object({
   accessToken: z.string(),
   refreshToken: z.string(),
   expiresIn: z.number(),
-  modules: z.array(z.string()).optional(),
+  roles: z.array(z.string()).optional(),
+  permissions: z.array(z.string()).optional(),
 });
 
 export const MeApiRawSchema = z.object({
@@ -43,7 +44,8 @@ export const MeApiRawSchema = z.object({
   displayName: z.string().optional(),
   username: z.string().optional(),
   email: z.string().optional(),
-  modules: z.array(z.string()).optional(),
+  roles: z.array(z.string()).optional(),
+  permissions: z.array(z.string()).optional(),
 });
 
 export const UpdateProfileApiRawSchema = z.object({
