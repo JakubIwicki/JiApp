@@ -4,12 +4,14 @@ using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Identity.Features.Admin.Common;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
 
 namespace JiApp.Identity.Features.Admin.Users.RemoveRole;
 
 public sealed class RemoveRoleHandler(
 	UserManager<User> userManager,
-	AdminAccessGuard guard)
+	AdminAccessGuard guard,
+	ILogger<RemoveRoleHandler> logger)
 {
 	public async Task<Result<bool>> HandleAsync(long userId, string roleName)
 	{
@@ -30,6 +32,11 @@ public sealed class RemoveRoleHandler(
 			var errors = string.Join(", ", result.Errors.Select(e => e.Description));
 			return Result<bool>.Failure(errors, ResultCategories.Validation);
 		}
+
+		var stampResult = await userManager.UpdateSecurityStampAsync(user);
+		if (!stampResult.Succeeded)
+			logger.LogWarning("Failed to invalidate outstanding tokens for user {UserId} after role removal: {Errors}",
+				user.Id, string.Join(", ", stampResult.Errors.Select(e => e.Description)));
 
 		return Result<bool>.Success(true);
 	}

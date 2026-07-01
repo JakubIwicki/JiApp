@@ -33,6 +33,17 @@ public sealed class UpdateRolePermissionsHandlerTests
 			Mock.Of<IServiceProvider>(),
 			Mock.Of<ILogger<UserManager<User>>>());
 
+		public Mock<UserManager<User>> UserManagerMock { get; } = new(
+			Mock.Of<IUserStore<User>>(),
+			Mock.Of<Microsoft.Extensions.Options.IOptions<IdentityOptions>>(),
+			Mock.Of<IPasswordHasher<User>>(),
+			Array.Empty<IUserValidator<User>>(),
+			Array.Empty<IPasswordValidator<User>>(),
+			Mock.Of<ILookupNormalizer>(),
+			Mock.Of<IdentityErrorDescriber>(),
+			Mock.Of<IServiceProvider>(),
+			Mock.Of<ILogger<UserManager<User>>>());
+
 		public Mock<ICurrentUserService> CurrentUserMock { get; } = new();
 
 		public AdminAccessGuard Guard { get; }
@@ -42,7 +53,8 @@ public sealed class UpdateRolePermissionsHandlerTests
 		{
 			CurrentUserMock.Setup(x => x.UserId).Returns(1);
 			Guard = new AdminAccessGuard(GuardUserManagerMock.Object, CurrentUserMock.Object);
-			Sut = new UpdateRolePermissionsHandler(RoleManagerMock.Object, Guard);
+			Sut = new UpdateRolePermissionsHandler(RoleManagerMock.Object, UserManagerMock.Object, Guard,
+				Mock.Of<ILogger<UpdateRolePermissionsHandler>>());
 		}
 
 		public Fixture WithEditableRole()
@@ -56,6 +68,10 @@ public sealed class UpdateRolePermissionsHandlerTests
 				.ReturnsAsync(IdentityResult.Success);
 			RoleManagerMock
 				.Setup(x => x.AddClaimAsync(_role, It.IsAny<Claim>()))
+				.ReturnsAsync(IdentityResult.Success);
+			UserManagerMock.Setup(x => x.GetUsersInRoleAsync("User"))
+				.ReturnsAsync([new User { Id = 10, UserName = "user1" }, new User { Id = 20, UserName = "user2" }]);
+			UserManagerMock.Setup(x => x.UpdateSecurityStampAsync(It.IsAny<User>()))
 				.ReturnsAsync(IdentityResult.Success);
 			return this;
 		}
@@ -110,5 +126,49 @@ public sealed class UpdateRolePermissionsHandlerTests
 			["invalid.permission"]));
 
 		AssertValidationFailure(result);
+	}
+
+	[Fact]
+	public async Task HandleAsync_RevokesTokensForAllUsersInRole_WhenPermissionsChange()
+	{
+		var fixture = new Fixture().WithEditableRole();
+
+		await fixture.Sut.HandleAsync("User", new UpdateRolePermissionsRequest(
+			["ytdownloader.access", "scheduler.access"]));
+
+		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Exactly(2));
+	}
+
+	[Fact]
+	public async Task HandleAsync_DoesNotRevokeTokens_WhenPermissionsAreUnchanged()
+	{
+		var fixture = new Fixture().WithEditableRole();
+
+		await fixture.Sut.HandleAsync("User", new UpdateRolePermissionsRequest(
+			["scheduler.access"]));
+
+		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Never);
+	}
+
+	[Fact]
+	public async Task HandleAsync_DoesNotRevokeTokens_WhenRoleIsNotEditable()
+	{
+		var fixture = new Fixture();
+
+		await fixture.Sut.HandleAsync("Admin", new UpdateRolePermissionsRequest(
+			["ytdownloader.access"]));
+
+		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Never);
+	}
+
+	[Fact]
+	public async Task HandleAsync_DoesNotRevokeTokens_WhenRoleNotFound()
+	{
+		var fixture = new Fixture().WithNonexistentRole();
+
+		await fixture.Sut.HandleAsync("FakeRole", new UpdateRolePermissionsRequest(
+			["scheduler.access"]));
+
+		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Never);
 	}
 }

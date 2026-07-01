@@ -26,10 +26,28 @@ public sealed class JwtTokenServiceTests
     {
         var sut = new Fixture().Sut;
 
-        var token = sut.GenerateToken(1, "testuser", [], []);
+        var token = sut.GenerateToken(1, "testuser", [], [], "stamp-1");
 
         token.Should().NotBeNullOrEmpty();
         sut.IsTokenValid(token).Should().BeTrue();
+    }
+
+    [Fact]
+    public void GenerateToken_EmitsSecurityStampClaim()
+    {
+        var sut = new Fixture().Sut;
+
+        var token = sut.GenerateToken(1, "testuser", [], [], "stamp-xyz");
+
+        var allClaims = new JwtSecurityTokenHandler()
+            .ReadJwtToken(token)
+            .Claims;
+
+        var stampClaim = allClaims
+            .FirstOrDefault(c => c.Type == JwtTokenService.SecurityStampClaimType);
+
+        stampClaim.Should().NotBeNull();
+        stampClaim!.Value.Should().Be("stamp-xyz");
     }
 
     [Fact]
@@ -39,7 +57,7 @@ public sealed class JwtTokenServiceTests
         var roles = new[] { "User" };
         var permissions = new[] { "ytdownloader.access", "scheduler.access" };
 
-        var token = sut.GenerateToken(1, "testuser", roles, permissions);
+        var token = sut.GenerateToken(1, "testuser", roles, permissions, "stamp-1");
 
         var allClaims = new JwtSecurityTokenHandler()
             .ReadJwtToken(token)
@@ -64,7 +82,7 @@ public sealed class JwtTokenServiceTests
     {
         var sut = new Fixture().Sut;
 
-        var token = sut.GenerateToken(1, "testuser", [], []);
+        var token = sut.GenerateToken(1, "testuser", [], [], "stamp-1");
 
         var roleClaims = new JwtSecurityTokenHandler()
             .ReadJwtToken(token)
@@ -93,7 +111,7 @@ public sealed class JwtTokenServiceTests
     {
         var sut = new Fixture().Sut;
 
-        var token = sut.GenerateToken(42, "jakub", [], []);
+        var token = sut.GenerateToken(42, "jakub", [], [], "stamp-1");
         var username = sut.GetUsernameFromToken(token);
 
         username.Should().Be("jakub");
@@ -104,7 +122,7 @@ public sealed class JwtTokenServiceTests
     {
         var sut = new Fixture().Sut;
 
-        var token = sut.GenerateToken(42, "jakub", [], []);
+        var token = sut.GenerateToken(42, "jakub", [], [], "stamp-1");
         var userId = sut.GetUserIdFromToken(token);
 
         userId.Should().Be(42);
@@ -115,8 +133,8 @@ public sealed class JwtTokenServiceTests
     {
         var sut = new Fixture().Sut;
 
-        var t1 = sut.GenerateToken(1, "alice", [], []);
-        var t2 = sut.GenerateToken(2, "bob", [], []);
+        var t1 = sut.GenerateToken(1, "alice", [], [], "stamp-1");
+        var t2 = sut.GenerateToken(2, "bob", [], [], "stamp-2");
 
         t1.Should().NotBe(t2);
     }
@@ -126,7 +144,7 @@ public sealed class JwtTokenServiceTests
     {
         var sut = new Fixture(expireMinutes: -1).Sut;
 
-        var token = sut.GenerateToken(1, "testuser", [], []);
+        var token = sut.GenerateToken(1, "testuser", [], [], "stamp-1");
         new Fixture().Sut.IsTokenValid(token).Should().BeFalse();
     }
 }

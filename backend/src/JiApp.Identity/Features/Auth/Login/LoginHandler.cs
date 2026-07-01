@@ -49,9 +49,12 @@ public sealed class LoginHandler(
             return Result<LoginResponse>.Failure("Invalid username or password");
         }
 
+        if (user.SecurityStamp is null)
+            await userManager.UpdateSecurityStampAsync(user);
+
         var roles = await userManager.GetRolesAsync(user);
         var permissions = await accessService.GetEffectivePermissionsAsync(user.Id);
-        var accessToken = jwtTokenService.GenerateToken(user.Id, user.UserName!, roles, permissions);
+        var accessToken = jwtTokenService.GenerateToken(user.Id, user.UserName!, roles, permissions, user.SecurityStamp!);
         var refreshToken = await refreshTokenService.CreateAsync(user.Id);
         var expiresIn = settings.GetAccessTokenExpireMinutes() * 60;
 

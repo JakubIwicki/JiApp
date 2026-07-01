@@ -4,13 +4,15 @@ using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Identity.Features.Admin.Common;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
 
 namespace JiApp.Identity.Features.Admin.Users.AssignRole;
 
 public sealed class AssignRoleHandler(
 	UserManager<User> userManager,
 	RoleManager<IdentityRole<long>> roleManager,
-	AdminAccessGuard guard)
+	AdminAccessGuard guard,
+	ILogger<AssignRoleHandler> logger)
 {
 	public async Task<Result<bool>> HandleAsync(long userId, AssignRoleRequest request)
 	{
@@ -34,6 +36,11 @@ public sealed class AssignRoleHandler(
 			var errors = string.Join(", ", result.Errors.Select(e => e.Description));
 			return Result<bool>.Failure(errors, ResultCategories.Validation);
 		}
+
+		var stampResult = await userManager.UpdateSecurityStampAsync(user);
+		if (!stampResult.Succeeded)
+			logger.LogWarning("Failed to invalidate outstanding tokens for user {UserId} after role assignment: {Errors}",
+				user.Id, string.Join(", ", stampResult.Errors.Select(e => e.Description)));
 
 		return Result<bool>.Success(true);
 	}

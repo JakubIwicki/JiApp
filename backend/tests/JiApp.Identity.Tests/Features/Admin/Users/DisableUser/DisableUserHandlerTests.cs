@@ -41,18 +41,19 @@ public sealed class DisableUserHandlerTests
 		{
 			CurrentUserMock.Setup(x => x.UserId).Returns(1);
 			Guard = new AdminAccessGuard(UserManagerMock.Object, CurrentUserMock.Object);
-			Sut = new DisableUserHandler(UserManagerMock.Object, RefreshTokenServiceMock.Object, Guard);
+			Sut = new DisableUserHandler(UserManagerMock.Object, RefreshTokenServiceMock.Object, Guard,
+				Mock.Of<ILogger<DisableUserHandler>>());
 		}
 
 		public Fixture WithTargetUser()
 		{
 			UserManagerMock.Setup(x => x.FindByIdAsync("2"))
 				.ReturnsAsync(_testUser);
-			UserManagerMock.Setup(x => x.IsLockedOutAsync(_testUser))
-				.ReturnsAsync(false);
 			UserManagerMock.Setup(x => x.SetLockoutEnabledAsync(_testUser, true))
 				.ReturnsAsync(IdentityResult.Success);
 			UserManagerMock.Setup(x => x.SetLockoutEndDateAsync(_testUser, DateTimeOffset.MaxValue))
+				.ReturnsAsync(IdentityResult.Success);
+			UserManagerMock.Setup(x => x.UpdateSecurityStampAsync(_testUser))
 				.ReturnsAsync(IdentityResult.Success);
 			RefreshTokenServiceMock.Setup(x => x.RevokeAllForUserAsync(2))
 				.Returns(Task.CompletedTask);
@@ -85,7 +86,35 @@ public sealed class DisableUserHandlerTests
 		var result = await fixture.Sut.HandleAsync(2);
 
 		AssertSuccess(result);
+		fixture.UserManagerMock.Verify(x => x.SetLockoutEnabledAsync(It.IsAny<User>(), true), Times.Once);
+		fixture.UserManagerMock.Verify(x => x.SetLockoutEndDateAsync(It.IsAny<User>(), DateTimeOffset.MaxValue), Times.Once);
+		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Once);
 		fixture.RefreshTokenServiceMock.Verify(x => x.RevokeAllForUserAsync(2), Times.Once);
+	}
+
+	[Fact]
+	public async Task HandleAsync_SetsPermanentLockout_WhenUserIsAlreadyTransientlyLockedOut()
+	{
+		var fixture = new Fixture();
+		fixture.UserManagerMock.Setup(x => x.FindByIdAsync("2"))
+			.ReturnsAsync(new User { Id = 2, UserName = "lockeduser" });
+		fixture.UserManagerMock.Setup(x => x.IsLockedOutAsync(It.IsAny<User>()))
+			.ReturnsAsync(true);
+		fixture.UserManagerMock.Setup(x => x.SetLockoutEnabledAsync(It.IsAny<User>(), true))
+			.ReturnsAsync(IdentityResult.Success);
+		fixture.UserManagerMock.Setup(x => x.SetLockoutEndDateAsync(It.IsAny<User>(), DateTimeOffset.MaxValue))
+			.ReturnsAsync(IdentityResult.Success);
+		fixture.UserManagerMock.Setup(x => x.UpdateSecurityStampAsync(It.IsAny<User>()))
+			.ReturnsAsync(IdentityResult.Success);
+		fixture.RefreshTokenServiceMock.Setup(x => x.RevokeAllForUserAsync(2))
+			.Returns(Task.CompletedTask);
+
+		var result = await fixture.Sut.HandleAsync(2);
+
+		AssertSuccess(result);
+		fixture.UserManagerMock.Verify(x => x.SetLockoutEnabledAsync(It.IsAny<User>(), true), Times.Once);
+		fixture.UserManagerMock.Verify(x => x.SetLockoutEndDateAsync(It.IsAny<User>(), DateTimeOffset.MaxValue), Times.Once);
+		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Once);
 	}
 
 	[Fact]
@@ -96,6 +125,7 @@ public sealed class DisableUserHandlerTests
 		var result = await fixture.Sut.HandleAsync(2);
 
 		AssertAccessDenied(result);
+		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Never);
 	}
 
 	[Fact]
@@ -106,6 +136,7 @@ public sealed class DisableUserHandlerTests
 		var result = await fixture.Sut.HandleAsync(2);
 
 		AssertAccessDenied(result);
+		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Never);
 	}
 
 	[Fact]
@@ -118,5 +149,6 @@ public sealed class DisableUserHandlerTests
 		var result = await fixture.Sut.HandleAsync(999);
 
 		AssertNotFound(result);
+		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Never);
 	}
 }
