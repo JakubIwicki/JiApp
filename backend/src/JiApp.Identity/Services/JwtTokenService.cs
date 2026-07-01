@@ -8,7 +8,7 @@ namespace JiApp.Identity.Services;
 
 public interface IJwtTokenService
 {
-    string GenerateToken(long userId, string username, IEnumerable<string> roles, IEnumerable<string> permissions);
+    string GenerateToken(long userId, string username, IEnumerable<string> roles, IEnumerable<string> permissions, string securityStamp);
     bool IsTokenValid(string token);
     string GetUsernameFromToken(string token);
     long GetUserIdFromToken(string token);
@@ -20,6 +20,8 @@ public sealed class JwtTokenService(
     string audience,
     int expireMinutes) : IJwtTokenService
 {
+    public const string SecurityStampClaimType = "security_stamp";
+
     private static readonly JwtSecurityTokenHandler Handler = new();
 
     public static TokenValidationParameters CreateValidationParameters(string key, string issuer, string audience)
@@ -43,7 +45,7 @@ public sealed class JwtTokenService(
         return CreateValidationParameters(key, issuer, audience);
     }
 
-    public string GenerateToken(long userId, string username, IEnumerable<string> roles, IEnumerable<string> permissions)
+    public string GenerateToken(long userId, string username, IEnumerable<string> roles, IEnumerable<string> permissions, string securityStamp)
     {
         var keyBytes = Encoding.UTF8.GetBytes(key);
         var signingKey = new SymmetricSecurityKey(keyBytes);
@@ -58,6 +60,7 @@ public sealed class JwtTokenService(
             new(JwtRegisteredClaimNames.Iat,
                 new DateTimeOffset(now).ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture),
                 ClaimValueTypes.Integer64),
+            new(SecurityStampClaimType, securityStamp),
         };
 
         claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));

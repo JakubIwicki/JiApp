@@ -88,7 +88,7 @@ public sealed class LoginHandlerTests
                 .Setup(x => x.CheckPasswordSignInAsync(_testUser, "correct-password", true))
                 .ReturnsAsync(SignInResult.Success);
             JwtTokenServiceMock
-                .Setup(x => x.GenerateToken(_testUser.Id, _testUser.UserName!, It.IsAny<IEnumerable<string>>(), It.IsAny<IEnumerable<string>>()))
+                .Setup(x => x.GenerateToken(_testUser.Id, _testUser.UserName!, It.IsAny<IEnumerable<string>>(), It.IsAny<IEnumerable<string>>(), It.IsAny<string>()))
                 .Returns("access-token");
             RefreshTokenServiceMock
                 .Setup(x => x.CreateAsync(_testUser.Id))
@@ -157,7 +157,8 @@ public sealed class LoginHandlerTests
         fixture.JwtTokenServiceMock.Verify(x => x.GenerateToken(
             1, "testuser",
             It.Is<IEnumerable<string>>(r => r.SequenceEqual(new[] { "User" })),
-            It.Is<IEnumerable<string>>(p => p.SequenceEqual(new[] { "ytdownloader.access", "scheduler.access" }))),
+            It.Is<IEnumerable<string>>(p => p.SequenceEqual(new[] { "ytdownloader.access", "scheduler.access" })),
+            "stamp"),
             Times.Once);
     }
 
@@ -205,5 +206,46 @@ public sealed class LoginHandlerTests
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Account is locked. Please try again later.");
+    }
+
+    [Fact]
+    public async Task HandleAsync_PopulatesSecurityStamp_WhenNull_AndGeneratesToken()
+    {
+        var fixture = new Fixture();
+        var userWithNullStamp = new User
+        {
+            Id = 1,
+            UserName = "testuser",
+            DisplayName = "Test User",
+            SecurityStamp = null
+        };
+        fixture.UserManagerMock.Setup(x => x.FindByNameAsync("testuser"))
+            .ReturnsAsync(userWithNullStamp);
+        fixture.SignInManagerMock
+            .Setup(x => x.CheckPasswordSignInAsync(userWithNullStamp, "pass", true))
+            .ReturnsAsync(SignInResult.Success);
+        fixture.UserManagerMock
+            .Setup(x => x.UpdateSecurityStampAsync(userWithNullStamp))
+            .Callback<User>(u => u.SecurityStamp = "generated-stamp")
+            .ReturnsAsync(IdentityResult.Success);
+        fixture.JwtTokenServiceMock
+            .Setup(x => x.GenerateToken(1, "testuser", It.IsAny<IEnumerable<string>>(), It.IsAny<IEnumerable<string>>(), "generated-stamp"))
+            .Returns("access-token");
+        fixture.RefreshTokenServiceMock
+            .Setup(x => x.CreateAsync(1))
+            .ReturnsAsync(new RefreshToken { Token = "refresh-token", Id = 10 });
+        fixture.UserManagerMock
+            .Setup(x => x.GetRolesAsync(userWithNullStamp))
+            .ReturnsAsync(["User"]);
+        fixture.AccessServiceMock
+            .Setup(x => x.GetEffectivePermissionsAsync(1))
+            .ReturnsAsync(["ytdownloader.access"]);
+
+        var result = await fixture.Sut.HandleAsync(new LoginRequest("testuser", "pass"));
+
+        AssertSuccess(result);
+        fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(userWithNullStamp), Times.Once);
+        fixture.JwtTokenServiceMock.Verify(x => x.GenerateToken(1, "testuser",
+            It.IsAny<IEnumerable<string>>(), It.IsAny<IEnumerable<string>>(), "generated-stamp"), Times.Once);
     }
 }

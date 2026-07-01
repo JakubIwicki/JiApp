@@ -99,6 +99,21 @@ public class Startup(IdentitySettings settings)
                         var response = JsonSerializer.Serialize(
                             new ApiErrorResponse(Error: "Unauthorized"), ApiErrorResponse.JsonOptions);
                         return context.Response.WriteAsync(response);
+                    },
+                    OnTokenValidated = async context =>
+                    {
+                        var stampClaim = context.Principal?.FindFirst(JwtTokenService.SecurityStampClaimType)?.Value;
+                        var userIdClaim = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+                        User? user = null;
+                        if (userIdClaim is not null && long.TryParse(userIdClaim, out var userId))
+                        {
+                            var userManager = context.HttpContext.RequestServices.GetRequiredService<UserManager<User>>();
+                            user = await userManager.FindByIdAsync(userId.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                        }
+
+                        if (!AccessTokenRevocation.IsValid(user, stampClaim))
+                            context.Fail("Token has been revoked");
                     }
                 };
             });

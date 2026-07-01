@@ -39,7 +39,7 @@ public sealed class EnableUserHandlerTests
 		{
 			CurrentUserMock.Setup(x => x.UserId).Returns(9999);
 			Guard = new AdminAccessGuard(UserManagerMock.Object, CurrentUserMock.Object);
-			Sut = new EnableUserHandler(UserManagerMock.Object, Guard);
+			Sut = new EnableUserHandler(UserManagerMock.Object, Guard, Mock.Of<ILogger<EnableUserHandler>>());
 		}
 
 		public Fixture WithExistingUser()
@@ -47,6 +47,8 @@ public sealed class EnableUserHandlerTests
 			UserManagerMock.Setup(x => x.FindByIdAsync("1"))
 				.ReturnsAsync(_testUser);
 			UserManagerMock.Setup(x => x.SetLockoutEndDateAsync(_testUser, null))
+				.ReturnsAsync(IdentityResult.Success);
+			UserManagerMock.Setup(x => x.UpdateSecurityStampAsync(_testUser))
 				.ReturnsAsync(IdentityResult.Success);
 			return this;
 		}
@@ -74,6 +76,7 @@ public sealed class EnableUserHandlerTests
 
 		AssertSuccess(result);
 		fixture.UserManagerMock.Verify(x => x.SetLockoutEndDateAsync(It.IsAny<User>(), null), Times.Once);
+		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Once);
 	}
 
 	[Fact]
@@ -84,6 +87,7 @@ public sealed class EnableUserHandlerTests
 		var result = await fixture.Sut.HandleAsync(999);
 
 		AssertNotFound(result);
+		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Never);
 	}
 
 	[Fact]
@@ -94,5 +98,6 @@ public sealed class EnableUserHandlerTests
 		var result = await fixture.Sut.HandleAsync(1);
 
 		AssertAccessDenied(result);
+		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Never);
 	}
 }

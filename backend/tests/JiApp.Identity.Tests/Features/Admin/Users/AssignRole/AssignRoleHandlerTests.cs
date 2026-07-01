@@ -45,7 +45,8 @@ public sealed class AssignRoleHandlerTests
 		{
 			CurrentUserMock.Setup(x => x.UserId).Returns(999);
 			Guard = new AdminAccessGuard(UserManagerMock.Object, CurrentUserMock.Object);
-			Sut = new AssignRoleHandler(UserManagerMock.Object, RoleManagerMock.Object, Guard);
+			Sut = new AssignRoleHandler(UserManagerMock.Object, RoleManagerMock.Object, Guard,
+				Mock.Of<ILogger<AssignRoleHandler>>());
 		}
 
 		public Fixture WithExistingUserAndRole()
@@ -55,6 +56,8 @@ public sealed class AssignRoleHandlerTests
 			RoleManagerMock.Setup(x => x.RoleExistsAsync("Admin"))
 				.ReturnsAsync(true);
 			UserManagerMock.Setup(x => x.AddToRoleAsync(_testUser, "Admin"))
+				.ReturnsAsync(IdentityResult.Success);
+			UserManagerMock.Setup(x => x.UpdateSecurityStampAsync(_testUser))
 				.ReturnsAsync(IdentityResult.Success);
 			return this;
 		}
@@ -81,6 +84,7 @@ public sealed class AssignRoleHandlerTests
 		var result = await fixture.Sut.HandleAsync(1, new AssignRoleRequest("Admin"));
 
 		AssertSuccess(result);
+		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Once);
 	}
 
 	[Fact]
@@ -91,6 +95,7 @@ public sealed class AssignRoleHandlerTests
 		var result = await fixture.Sut.HandleAsync(1, new AssignRoleRequest("FakeRole"));
 
 		AssertValidationFailure(result);
+		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Never);
 	}
 
 	[Fact]
@@ -105,6 +110,7 @@ public sealed class AssignRoleHandlerTests
 		var result = await fixture.Sut.HandleAsync(9999, new AssignRoleRequest("Admin"));
 
 		AssertNotFound(result);
+		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Never);
 	}
 
 	[Fact]
@@ -115,6 +121,7 @@ public sealed class AssignRoleHandlerTests
 		var result = await fixture.Sut.HandleAsync(1, new AssignRoleRequest("Admin"));
 
 		AssertAccessDenied(result);
+		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Never);
 	}
 
 	[Fact]
@@ -126,6 +133,8 @@ public sealed class AssignRoleHandlerTests
 		fixture.RoleManagerMock.Setup(x => x.RoleExistsAsync("User"))
 			.ReturnsAsync(true);
 		fixture.UserManagerMock.Setup(x => x.AddToRoleAsync(It.IsAny<User>(), "User"))
+			.ReturnsAsync(IdentityResult.Success);
+		fixture.UserManagerMock.Setup(x => x.UpdateSecurityStampAsync(It.IsAny<User>()))
 			.ReturnsAsync(IdentityResult.Success);
 
 		var result = await fixture.Sut.HandleAsync(1, new AssignRoleRequest("User"));

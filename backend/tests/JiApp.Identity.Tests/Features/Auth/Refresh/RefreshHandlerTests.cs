@@ -69,7 +69,7 @@ public sealed class RefreshHandlerTests
             UserManagerMock.Setup(x => x.FindByIdAsync("1"))
                 .ReturnsAsync(_testUser);
             JwtTokenServiceMock
-                .Setup(x => x.GenerateToken(_testUser.Id, _testUser.UserName!, It.IsAny<IEnumerable<string>>(), It.IsAny<IEnumerable<string>>()))
+                .Setup(x => x.GenerateToken(_testUser.Id, _testUser.UserName!, It.IsAny<IEnumerable<string>>(), It.IsAny<IEnumerable<string>>(), It.IsAny<string>()))
                 .Returns("new-access-token");
             UserManagerMock.Setup(x => x.GetRolesAsync(_testUser))
                 .ReturnsAsync(["User"]);
@@ -186,5 +186,42 @@ public sealed class RefreshHandlerTests
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Invalid or expired refresh token");
         fixture.RefreshTokenServiceMock.Verify(x => x.RevokeAllForUserAsync(1), Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleAsync_PopulatesSecurityStamp_WhenNull_AndGeneratesToken()
+    {
+        var fixture = new Fixture();
+        var storedToken = new RefreshToken { Id = 10, Token = "raw-token", UserId = 1, IsRevoked = false };
+        var userWithNullStamp = new User
+        {
+            Id = 1,
+            UserName = "testuser",
+            SecurityStamp = null
+        };
+        fixture.RefreshTokenServiceMock.Setup(x => x.ValidateAsync("valid-token"))
+            .ReturnsAsync(storedToken);
+        fixture.UserManagerMock.Setup(x => x.FindByIdAsync("1"))
+            .ReturnsAsync(userWithNullStamp);
+        fixture.UserManagerMock
+            .Setup(x => x.UpdateSecurityStampAsync(userWithNullStamp))
+            .Callback<User>(u => u.SecurityStamp = "generated-stamp")
+            .ReturnsAsync(IdentityResult.Success);
+        fixture.JwtTokenServiceMock
+            .Setup(x => x.GenerateToken(1, "testuser", It.IsAny<IEnumerable<string>>(), It.IsAny<IEnumerable<string>>(), "generated-stamp"))
+            .Returns("new-access-token");
+        fixture.UserManagerMock.Setup(x => x.GetRolesAsync(userWithNullStamp))
+            .ReturnsAsync(["User"]);
+        fixture.RefreshTokenServiceMock.Setup(x => x.RevokeAsync(10))
+            .ReturnsAsync(true);
+        fixture.RefreshTokenServiceMock.Setup(x => x.CreateAsync(1))
+            .ReturnsAsync(new RefreshToken { Token = "new-refresh-token" });
+
+        var result = await fixture.Sut.HandleAsync(new RefreshRequest("valid-token"));
+
+        AssertSuccess(result);
+        fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(userWithNullStamp), Times.Once);
+        fixture.JwtTokenServiceMock.Verify(x => x.GenerateToken(1, "testuser",
+            It.IsAny<IEnumerable<string>>(), It.IsAny<IEnumerable<string>>(), "generated-stamp"), Times.Once);
     }
 }
