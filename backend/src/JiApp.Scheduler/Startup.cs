@@ -3,7 +3,9 @@ using System.Text.Json;
 using FluentValidation;
 using JiApp.Common;
 using JiApp.Common.Abstractions;
+using JiApp.Common.Authorization;
 using JiApp.Common.Middleware;
+using Microsoft.AspNetCore.Authorization;
 using JiApp.Common.Services;
 using JiApp.Scheduler.Configuration;
 using JiApp.Scheduler.Features.Appointments.CreateAppointment;
@@ -96,9 +98,10 @@ public class Startup(SchedulerSettings settings)
                 };
             });
 
+        services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
         services.AddAuthorizationBuilder()
-            .AddPolicy("module:Scheduler", policy =>
-                policy.RequireClaim("module", Modules.Scheduler, Modules.FullAccess));
+            .AddPolicy(Permissions.SchedulerAccess, policy =>
+                policy.RequirePermission(Permissions.SchedulerAccess));
 
         // CORS — AllowCredentials prevents using AllowAnyOrigin, so we use
         // SetIsOriginAllowed. In production, restrict to configured origins.
@@ -226,7 +229,7 @@ public class Startup(SchedulerSettings settings)
         app.UseAuthorization();
 
         var scheduler = app.MapGroup("/api/v1/scheduler")
-            .RequireAuthorization("module:Scheduler");
+            .RequireAuthorization(Permissions.SchedulerAccess);
 
         app.MapGet("/api/v1/scheduler/health", async (SchedulerDbContext db) =>
             {

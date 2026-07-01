@@ -6,6 +6,7 @@ public sealed class IdentitySettings
     public string? ConnectionString { get; set; }
     public JwtSettings? Jwt { get; set; }
     public string[]? CorsAllowedOrigins { get; set; }
+    public BootstrapSettings? Bootstrap { get; set; }
 
     public void Validate()
     {
@@ -67,5 +68,11 @@ public sealed class IdentitySettings
         public string ValidatedAudience => Audience ?? throw new InvalidOperationException("Jwt:Audience not configured after validation");
         public int ValidatedAccessTokenExpireMinutes => AccessTokenExpireMinutes ?? throw new InvalidOperationException("Jwt:AccessTokenExpireMinutes not configured after validation");
         public int ValidatedRefreshTokenExpireDays => RefreshTokenExpireDays ?? throw new InvalidOperationException("Jwt:RefreshTokenExpireDays not configured after validation");
+    }
+
+    [Serializable]
+    public sealed class BootstrapSettings
+    {
+        public string? AdminUsername { get; set; }
     }
 }

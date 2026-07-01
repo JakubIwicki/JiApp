@@ -34,14 +34,14 @@ public sealed class MeHandlerTests
             Mock.Of<ILogger<UserManager<User>>>());
 
         public MockCurrentUserService CurrentUserMock { get; } = new();
-        public Mock<IUserModuleGrantService> GrantServiceMock { get; } = new();
+        public Mock<IUserAccessService> AccessServiceMock { get; } = new();
 
         public MeHandler Sut { get; }
 
         public Fixture()
         {
             Sut = new MeHandler(
-                UserManagerMock.Object, CurrentUserMock.Mock.Object, GrantServiceMock.Object,
+                UserManagerMock.Object, CurrentUserMock.Mock.Object, AccessServiceMock.Object,
                 Mock.Of<ILogger<MeHandler>>());
         }
 
@@ -51,8 +51,10 @@ public sealed class MeHandlerTests
             CurrentUserMock.Mock.Setup(x => x.Username).Returns("testuser");
             UserManagerMock.Setup(x => x.FindByIdAsync(userId.ToString()))
                 .ReturnsAsync(_testUser);
-            GrantServiceMock.Setup(x => x.GetModulesAsync(userId))
-                .ReturnsAsync(["YtDownloader", "Scheduler"]);
+            UserManagerMock.Setup(x => x.GetRolesAsync(_testUser))
+                .ReturnsAsync(["User"]);
+            AccessServiceMock.Setup(x => x.GetEffectivePermissionsAsync(userId))
+                .ReturnsAsync(["ytdownloader.access", "scheduler.access"]);
             return this;
         }
 
@@ -78,7 +80,8 @@ public sealed class MeHandlerTests
         result.Value.DisplayName.Should().Be("Test User");
         result.Value.Username.Should().Be("testuser");
         result.Value.Email.Should().Be("test@test.com");
-        result.Value.Modules.Should().BeEquivalentTo("YtDownloader", "Scheduler");
+        result.Value.Roles.Should().BeEquivalentTo("User");
+        result.Value.Permissions.Should().BeEquivalentTo("ytdownloader.access", "scheduler.access");
     }
 
     [Fact]

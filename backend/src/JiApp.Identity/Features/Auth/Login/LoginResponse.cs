@@ -7,4 +7,5 @@ public sealed record LoginResponse(
     string AccessToken,
     string RefreshToken,
     int ExpiresIn,
-    IReadOnlyList<string> Modules);
+    IReadOnlyList<string> Roles,
+    IReadOnlyList<string> Permissions);

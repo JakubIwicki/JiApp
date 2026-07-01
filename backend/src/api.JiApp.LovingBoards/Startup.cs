@@ -3,7 +3,9 @@ using System.Text.Json;
 using FluentValidation;
 using JiApp.Common;
 using JiApp.Common.Abstractions;
+using JiApp.Common.Authorization;
 using JiApp.Common.Middleware;
+using Microsoft.AspNetCore.Authorization;
 using JiApp.Common.Services;
 using api.JiApp.LovingBoards.Configuration;
 using api.JiApp.LovingBoards.Features.Boards.AddBoardMember;
@@ -80,9 +82,10 @@ public class Startup(LovingBoardsSettings settings)
                 };
             });
 
+        services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
         services.AddAuthorizationBuilder()
-            .AddPolicy("module:LovingBoards", policy =>
-                policy.RequireClaim("module", Modules.LovingBoards, Modules.FullAccess));
+            .AddPolicy(Permissions.LovingBoardsAccess, policy =>
+                policy.RequirePermission(Permissions.LovingBoardsAccess));
 
         // CORS
         services.AddCors(options =>
@@ -165,7 +168,7 @@ public class Startup(LovingBoardsSettings settings)
         app.UseAuthorization();
 
         var lovingboards = app.MapGroup("/api/v1/lovingboards")
-            .RequireAuthorization("module:LovingBoards");
+            .RequireAuthorization(Permissions.LovingBoardsAccess);
 
         app.MapGet("/api/v1/lovingboards/health", async (LovingBoardsDbContext db) =>
             {

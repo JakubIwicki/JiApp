@@ -161,7 +161,7 @@ All origins accepted. Same policy on all services.
 
 **JWT Config:** Issuer=`JiApp-Identity`, Audience=`jiapp-gateway`
 
-**Module permissions:** `login` and `me` responses include a `modules` array (e.g. `["YtDownloader","Scheduler"]`), and the access token carries one `module` claim per granted module. `register` grants ALL modules to the new user. Grants are stored in the `UserModuleGrants` table (migration `AddUserModuleGrants`). Canonical module ids: `YtDownloader`, `Scheduler`.
+**RBAC (roles + permissions):** `login` and `me` responses include `roles` and `permissions` arrays. The access token carries one `ClaimTypes.Role` claim per role and one `"permission"` claim per effective permission. New users are assigned the `"Guest"` role on registration. Roles and permissions are managed via ASP.NET Core Identity (`AspNetRoles`, `AspNetRoleClaims`, `AspNetUserRoles` tables), seeded on startup by `RoleSeeder`. Unlike the old flat `UserModuleGrants` table (removed in migration `AddRbacRemoveModuleGrants`), permissions are role-based: `"Admin"` gets all permissions, `"User"` gets module access permissions, `"Guest"` gets none. Canonical permission strings are defined in `JiApp.Common.Permissions` (e.g. `scheduler.access`, `ytdownloader.access`, `lovingboards.access`).
 
 ---
 

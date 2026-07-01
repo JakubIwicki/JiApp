@@ -8,6 +8,7 @@ import ModuleSelectionScreen from '../screens/ModuleSelectionScreen';
 import MainNavigator from './MainNavigator';
 import SchedulerNavigator from './SchedulerNavigator';
 import LovingBoardsNavigator from './LovingBoardsNavigator';
+import AdminNavigator from './AdminNavigator';
 import type { Theme } from '../styles/theme';
 import { useThemedStyles, useTheme } from '../context/ThemeContext';
 import type { ModuleId, RootStackParamList } from './types';
@@ -54,7 +55,16 @@ const ModuleSelectionRoute: React.FC = () => {
     [navigation],
   );
 
-  return <ModuleSelectionScreen onSelectModule={handleSelectModule} />;
+  const handleSelectAdmin = useCallback(() => {
+    navigation.navigate('Admin');
+  }, [navigation]);
+
+  return (
+    <ModuleSelectionScreen
+      onSelectModule={handleSelectModule}
+      onSelectAdmin={handleSelectAdmin}
+    />
+  );
 };
 
 const RootNavigator: React.FC = () => {
@@ -101,6 +111,7 @@ const RootNavigator: React.FC = () => {
       <Stack.Screen name="YtDownloader" component={MainNavigator} />
       <Stack.Screen name="Scheduler" component={SchedulerNavigator} />
       <Stack.Screen name="LovingBoards" component={LovingBoardsNavigator} />
+      <Stack.Screen name="Admin" component={AdminNavigator} />
     </Stack.Navigator>
   );
 };

@@ -14,10 +14,13 @@ const mockAuthValue = {
   userId: null,
   displayName: null,
   username: null,
+  roles: [],
+  permissions: [],
   availableModules: [],
   isLoading: false,
   showWelcome: false,
   showFarewell: false,
+  isAdmin: false,
   login: async () => {},
   register: async (
     username: string,

@@ -91,6 +91,8 @@ describe('AuthContext', () => {
       id: 1,
       displayName: 'Test User',
       token: 'mock-token',
+      roles: [],
+      permissions: [],
     });
 
     renderProvider();
@@ -111,6 +113,8 @@ describe('AuthContext', () => {
       id: 1,
       displayName: 'Test User',
       token: 'mock-token',
+      roles: [],
+      permissions: [],
     });
 
     renderProvider();
@@ -137,12 +141,13 @@ describe('AuthContext', () => {
     });
   });
 
-  it('LOGIN populates availableModules from the login response', async () => {
+  it('LOGIN populates availableModules from permissions', async () => {
     mockLogin.mockResolvedValueOnce({
       id: 1,
       displayName: 'Test User',
       token: 'mock-token',
-      modules: ['YtDownloader', 'Scheduler'],
+      roles: ['User'],
+      permissions: ['ytdownloader.access', 'scheduler.access'],
     });
 
     renderProvider();
@@ -158,14 +163,15 @@ describe('AuthContext', () => {
     });
   });
 
-  it('RESTORE_TOKEN populates availableModules from /auth/me', async () => {
+  it('RESTORE_TOKEN populates availableModules from /auth/me permissions', async () => {
     mockGetToken.mockResolvedValue('saved-token');
     mockGetUsername.mockResolvedValue('testuser');
     mockCheckToken.mockResolvedValue({
       id: 42,
       displayName: 'Restored User',
       token: 'saved-token',
-      modules: ['Scheduler'],
+      roles: ['User'],
+      permissions: ['scheduler.access'],
     });
 
     renderProvider();
@@ -189,6 +195,8 @@ describe('AuthContext', () => {
       id: 42,
       displayName: 'Restored User',
       token: 'saved-token',
+      roles: [],
+      permissions: [],
     });
 
     renderProvider();
@@ -207,6 +215,8 @@ describe('AuthContext', () => {
       id: 1,
       displayName: 'Test User',
       token: 'mock-token',
+      roles: [],
+      permissions: [],
     });
 
     renderProvider();
@@ -228,6 +238,8 @@ describe('AuthContext', () => {
       id: 1,
       displayName: 'Test User',
       token: 'mock-token',
+      roles: [],
+      permissions: [],
     });
 
     renderProvider();
@@ -248,6 +260,8 @@ describe('AuthContext', () => {
       id: 5,
       displayName: 'Stored User',
       token: 'stored-token',
+      roles: [],
+      permissions: [],
     });
 
     renderProvider();
@@ -300,6 +314,8 @@ describe('AuthContext', () => {
       id: 7,
       displayName: 'Session User',
       token: 'valid-token',
+      roles: [],
+      permissions: [],
     });
 
     renderProvider();
@@ -351,6 +367,8 @@ describe('AuthContext', () => {
       id: 1,
       displayName: 'Test User',
       token: 'mock-token',
+      roles: [],
+      permissions: [],
     });
 
     renderProvider();
@@ -373,6 +391,8 @@ describe('AuthContext', () => {
       id: 2,
       displayName: 'User Two',
       token: 'token-two',
+      roles: [],
+      permissions: [],
     });
 
     renderProvider();

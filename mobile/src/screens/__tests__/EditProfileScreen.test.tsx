@@ -67,7 +67,8 @@ describe('EditProfileScreen', () => {
       id: 1,
       displayName: 'Test User',
       email: 'test@example.com',
-      modules: ['YtDownloader'],
+      roles: [],
+      permissions: [],
     });
   });
 
@@ -99,7 +100,8 @@ describe('EditProfileScreen', () => {
       id: 1,
       displayName: '',
       email: '',
-      modules: [],
+      roles: [],
+      permissions: [],
     });
 
     const { getByTestId, findByText } = render(<EditProfileScreen />);
@@ -115,7 +117,8 @@ describe('EditProfileScreen', () => {
       id: 1,
       displayName: 'Test',
       email: 'not-an-email',
-      modules: [],
+      roles: [],
+      permissions: [],
     });
 
     const { getByPlaceholderText, getByTestId, findByText } = render(

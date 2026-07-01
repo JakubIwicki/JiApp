@@ -37,7 +37,7 @@ public sealed class RefreshHandlerTests
             Mock.Of<ILogger<UserManager<User>>>());
 
         public Mock<IJwtTokenService> JwtTokenServiceMock { get; } = new();
-        public Mock<IUserModuleGrantService> GrantServiceMock { get; } = new();
+        public Mock<IUserAccessService> AccessServiceMock { get; } = new();
         public Mock<IDbContextTransaction> TransactionMock { get; } = new();
         public IdentitySettings Settings { get; } = new()
         {
@@ -56,7 +56,7 @@ public sealed class RefreshHandlerTests
                 RefreshTokenServiceMock.Object,
                 UserManagerMock.Object,
                 JwtTokenServiceMock.Object,
-                GrantServiceMock.Object,
+                AccessServiceMock.Object,
                 Settings,
                 Mock.Of<ILogger<RefreshHandler>>());
         }
@@ -69,8 +69,10 @@ public sealed class RefreshHandlerTests
             UserManagerMock.Setup(x => x.FindByIdAsync("1"))
                 .ReturnsAsync(_testUser);
             JwtTokenServiceMock
-                .Setup(x => x.GenerateToken(_testUser.Id, _testUser.UserName!, It.IsAny<IEnumerable<string>>()))
+                .Setup(x => x.GenerateToken(_testUser.Id, _testUser.UserName!, It.IsAny<IEnumerable<string>>(), It.IsAny<IEnumerable<string>>()))
                 .Returns("new-access-token");
+            UserManagerMock.Setup(x => x.GetRolesAsync(_testUser))
+                .ReturnsAsync(["User"]);
             RefreshTokenServiceMock.Setup(x => x.RevokeAsync(10))
                 .ReturnsAsync(true);
             RefreshTokenServiceMock.Setup(x => x.CreateAsync(_testUser.Id))

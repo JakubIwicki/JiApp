@@ -159,6 +159,10 @@
       "name": "LovingBoards",
       "description": "Shared checklists and recurring tasks"
     },
+    "admin": {
+      "name": "Admin Panel",
+      "description": "Manage users, roles, and permissions"
+    },
     "emptyTitle": "No modules available",
     "emptyMessage": "Your account doesn't have access to any modules yet. Please contact your administrator."
   },
@@ -314,6 +318,85 @@
       "addMember": "Failed to add member",
       "removeMember": "Failed to remove member",
       "stream": "Live updates unavailable"
+    }
+  },
+  "admin": {
+    "userList": {
+      "title": "Users",
+      "searchPlaceholder": "Search users…",
+      "noRoles": "No roles",
+      "locked": "Locked",
+      "empty": "No users found",
+      "createUser": "Create user",
+      "goToRoles": "Roles"
+    },
+    "userDetail": {
+      "title": "User Details",
+      "username": "Username",
+      "email": "Email",
+      "displayName": "Display Name",
+      "roles": "Roles",
+      "accountStatus": "Account Status",
+      "active": "Active",
+      "lockedOut": "Locked out",
+      "lockoutEnd": "Lockout ends",
+      "assignRole": "Assign role",
+      "removeRole": "Remove",
+      "removeRoleConfirm": "Remove role \"{{role}}\"?",
+      "removeRoleError": "Failed to remove role",
+      "roleAssigned": "Role assigned",
+      "assignRoleError": "Failed to assign role",
+      "noAvailableRoles": "No available roles to assign",
+      "permissions": "permissions",
+      "disable": "Disable",
+      "enable": "Enable",
+      "disableConfirm": "Disable \"{{username}}\"?",
+      "enableConfirm": "Enable \"{{username}}\"?",
+      "toggleLockError": "Failed to update account status",
+      "deleteUser": "Delete User",
+      "deleteConfirm": "Permanently delete \"{{username}}\"?",
+      "deleteError": "Failed to delete user",
+      "resetPassword": "Reset Password",
+      "newPassword": "New password",
+      "passwordReset": "Password reset successfully",
+      "passwordResetError": "Failed to reset password",
+      "notFound": "User not found"
+    },
+    "createUser": {
+      "title": "Create User",
+      "username": "Username",
+      "usernamePlaceholder": "Enter username",
+      "email": "Email",
+      "emailPlaceholder": "Enter email",
+      "password": "Password",
+      "passwordPlaceholder": "Enter password",
+      "displayName": "Display Name",
+      "displayNamePlaceholder": "Enter display name (optional)",
+      "roles": "Roles",
+      "create": "Create User",
+      "success": "User created",
+      "createError": "Failed to create user",
+      "validationError": "Username, email, and password are required"
+    },
+    "roleList": {
+      "title": "Roles",
+      "empty": "No roles found",
+      "permissions": "permissions",
+      "delete": "Delete",
+      "deleteConfirm": "Delete role \"{{name}}\"?",
+      "create": "Create",
+      "createRole": "Create role",
+      "createPlaceholder": "Role name",
+      "goToUsers": "Users"
+    },
+    "roleEdit": {
+      "title": "Edit Role",
+      "permissions": "Permissions",
+      "save": "Save",
+      "saved": "Permissions saved",
+      "saveError": "Failed to save permissions",
+      "adminReadonly": "The Admin role's permissions cannot be modified.",
+      "notFound": "Role not found"
     }
   }
 }

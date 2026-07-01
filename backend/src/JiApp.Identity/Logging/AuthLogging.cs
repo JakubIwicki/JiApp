@@ -45,6 +45,6 @@ internal static partial class AuthLogging
         Message = "SECURITY ALERT: Refresh token reuse detected for token ID {TokenId}, user ID {UserId}. All tokens revoked for user.")]
     public static partial void RefreshTokenReuseDetected(this ILogger logger, long tokenId, long userId);
 
-    [LoggerMessage(EventId = 15, Level = LogLevel.Error, Message = "Grant allocation failed for user {UserId}")]
-    public static partial void GrantAllocationFailed(this ILogger logger, long userId, Exception ex);
+    [LoggerMessage(EventId = 15, Level = LogLevel.Error, Message = "Default role assignment failed for user {UserId}")]
+    public static partial void DefaultRoleAssignmentFailed(this ILogger logger, long userId, Exception ex);
 }

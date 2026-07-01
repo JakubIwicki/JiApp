@@ -25,13 +25,13 @@ public sealed class RegisterHandlerTests
             Mock.Of<IServiceProvider>(),
             Mock.Of<ILogger<UserManager<User>>>());
 
-        public Mock<IUserModuleGrantService> GrantServiceMock { get; } = new();
+        public Mock<IUserAccessService> AccessServiceMock { get; } = new();
 
         public RegisterHandler Sut { get; }
 
         public Fixture()
         {
-            Sut = new RegisterHandler(UserManagerMock.Object, GrantServiceMock.Object, Mock.Of<ILogger<RegisterHandler>>());
+            Sut = new RegisterHandler(UserManagerMock.Object, AccessServiceMock.Object, Mock.Of<ILogger<RegisterHandler>>());
         }
 
         public Fixture WithSuccessfulCreate(long userId = 7)
@@ -71,10 +71,10 @@ public sealed class RegisterHandlerTests
             return this;
         }
 
-        public Fixture WithFailingGrantAllocation(long userId)
+        public Fixture WithFailingDefaultRoleAssignment(long userId)
         {
-            GrantServiceMock
-                .Setup(x => x.GrantAllAsync(userId))
+            AccessServiceMock
+                .Setup(x => x.AssignDefaultRoleAsync(userId))
                 .ThrowsAsync(new InvalidOperationException("DB unavailable"));
             return this;
         }
@@ -92,7 +92,7 @@ public sealed class RegisterHandlerTests
     }
 
     [Fact]
-    public async Task HandleAsync_GrantsAllModules_OnSuccessfulRegistration()
+    public async Task HandleAsync_AssignsDefaultRole_OnSuccessfulRegistration()
     {
         const long createdUserId = 7;
         var fixture = new Fixture().WithSuccessfulCreate(createdUserId);
@@ -100,18 +100,18 @@ public sealed class RegisterHandlerTests
         await fixture.Sut.HandleAsync(
             new RegisterRequest("newuser", "new@test.com", "Password1", "New User"));
 
-        fixture.GrantServiceMock.Verify(x => x.GrantAllAsync(createdUserId), Times.Once);
+        fixture.AccessServiceMock.Verify(x => x.AssignDefaultRoleAsync(createdUserId), Times.Once);
     }
 
     [Fact]
-    public async Task HandleAsync_DoesNotGrantModules_WhenRegistrationFails()
+    public async Task HandleAsync_DoesNotAssignRole_WhenRegistrationFails()
     {
         var fixture = new Fixture().WithFailingCreate("Passwords must have at least one uppercase ('A'-'Z').");
 
         await fixture.Sut.HandleAsync(
             new RegisterRequest("newuser", "new@test.com", "weak", "New User"));
 
-        fixture.GrantServiceMock.Verify(x => x.GrantAllAsync(It.IsAny<long>()), Times.Never);
+        fixture.AccessServiceMock.Verify(x => x.AssignDefaultRoleAsync(It.IsAny<long>()), Times.Never);
     }
 
     [Fact]
@@ -152,12 +152,12 @@ public sealed class RegisterHandlerTests
     }
 
     [Fact]
-    public async Task HandleAsync_CompensatesUserDeletion_WhenGrantAllocationFails()
+    public async Task HandleAsync_CompensatesUserDeletion_WhenDefaultRoleAssignmentFails()
     {
         const long createdUserId = 9;
         var fixture = new Fixture()
             .WithSuccessfulCreate(createdUserId)
-            .WithFailingGrantAllocation(createdUserId);
+            .WithFailingDefaultRoleAssignment(createdUserId);
 
         var result = await fixture.Sut.HandleAsync(
             new RegisterRequest("newuser", "new@test.com", "Password1", "New User"));

@@ -9,6 +9,7 @@ export type RootStackParamList = {
   YtDownloader: undefined;
   Scheduler: undefined;
   LovingBoards: undefined;
+  Admin: undefined;
 };
 
 export type LovingBoardsStackParamList = {
@@ -43,6 +44,14 @@ export type SettingsStackParamList = {
 export type ChatStackParamList = {
   Chat: undefined;
   Download: VideoItem;
+};
+
+export type AdminStackParamList = {
+  UserList: undefined;
+  UserDetail: { userId: number };
+  CreateUser: undefined;
+  RoleList: undefined;
+  RoleEdit: { roleName: string };
 };
 
 export type MainTabParamList = {

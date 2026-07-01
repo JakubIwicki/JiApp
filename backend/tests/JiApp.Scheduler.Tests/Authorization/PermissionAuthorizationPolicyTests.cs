@@ -1,13 +1,14 @@
 using System.Security.Claims;
 using JiApp.Common;
+using JiApp.Common.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace JiApp.Scheduler.Tests.Authorization;
 
-public sealed class ModuleAuthorizationPolicyTests
+public sealed class PermissionAuthorizationPolicyTests
 {
-    private const string PolicyName = "module:Scheduler";
+    private const string PolicyName = Permissions.SchedulerAccess;
 
     private sealed class Fixture
     {
@@ -18,9 +19,10 @@ public sealed class ModuleAuthorizationPolicyTests
         {
             var services = new ServiceCollection();
             services.AddLogging();
+            services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
             services.AddAuthorizationBuilder()
                 .AddPolicy(PolicyName, policy =>
-                    policy.RequireClaim("module", Modules.Scheduler));
+                    policy.RequirePermission(Permissions.SchedulerAccess));
 
             var provider = services.BuildServiceProvider();
             _authorizationService = provider.GetRequiredService<IAuthorizationService>();
@@ -45,7 +47,7 @@ public sealed class ModuleAuthorizationPolicyTests
     }
 
     [Fact]
-    public async Task Policy_DeniesAuthenticatedUser_WithoutModuleClaim()
+    public async Task Policy_DeniesAuthenticatedUser_WithoutPermissionClaim()
     {
         var fixture = Fixture.Init();
         var user = Fixture.UserWithClaims(
@@ -57,12 +59,12 @@ public sealed class ModuleAuthorizationPolicyTests
     }
 
     [Fact]
-    public async Task Policy_DeniesUser_HoldingOnlyOtherModuleClaim()
+    public async Task Policy_DeniesUser_HoldingOnlyOtherPermissionClaim()
     {
         var fixture = Fixture.Init();
         var user = Fixture.UserWithClaims(
             new Claim(ClaimTypes.NameIdentifier, "42"),
-            new Claim("module", Modules.YtDownloader));
+            new Claim("permission", Permissions.YtDownloaderAccess));
 
         var authorized = await fixture.IsAuthorizedAsync(user);
 
@@ -70,12 +72,25 @@ public sealed class ModuleAuthorizationPolicyTests
     }
 
     [Fact]
-    public async Task Policy_AllowsUser_HoldingSchedulerModuleClaim()
+    public async Task Policy_AllowsUser_HoldingSchedulerAccessPermission()
     {
         var fixture = Fixture.Init();
         var user = Fixture.UserWithClaims(
             new Claim(ClaimTypes.NameIdentifier, "42"),
-            new Claim("module", Modules.Scheduler));
+            new Claim("permission", Permissions.SchedulerAccess));
+
+        var authorized = await fixture.IsAuthorizedAsync(user);
+
+        authorized.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Policy_AllowsAdminUser_WithoutPermissionClaim()
+    {
+        var fixture = Fixture.Init();
+        var user = Fixture.UserWithClaims(
+            new Claim(ClaimTypes.NameIdentifier, "42"),
+            new Claim(ClaimTypes.Role, RoleNames.Admin));
 
         var authorized = await fixture.IsAuthorizedAsync(user);
 

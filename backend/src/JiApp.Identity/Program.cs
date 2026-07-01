@@ -1,6 +1,7 @@
 using JiApp.Identity;
 using JiApp.Identity.Configuration;
 using JiApp.Identity.Persistence;
+using JiApp.Identity.Services;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
@@ -24,6 +25,8 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
     db.Database.Migrate();
+
+    await scope.ServiceProvider.GetRequiredService<IRoleSeeder>().SeedAsync();
 }
 
 Startup.Configure(app);

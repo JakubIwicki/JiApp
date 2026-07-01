@@ -8,12 +8,15 @@ import React, {
 import * as authService from '../services/authService';
 import * as storageService from '../services/storageService';
 import type { ModuleId } from '../navigation/types';
+import { modulesFromPermissions, isAdminRole } from '../utils/permissions';
 
 interface AuthState {
   token: string | null;
   userId: number | null;
   displayName: string | null;
   username: string | null;
+  roles: string[];
+  permissions: string[];
   availableModules: ModuleId[];
   isLoading: boolean;
   showWelcome: boolean;
@@ -27,7 +30,8 @@ type AuthAction =
       userId: number;
       displayName: string;
       username: string;
-      availableModules: ModuleId[];
+      roles: string[];
+      permissions: string[];
     }
   | { type: 'LOGOUT' }
   | {
@@ -36,7 +40,8 @@ type AuthAction =
       userId: number;
       displayName: string;
       username: string | null;
-      availableModules: ModuleId[];
+      roles: string[];
+      permissions: string[];
     }
   | { type: 'SET_LOADING'; isLoading: boolean }
   | { type: 'SHOW_WELCOME'; showWelcome: boolean }
@@ -44,6 +49,7 @@ type AuthAction =
   | { type: 'UPDATE_PROFILE'; displayName: string };
 
 interface AuthContextValue extends AuthState {
+  isAdmin: boolean;
   login: (username: string, password: string) => Promise<void>;
   register: (
     username: string,
@@ -63,6 +69,8 @@ const initialState: AuthState = {
   userId: null,
   displayName: null,
   username: null,
+  roles: [],
+  permissions: [],
   availableModules: [],
   isLoading: true,
   showWelcome: false,
@@ -78,7 +86,9 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
         userId: action.userId,
         displayName: action.displayName,
         username: action.username,
-        availableModules: action.availableModules,
+        roles: action.roles,
+        permissions: action.permissions,
+        availableModules: modulesFromPermissions(action.permissions),
         isLoading: false,
         showWelcome: true,
       };
@@ -88,6 +98,8 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
         userId: null,
         displayName: null,
         username: null,
+        roles: [],
+        permissions: [],
         availableModules: [],
         isLoading: false,
         showWelcome: false,
@@ -100,7 +112,9 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
         userId: action.userId,
         displayName: action.displayName,
         username: action.username,
-        availableModules: action.availableModules,
+        roles: action.roles,
+        permissions: action.permissions,
+        availableModules: modulesFromPermissions(action.permissions),
         isLoading: false,
         showWelcome: true,
       };
@@ -134,10 +148,13 @@ export const AuthContext = createContext<AuthContextValue>({
   userId: null,
   displayName: null,
   username: null,
+  roles: [],
+  permissions: [],
   availableModules: [],
   isLoading: true,
   showWelcome: false,
   showFarewell: false,
+  isAdmin: false,
   login: async () => {},
   register: async () => {},
   logout: async () => {},
@@ -146,15 +163,6 @@ export const AuthContext = createContext<AuthContextValue>({
   dismissFarewell: () => {},
   updateProfile: async () => {},
 });
-
-const KNOWN_MODULES: readonly ModuleId[] = ['YtDownloader', 'Scheduler'];
-
-/** Keep only canonical module ids the app knows how to navigate to. */
-function normalizeModules(modules: string[] | undefined): ModuleId[] {
-  return (modules ?? []).filter((m): m is ModuleId =>
-    KNOWN_MODULES.includes(m as ModuleId),
-  );
-}
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -177,7 +185,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         userId: user.id,
         displayName: user.displayName,
         username: storedUsername,
-        availableModules: normalizeModules(user.modules),
+        roles: user.roles,
+        permissions: user.permissions,
       });
     } catch {
       await Promise.all([
@@ -210,7 +219,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         userId: user.id,
         displayName: user.displayName,
         username,
-        availableModules: normalizeModules(user.modules),
+        roles: user.roles,
+        permissions: user.permissions,
       });
     } catch (error) {
       dispatch({ type: 'SET_LOADING', isLoading: false });
@@ -265,10 +275,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       userId: state.userId,
       displayName: state.displayName,
       username: state.username,
+      roles: state.roles,
+      permissions: state.permissions,
       availableModules: state.availableModules,
       isLoading: state.isLoading,
       showWelcome: state.showWelcome,
       showFarewell: state.showFarewell,
+      isAdmin: isAdminRole(state.roles),
       login,
       register,
       logout,

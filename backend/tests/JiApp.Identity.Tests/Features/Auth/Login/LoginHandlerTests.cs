@@ -42,7 +42,7 @@ public sealed class LoginHandlerTests
         public Mock<SignInManager<User>> SignInManagerMock { get; }
         public Mock<IJwtTokenService> JwtTokenServiceMock { get; } = new();
         public Mock<IRefreshTokenService> RefreshTokenServiceMock { get; } = new();
-        public Mock<IUserModuleGrantService> GrantServiceMock { get; } = new();
+        public Mock<IUserAccessService> AccessServiceMock { get; } = new();
         public Mock<IPasswordHasher<User>> PasswordHasherMock { get; } = new();
         public IdentitySettings Settings { get; } = new()
         {
@@ -74,7 +74,7 @@ public sealed class LoginHandlerTests
                 UserManagerMock.Object,
                 JwtTokenServiceMock.Object,
                 RefreshTokenServiceMock.Object,
-                GrantServiceMock.Object,
+                AccessServiceMock.Object,
                 PasswordHasherMock.Object,
                 Settings,
                 Mock.Of<ILogger<LoginHandler>>());
@@ -88,14 +88,17 @@ public sealed class LoginHandlerTests
                 .Setup(x => x.CheckPasswordSignInAsync(_testUser, "correct-password", true))
                 .ReturnsAsync(SignInResult.Success);
             JwtTokenServiceMock
-                .Setup(x => x.GenerateToken(_testUser.Id, _testUser.UserName!, It.IsAny<IEnumerable<string>>()))
+                .Setup(x => x.GenerateToken(_testUser.Id, _testUser.UserName!, It.IsAny<IEnumerable<string>>(), It.IsAny<IEnumerable<string>>()))
                 .Returns("access-token");
             RefreshTokenServiceMock
                 .Setup(x => x.CreateAsync(_testUser.Id))
                 .ReturnsAsync(new RefreshToken { Token = "refresh-token", Id = 10 });
-            GrantServiceMock
-                .Setup(x => x.GetModulesAsync(_testUser.Id))
-                .ReturnsAsync(["YtDownloader", "Scheduler"]);
+            UserManagerMock
+                .Setup(x => x.GetRolesAsync(_testUser))
+                .ReturnsAsync(["User"]);
+            AccessServiceMock
+                .Setup(x => x.GetEffectivePermissionsAsync(_testUser.Id))
+                .ReturnsAsync(["ytdownloader.access", "scheduler.access"]);
             return this;
         }
 
@@ -140,11 +143,12 @@ public sealed class LoginHandlerTests
         result.Value.AccessToken.Should().Be("access-token");
         result.Value.RefreshToken.Should().Be("refresh-token");
         result.Value.ExpiresIn.Should().Be(900);
-        result.Value.Modules.Should().BeEquivalentTo("YtDownloader", "Scheduler");
+        result.Value.Roles.Should().BeEquivalentTo("User");
+        result.Value.Permissions.Should().BeEquivalentTo("ytdownloader.access", "scheduler.access");
     }
 
     [Fact]
-    public async Task HandleAsync_PassesGrantedModules_IntoAccessToken()
+    public async Task HandleAsync_PassesRolesAndPermissions_IntoAccessToken()
     {
         var fixture = new Fixture().WithExistingUser();
 
@@ -152,7 +156,8 @@ public sealed class LoginHandlerTests
 
         fixture.JwtTokenServiceMock.Verify(x => x.GenerateToken(
             1, "testuser",
-            It.Is<IEnumerable<string>>(m => m.SequenceEqual(new[] { "YtDownloader", "Scheduler" }))),
+            It.Is<IEnumerable<string>>(r => r.SequenceEqual(new[] { "User" })),
+            It.Is<IEnumerable<string>>(p => p.SequenceEqual(new[] { "ytdownloader.access", "scheduler.access" }))),
             Times.Once);
     }
 
