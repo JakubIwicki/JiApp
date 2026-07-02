@@ -6,18 +6,13 @@ const TOKEN_KEY = 'auth_token';
 const USER_ID_KEY = 'auth_user_id';
 const DISPLAY_NAME_KEY = 'auth_display_name';
 const USERNAME_KEY = 'auth_username';
-const CREDENTIALS_KEY = 'saved_credentials';
+const REFRESH_TOKEN_KEY = 'auth_refresh_token';
+const LEGACY_CREDENTIALS_KEY = 'saved_credentials';
 const LANGUAGE_KEY = 'app_language';
 const PALETTE_KEY = 'app_palette';
 const SELECTED_BOARD_KEY = 'selected_board_id';
 const SELECTED_MODULE_KEY = 'selected_module';
 const WELCOME_SEEN_KEY = 'jiapp_welcome_seen';
-
-interface SavedCredentials {
-  username: string;
-  password: string;
-  validUntil: string; // ISO 8601 — after this date, credentials are discarded
-}
 
 // --- Token ---
 
@@ -76,31 +71,27 @@ export const clearUsername = async (): Promise<void> => {
   await EncryptedStorage.removeItem(USERNAME_KEY);
 };
 
-// --- Credentials ---
+// --- Refresh Token ---
 
-export const saveCredentials = async (
-  credentials: SavedCredentials,
-): Promise<void> => {
-  await EncryptedStorage.setItem(CREDENTIALS_KEY, JSON.stringify(credentials));
+export const saveRefreshToken = async (token: string): Promise<void> => {
+  await EncryptedStorage.setItem(REFRESH_TOKEN_KEY, token);
 };
 
-export const getCredentials = async (): Promise<SavedCredentials | null> => {
-  const json = await EncryptedStorage.getItem(CREDENTIALS_KEY);
-  if (!json) return null;
-
-  const credentials = JSON.parse(json) as SavedCredentials;
-
-  // Discard expired credentials so the user must re-login manually
-  if (new Date(credentials.validUntil) < new Date()) {
-    await EncryptedStorage.removeItem(CREDENTIALS_KEY);
-    return null;
-  }
-
-  return credentials;
+export const getRefreshToken = async (): Promise<string | null> => {
+  return EncryptedStorage.getItem(REFRESH_TOKEN_KEY);
 };
+
+export const clearRefreshToken = async (): Promise<void> => {
+  await EncryptedStorage.removeItem(REFRESH_TOKEN_KEY);
+};
+
+// --- Legacy Credential Cleanup ---
+// Remove the old saved_credentials key (password storage) from
+// installs that upgraded from a version that still wrote it.
+// No password is ever written again — this is migration-only.
 
 export const clearCredentials = async (): Promise<void> => {
-  await EncryptedStorage.removeItem(CREDENTIALS_KEY);
+  await EncryptedStorage.removeItem(LEGACY_CREDENTIALS_KEY);
 };
 
 // --- Language ---

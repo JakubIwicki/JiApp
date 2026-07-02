@@ -26,6 +26,8 @@ const mockGetUsername = jest.fn();
 const mockClearUsername = jest.fn();
 const mockClearCredentials = jest.fn();
 const mockClearSelectedModule = jest.fn();
+const mockSaveRefreshToken = jest.fn();
+const mockClearRefreshToken = jest.fn();
 
 jest.mock('../../services/storageService', () => ({
   getToken: (...args: unknown[]) => mockGetToken(...args),
@@ -38,12 +40,12 @@ jest.mock('../../services/storageService', () => ({
   saveUsername: (...args: unknown[]) => mockSaveUsername(...args),
   getUsername: (...args: unknown[]) => mockGetUsername(...args),
   clearUsername: (...args: unknown[]) => mockClearUsername(...args),
+  saveRefreshToken: (...args: unknown[]) => mockSaveRefreshToken(...args),
+  clearRefreshToken: (...args: unknown[]) => mockClearRefreshToken(...args),
   clearCredentials: (...args: unknown[]) => mockClearCredentials(...args),
   clearSelectedModule: (...args: unknown[]) => mockClearSelectedModule(...args),
   getUserId: jest.fn(() => Promise.resolve(null)),
   getDisplayName: jest.fn(() => Promise.resolve(null)),
-  saveCredentials: jest.fn(),
-  getCredentials: jest.fn(() => Promise.resolve(null)),
 }));
 
 describe('AuthContext', () => {
@@ -210,11 +212,12 @@ describe('AuthContext', () => {
     });
   });
 
-  it('login() calls API and stores token', async () => {
+  it('login() calls API and stores token alongside refresh token', async () => {
     mockLogin.mockResolvedValueOnce({
       id: 1,
       displayName: 'Test User',
       token: 'mock-token',
+      refreshToken: 'mock-refresh-token',
       roles: [],
       permissions: [],
     });
@@ -231,6 +234,7 @@ describe('AuthContext', () => {
     expect(mockSaveToken).toHaveBeenCalledWith('mock-token');
     expect(mockSaveUserId).toHaveBeenCalledWith(1);
     expect(mockSaveDisplayName).toHaveBeenCalledWith('Test User');
+    expect(mockSaveRefreshToken).toHaveBeenCalledWith('mock-refresh-token');
   });
 
   it('LOGIN stores username in storage', async () => {
@@ -327,7 +331,7 @@ describe('AuthContext', () => {
     });
   });
 
-  it('checkToken() logs out on 401', async () => {
+  it('checkToken() logs out on 401 clearing refresh token and legacy creds', async () => {
     mockGetToken.mockResolvedValue('expired-token');
     mockCheckToken.mockRejectedValue(new Error('Token expired'));
 
@@ -341,11 +345,13 @@ describe('AuthContext', () => {
     });
 
     expect(mockClearToken).toHaveBeenCalled();
+    expect(mockClearRefreshToken).toHaveBeenCalled();
     expect(mockClearUserId).toHaveBeenCalled();
     expect(mockClearDisplayName).toHaveBeenCalled();
+    expect(mockClearCredentials).toHaveBeenCalled();
   });
 
-  it('logout() clears storage', async () => {
+  it('logout() clears storage including refresh token and legacy credentials', async () => {
     renderProvider();
     await waitForLoggedOut();
 
@@ -353,6 +359,7 @@ describe('AuthContext', () => {
     await capturedCtx!.dismissFarewell();
 
     expect(mockClearToken).toHaveBeenCalled();
+    expect(mockClearRefreshToken).toHaveBeenCalled();
     expect(mockClearUserId).toHaveBeenCalled();
     expect(mockClearDisplayName).toHaveBeenCalled();
     expect(mockClearUsername).toHaveBeenCalled();
@@ -391,6 +398,7 @@ describe('AuthContext', () => {
       id: 2,
       displayName: 'User Two',
       token: 'token-two',
+      refreshToken: 'refresh-two',
       roles: [],
       permissions: [],
     });
@@ -404,5 +412,6 @@ describe('AuthContext', () => {
     expect(mockSaveUserId).toHaveBeenCalledWith(2);
     expect(mockSaveDisplayName).toHaveBeenCalledWith('User Two');
     expect(mockSaveUsername).toHaveBeenCalledWith('user2');
+    expect(mockSaveRefreshToken).toHaveBeenCalledWith('refresh-two');
   });
 });
