@@ -1,16 +1,14 @@
 import axios from 'axios';
 import EventSource from 'react-native-sse';
-import type { LoginApiRaw } from '../types/api';
 import { API_BASE_URL } from '../config';
 import i18next from '../i18n';
 import {
   getToken,
-  getCredentials,
+  getRefreshToken,
   saveToken,
-  saveUserId,
-  saveDisplayName,
-  saveUsername,
+  saveRefreshToken,
 } from './storageService';
+import { RefreshResponseSchema } from '../types/schemas';
 import {
   TextDeltaEventSchema,
   ToolStepEventSchema,
@@ -188,23 +186,18 @@ export function openChatStream(params: ChatStreamParams): ChatStreamHandle {
         closed = true;
 
         try {
-          const credentials = await getCredentials();
-          if (credentials) {
-            const loginResponse = await axios.post<LoginApiRaw>(
-              `${API_BASE_URL}/auth/login`,
-              {
-                username: credentials.username,
-                password: credentials.password,
-              },
+          const storedRefreshToken = await getRefreshToken();
+          if (storedRefreshToken) {
+            const refreshResponse = await axios.post<unknown>(
+              `${API_BASE_URL}/auth/refresh`,
+              { refreshToken: storedRefreshToken },
               { headers: { 'Content-Type': 'application/json' } },
             );
 
-            const { accessToken, userId, displayName } = loginResponse.data;
+            const data = RefreshResponseSchema.parse(refreshResponse.data);
             await Promise.all([
-              saveToken(accessToken),
-              saveUserId(userId),
-              saveDisplayName(displayName ?? ''),
-              saveUsername(credentials.username),
+              saveToken(data.accessToken),
+              saveRefreshToken(data.refreshToken),
             ]);
 
             // Reconnect with the fresh token
@@ -213,7 +206,7 @@ export function openChatStream(params: ChatStreamParams): ChatStreamHandle {
             return;
           }
         } catch {
-          // Re-login failed — fall through to error
+          // Refresh failed — fall through to error
         }
       }
 

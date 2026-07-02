@@ -85,24 +85,31 @@ public class Startup(GatewaySettings settings, IConfiguration configuration, IWe
             foreach (var (sectionName, policyConfig) in settings.RateLimiting!)
             {
                 var policyName = sectionName + "Policy";
-                if (policyConfig.SegmentsPerWindow > 0)
+                var config = policyConfig; // capture per-iteration to avoid loop-variable closure
+                if (config.SegmentsPerWindow > 0)
                 {
-                    options.AddSlidingWindowLimiter(policyName, opt =>
-                    {
-                        opt.PermitLimit = policyConfig.PermitLimit;
-                        opt.Window = TimeSpan.FromSeconds(policyConfig.WindowInSeconds);
-                        opt.QueueLimit = policyConfig.QueueLimit;
-                        opt.SegmentsPerWindow = policyConfig.SegmentsPerWindow;
-                    });
+                    options.AddPolicy(policyName, httpContext =>
+                        RateLimitPartition.GetSlidingWindowLimiter(
+                            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                            _ => new SlidingWindowRateLimiterOptions
+                            {
+                                PermitLimit = config.PermitLimit,
+                                Window = TimeSpan.FromSeconds(config.WindowInSeconds),
+                                QueueLimit = config.QueueLimit,
+                                SegmentsPerWindow = config.SegmentsPerWindow,
+                            }));
                 }
                 else
                 {
-                    options.AddFixedWindowLimiter(policyName, opt =>
-                    {
-                        opt.PermitLimit = policyConfig.PermitLimit;
-                        opt.Window = TimeSpan.FromSeconds(policyConfig.WindowInSeconds);
-                        opt.QueueLimit = policyConfig.QueueLimit;
-                    });
+                    options.AddPolicy(policyName, httpContext =>
+                        RateLimitPartition.GetFixedWindowLimiter(
+                            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                            _ => new FixedWindowRateLimiterOptions
+                            {
+                                PermitLimit = config.PermitLimit,
+                                Window = TimeSpan.FromSeconds(config.WindowInSeconds),
+                                QueueLimit = config.QueueLimit,
+                            }));
                 }
             }
 

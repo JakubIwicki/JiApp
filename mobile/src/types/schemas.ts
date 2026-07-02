@@ -48,6 +48,12 @@ export const MeApiRawSchema = z.object({
   permissions: z.array(z.string()).optional(),
 });
 
+export const RefreshResponseSchema = z.object({
+  accessToken: z.string(),
+  refreshToken: z.string(),
+  expiresIn: z.number(),
+});
+
 export const UpdateProfileApiRawSchema = z.object({
   id: z.number(),
   displayName: z.string().optional(),

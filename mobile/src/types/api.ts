@@ -9,6 +9,7 @@ import type {
   SearchResponseSchema,
   HistoryResponseSchema,
   DownloadResponseSchema,
+  RefreshResponseSchema,
 } from './schemas';
 
 // ── Request interfaces (outbound — no schema needed) ────────────────────────
@@ -56,6 +57,8 @@ export interface LoginResponse {
   /** Mapped from API `userId` field */
   id: number;
   displayName: string;
+  /** Refresh token for silent re-authentication. Set by login; absent from /auth/me. */
+  refreshToken?: string;
   /** Role names assigned to the user (e.g. ["Admin","User"]). */
   roles: string[];
   /** Permission strings granted to the user (e.g. ["scheduler.access"]). */
@@ -85,6 +88,7 @@ export type DownloadHistoryItem = z.infer<typeof DownloadHistoryItemSchema>;
 
 export type LoginApiRaw = z.infer<typeof LoginApiRawSchema>;
 export type MeApiRaw = z.infer<typeof MeApiRawSchema>;
+export type RefreshResponse = z.infer<typeof RefreshResponseSchema>;
 export type UpdateProfileApiRaw = z.infer<typeof UpdateProfileApiRawSchema>;
 
 export type SearchResponse = z.infer<typeof SearchResponseSchema>;

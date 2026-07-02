@@ -13,8 +13,9 @@ import {
   saveUsername,
   getUsername,
   clearUsername,
-  saveCredentials,
-  getCredentials,
+  saveRefreshToken,
+  getRefreshToken,
+  clearRefreshToken,
   clearCredentials,
   saveLanguage,
   getLanguage,
@@ -27,7 +28,8 @@ const TOKEN_KEY = 'auth_token';
 const USER_ID_KEY = 'auth_user_id';
 const DISPLAY_NAME_KEY = 'auth_display_name';
 const USERNAME_KEY = 'auth_username';
-const CREDENTIALS_KEY = 'saved_credentials';
+const REFRESH_TOKEN_KEY = 'auth_refresh_token';
+const LEGACY_CREDENTIALS_KEY = 'saved_credentials';
 const LANGUAGE_KEY = 'app_language';
 const SELECTED_MODULE_KEY = 'selected_module';
 
@@ -178,68 +180,52 @@ describe('clearUsername', () => {
   });
 });
 
-// --- Credentials ---
+// --- Refresh Token ---
 
-describe('saveCredentials', () => {
-  it('saves credentials as JSON to encrypted storage', async () => {
-    const credentials = {
-      username: 'johndoe',
-      password: 's3cret',
-      validUntil: '2026-06-01T00:00:00.000Z',
-    };
-    await saveCredentials(credentials);
+describe('saveRefreshToken', () => {
+  it('saves refresh token to encrypted storage', async () => {
+    await saveRefreshToken('refresh-jwt-abc');
     expect(EncryptedStorage.setItem).toHaveBeenCalledWith(
-      CREDENTIALS_KEY,
-      JSON.stringify(credentials),
+      REFRESH_TOKEN_KEY,
+      'refresh-jwt-abc',
     );
   });
 });
 
-describe('getCredentials', () => {
-  it('returns parsed credentials when saved and not expired', async () => {
-    const futureDate = new Date(Date.now() + 86400000).toISOString();
-    const credentials = {
-      username: 'johndoe',
-      password: 's3cret',
-      validUntil: futureDate,
-    };
+describe('getRefreshToken', () => {
+  it('returns the refresh token when saved', async () => {
     (EncryptedStorage.getItem as jest.Mock).mockResolvedValueOnce(
-      JSON.stringify(credentials),
+      'stored-refresh',
     );
 
-    const result = await getCredentials();
-    expect(result).toEqual(credentials);
-    expect(EncryptedStorage.getItem).toHaveBeenCalledWith(CREDENTIALS_KEY);
+    const result = await getRefreshToken();
+    expect(result).toBe('stored-refresh');
+    expect(EncryptedStorage.getItem).toHaveBeenCalledWith(REFRESH_TOKEN_KEY);
   });
 
-  it('returns null when no credentials are saved', async () => {
+  it('returns null when no refresh token is saved', async () => {
     (EncryptedStorage.getItem as jest.Mock).mockResolvedValueOnce(null);
 
-    const result = await getCredentials();
+    const result = await getRefreshToken();
     expect(result).toBeNull();
-  });
-
-  it('returns null and removes expired credentials', async () => {
-    const expiredDate = new Date(Date.now() - 86400000).toISOString();
-    const credentials = {
-      username: 'johndoe',
-      password: 's3cret',
-      validUntil: expiredDate,
-    };
-    (EncryptedStorage.getItem as jest.Mock).mockResolvedValueOnce(
-      JSON.stringify(credentials),
-    );
-
-    const result = await getCredentials();
-    expect(result).toBeNull();
-    expect(EncryptedStorage.removeItem).toHaveBeenCalledWith(CREDENTIALS_KEY);
   });
 });
 
+describe('clearRefreshToken', () => {
+  it('removes refresh token from encrypted storage', async () => {
+    await clearRefreshToken();
+    expect(EncryptedStorage.removeItem).toHaveBeenCalledWith(REFRESH_TOKEN_KEY);
+  });
+});
+
+// --- Legacy Credential Cleanup ---
+
 describe('clearCredentials', () => {
-  it('removes credentials from encrypted storage', async () => {
+  it('removes the legacy saved_credentials key (migration cleanup)', async () => {
     await clearCredentials();
-    expect(EncryptedStorage.removeItem).toHaveBeenCalledWith(CREDENTIALS_KEY);
+    expect(EncryptedStorage.removeItem).toHaveBeenCalledWith(
+      LEGACY_CREDENTIALS_KEY,
+    );
   });
 });
 
