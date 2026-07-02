@@ -11,7 +11,7 @@ var settings = new GatewaySettings();
 builder.Configuration.Bind(settings);
 settings.Validate();
 
-var startup = new Startup(settings, builder.Configuration);
+var startup = new Startup(settings, builder.Configuration, builder.Environment);
 startup.ConfigureServices(builder.Services);
 
 var app = builder.Build();
