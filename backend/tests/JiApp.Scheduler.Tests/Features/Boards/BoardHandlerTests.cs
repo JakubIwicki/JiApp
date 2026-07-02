@@ -176,7 +176,7 @@ public sealed class BoardHandlerTests : HandlerTestBase
     }
 
     [Fact]
-    public async Task DeleteBoard_ByNonMember_ReturnsAccessDenied()
+    public async Task DeleteBoard_ByNonMemberNonOwner_ReturnsAccessDenied()
     {
         var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L], ownerUserId: 2L);
         var sut = fixture.DeleteBoard;
@@ -245,7 +245,7 @@ public sealed class BoardHandlerTests : HandlerTestBase
     }
 
     [Fact]
-    public async Task RemoveBoardMember_ByNonMember_ReturnsAccessDenied()
+    public async Task RemoveBoardMember_ByNonMemberNonOwner_ReturnsAccessDenied()
     {
         var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L, 3L], ownerUserId: 2L);
         var sut = fixture.RemoveBoardMember;
@@ -271,10 +271,10 @@ public sealed class BoardHandlerTests : HandlerTestBase
     [Fact]
     public async Task RemoveBoardMember_WhenLastMember_ReturnsFailure()
     {
-        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L]);
         var sut = fixture.RemoveBoardMember;
 
-        var result = await sut.HandleAsync(boardId, 1L, CancellationToken.None);
+        var result = await sut.HandleAsync(boardId, 2L, CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Cannot remove the last member");
@@ -292,7 +292,7 @@ public sealed class BoardHandlerTests : HandlerTestBase
     }
 
     [Fact]
-    public async Task DeleteBoard_ByNonMember_ReturnsAccessDeniedErrorCategory()
+    public async Task DeleteBoard_ByNonMemberNonOwner_ReturnsAccessDeniedErrorCategory()
     {
         var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L], ownerUserId: 2L);
         var sut = fixture.DeleteBoard;
@@ -314,7 +314,7 @@ public sealed class BoardHandlerTests : HandlerTestBase
     }
 
     [Fact]
-    public async Task RemoveBoardMember_ByNonMember_ReturnsAccessDeniedErrorCategory()
+    public async Task RemoveBoardMember_ByNonMemberNonOwner_ReturnsAccessDeniedErrorCategory()
     {
         var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L, 3L], ownerUserId: 2L);
         var sut = fixture.RemoveBoardMember;
@@ -338,10 +338,10 @@ public sealed class BoardHandlerTests : HandlerTestBase
     [Fact]
     public async Task RemoveBoardMember_WhenLastMember_ReturnsConflictErrorCategory()
     {
-        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L]);
         var sut = fixture.RemoveBoardMember;
 
-        var result = await sut.HandleAsync(boardId, 1L, CancellationToken.None);
+        var result = await sut.HandleAsync(boardId, 2L, CancellationToken.None);
 
         AssertConflict(result);
     }

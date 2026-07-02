@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace JiApp.Scheduler.Features.Common;
 
+// Board ownership is currently immutable — there is no transfer-ownership operation.
+// This is a known limitation (shared with LovingBoards) tracked as a follow-up.
 internal static class BoardAccessGuard
 {
     internal static async Task<Result<Board>> VerifyBoardAccessAsync(
