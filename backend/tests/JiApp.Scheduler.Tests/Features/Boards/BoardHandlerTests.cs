@@ -35,16 +35,16 @@ public sealed class BoardHandlerTests : HandlerTestBase
 
         public static Fixture Init(ISchedulerDbContext dbContext, TestDb testDb) => new(dbContext, testDb);
 
-        public Fixture WithBoard(string name = "Test", List<long>? memberUserIds = null)
+        public Fixture WithBoard(string name = "Test", List<long>? memberUserIds = null, long ownerUserId = 1L)
         {
-            var board = new Board { Name = name, MemberUserIds = memberUserIds ?? [1L] };
+            var board = new Board { Name = name, OwnerUserId = ownerUserId, MemberUserIds = memberUserIds ?? [1L] };
             _testDb.Store(board);
             return this;
         }
 
-        public Fixture WithBoard(out long boardId, string name = "Test", List<long>? memberUserIds = null)
+        public Fixture WithBoard(out long boardId, string name = "Test", List<long>? memberUserIds = null, long ownerUserId = 1L)
         {
-            var board = new Board { Name = name, MemberUserIds = memberUserIds ?? [1L] };
+            var board = new Board { Name = name, OwnerUserId = ownerUserId, MemberUserIds = memberUserIds ?? [1L] };
             _testDb.Store(board);
             boardId = board.Id;
             return this;
@@ -178,7 +178,7 @@ public sealed class BoardHandlerTests : HandlerTestBase
     [Fact]
     public async Task DeleteBoard_ByNonMember_ReturnsAccessDenied()
     {
-        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L]);
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L], ownerUserId: 2L);
         var sut = fixture.DeleteBoard;
 
         var result = await sut.HandleAsync(boardId, CancellationToken.None);
@@ -247,7 +247,7 @@ public sealed class BoardHandlerTests : HandlerTestBase
     [Fact]
     public async Task RemoveBoardMember_ByNonMember_ReturnsAccessDenied()
     {
-        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L, 3L]);
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L, 3L], ownerUserId: 2L);
         var sut = fixture.RemoveBoardMember;
 
         var result = await sut.HandleAsync(boardId, 3L, CancellationToken.None);
@@ -294,7 +294,7 @@ public sealed class BoardHandlerTests : HandlerTestBase
     [Fact]
     public async Task DeleteBoard_ByNonMember_ReturnsAccessDeniedErrorCategory()
     {
-        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L]);
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L], ownerUserId: 2L);
         var sut = fixture.DeleteBoard;
 
         var result = await sut.HandleAsync(boardId, CancellationToken.None);
@@ -316,7 +316,7 @@ public sealed class BoardHandlerTests : HandlerTestBase
     [Fact]
     public async Task RemoveBoardMember_ByNonMember_ReturnsAccessDeniedErrorCategory()
     {
-        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L, 3L]);
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L, 3L], ownerUserId: 2L);
         var sut = fixture.RemoveBoardMember;
 
         var result = await sut.HandleAsync(boardId, 3L, CancellationToken.None);
@@ -388,6 +388,55 @@ public sealed class BoardHandlerTests : HandlerTestBase
         var result = await sut.HandleAsync(boardId, new UpdateBoardRequest("Test"), CancellationToken.None);
 
         AssertAccessDenied(result);
+    }
+
+    [Fact]
+    public async Task CreateBoard_SetsOwnerUserId()
+    {
+        var fixture = Fixture.Init(DbContext, Db);
+        var sut = fixture.Sut;
+        var request = new CreateBoardRequest("My Board");
+
+        await sut.HandleAsync(request, CancellationToken.None);
+
+        var board = await Db.Query<Board>().FirstAsync();
+        board.OwnerUserId.Should().Be(1L);
+    }
+
+    [Fact]
+    public async Task DeleteBoard_ByNonOwnerMember_ReturnsAccessDenied()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [1L, 2L], ownerUserId: 2L);
+        var sut = fixture.DeleteBoard;
+
+        var result = await sut.HandleAsync(boardId, CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be("Access denied");
+    }
+
+    [Fact]
+    public async Task AddBoardMember_ByNonOwnerMember_ReturnsAccessDenied()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [1L, 2L], ownerUserId: 2L);
+        var sut = fixture.AddBoardMember;
+
+        var result = await sut.HandleAsync(boardId, new AddBoardMemberRequest(3L), CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be("Access denied");
+    }
+
+    [Fact]
+    public async Task RemoveBoardMember_ByNonOwnerMember_ReturnsAccessDenied()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [1L, 2L], ownerUserId: 2L);
+        var sut = fixture.RemoveBoardMember;
+
+        var result = await sut.HandleAsync(boardId, 2L, CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be("Access denied");
     }
 
     [Fact]

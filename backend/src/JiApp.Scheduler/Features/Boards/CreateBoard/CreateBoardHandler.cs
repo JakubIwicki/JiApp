@@ -12,6 +12,7 @@ public sealed class CreateBoardHandler(ISchedulerDbContext db, ICurrentUserServi
         var board = new Board
         {
             Name = request.Name,
+            OwnerUserId = currentUser.UserId,
             MemberUserIds = [currentUser.UserId]
         };
         db.Boards.Add(board);
