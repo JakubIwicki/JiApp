@@ -3,6 +3,7 @@ using System;
 using JiApp.Scheduler.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace JiApp.Scheduler.Migrations
 {
     [DbContext(typeof(SchedulerDbContext))]
-    partial class SchedulerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260702134139_AddSchedulerBoardOwnerUserId")]
+    partial class AddSchedulerBoardOwnerUserId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.8");

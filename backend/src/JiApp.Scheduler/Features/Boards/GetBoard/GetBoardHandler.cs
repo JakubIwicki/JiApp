@@ -11,7 +11,7 @@ public sealed class GetBoardHandler(ISchedulerDbContext db, ICurrentUserService 
     {
         var board = await db.Boards
             .Where(b => b.Id == id)
-            .Select(b => new GetBoardResponse(b.Id, b.Name, b.MemberUserIds, b.CreatedAt))
+            .Select(b => new GetBoardResponse(b.Id, b.Name, b.OwnerUserId, b.MemberUserIds, b.CreatedAt))
             .FirstOrDefaultAsync(ct);
 
         if (board is null)

@@ -16,7 +16,7 @@ public sealed class ListBoardsHandler(ISchedulerDbContext db, ICurrentUserServic
 
         var userBoards = boards
             .Where(b => b.MemberUserIds.Contains(currentUser.UserId))
-            .Select(b => new GetBoardResponse(b.Id, b.Name, b.MemberUserIds, b.CreatedAt))
+            .Select(b => new GetBoardResponse(b.Id, b.Name, b.OwnerUserId, b.MemberUserIds, b.CreatedAt))
             .ToList();
 
         return Result<ListBoardsResponse>.Success(new ListBoardsResponse(userBoards));

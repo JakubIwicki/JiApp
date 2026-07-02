@@ -128,3 +128,4 @@ mobile/src/config.generated.ts
 
 # Media
 *.mp3
+backend/.tools/
