@@ -37,6 +37,7 @@ public class Startup(GatewaySettings settings, IConfiguration configuration, IWe
                     ValidAudience = jwt.Audience,
                     IssuerSigningKey = new SymmetricSecurityKey(
                         Encoding.UTF8.GetBytes(jwt.Key)),
+                    ValidAlgorithms = ["HS256"],
                 };
 
                 options.Events = new JwtBearerEvents

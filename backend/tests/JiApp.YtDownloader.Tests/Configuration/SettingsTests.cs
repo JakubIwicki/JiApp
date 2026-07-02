@@ -16,7 +16,7 @@ public sealed class SettingsTests
             },
             Jwt = new Settings.JwtSettings
             {
-                Key = "test-key", Issuer = "test-issuer", Audience = "test-audience",
+                Key = "test-jwt-key-with-at-least-32-chars", Issuer = "test-issuer", Audience = "test-audience",
             },
             Youtube = new Settings.YoutubeSettings
             {
@@ -108,7 +108,7 @@ public sealed class SettingsTests
             },
             Jwt = new Settings.JwtSettings
             {
-                Key = "test-key", Issuer = "test-issuer", Audience = "test-audience",
+                Key = "test-jwt-key-with-at-least-32-chars", Issuer = "test-issuer", Audience = "test-audience",
             },
             Youtube = new Settings.YoutubeSettings
             {
@@ -212,7 +212,7 @@ public sealed class SettingsTests
         App = new Settings.AppSettings { BaseDirectory = "/tmp", PreviewDurationSeconds = 10 },
         Jwt = new Settings.JwtSettings
         {
-            Key = "test-key", Issuer = "test-issuer", Audience = "test-audience",
+            Key = "test-jwt-key-with-at-least-32-chars", Issuer = "test-issuer", Audience = "test-audience",
         },
         Youtube = new Settings.YoutubeSettings
         {

@@ -31,6 +31,8 @@ public sealed class GatewaySettings
 
         if (string.IsNullOrEmpty(Jwt.Key))
             errors.Add("Jwt:Key is not configured.");
+        else if (Jwt.Key.Length < 32)
+            errors.Add("Jwt:Key must be at least 32 characters long.");
         if (string.IsNullOrEmpty(Jwt.Issuer))
             errors.Add("Jwt:Issuer is not configured.");
         if (string.IsNullOrEmpty(Jwt.Audience))

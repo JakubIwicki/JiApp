@@ -123,5 +123,8 @@ mobile/src/config.generated.ts
 # Worktrees
 .worktrees/
 
+# Playwright MCP debug artifacts
+.playwright-mcp/
+
 # Media
 *.mp3

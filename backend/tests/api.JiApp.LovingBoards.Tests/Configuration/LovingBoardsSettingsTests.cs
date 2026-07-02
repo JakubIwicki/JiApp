@@ -25,7 +25,7 @@ public sealed class LovingBoardsSettingsTests
         var settings = new LovingBoardsSettings
         {
             ConnectionString = null,
-            Jwt = new JwtSettings { Key = "key", Issuer = "iss", Audience = "aud" }
+            Jwt = new JwtSettings { Key = "test-jwt-key-with-at-least-32-chars", Issuer = "iss", Audience = "aud" }
         };
 
         var act = () => settings.Validate();
@@ -55,7 +55,7 @@ public sealed class LovingBoardsSettingsTests
         var settings = new LovingBoardsSettings
         {
             ConnectionString = "Data Source=test.db",
-            Jwt = new JwtSettings { Key = "key", Issuer = "iss", Audience = "aud" }
+            Jwt = new JwtSettings { Key = "test-jwt-key-with-at-least-32-chars", Issuer = "iss", Audience = "aud" }
         };
 
         var act = () => settings.Validate();

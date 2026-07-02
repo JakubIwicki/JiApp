@@ -44,6 +44,8 @@ public sealed class JwtSettings
     {
         if (string.IsNullOrWhiteSpace(Key))
             throw new InvalidOperationException("Jwt:Key is required");
+        if (Key is not null && Key.Length < 32)
+            throw new InvalidOperationException("Jwt:Key must be at least 32 characters long.");
         if (string.IsNullOrWhiteSpace(Issuer))
             throw new InvalidOperationException("Jwt:Issuer is required");
         if (string.IsNullOrWhiteSpace(Audience))
