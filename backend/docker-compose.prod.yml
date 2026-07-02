@@ -13,6 +13,7 @@ services:
       Jwt__Key: ${JWT_KEY:?required}
       Jwt__Issuer: ${JWT_ISSUER:-JiApp}
       Jwt__Audience: ${JWT_AUDIENCE:-JiAppMobile}
+      CorsAllowedOrigins__0: https://jakubiwicki.github.io
       Jwt__AccessTokenExpireMinutes: ${JWT_ACCESS_EXPIRE:-15}
       Jwt__RefreshTokenExpireDays: ${JWT_REFRESH_EXPIRE:-7}
     volumes:
@@ -32,6 +33,7 @@ services:
       Jwt__Key: ${JWT_KEY:?required}
       Jwt__Issuer: ${JWT_ISSUER:-JiApp}
       Jwt__Audience: ${JWT_AUDIENCE:-JiAppMobile}
+      CorsAllowedOrigins__0: https://jakubiwicki.github.io
       Youtube__ApiKey: ${YOUTUBE_API_KEY:?required}
       Youtube__CookiesFile: ${YOUTUBE_COOKIES_FILE:-}
       Youtube__Proxy: ${YOUTUBE_PROXY:-}
@@ -96,6 +98,7 @@ services:
       Jwt__Key: ${JWT_KEY:?required}
       Jwt__Issuer: ${JWT_ISSUER:-JiApp}
       Jwt__Audience: ${JWT_AUDIENCE:-JiAppMobile}
+      CorsAllowedOrigins__0: https://jakubiwicki.github.io
       IdentityBaseUrl: http://identity:6701
     volumes:
       - jiapp_data:/app/data
@@ -114,6 +117,7 @@ services:
       Jwt__Key: ${JWT_KEY:?required}
       Jwt__Issuer: ${JWT_ISSUER:-JiApp}
       Jwt__Audience: ${JWT_AUDIENCE:-JiAppMobile}
+      CorsAllowedOrigins__0: https://jakubiwicki.github.io
       IdentityBaseUrl: http://identity:6701
     volumes:
       - jiapp_data:/app/data
@@ -131,6 +135,7 @@ services:
       Jwt__Key: ${JWT_KEY:?required}
       Jwt__Issuer: ${JWT_ISSUER:-JiApp}
       Jwt__Audience: ${JWT_AUDIENCE:-JiAppMobile}
+      CorsAllowedOrigins__0: https://jakubiwicki.github.io
       Kestrel__Endpoints__Https__Certificate__Path: /app/certs/server.pfx
       Kestrel__Endpoints__Https__Certificate__Password: ${CERT_PASSWORD:?required}
       ReverseProxy__Clusters__identity-cluster__Destinations__identity__Address: "http://identity:6701"
