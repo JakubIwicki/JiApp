@@ -13,7 +13,7 @@ var settings = new Settings();
 builder.Configuration.Bind(settings);
 settings.Validate();
 
-var startup = new Startup(settings);
+var startup = new Startup(settings, builder.Environment);
 
 startup.ConfigureServices(builder.Services);
 

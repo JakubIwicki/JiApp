@@ -32,7 +32,7 @@ using Serilog.Context;
 
 namespace api.JiApp.LovingBoards;
 
-public class Startup(LovingBoardsSettings settings)
+public class Startup(LovingBoardsSettings settings, IWebHostEnvironment env)
 {
     public void ConfigureServices(IServiceCollection services)
     {
@@ -87,7 +87,10 @@ public class Startup(LovingBoardsSettings settings)
             .AddPolicy(Permissions.LovingBoardsAccess, policy =>
                 policy.RequirePermission(Permissions.LovingBoardsAccess));
 
-        // CORS
+        // CORS — AllowCredentials prevents using AllowAnyOrigin, so we use
+        // SetIsOriginAllowed with explicit origin lists. In Development, accept
+        // any origin when no origins are configured. In all other environments,
+        // fail closed if CorsAllowedOrigins is missing.
         services.AddCors(options =>
         {
             options.AddDefaultPolicy(policy =>
@@ -98,8 +101,10 @@ public class Startup(LovingBoardsSettings settings)
 
                 if (settings.CorsAllowedOrigins is { Length: > 0 } origins)
                     policy.SetIsOriginAllowed(origin => origins.Contains(origin));
-                else
+                else if (env.IsDevelopment())
                     policy.SetIsOriginAllowed(_ => true);
+                else
+                    throw new InvalidOperationException("CorsAllowedOrigins must be configured in non-Development environments.");
             });
         });
 
