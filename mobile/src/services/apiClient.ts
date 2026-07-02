@@ -2,16 +2,16 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import {
   getToken,
   clearToken,
+  clearRefreshToken,
   clearUserId,
   clearDisplayName,
   clearUsername,
   clearCredentials,
   saveToken,
-  saveUserId,
-  saveDisplayName,
-  saveUsername,
-  getCredentials,
+  getRefreshToken,
+  saveRefreshToken,
 } from './storageService';
+import { RefreshResponseSchema } from '../types/schemas';
 import { API_BASE_URL } from '../config';
 import type { ServerAugmentedError } from '../types/api';
 
@@ -38,55 +38,81 @@ interface RetryConfig extends InternalAxiosRequestConfig {
   _isRetry?: boolean;
 }
 
-apiClient.interceptors.response.use(
-  response => response,
-  async (error: AxiosError) => {
-    const config = error.config as RetryConfig | undefined;
+// ── Single-flight refresh guard ───────────────────────────────────────────
+// Concurrent 401s must trigger only one /auth/refresh call; other requests
+// await the same promise, then retry with the new access token.
 
-    // Don't intercept 401 for login/register — let the callers handle errors
-    if (
-      error.response?.status === 401 &&
-      config &&
-      !config._isRetry &&
-      !config.url?.includes('/auth/login') &&
-      !config.url?.includes('/auth/register')
-    ) {
-      const credentials = await getCredentials();
+let refreshPromise: Promise<string | null> | null = null;
 
-      if (credentials) {
-        try {
-          // Re-login with saved credentials using raw axios (bypasses this interceptor)
-          const loginResponse = await axios.post(
-            `${API_BASE_URL}/auth/login`,
-            { username: credentials.username, password: credentials.password },
-            { headers: { 'Content-Type': 'application/json' } },
-          );
+async function refreshAuth(): Promise<string | null> {
+  if (refreshPromise) return refreshPromise;
 
-          const { accessToken, userId, displayName } = loginResponse.data;
-          await Promise.all([
-            saveToken(accessToken),
-            saveUserId(userId),
-            saveDisplayName(displayName),
-            saveUsername(credentials.username),
-          ]);
-
-          // Retry the original request with the new token
-          config._isRetry = true;
-          config.headers.Authorization = `Bearer ${accessToken}`;
-          return apiClient.request(config);
-        } catch {
-          // Re-login failed — wipe everything
-        }
+  refreshPromise = (async () => {
+    try {
+      const storedRefreshToken = await getRefreshToken();
+      if (!storedRefreshToken) {
+        await Promise.all([
+          clearToken(),
+          clearRefreshToken(),
+          clearUserId(),
+          clearDisplayName(),
+          clearUsername(),
+          clearCredentials(),
+        ]);
+        return null;
       }
 
-      // No saved credentials or re-login failed — clear all auth state
+      const response = await axios.post<unknown>(
+        `${API_BASE_URL}/auth/refresh`,
+        { refreshToken: storedRefreshToken },
+        { headers: { 'Content-Type': 'application/json' } },
+      );
+
+      const data = RefreshResponseSchema.parse(response.data);
+      await Promise.all([
+        saveToken(data.accessToken),
+        saveRefreshToken(data.refreshToken),
+      ]);
+
+      return data.accessToken;
+    } catch {
       await Promise.all([
         clearToken(),
+        clearRefreshToken(),
         clearUserId(),
         clearDisplayName(),
         clearUsername(),
         clearCredentials(),
       ]);
+      return null;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
+}
+
+apiClient.interceptors.response.use(
+  response => response,
+  async (error: AxiosError) => {
+    const config = error.config as RetryConfig | undefined;
+
+    if (
+      error.response?.status === 401 &&
+      config &&
+      !config._isRetry &&
+      !config.url?.includes('/auth/login') &&
+      !config.url?.includes('/auth/register') &&
+      !config.url?.includes('/auth/refresh')
+    ) {
+      const newToken = await refreshAuth();
+
+      if (newToken) {
+        config._isRetry = true;
+        config.headers.Authorization = `Bearer ${newToken}`;
+        return apiClient.request(config);
+      }
     }
 
     // Extract server error message so downstream error utils can read

@@ -6,12 +6,21 @@ jest.mock('../apiClient', () => ({
   },
 }));
 
+jest.mock('axios', () => ({
+  __esModule: true,
+  default: {
+    post: jest.fn(),
+  },
+}));
+
 import apiClient from '../apiClient';
-import { login, register, checkToken } from '../authService';
+import axios from 'axios';
+import { login, register, checkToken, refreshToken } from '../authService';
 import type { LoginResponse } from '../../types/api';
 
 const mockPost = apiClient.post as jest.Mock;
 const mockGet = apiClient.get as jest.Mock;
+const mockAxiosPost = axios.post as jest.Mock;
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -26,6 +35,7 @@ describe('login', () => {
     id: 1,
     displayName: 'John Doe',
     token: 'jwt-token-123',
+    refreshToken: 'refresh-token-456',
     roles: ['User'],
     permissions: ['ytdownloader.access', 'scheduler.access'],
   };
@@ -40,7 +50,7 @@ describe('login', () => {
     permissions: ['ytdownloader.access', 'scheduler.access'],
   };
 
-  it('calls /auth/login with credentials and returns login data', async () => {
+  it('calls /auth/login with credentials and returns login data including refreshToken', async () => {
     mockPost.mockResolvedValueOnce({ data: mockApiRaw });
 
     const result = await login(username, password);
@@ -50,6 +60,7 @@ describe('login', () => {
       password,
     });
     expect(result).toEqual(mockLoginResponse);
+    expect(result.refreshToken).toBe('refresh-token-456');
   });
 
   it('defaults roles and permissions to empty arrays when absent from the response', async () => {
@@ -167,5 +178,41 @@ describe('checkToken', () => {
     expect(mockGet).toHaveBeenCalledWith('/auth/me', {
       headers: { Authorization: `Bearer ${token}` },
     });
+  });
+});
+
+// --- refreshToken ---
+
+describe('refreshToken', () => {
+  it('calls /auth/refresh with raw axios and returns validated response', async () => {
+    const mockApiRaw = {
+      accessToken: 'new-access',
+      refreshToken: 'new-refresh',
+      expiresIn: 3600,
+    };
+    mockAxiosPost.mockResolvedValueOnce({ data: mockApiRaw });
+
+    const result = await refreshToken('old-refresh');
+
+    expect(mockAxiosPost).toHaveBeenCalledWith(
+      expect.stringContaining('/auth/refresh'),
+      { refreshToken: 'old-refresh' },
+      { headers: { 'Content-Type': 'application/json' } },
+    );
+    expect(result).toEqual(mockApiRaw);
+  });
+
+  it('throws when refresh response fails Zod validation', async () => {
+    mockAxiosPost.mockResolvedValueOnce({
+      data: { accessToken: 'ok', expiresIn: 3600 },
+    });
+
+    await expect(refreshToken('bad')).rejects.toThrow();
+  });
+
+  it('throws when /auth/refresh rejects', async () => {
+    mockAxiosPost.mockRejectedValueOnce(new Error('Network error'));
+
+    await expect(refreshToken('stale')).rejects.toThrow('Network error');
   });
 });

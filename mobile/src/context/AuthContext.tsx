@@ -191,9 +191,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch {
       await Promise.all([
         storageService.clearToken(),
+        storageService.clearRefreshToken(),
         storageService.clearUserId(),
         storageService.clearDisplayName(),
         storageService.clearUsername(),
+        storageService.clearCredentials(),
       ]);
       dispatch({ type: 'LOGOUT' });
     }
@@ -207,12 +209,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     dispatch({ type: 'SET_LOADING', isLoading: true });
     try {
       const user = await authService.login(username, password);
-      await Promise.all([
+      const storageOps: Promise<void>[] = [
         storageService.saveToken(user.token),
         storageService.saveUserId(user.id),
         storageService.saveDisplayName(user.displayName),
         storageService.saveUsername(username),
-      ]);
+      ];
+      if (user.refreshToken) {
+        storageOps.push(storageService.saveRefreshToken(user.refreshToken));
+      }
+      await Promise.all(storageOps);
       dispatch({
         type: 'LOGIN',
         token: user.token,
@@ -251,6 +257,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const dismissFarewell = useCallback(async () => {
     await Promise.all([
       storageService.clearToken(),
+      storageService.clearRefreshToken(),
       storageService.clearUserId(),
       storageService.clearDisplayName(),
       storageService.clearUsername(),
