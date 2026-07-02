@@ -35,7 +35,7 @@ using Serilog.Context;
 
 namespace JiApp.YtDownloader;
 
-public class Startup(Settings settings)
+public class Startup(Settings settings, IWebHostEnvironment env)
 {
     public void ConfigureServices(IServiceCollection services)
     {
@@ -90,8 +90,9 @@ public class Startup(Settings settings)
                 policy.RequirePermission(Permissions.YtDownloaderAccess));
 
         // CORS — AllowCredentials prevents using AllowAnyOrigin, so we use
-        // SetIsOriginAllowed. In production, restrict to configured origins.
-        // In development, accept any origin by default (null/empty config).
+        // SetIsOriginAllowed with explicit origin lists. In Development, accept
+        // any origin when no origins are configured. In all other environments,
+        // fail closed if CorsAllowedOrigins is missing.
         services.AddCors(options =>
         {
             options.AddDefaultPolicy(policy =>
@@ -102,8 +103,10 @@ public class Startup(Settings settings)
 
                 if (settings.CorsAllowedOrigins is { Length: > 0 } origins)
                     policy.SetIsOriginAllowed(origin => origins.Contains(origin));
-                else
+                else if (env.IsDevelopment())
                     policy.SetIsOriginAllowed(_ => true);
+                else
+                    throw new InvalidOperationException("CorsAllowedOrigins must be configured in non-Development environments.");
             });
         });
 
