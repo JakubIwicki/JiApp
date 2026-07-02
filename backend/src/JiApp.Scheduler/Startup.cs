@@ -82,6 +82,7 @@ public class Startup(SchedulerSettings settings, IWebHostEnvironment env)
                     ValidAudience = settings.Jwt!.Audience!,
                     IssuerSigningKey = new SymmetricSecurityKey(
                         Encoding.UTF8.GetBytes(settings.Jwt!.Key!)),
+                    ValidAlgorithms = ["HS256"],
                 };
 
                 options.Events = new JwtBearerEvents

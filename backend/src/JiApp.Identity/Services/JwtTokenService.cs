@@ -36,7 +36,8 @@ public sealed class JwtTokenService(
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(keyBytes),
             ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero
+            ClockSkew = TimeSpan.Zero,
+            ValidAlgorithms = ["HS256"]
         };
     }
 
