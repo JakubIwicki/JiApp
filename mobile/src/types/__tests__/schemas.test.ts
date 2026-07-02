@@ -3,6 +3,7 @@ import {
   SearchHistoryItemSchema,
   DownloadHistoryItemSchema,
   LoginApiRawSchema,
+  RefreshResponseSchema,
   MeApiRawSchema,
   UpdateProfileApiRawSchema,
   SearchResponseSchema,
@@ -260,6 +261,35 @@ describe('DownloadResponseSchema', () => {
   it('fails when downloadUrl is missing', () => {
     const bad = {};
     expect(DownloadResponseSchema.safeParse(bad).success).toBe(false);
+  });
+});
+
+// ── RefreshResponseSchema ───────────────────────────────────────────────────
+
+describe('RefreshResponseSchema', () => {
+  const valid = {
+    accessToken: 'new-access-token',
+    refreshToken: 'new-refresh-token',
+    expiresIn: 3600,
+  };
+
+  it('parses a valid RefreshResponse', () => {
+    expect(() => RefreshResponseSchema.parse(valid)).not.toThrow();
+  });
+
+  it('fails when accessToken is missing', () => {
+    const bad = { refreshToken: 'rt', expiresIn: 3600 };
+    expect(RefreshResponseSchema.safeParse(bad).success).toBe(false);
+  });
+
+  it('fails when refreshToken is missing', () => {
+    const bad = { accessToken: 'at', expiresIn: 3600 };
+    expect(RefreshResponseSchema.safeParse(bad).success).toBe(false);
+  });
+
+  it('fails when expiresIn is not a number', () => {
+    const bad = { ...valid, expiresIn: '3600' };
+    expect(RefreshResponseSchema.safeParse(bad).success).toBe(false);
   });
 });
 

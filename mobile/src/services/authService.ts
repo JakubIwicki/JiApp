@@ -1,3 +1,4 @@
+import axios from 'axios';
 import apiClient from './apiClient';
 import {
   ChangePasswordRequest,
@@ -5,6 +6,7 @@ import {
   LoginRequest,
   LoginResponse,
   MeApiRaw,
+  RefreshResponse,
   RegisterRequest,
   UpdateProfileApiRaw,
   UpdateProfileRequest,
@@ -12,8 +14,10 @@ import {
 import {
   LoginApiRawSchema,
   MeApiRawSchema,
+  RefreshResponseSchema,
   UpdateProfileApiRawSchema,
 } from '../types/schemas';
+import { API_BASE_URL } from '../config';
 
 export interface ProfileResponse {
   id: number;
@@ -35,6 +39,7 @@ export const login = async (
     token: data.accessToken,
     id: data.userId,
     displayName: data.displayName ?? '',
+    refreshToken: data.refreshToken,
     roles: data.roles ?? [],
     permissions: data.permissions ?? [],
   };
@@ -106,4 +111,17 @@ export const changePassword = async (
 ): Promise<void> => {
   const body: ChangePasswordRequest = { currentPassword, newPassword };
   await apiClient.post('/auth/change-password', body);
+};
+
+/**
+ * Exchange a refresh token for a new access + refresh token pair.
+ * Uses raw axios to bypass the apiClient 401 interceptor.
+ */
+export const refreshToken = async (token: string): Promise<RefreshResponse> => {
+  const response = await axios.post<unknown>(
+    `${API_BASE_URL}/auth/refresh`,
+    { refreshToken: token },
+    { headers: { 'Content-Type': 'application/json' } },
+  );
+  return RefreshResponseSchema.parse(response.data);
 };

@@ -32,9 +32,7 @@ jest.mock('@react-navigation/native', () => {
 
 // Mock storageService
 jest.mock('../../services/storageService', () => ({
-  getCredentials: jest.fn(() => Promise.resolve(null)),
-  saveCredentials: jest.fn(() => Promise.resolve()),
-  clearCredentials: jest.fn(() => Promise.resolve()),
+  getUsername: jest.fn(() => Promise.resolve(null)),
 }));
 
 import LoginScreen from '../LoginScreen';

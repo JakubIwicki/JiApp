@@ -41,7 +41,7 @@ type LoginFormAction =
     }
   | { type: 'SET_API_ERROR'; error: string | undefined }
   | { type: 'SET_LOADING'; loading: boolean }
-  | { type: 'LOAD_CREDENTIALS'; username: string; password: string }
+  | { type: 'LOAD_USERNAME'; username: string }
   | { type: 'CLEAR_ERRORS' };
 
 const initialLoginFormState: LoginFormState = {
@@ -69,12 +69,10 @@ function loginFormReducer(
       return { ...state, apiError: action.error };
     case 'SET_LOADING':
       return { ...state, isLoading: action.loading };
-    case 'LOAD_CREDENTIALS':
+    case 'LOAD_USERNAME':
       return {
         ...state,
         username: action.username,
-        password: action.password,
-        rememberMe: true,
       };
     case 'CLEAR_ERRORS':
       return {
@@ -100,17 +98,13 @@ const LoginScreen: React.FC = () => {
   const styles = useThemedStyles(makeStyles);
   const { colors } = useTheme();
 
-  // Initialize saved credentials on mount
+  // Pre-fill remembered username on mount (non-sensitive only)
   useEffect(() => {
     storageService
-      .getCredentials()
-      .then(credentials => {
-        if (credentials) {
-          dispatch({
-            type: 'LOAD_CREDENTIALS',
-            username: credentials.username,
-            password: credentials.password,
-          });
+      .getUsername()
+      .then(username => {
+        if (username) {
+          dispatch({ type: 'LOAD_USERNAME', username });
         }
       })
       .catch(() => {});
@@ -145,19 +139,6 @@ const LoginScreen: React.FC = () => {
     try {
       await login(form.username.trim(), form.password.trim());
       showInfo('toast.loggedIn');
-
-      if (form.rememberMe) {
-        const validUntil = new Date(
-          Date.now() + 30 * 24 * 60 * 60 * 1000,
-        ).toISOString();
-        await storageService.saveCredentials({
-          username: form.username.trim(),
-          password: form.password.trim(),
-          validUntil,
-        });
-      } else {
-        await storageService.clearCredentials();
-      }
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         if (err.response?.status === 401) {
@@ -187,7 +168,7 @@ const LoginScreen: React.FC = () => {
     } finally {
       dispatch({ type: 'SET_LOADING', loading: false });
     }
-  }, [form.username, form.password, form.rememberMe, login, t, showInfo]);
+  }, [form.username, form.password, login, t, showInfo]);
 
   const handleGoToRegister = useCallback(() => {
     navigation.navigate('Register');
