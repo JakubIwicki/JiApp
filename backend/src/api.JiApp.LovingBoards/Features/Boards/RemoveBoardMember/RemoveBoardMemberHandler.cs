@@ -17,7 +17,7 @@ public sealed class RemoveBoardMemberHandler(
     {
         using var _ = await boardLock.AcquireAsync(boardId, ct);
 
-        var boardResult = await BoardAccessGuard.VerifyBoardAccessAsync(db, boardId, currentUser, ct);
+        var boardResult = await BoardAccessGuard.VerifyBoardOwnerAsync(db, boardId, currentUser, ct);
         if (!boardResult.IsSuccess)
             return Result<long>.Failure(boardResult.Error!, boardResult.ErrorCategory);
         var board = boardResult.Value!;

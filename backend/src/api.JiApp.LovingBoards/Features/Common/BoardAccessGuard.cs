@@ -20,4 +20,17 @@ internal static class BoardAccessGuard
 
         return Result<Board>.Success(board);
     }
+
+    internal static async Task<Result<Board>> VerifyBoardOwnerAsync(
+        ILovingBoardsDbContext db, long boardId, ICurrentUserService currentUser, CancellationToken ct)
+    {
+        var board = await db.Boards.FindAsync([boardId], ct);
+        if (board is null)
+            return Result<Board>.Failure("Board not found", ResultCategories.NotFound);
+
+        if (board.OwnerUserId != currentUser.UserId)
+            return Result<Board>.Failure("Access denied", ResultCategories.AccessDenied);
+
+        return Result<Board>.Success(board);
+    }
 }

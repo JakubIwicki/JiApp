@@ -73,4 +73,48 @@ public sealed class BoardAccessGuardTests : LovingBoardsHandlerTestBase
         AssertAccessDenied(result);
         result.Error.Should().Be("Access denied");
     }
+
+    [Fact]
+    public async Task VerifyBoardOwner_WhenBoardExistsAndUserIsOwner_ReturnsBoard()
+    {
+        var fixture = Fixture.Init(DbContext, Db);
+        fixture.WithBoard(out var board);
+
+        var result =
+            await BoardAccessGuard.VerifyBoardOwnerAsync(fixture.DbContext, board.Id, fixture.CurrentUser, CancellationToken.None);
+
+        AssertSuccess(result);
+        result.Value.Should().NotBeNull();
+        result.Value!.Id.Should().Be(board.Id);
+        result.Value.Name.Should().Be("Test");
+    }
+
+    [Fact]
+    public async Task VerifyBoardOwner_WhenBoardDoesNotExist_ReturnsNotFound()
+    {
+        var fixture = Fixture.Init(DbContext, Db);
+
+        var result =
+            await BoardAccessGuard.VerifyBoardOwnerAsync(fixture.DbContext, 999L, fixture.CurrentUser, CancellationToken.None);
+
+        AssertNotFound(result);
+        result.Error.Should().Be("Board not found");
+    }
+
+    [Fact]
+    public async Task VerifyBoardOwner_WhenUserIsNotOwner_ReturnsAccessDenied()
+    {
+        var fixture = Fixture.Init(DbContext, Db);
+        fixture.WithBoard(out var board, [1L, 2L]);
+        var db = (LovingBoardsDbContext)fixture.DbContext;
+        var tracked = await db.Boards.FindAsync(board.Id);
+        tracked!.OwnerUserId = 2L;
+        await db.SaveChangesAsync();
+
+        var result =
+            await BoardAccessGuard.VerifyBoardOwnerAsync(fixture.DbContext, board.Id, fixture.CurrentUser, CancellationToken.None);
+
+        AssertAccessDenied(result);
+        result.Error.Should().Be("Access denied");
+    }
 }
