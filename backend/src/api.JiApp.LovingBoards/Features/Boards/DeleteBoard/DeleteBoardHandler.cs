@@ -10,7 +10,7 @@ public sealed class DeleteBoardHandler(ILovingBoardsDbContext db, ICurrentUserSe
 {
     public async Task<Result<long>> HandleAsync(long id, CancellationToken ct)
     {
-        var boardResult = await BoardAccessGuard.VerifyBoardAccessAsync(db, id, currentUser, ct);
+        var boardResult = await BoardAccessGuard.VerifyBoardOwnerAsync(db, id, currentUser, ct);
         if (!boardResult.IsSuccess)
             return Result<long>.Failure(boardResult.Error!, boardResult.ErrorCategory);
         var board = boardResult.Value!;
