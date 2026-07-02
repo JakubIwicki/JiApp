@@ -1,4 +1,5 @@
 using JiApp.Common.Abstractions;
+using JiApp.Common.Middleware;
 using api.JiApp.LovingBoards.Configuration;
 
 namespace api.JiApp.LovingBoards.Features.Items.ResetWeeklyItems;
@@ -23,6 +24,7 @@ public static class ResetWeeklyItemsEndpoint
                     };
             })
             .RequireAuthorization()
+            .AddEndpointFilter<SecurityStampRecheckFilter>()
             .WithTags(SwaggerConstants.Tags.Items)
             .WithSummary("Force reset all recurring items to needed")
             .Produces(StatusCodes.Status200OK)

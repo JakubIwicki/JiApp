@@ -129,6 +129,8 @@ public class Startup(SchedulerSettings settings, IWebHostEnvironment env)
         services.AddSingleton(settings);
         services.AddHttpContextAccessor();
 
+        services.AddSecurityStampRecheck(settings.IdentityBaseUrl, env);
+
         // Board handlers
         services.AddScoped<CreateBoardHandler>();
         services.AddScoped<GetBoardHandler>();

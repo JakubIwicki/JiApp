@@ -1,5 +1,6 @@
 using JiApp.Scheduler.Configuration;
 using JiApp.Common.Abstractions;
+using JiApp.Common.Middleware;
 
 namespace JiApp.Scheduler.Features.Boards.DeleteBoard;
 
@@ -23,6 +24,7 @@ public static class DeleteBoardEndpoint
                     };
             })
             .RequireAuthorization()
+            .AddEndpointFilter<SecurityStampRecheckFilter>()
             .WithTags(SwaggerConstants.Tags.Boards)
             .WithSummary("Delete a board")
             .Produces(StatusCodes.Status200OK)

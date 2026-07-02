@@ -6,6 +6,7 @@ public sealed class SchedulerSettings
     public string? ConnectionString { get; set; }
     public JwtSettings? Jwt { get; set; }
     public string[]? CorsAllowedOrigins { get; set; }
+    public string? IdentityBaseUrl { get; set; }
 
     public void Validate()
     {

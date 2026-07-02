@@ -96,6 +96,7 @@ services:
       Jwt__Key: ${JWT_KEY:?required}
       Jwt__Issuer: ${JWT_ISSUER:-JiApp}
       Jwt__Audience: ${JWT_AUDIENCE:-JiAppMobile}
+      IdentityBaseUrl: http://identity:6701
     volumes:
       - jiapp_data:/app/data
       - jiapp_logs:/app/logs
@@ -113,6 +114,7 @@ services:
       Jwt__Key: ${JWT_KEY:?required}
       Jwt__Issuer: ${JWT_ISSUER:-JiApp}
       Jwt__Audience: ${JWT_AUDIENCE:-JiAppMobile}
+      IdentityBaseUrl: http://identity:6701
     volumes:
       - jiapp_data:/app/data
       - jiapp_logs:/app/logs

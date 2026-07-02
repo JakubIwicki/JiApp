@@ -1,4 +1,5 @@
 using JiApp.Common.Abstractions;
+using JiApp.Common.Middleware;
 using api.JiApp.LovingBoards.Configuration;
 
 namespace api.JiApp.LovingBoards.Features.Items.ClearCompleted;
@@ -23,6 +24,7 @@ public static class ClearCompletedEndpoint
                     };
             })
             .RequireAuthorization()
+            .AddEndpointFilter<SecurityStampRecheckFilter>()
             .WithTags(SwaggerConstants.Tags.Items)
             .WithSummary("Clear all completed items on a board (soft-remove)")
             .Produces(StatusCodes.Status200OK)

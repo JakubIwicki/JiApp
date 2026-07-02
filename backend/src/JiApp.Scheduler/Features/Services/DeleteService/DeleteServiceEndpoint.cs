@@ -1,5 +1,6 @@
 using JiApp.Scheduler.Configuration;
 using JiApp.Common.Abstractions;
+using JiApp.Common.Middleware;
 
 namespace JiApp.Scheduler.Features.Services.DeleteService;
 
@@ -23,6 +24,7 @@ public static class DeleteServiceEndpoint
                     };
             })
             .RequireAuthorization()
+            .AddEndpointFilter<SecurityStampRecheckFilter>()
             .WithTags(SwaggerConstants.Tags.Services)
             .WithSummary("Delete a service (fails if service is used in appointments)")
             .Produces(StatusCodes.Status200OK)

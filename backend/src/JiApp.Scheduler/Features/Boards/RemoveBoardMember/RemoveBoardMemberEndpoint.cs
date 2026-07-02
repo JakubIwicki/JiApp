@@ -1,5 +1,6 @@
 using JiApp.Scheduler.Configuration;
 using JiApp.Common.Abstractions;
+using JiApp.Common.Middleware;
 
 namespace JiApp.Scheduler.Features.Boards.RemoveBoardMember;
 
@@ -25,6 +26,7 @@ public static class RemoveBoardMemberEndpoint
                     };
             })
             .RequireAuthorization()
+            .AddEndpointFilter<SecurityStampRecheckFilter>()
             .WithTags(SwaggerConstants.Tags.Boards)
             .WithSummary("Remove a member from a board")
             .Produces(StatusCodes.Status200OK)

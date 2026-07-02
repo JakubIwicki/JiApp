@@ -1,5 +1,6 @@
 using JiApp.Scheduler.Configuration;
 using JiApp.Common.Abstractions;
+using JiApp.Common.Middleware;
 
 namespace JiApp.Scheduler.Features.Appointments.DeleteAppointment;
 
@@ -23,6 +24,7 @@ public static class DeleteAppointmentEndpoint
                     };
             })
             .RequireAuthorization()
+            .AddEndpointFilter<SecurityStampRecheckFilter>()
             .WithTags(SwaggerConstants.Tags.Appointments)
             .WithSummary("Delete an appointment")
             .Produces(StatusCodes.Status200OK)
