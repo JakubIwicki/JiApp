@@ -113,6 +113,8 @@ public class Startup(LovingBoardsSettings settings, IWebHostEnvironment env)
         services.AddSingleton(settings);
         services.AddHttpContextAccessor();
 
+        services.AddSecurityStampRecheck(settings.IdentityBaseUrl, env);
+
         // Realtime
         services.AddSingleton<IBoardBroadcaster, BoardBroadcaster>();
         services.AddSingleton<Common.BoardWriteLock>();

@@ -10,6 +10,7 @@ using JiApp.Common.Services;
 using JiApp.Identity.Features.Auth.Login;
 using JiApp.Identity.Features.Auth.Logout;
 using JiApp.Identity.Features.Auth.Me;
+using JiApp.Identity.Features.Auth.Validate;
 using JiApp.Identity.Features.Auth.Refresh;
 using JiApp.Identity.Features.Auth.ChangePassword;
 using JiApp.Identity.Features.Auth.Register;
@@ -266,6 +267,7 @@ public class Startup(IdentitySettings settings, IWebHostEnvironment env)
         auth.MapRefresh();
         auth.MapLogout();
         auth.MapMe();
+        auth.MapValidate();
         auth.MapUpdateProfile();
         auth.MapChangePassword();
 

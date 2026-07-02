@@ -1,4 +1,5 @@
 using JiApp.Common.Abstractions;
+using JiApp.Common.Middleware;
 using api.JiApp.LovingBoards.Configuration;
 
 namespace api.JiApp.LovingBoards.Features.Items.DeleteItem;
@@ -24,6 +25,7 @@ public static class DeleteItemEndpoint
                     };
             })
             .RequireAuthorization()
+            .AddEndpointFilter<SecurityStampRecheckFilter>()
             .WithTags(SwaggerConstants.Tags.Items)
             .WithSummary("Delete an item")
             .Produces(StatusCodes.Status200OK)

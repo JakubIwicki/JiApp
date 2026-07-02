@@ -34,6 +34,7 @@ services:
       - "6704:6704"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - IdentityBaseUrl=http://identity:6701
 
   lovingboards:
     build:
@@ -43,6 +44,7 @@ services:
       - "6705:6705"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - IdentityBaseUrl=http://identity:6701
 
   gateway:
     build:

@@ -1,5 +1,6 @@
 using JiApp.Scheduler.Configuration;
 using JiApp.Common.Abstractions;
+using JiApp.Common.Middleware;
 
 namespace JiApp.Scheduler.Features.Expenses.DeleteExpense;
 
@@ -18,6 +19,7 @@ public static class DeleteExpenseEndpoint
                     : Results.NotFound(new ApiErrorResponse(result.Error!));
             })
             .RequireAuthorization()
+            .AddEndpointFilter<SecurityStampRecheckFilter>()
             .WithTags(SwaggerConstants.Tags.Expenses)
             .WithSummary("Delete an expense")
             .Produces(StatusCodes.Status200OK)

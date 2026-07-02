@@ -6,6 +6,7 @@ public sealed class LovingBoardsSettings
     public string? ConnectionString { get; set; }
     public JwtSettings? Jwt { get; set; }
     public string[]? CorsAllowedOrigins { get; set; }
+    public string? IdentityBaseUrl { get; set; }
     public int MaxBoardsPerUser { get; set; } = 50;
     public int DefaultPageSize { get; set; } = 50;
     public int MaxBoardNameLength { get; set; } = 200;

@@ -1,4 +1,5 @@
 using JiApp.Common.Abstractions;
+using JiApp.Common.Middleware;
 using JiApp.Scheduler.Configuration;
 
 namespace JiApp.Scheduler.Features.Clients.DeleteClient;
@@ -24,6 +25,7 @@ public static class DeleteClientEndpoint
                     };
             })
             .RequireAuthorization()
+            .AddEndpointFilter<SecurityStampRecheckFilter>()
             .WithTags(SwaggerConstants.Tags.Clients)
             .WithSummary("Delete a client (fails if client has appointments)")
             .Produces(StatusCodes.Status200OK)

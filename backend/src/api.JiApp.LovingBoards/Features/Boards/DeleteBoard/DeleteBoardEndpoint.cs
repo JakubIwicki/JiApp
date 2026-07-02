@@ -1,4 +1,5 @@
 using JiApp.Common.Abstractions;
+using JiApp.Common.Middleware;
 using api.JiApp.LovingBoards.Configuration;
 
 namespace api.JiApp.LovingBoards.Features.Boards.DeleteBoard;
@@ -23,6 +24,7 @@ public static class DeleteBoardEndpoint
                     };
             })
             .RequireAuthorization()
+            .AddEndpointFilter<SecurityStampRecheckFilter>()
             .WithTags(SwaggerConstants.Tags.Boards)
             .WithSummary("Delete a board")
             .Produces(StatusCodes.Status200OK)
