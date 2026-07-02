@@ -22,7 +22,10 @@ public sealed class SecurityStampRecheckFilter(ISecurityStampValidator validator
 				new ApiErrorResponse(Error: "Authorization service unavailable"),
 				ApiErrorResponse.JsonOptions,
 				statusCode: StatusCodes.Status503ServiceUnavailable),
-			_ => await next(context)
+			_ => Results.Json(
+				new ApiErrorResponse(Error: "Authorization service unavailable"),
+				ApiErrorResponse.JsonOptions,
+				statusCode: StatusCodes.Status503ServiceUnavailable)
 		};
 	}
 }

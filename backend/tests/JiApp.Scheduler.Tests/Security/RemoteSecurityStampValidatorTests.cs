@@ -101,6 +101,22 @@ public sealed class RemoteSecurityStampValidatorTests
 	}
 
 	[Fact]
+	public async Task ValidateCurrentAsync_TaskCanceledException_Timeout_ReturnsUnavailable()
+	{
+		var handler = new StubHttpMessageHandler(HttpStatusCode.OK)
+		{
+			ThrowException = new TaskCanceledException()
+		};
+		using var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://identity:6701") };
+		var accessor = CreateHttpContextAccessor();
+		var validator = new RemoteSecurityStampValidator(httpClient, accessor, NullLogger<RemoteSecurityStampValidator>());
+
+		var result = await validator.ValidateCurrentAsync();
+
+		result.Should().Be(StampValidationResult.Unavailable);
+	}
+
+	[Fact]
 	public async Task ValidateCurrentAsync_NoHttpContext_ReturnsUnavailable()
 	{
 		var handler = new StubHttpMessageHandler(HttpStatusCode.NoContent);
