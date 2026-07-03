@@ -21,12 +21,10 @@ jest.mock('react-i18next', () => ({
 
 // Mock @react-navigation/native useNavigation
 const mockNavigate = jest.fn();
-const mockGetParent = jest.fn(() => ({ navigate: mockNavigate }));
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({
     setOptions: jest.fn(),
     navigate: mockNavigate,
-    getParent: mockGetParent,
   }),
 }));
 
@@ -68,7 +66,7 @@ describe('SettingsScreen', () => {
     expect(getByTestId('logout-button')).toBeTruthy();
   });
 
-  it('navigates to the module picker on the root stack when switching modules', () => {
+  it('navigates to ModuleSelection on the root stack when switching modules', () => {
     const { getByTestId } = render(<SettingsScreen />);
 
     // Precondition: not navigated yet
@@ -76,7 +74,6 @@ describe('SettingsScreen', () => {
 
     fireEvent.press(getByTestId('switch-module-button'));
 
-    expect(mockGetParent).toHaveBeenCalled();
     expect(mockNavigate).toHaveBeenCalledWith('ModuleSelection');
   });
 });

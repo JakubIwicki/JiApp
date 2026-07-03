@@ -11,6 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Circle, Line, Path, Polyline, Rect } from 'react-native-svg';
 import useAuth from '../hooks/useAuth';
+import TabIcon from '../components/TabIcon';
 import { animation, borderRadius, spacing } from '../styles/theme';
 import type { Theme } from '../styles/theme';
 import { useThemedStyles, useTheme } from '../context/ThemeContext';
@@ -21,6 +22,8 @@ interface ModuleSelectionScreenProps {
   readonly onSelectModule?: (moduleId: ModuleId) => void;
   /** Called when the admin panel card is tapped. */
   readonly onSelectAdmin?: () => void;
+  /** Called when the settings gear is tapped. */
+  readonly onOpenSettings?: () => void;
 }
 
 interface ModuleMeta {
@@ -240,6 +243,7 @@ const ModuleCard: React.FC<ModuleCardProps> = ({
 const ModuleSelectionScreen: React.FC<ModuleSelectionScreenProps> = ({
   onSelectModule,
   onSelectAdmin,
+  onOpenSettings,
 }) => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -297,10 +301,26 @@ const ModuleSelectionScreen: React.FC<ModuleSelectionScreenProps> = ({
       testID="module-selection-screen"
     >
       <View style={styles.header}>
-        <Text style={styles.greeting} testID="module-greeting">
-          {greeting}
-        </Text>
-        <Text style={styles.subtitle}>{t('modules.subtitle')}</Text>
+        <View style={styles.headerText}>
+          <Text style={styles.greeting} testID="module-greeting">
+            {greeting}
+          </Text>
+          <Text style={styles.subtitle}>{t('modules.subtitle')}</Text>
+        </View>
+        {onOpenSettings ? (
+          <Pressable
+            onPress={onOpenSettings}
+            style={({ pressed }) => [
+              styles.settingsBtn,
+              pressed && { opacity: 0.6 },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.title')}
+            testID="module-selection-settings"
+          >
+            <TabIcon name="settings" color={colors.primary} size={22} />
+          </Pressable>
+        ) : null}
       </View>
 
       <View style={styles.cards}>
@@ -365,7 +385,19 @@ const makeStyles = (t: Theme) =>
       paddingBottom: spacing.xxl,
     },
     header: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
       marginBottom: spacing.xxl,
+    },
+    headerText: {
+      flex: 1,
+    },
+    settingsBtn: {
+      minHeight: 44,
+      minWidth: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     greeting: {
       ...t.typography.title,

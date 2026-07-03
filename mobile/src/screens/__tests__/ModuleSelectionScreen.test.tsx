@@ -129,4 +129,42 @@ describe('ModuleSelectionScreen', () => {
       'modules.greetingFallback',
     );
   });
+
+  it('does not render the settings gear when onOpenSettings is not provided', () => {
+    // Arrange + Act
+    const { queryByTestId } = renderScreen(['YtDownloader']);
+
+    // Assert
+    expect(queryByTestId('module-selection-settings')).toBeNull();
+  });
+
+  it('renders the settings gear when onOpenSettings is provided', () => {
+    // Arrange
+    const onOpenSettings = jest.fn();
+    const { getByTestId } = render(
+      <SafeAreaProvider initialMetrics={testMetrics}>
+        <AuthContext.Provider value={buildAuthValue(['YtDownloader'], 'Jakub')}>
+          <ModuleSelectionScreen
+            onSelectModule={jest.fn()}
+            onOpenSettings={onOpenSettings}
+          />
+        </AuthContext.Provider>
+      </SafeAreaProvider>,
+    );
+
+    // Act + Assert: gear renders
+    const gear = getByTestId('module-selection-settings');
+    expect(gear).toBeTruthy();
+    expect(gear.props.accessibilityRole).toBe('button');
+    expect(gear.props.accessibilityLabel).toBe('settings.title');
+
+    // Precondition: not called yet
+    expect(onOpenSettings).not.toHaveBeenCalled();
+
+    // Act: press the gear
+    fireEvent.press(gear);
+
+    // Assert: callback called
+    expect(onOpenSettings).toHaveBeenCalledTimes(1);
+  });
 });

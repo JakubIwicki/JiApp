@@ -2,9 +2,12 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import useAuth from '../hooks/useAuth';
 import * as storageService from '../services/storageService';
 import ModuleSelectionScreen from '../screens/ModuleSelectionScreen';
+import SettingsScreen from '../screens/SettingsScreen';
+import EditProfileScreen from '../screens/EditProfileScreen';
 import MainNavigator from './MainNavigator';
 import SchedulerNavigator from './SchedulerNavigator';
 import LovingBoardsNavigator from './LovingBoardsNavigator';
@@ -63,11 +66,13 @@ const ModuleSelectionRoute: React.FC = () => {
     <ModuleSelectionScreen
       onSelectModule={handleSelectModule}
       onSelectAdmin={handleSelectAdmin}
+      onOpenSettings={() => navigation.navigate('Settings')}
     />
   );
 };
 
 const RootNavigator: React.FC = () => {
+  const { t } = useTranslation();
   const { availableModules } = useAuth();
   const [persisted, setPersisted] = useState<ModuleId | null>(null);
   const [resolved, setResolved] = useState(false);
@@ -112,6 +117,16 @@ const RootNavigator: React.FC = () => {
       <Stack.Screen name="Scheduler" component={SchedulerNavigator} />
       <Stack.Screen name="LovingBoards" component={LovingBoardsNavigator} />
       <Stack.Screen name="Admin" component={AdminNavigator} />
+      <Stack.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{ headerShown: true, title: t('settings.title') }}
+      />
+      <Stack.Screen
+        name="EditProfile"
+        component={EditProfileScreen}
+        options={{ headerShown: true, title: t('settings.editProfile') }}
+      />
     </Stack.Navigator>
   );
 };

@@ -10,6 +10,8 @@ export type RootStackParamList = {
   Scheduler: undefined;
   LovingBoards: undefined;
   Admin: undefined;
+  Settings: undefined;
+  EditProfile: undefined;
 };
 
 export type LovingBoardsStackParamList = {
