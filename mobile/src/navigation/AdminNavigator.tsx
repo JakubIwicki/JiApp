@@ -7,9 +7,16 @@ import CreateUserScreen from '../modules/admin/screens/CreateUserScreen';
 import RoleListScreen from '../modules/admin/screens/RoleListScreen';
 import RoleEditScreen from '../modules/admin/screens/RoleEditScreen';
 import { useTheme } from '../context/ThemeContext';
+import {
+  SwitchModuleButton,
+  SettingsButton,
+} from './components/HeaderNavButtons';
 import type { AdminStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<AdminStackParamList>();
+
+const renderHeaderLeft = () => <SwitchModuleButton />;
+const renderHeaderRight = () => <SettingsButton />;
 
 const AdminNavigator: React.FC = () => {
   const { t } = useTranslation();
@@ -33,6 +40,8 @@ const AdminNavigator: React.FC = () => {
         component={UserListScreen}
         options={{
           title: t('admin.userList.title'),
+          headerLeft: renderHeaderLeft,
+          headerRight: renderHeaderRight,
         }}
       />
       <Stack.Screen

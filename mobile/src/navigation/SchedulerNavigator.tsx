@@ -16,39 +16,14 @@ import BoardManagementScreen from '../modules/scheduler/screens/BoardManagementS
 import { spacing } from '../styles/theme';
 import type { Theme } from '../styles/theme';
 import { useThemedStyles, useTheme } from '../context/ThemeContext';
+import {
+  SwitchModuleButton,
+  SettingsButton,
+} from './components/HeaderNavButtons';
 import type { SchedulerStackParamList } from '../modules/scheduler/types/navigation';
-import type { RootStackParamList } from './types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { CompositeNavigationProp } from '@react-navigation/native';
 
 const Stack = createNativeStackNavigator<SchedulerStackParamList>();
-
-type WeekendGridNavigationProp = CompositeNavigationProp<
-  NativeStackNavigationProp<SchedulerStackParamList, 'WeekendGrid'>,
-  NativeStackNavigationProp<RootStackParamList>
->;
-
-const SwitchModuleButton: React.FC = () => {
-  const { t } = useTranslation();
-  const navigation = useNavigation<WeekendGridNavigationProp>();
-  const styles = useThemedStyles(makeStyles);
-
-  const handlePress = useCallback(() => {
-    navigation.navigate('ModuleSelection');
-  }, [navigation]);
-
-  return (
-    <Pressable
-      onPress={handlePress}
-      style={({ pressed }) => [styles.headerBtn, pressed && styles.pressed]}
-      accessibilityRole="button"
-      accessibilityLabel={t('modules.switch')}
-      testID="scheduler-switch-module"
-    >
-      <Text style={styles.headerBtnText}>{t('modules.switch')}</Text>
-    </Pressable>
-  );
-};
 
 const BoardsButton: React.FC = () => {
   const { t } = useTranslation();
@@ -75,8 +50,13 @@ const BoardsButton: React.FC = () => {
   );
 };
 
-const renderSwitchModuleButton = () => <SwitchModuleButton />;
-const renderBoardsButton = () => <BoardsButton />;
+const renderHeaderLeft = () => <SwitchModuleButton />;
+const renderHeaderRight = () => (
+  <>
+    <SettingsButton />
+    <BoardsButton />
+  </>
+);
 
 const SchedulerNavigator: React.FC = () => {
   const { t } = useTranslation();
@@ -101,8 +81,8 @@ const SchedulerNavigator: React.FC = () => {
           component={WeekendGridScreen}
           options={{
             title: t('modules.scheduler.name'),
-            headerLeft: renderSwitchModuleButton,
-            headerRight: renderBoardsButton,
+            headerLeft: renderHeaderLeft,
+            headerRight: renderHeaderRight,
           }}
         />
         <Stack.Screen

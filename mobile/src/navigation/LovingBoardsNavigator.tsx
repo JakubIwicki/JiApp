@@ -6,9 +6,16 @@ import BoardDetailScreen from '../modules/lovingBoards/screens/BoardDetailScreen
 import BoardMembersScreen from '../modules/lovingBoards/screens/BoardMembersScreen';
 import ItemSheet from '../modules/lovingBoards/screens/ItemSheet';
 import { useTheme } from '../context/ThemeContext';
+import {
+  SwitchModuleButton,
+  SettingsButton,
+} from './components/HeaderNavButtons';
 import type { LovingBoardsStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<LovingBoardsStackParamList>();
+
+const renderHeaderLeft = () => <SwitchModuleButton />;
+const renderHeaderRight = () => <SettingsButton />;
 
 const LovingBoardsNavigator: React.FC = () => {
   const { t } = useTranslation();
@@ -32,6 +39,8 @@ const LovingBoardsNavigator: React.FC = () => {
         component={BoardListScreen}
         options={{
           title: t('lovingBoards.boardList.title'),
+          headerLeft: renderHeaderLeft,
+          headerRight: renderHeaderRight,
         }}
       />
       <Stack.Screen

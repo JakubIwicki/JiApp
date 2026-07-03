@@ -16,10 +16,11 @@ import type {
   SettingsStackParamList,
 } from '../navigation/types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { CompositeNavigationProp } from '@react-navigation/native';
 
-type SettingsNavigationProp = NativeStackNavigationProp<
-  SettingsStackParamList,
-  'Settings'
+type SettingsNavigationProp = CompositeNavigationProp<
+  NativeStackNavigationProp<SettingsStackParamList, 'Settings'>,
+  NativeStackNavigationProp<RootStackParamList>
 >;
 
 const SettingsScreen: React.FC = () => {
@@ -33,9 +34,7 @@ const SettingsScreen: React.FC = () => {
   useScreenTitle('settings.title');
 
   const handleSwitchModule = useCallback(() => {
-    const rootNavigation =
-      navigation.getParent<NativeStackNavigationProp<RootStackParamList>>();
-    rootNavigation?.navigate('ModuleSelection');
+    navigation.navigate('ModuleSelection');
   }, [navigation]);
 
   const handleEditProfile = useCallback(() => {
