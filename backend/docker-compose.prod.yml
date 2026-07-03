@@ -16,6 +16,7 @@ services:
       CorsAllowedOrigins__0: https://jakubiwicki.github.io
       Jwt__AccessTokenExpireMinutes: ${JWT_ACCESS_EXPIRE:-15}
       Jwt__RefreshTokenExpireDays: ${JWT_REFRESH_EXPIRE:-7}
+      Bootstrap__AdminUsername: ${BOOTSTRAP_ADMIN_USERNAME:-}
     volumes:
       - jiapp_data:/app/data
       - jiapp_logs:/app/logs
