@@ -2,9 +2,8 @@ using JiApp.Common;
 using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Identity.Features.Admin.Common;
+using JiApp.Identity.Tests.Mocks;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Logging;
-using Moq;
 
 namespace JiApp.Identity.Tests.Features.Admin.Common;
 
@@ -15,25 +14,15 @@ public sealed class AdminAccessGuardTests
 		private readonly User _adminA = new() { Id = 1, UserName = "adminA" };
 		private readonly User _adminB = new() { Id = 2, UserName = "adminB" };
 
-		public Mock<UserManager<User>> UserManagerMock { get; } = new(
-			Mock.Of<IUserStore<User>>(),
-			Mock.Of<Microsoft.Extensions.Options.IOptions<IdentityOptions>>(),
-			Mock.Of<IPasswordHasher<User>>(),
-			Array.Empty<IUserValidator<User>>(),
-			Array.Empty<IPasswordValidator<User>>(),
-			Mock.Of<ILookupNormalizer>(),
-			Mock.Of<IdentityErrorDescriber>(),
-			Mock.Of<IServiceProvider>(),
-			Mock.Of<ILogger<UserManager<User>>>());
-
-		public Mock<ICurrentUserService> CurrentUserMock { get; } = new();
+		public MockUserManager UserManagerDouble { get; } = MockUserManager.GetSuccessful();
+		public MockCurrentUserService CurrentUserMock { get; } = new();
 
 		public AdminAccessGuard Sut { get; }
 
 		public Fixture()
 		{
-			CurrentUserMock.Setup(x => x.UserId).Returns(999);
-			Sut = new AdminAccessGuard(UserManagerMock.Object, CurrentUserMock.Object);
+			CurrentUserMock.WithReturning(999);
+			Sut = new AdminAccessGuard(UserManagerDouble.Object, CurrentUserMock.Object);
 		}
 
 		public Fixture WithTwoAdminsOneLockedOut(long targetUserId)
@@ -41,16 +30,11 @@ public sealed class AdminAccessGuardTests
 			var target = targetUserId == _adminA.Id ? _adminA : _adminB;
 			var other = target == _adminA ? _adminB : _adminA;
 
-			UserManagerMock.Setup(x => x.FindByIdAsync(targetUserId.ToString()))
-				.ReturnsAsync(target);
-			UserManagerMock.Setup(x => x.IsInRoleAsync(target, RoleNames.Admin))
-				.ReturnsAsync(true);
-			UserManagerMock.Setup(x => x.GetUsersInRoleAsync(RoleNames.Admin))
-				.ReturnsAsync([_adminA, _adminB]);
-			UserManagerMock.Setup(x => x.IsLockedOutAsync(target))
-				.ReturnsAsync(false);
-			UserManagerMock.Setup(x => x.IsLockedOutAsync(other))
-				.ReturnsAsync(true);
+			UserManagerDouble.WithFindByIdAsync(targetUserId.ToString(), target);
+			UserManagerDouble.WithIsInRoleAsync(target, RoleNames.Admin, true);
+			UserManagerDouble.WithGetUsersInRoleAsync(RoleNames.Admin, [_adminA, _adminB]);
+			UserManagerDouble.WithIsLockedOutAsync(target, false);
+			UserManagerDouble.WithIsLockedOutAsync(other, true);
 			return this;
 		}
 
@@ -59,16 +43,11 @@ public sealed class AdminAccessGuardTests
 			var target = targetUserId == _adminA.Id ? _adminA : _adminB;
 			var other = target == _adminA ? _adminB : _adminA;
 
-			UserManagerMock.Setup(x => x.FindByIdAsync(targetUserId.ToString()))
-				.ReturnsAsync(target);
-			UserManagerMock.Setup(x => x.IsInRoleAsync(target, RoleNames.Admin))
-				.ReturnsAsync(true);
-			UserManagerMock.Setup(x => x.GetUsersInRoleAsync(RoleNames.Admin))
-				.ReturnsAsync([_adminA, _adminB]);
-			UserManagerMock.Setup(x => x.IsLockedOutAsync(target))
-				.ReturnsAsync(true);
-			UserManagerMock.Setup(x => x.IsLockedOutAsync(other))
-				.ReturnsAsync(false);
+			UserManagerDouble.WithFindByIdAsync(targetUserId.ToString(), target);
+			UserManagerDouble.WithIsInRoleAsync(target, RoleNames.Admin, true);
+			UserManagerDouble.WithGetUsersInRoleAsync(RoleNames.Admin, [_adminA, _adminB]);
+			UserManagerDouble.WithIsLockedOutAsync(target, true);
+			UserManagerDouble.WithIsLockedOutAsync(other, false);
 			return this;
 		}
 
@@ -76,16 +55,11 @@ public sealed class AdminAccessGuardTests
 		{
 			var target = targetUserId == _adminA.Id ? _adminA : _adminB;
 
-			UserManagerMock.Setup(x => x.FindByIdAsync(targetUserId.ToString()))
-				.ReturnsAsync(target);
-			UserManagerMock.Setup(x => x.IsInRoleAsync(target, RoleNames.Admin))
-				.ReturnsAsync(true);
-			UserManagerMock.Setup(x => x.GetUsersInRoleAsync(RoleNames.Admin))
-				.ReturnsAsync([_adminA, _adminB]);
-			UserManagerMock.Setup(x => x.IsLockedOutAsync(_adminA))
-				.ReturnsAsync(false);
-			UserManagerMock.Setup(x => x.IsLockedOutAsync(_adminB))
-				.ReturnsAsync(false);
+			UserManagerDouble.WithFindByIdAsync(targetUserId.ToString(), target);
+			UserManagerDouble.WithIsInRoleAsync(target, RoleNames.Admin, true);
+			UserManagerDouble.WithGetUsersInRoleAsync(RoleNames.Admin, [_adminA, _adminB]);
+			UserManagerDouble.WithIsLockedOutAsync(_adminA, false);
+			UserManagerDouble.WithIsLockedOutAsync(_adminB, false);
 			return this;
 		}
 	}
@@ -124,10 +98,9 @@ public sealed class AdminAccessGuardTests
 	public async Task EnsureNotLastAdminAsync_ReturnsSuccess_WhenTargetIsNotAdmin()
 	{
 		var fixture = new Fixture();
-		fixture.UserManagerMock.Setup(x => x.FindByIdAsync("5"))
-			.ReturnsAsync(new User { Id = 5, UserName = "regular" });
-		fixture.UserManagerMock.Setup(x => x.IsInRoleAsync(It.IsAny<User>(), RoleNames.Admin))
-			.ReturnsAsync(false);
+		var regularUser = new User { Id = 5, UserName = "regular" };
+		fixture.UserManagerDouble.WithFindByIdAsync("5", regularUser);
+		fixture.UserManagerDouble.WithIsInRoleAsync(regularUser, RoleNames.Admin, false);
 
 		var result = await fixture.Sut.EnsureNotLastAdminAsync(5);
 
@@ -138,7 +111,7 @@ public sealed class AdminAccessGuardTests
 	public void EnsureNotSelf_ReturnsAccessDenied_WhenTargetIsSelf()
 	{
 		var fixture = new Fixture();
-		fixture.CurrentUserMock.Setup(x => x.UserId).Returns(42);
+		fixture.CurrentUserMock.WithReturning(42);
 
 		var result = fixture.Sut.EnsureNotSelf(42);
 
@@ -149,7 +122,7 @@ public sealed class AdminAccessGuardTests
 	public void EnsureNotSelf_ReturnsSuccess_WhenTargetIsOther()
 	{
 		var fixture = new Fixture();
-		fixture.CurrentUserMock.Setup(x => x.UserId).Returns(42);
+		fixture.CurrentUserMock.WithReturning(42);
 
 		var result = fixture.Sut.EnsureNotSelf(99);
 

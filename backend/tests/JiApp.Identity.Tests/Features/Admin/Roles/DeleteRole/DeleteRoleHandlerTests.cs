@@ -2,9 +2,8 @@ using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Identity.Features.Admin.Common;
 using JiApp.Identity.Features.Admin.Roles.DeleteRole;
+using JiApp.Identity.Tests.Mocks;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Logging;
-using Moq;
 
 namespace JiApp.Identity.Tests.Features.Admin.Roles.DeleteRole;
 
@@ -14,53 +13,32 @@ public sealed class DeleteRoleHandlerTests
 	{
 		private readonly IdentityRole<long> _role = new("Moderator") { Id = 3 };
 
-		public Mock<RoleManager<IdentityRole<long>>> RoleManagerMock { get; } = new(
-			Mock.Of<IRoleStore<IdentityRole<long>>>(),
-			Array.Empty<IRoleValidator<IdentityRole<long>>>(),
-			Mock.Of<ILookupNormalizer>(),
-			Mock.Of<IdentityErrorDescriber>(),
-			Mock.Of<ILogger<RoleManager<IdentityRole<long>>>>());
-
-		public Mock<UserManager<User>> UserManagerMock { get; } = new(
-			Mock.Of<IUserStore<User>>(),
-			Mock.Of<Microsoft.Extensions.Options.IOptions<IdentityOptions>>(),
-			Mock.Of<IPasswordHasher<User>>(),
-			Array.Empty<IUserValidator<User>>(),
-			Array.Empty<IPasswordValidator<User>>(),
-			Mock.Of<ILookupNormalizer>(),
-			Mock.Of<IdentityErrorDescriber>(),
-			Mock.Of<IServiceProvider>(),
-			Mock.Of<ILogger<UserManager<User>>>());
-
-		public Mock<ICurrentUserService> CurrentUserMock { get; } = new();
+		public MockRoleManager RoleManagerDouble { get; } = MockRoleManager.GetSuccessful();
+		public MockUserManager UserManagerDouble { get; } = MockUserManager.GetSuccessful();
+		public MockCurrentUserService CurrentUserMock { get; } = new();
 
 		public AdminAccessGuard Guard { get; }
 		public DeleteRoleHandler Sut { get; }
 
 		public Fixture()
 		{
-			CurrentUserMock.Setup(x => x.UserId).Returns(1);
-			Guard = new AdminAccessGuard(UserManagerMock.Object, CurrentUserMock.Object);
-			Sut = new DeleteRoleHandler(RoleManagerMock.Object, UserManagerMock.Object, Guard);
+			CurrentUserMock.WithReturning(1);
+			Guard = new AdminAccessGuard(UserManagerDouble.Object, CurrentUserMock.Object);
+			Sut = new DeleteRoleHandler(RoleManagerDouble.Object, UserManagerDouble.Object, Guard);
 		}
 
 		public Fixture WithDeletableRole()
 		{
-			RoleManagerMock.Setup(x => x.FindByNameAsync("Moderator"))
-				.ReturnsAsync(_role);
-			UserManagerMock.Setup(x => x.GetUsersInRoleAsync("Moderator"))
-				.ReturnsAsync([]);
-			RoleManagerMock.Setup(x => x.DeleteAsync(_role))
-				.ReturnsAsync(IdentityResult.Success);
+			RoleManagerDouble.WithFindByNameAsync("Moderator", _role);
+			UserManagerDouble.WithGetUsersInRoleAsync("Moderator", []);
+			RoleManagerDouble.WithDeleteAsync(_role, IdentityResult.Success);
 			return this;
 		}
 
 		public Fixture WithRoleHavingUsers()
 		{
-			RoleManagerMock.Setup(x => x.FindByNameAsync("Moderator"))
-				.ReturnsAsync(_role);
-			UserManagerMock.Setup(x => x.GetUsersInRoleAsync("Moderator"))
-				.ReturnsAsync([new User { Id = 1, UserName = "someuser" }]);
+			RoleManagerDouble.WithFindByNameAsync("Moderator", _role);
+			UserManagerDouble.WithGetUsersInRoleAsync("Moderator", [new User { Id = 1, UserName = "someuser" }]);
 			return this;
 		}
 	}
@@ -109,8 +87,7 @@ public sealed class DeleteRoleHandlerTests
 	public async Task HandleAsync_ReturnsNotFound_WhenRoleDoesNotExist()
 	{
 		var fixture = new Fixture();
-		fixture.RoleManagerMock.Setup(x => x.FindByNameAsync("FakeRole"))
-			.ReturnsAsync((IdentityRole<long>?)null);
+		fixture.RoleManagerDouble.WithFindByNameAsync("FakeRole", null);
 
 		var result = await fixture.Sut.HandleAsync("FakeRole", CancellationToken.None);
 

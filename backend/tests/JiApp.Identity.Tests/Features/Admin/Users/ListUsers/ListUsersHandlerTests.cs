@@ -1,10 +1,8 @@
 using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Identity.Features.Admin.Users.ListUsers;
+using JiApp.Identity.Tests.Mocks;
 using JiApp.Testing.Common.Data;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Logging;
-using Moq;
 
 namespace JiApp.Identity.Tests.Features.Admin.Users.ListUsers;
 
@@ -12,16 +10,7 @@ public sealed class ListUsersHandlerTests
 {
 	private sealed class Fixture
 	{
-		public Mock<UserManager<User>> UserManagerMock { get; } = new(
-			Mock.Of<IUserStore<User>>(),
-			Mock.Of<Microsoft.Extensions.Options.IOptions<IdentityOptions>>(),
-			Mock.Of<IPasswordHasher<User>>(),
-			Array.Empty<IUserValidator<User>>(),
-			Array.Empty<IPasswordValidator<User>>(),
-			Mock.Of<ILookupNormalizer>(),
-			Mock.Of<IdentityErrorDescriber>(),
-			Mock.Of<IServiceProvider>(),
-			Mock.Of<ILogger<UserManager<User>>>());
+		public MockUserManager UserManagerDouble { get; } = MockUserManager.GetSuccessful();
 
 		public ListUsersHandler Sut { get; }
 
@@ -29,7 +18,7 @@ public sealed class ListUsersHandlerTests
 
 		public Fixture()
 		{
-			Sut = new ListUsersHandler(UserManagerMock.Object);
+			Sut = new ListUsersHandler(UserManagerDouble.Object);
 		}
 
 		public Fixture WithUsers(int count)
@@ -47,10 +36,8 @@ public sealed class ListUsersHandlerTests
 			}
 
 			var queryable = _users.AsAsyncQueryable();
-			UserManagerMock.Setup(x => x.Users).Returns(queryable);
-			UserManagerMock
-				.Setup(x => x.GetRolesAsync(It.IsAny<User>()))
-				.ReturnsAsync(["User"]);
+			UserManagerDouble.WithUsersQueryable(queryable);
+			UserManagerDouble.WithGetRolesAsyncForAny(["User"]);
 			return this;
 		}
 
