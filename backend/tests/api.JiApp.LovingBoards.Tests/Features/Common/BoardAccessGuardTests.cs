@@ -57,8 +57,8 @@ public sealed class BoardAccessGuardTests : LovingBoardsHandlerTestBase
         var result =
             await BoardAccessGuard.VerifyBoardAccessAsync(fixture.DbContext, 999L, fixture.CurrentUser, CancellationToken.None);
 
-        AssertNotFound(result);
-        result.Error.Should().Be("Board not found");
+        var error = AssertNotFound(result);
+        error.Should().Be("Board not found");
     }
 
     [Fact]
@@ -70,8 +70,8 @@ public sealed class BoardAccessGuardTests : LovingBoardsHandlerTestBase
         var result =
             await BoardAccessGuard.VerifyBoardAccessAsync(fixture.DbContext, board.Id, fixture.CurrentUser, CancellationToken.None);
 
-        AssertAccessDenied(result);
-        result.Error.Should().Be("Access denied");
+        var error = AssertAccessDenied(result);
+        error.Should().Be("Access denied");
     }
 
     [Fact]
@@ -83,10 +83,10 @@ public sealed class BoardAccessGuardTests : LovingBoardsHandlerTestBase
         var result =
             await BoardAccessGuard.VerifyBoardOwnerAsync(fixture.DbContext, board.Id, fixture.CurrentUser, CancellationToken.None);
 
-        AssertSuccess(result);
-        result.Value.Should().NotBeNull();
-        result.Value!.Id.Should().Be(board.Id);
-        result.Value.Name.Should().Be("Test");
+        var returnedBoard = AssertSuccess(result);
+        returnedBoard.Should().NotBeNull();
+        returnedBoard.Id.Should().Be(board.Id);
+        returnedBoard.Name.Should().Be("Test");
     }
 
     [Fact]
