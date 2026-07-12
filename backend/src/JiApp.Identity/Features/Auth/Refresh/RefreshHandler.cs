@@ -31,7 +31,8 @@ public sealed class RefreshHandler(
         if (storedToken.IsRevoked)
         {
             logger.RefreshTokenReuseDetected(storedToken.Id, storedToken.UserId);
-            await refreshTokenService.RevokeAllForUserAsync(storedToken.UserId, ct);
+            // Security cleanup must complete even if the request aborts — never cancel the revoke.
+            await refreshTokenService.RevokeAllForUserAsync(storedToken.UserId, CancellationToken.None);
             return Result<RefreshResponse>.Failure("Invalid or expired refresh token");
         }
 

@@ -25,7 +25,8 @@ public sealed class ResetPasswordHandler(
 			return Result<bool>.Failure(errors, ResultCategories.Validation);
 		}
 
-		await refreshTokenService.RevokeAllForUserAsync(userId, ct);
+		// Security cleanup must complete even if the request aborts — never cancel the revoke.
+		await refreshTokenService.RevokeAllForUserAsync(userId, CancellationToken.None);
 
 		return Result<bool>.Success(true);
 	}
