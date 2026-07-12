@@ -9,19 +9,18 @@ const ServiceContext = createContext<ServicesBag>({
   metadataService: new MetadataService(),
 });
 
-export function ServiceProvider({
-  children,
-}: {
+export interface ServiceProviderProps {
   readonly children: ReactNode;
-}) {
-  const services = useMemo<ServicesBag>(
-    () => ({ metadataService: new MetadataService() }),
-    [],
+  readonly services?: ServicesBag;
+}
+
+export function ServiceProvider({ children, services }: ServiceProviderProps) {
+  const bag = useMemo<ServicesBag>(
+    () => services ?? { metadataService: new MetadataService() },
+    [services],
   );
   return (
-    <ServiceContext.Provider value={services}>
-      {children}
-    </ServiceContext.Provider>
+    <ServiceContext.Provider value={bag}>{children}</ServiceContext.Provider>
   );
 }
 
