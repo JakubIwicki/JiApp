@@ -1,44 +1,220 @@
-import type { LoginResponse } from '../../types/api';
+import { createMockFn } from '../../test/createMockFn';
+import type { ProfileResponse } from '../authService';
+import type { LoginResponse, RefreshResponse } from '../../types/api';
 
-type Mode = 'success' | 'error' | 'loading';
+// ── Default stub data ──────────────────────────────────────────────────────
 
-let _mode: Mode = 'success';
-let _delayMs = 0;
-
-export const setAuthMode = (mode: Mode, delayMs = 0) => {
-  _mode = mode;
-  _delayMs = delayMs;
-};
-
-export const login = async (
-  _username: string,
-  _password: string,
-): Promise<LoginResponse> => {
-  if (_delayMs) await new Promise(r => setTimeout(r, _delayMs));
-  if (_mode === 'loading') await new Promise(() => {});
-  if (_mode === 'error') throw new Error('Invalid credentials');
-  return {
-    id: 1,
-    displayName: 'Mock User',
-    token: 'mock-jwt-token',
-    roles: ['User'],
-    permissions: ['ytdownloader.access', 'scheduler.access'],
-  };
-};
-
-export const register = async (
-  _username: string,
-  _email: string,
-  _password: string,
-  _displayName: string,
-): Promise<void> => {
-  if (_mode === 'error') throw new Error('Registration failed');
-};
-
-export const checkToken = async (_token: string): Promise<LoginResponse> => ({
+const defaultUser: LoginResponse = {
   id: 1,
   displayName: 'Mock User',
-  token: _token,
+  token: 'mock-jwt-token',
   roles: ['User'],
   permissions: ['ytdownloader.access', 'scheduler.access'],
+};
+
+const defaultProfile: ProfileResponse = {
+  id: 1,
+  displayName: 'Mock User',
+  email: 'mock@test.com',
+  roles: ['User'],
+  permissions: ['ytdownloader.access', 'scheduler.access'],
+};
+
+const defaultRefresh: RefreshResponse = {
+  accessToken: 'mock-refreshed-jwt',
+  refreshToken: 'mock-refreshed-rt',
+  expiresIn: 3600,
+};
+
+// ── Internal state ─────────────────────────────────────────────────────────
+
+let _loginResponse: LoginResponse = { ...defaultUser };
+let _loginError: Error | null = null;
+let _registerError: Error | null = null;
+let _checkTokenResponse: LoginResponse = { ...defaultUser };
+let _checkTokenError: Error | null = null;
+let _getProfileResponse: ProfileResponse = { ...defaultProfile };
+let _getProfileError: Error | null = null;
+let _updateProfileResponse: ProfileResponse = { ...defaultProfile };
+let _updateProfileError: Error | null = null;
+let _changePasswordError: Error | null = null;
+let _refreshTokenResponse: RefreshResponse = { ...defaultRefresh };
+let _refreshTokenError: Error | null = null;
+
+// ── Mock functions ─────────────────────────────────────────────────────────
+
+export const login = createMockFn(
+  async (_username: string, _password: string): Promise<LoginResponse> => {
+    if (_loginError) throw _loginError;
+    return _loginResponse;
+  },
+);
+
+export const register = createMockFn(
+  async (
+    _username: string,
+    _email: string,
+    _password: string,
+    _displayName: string,
+  ): Promise<void> => {
+    if (_registerError) throw _registerError;
+  },
+);
+
+export const checkToken = createMockFn(
+  async (_token: string): Promise<LoginResponse> => {
+    if (_checkTokenError) throw _checkTokenError;
+    return _checkTokenResponse;
+  },
+);
+
+export const getProfile = createMockFn(async (): Promise<ProfileResponse> => {
+  if (_getProfileError) throw _getProfileError;
+  return _getProfileResponse;
 });
+
+export const updateProfile = createMockFn(
+  async (_displayName: string, _email: string): Promise<ProfileResponse> => {
+    if (_updateProfileError) throw _updateProfileError;
+    return _updateProfileResponse;
+  },
+);
+
+export const changePassword = createMockFn(
+  async (_currentPassword: string, _newPassword: string): Promise<void> => {
+    if (_changePasswordError) throw _changePasswordError;
+  },
+);
+
+export const refreshToken = createMockFn(
+  async (_token: string): Promise<RefreshResponse> => {
+    if (_refreshTokenError) throw _refreshTokenError;
+    return _refreshTokenResponse;
+  },
+);
+
+// ── Fluent scenario builders (.withX()) ────────────────────────────────────
+
+export function withLoginSuccess(
+  overrides?: Partial<LoginResponse>,
+): LoginResponse {
+  _loginError = null;
+  _loginResponse = { ...defaultUser, ...overrides };
+  return _loginResponse;
+}
+
+export function withLoginFailure(
+  error: Error = new Error('Invalid credentials'),
+): Error {
+  _loginError = error;
+  return error;
+}
+
+export function withRegisterSuccess(): void {
+  _registerError = null;
+}
+
+export function withRegisterFailure(
+  error: Error = new Error('Registration failed'),
+): Error {
+  _registerError = error;
+  return error;
+}
+
+export function withCheckTokenSuccess(
+  overrides?: Partial<LoginResponse>,
+): LoginResponse {
+  _checkTokenError = null;
+  _checkTokenResponse = { ...defaultUser, ...overrides };
+  return _checkTokenResponse;
+}
+
+export function withCheckTokenFailure(
+  error: Error = new Error('Token invalid'),
+): Error {
+  _checkTokenError = error;
+  return error;
+}
+
+export function withGetProfileSuccess(
+  overrides?: Partial<ProfileResponse>,
+): ProfileResponse {
+  _getProfileError = null;
+  _getProfileResponse = { ...defaultProfile, ...overrides };
+  return _getProfileResponse;
+}
+
+export function withGetProfileFailure(
+  error: Error = new Error('Failed to fetch profile'),
+): Error {
+  _getProfileError = error;
+  return error;
+}
+
+export function withUpdateProfileSuccess(
+  overrides?: Partial<ProfileResponse>,
+): ProfileResponse {
+  _updateProfileError = null;
+  _updateProfileResponse = { ...defaultProfile, ...overrides };
+  return _updateProfileResponse;
+}
+
+export function withUpdateProfileFailure(
+  error: Error = new Error('Failed to update profile'),
+): Error {
+  _updateProfileError = error;
+  return error;
+}
+
+export function withChangePasswordSuccess(): void {
+  _changePasswordError = null;
+}
+
+export function withChangePasswordFailure(
+  error: Error = new Error('Password change failed'),
+): Error {
+  _changePasswordError = error;
+  return error;
+}
+
+export function withRefreshTokenSuccess(
+  overrides?: Partial<RefreshResponse>,
+): RefreshResponse {
+  _refreshTokenError = null;
+  _refreshTokenResponse = { ...defaultRefresh, ...overrides };
+  return _refreshTokenResponse;
+}
+
+export function withRefreshTokenFailure(
+  error: Error = new Error('Refresh failed'),
+): Error {
+  _refreshTokenError = error;
+  return error;
+}
+
+// ── Reset ──────────────────────────────────────────────────────────────────
+
+export function reset(): void {
+  _loginError = null;
+  _loginResponse = { ...defaultUser };
+  _registerError = null;
+  _checkTokenError = null;
+  _checkTokenResponse = { ...defaultUser };
+  _getProfileError = null;
+  _getProfileResponse = { ...defaultProfile };
+  _updateProfileError = null;
+  _updateProfileResponse = { ...defaultProfile };
+  _changePasswordError = null;
+  _refreshTokenError = null;
+  _refreshTokenResponse = { ...defaultRefresh };
+
+  if (typeof jest !== 'undefined') {
+    login.mockClear();
+    register.mockClear();
+    checkToken.mockClear();
+    getProfile.mockClear();
+    updateProfile.mockClear();
+    changePassword.mockClear();
+    refreshToken.mockClear();
+  }
+}

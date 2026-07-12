@@ -4,7 +4,10 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { Meta, StoryObj } from '@storybook/react';
 import DownloadScreen from './DownloadScreen';
 import type { MainStackParamList } from '../navigation/types';
-import { setDownloadMode } from '../services/__mocks__/downloadService';
+import {
+  withDownloadLinkSuccess,
+  withDownloadLinkFailure,
+} from '../services/__mocks__/downloadService';
 
 const Stack = createNativeStackNavigator<MainStackParamList>();
 
@@ -21,7 +24,7 @@ const meta: Meta<typeof DownloadScreen> = {
   title: 'Screens/DownloadScreen',
   component: DownloadScreen,
   decorators: [
-    (Story) => (
+    Story => (
       <NavigationContainer>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen
@@ -41,8 +44,8 @@ type Story = StoryObj<typeof DownloadScreen>;
 
 export const Ready: Story = {
   decorators: [
-    (Story) => {
-      setDownloadMode('success');
+    Story => {
+      withDownloadLinkSuccess();
       return <Story />;
     },
   ],
@@ -58,8 +61,8 @@ export const Ready: Story = {
 
 export const Error: Story = {
   decorators: [
-    (Story) => {
-      setDownloadMode('error');
+    Story => {
+      withDownloadLinkFailure();
       return <Story />;
     },
   ],
