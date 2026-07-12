@@ -1,6 +1,7 @@
 using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Identity.Features.Auth.ChangePassword;
+using JiApp.Identity.Tests.Mocks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -21,50 +22,36 @@ public sealed class ChangePasswordHandlerTests
             ConcurrencyStamp = "concurrency"
         };
 
-        public Mock<UserManager<User>> UserManagerMock { get; } = new(
-            Mock.Of<IUserStore<User>>(),
-            Mock.Of<Microsoft.Extensions.Options.IOptions<IdentityOptions>>(),
-            Mock.Of<IPasswordHasher<User>>(),
-            Array.Empty<IUserValidator<User>>(),
-            Array.Empty<IPasswordValidator<User>>(),
-            Mock.Of<ILookupNormalizer>(),
-            Mock.Of<IdentityErrorDescriber>(),
-            Mock.Of<IServiceProvider>(),
-            Mock.Of<ILogger<UserManager<User>>>());
-
+        public MockUserManager UserManagerDouble { get; } = MockUserManager.GetSuccessful();
         public MockCurrentUserService CurrentUser { get; } = MockCurrentUserService.GetSuccessful();
 
         public ChangePasswordHandler Sut =>
-            new(UserManagerMock.Object, CurrentUser.Mock.Object, Mock.Of<ILogger<ChangePasswordHandler>>());
+            new(UserManagerDouble.Object, CurrentUser.Object, Mock.Of<ILogger<ChangePasswordHandler>>());
 
         public Fixture WithExistingUser(long userId = 1)
         {
             CurrentUser.WithReturning(userId);
-            UserManagerMock.Setup(x => x.FindByIdAsync(userId.ToString()))
-                .ReturnsAsync(_testUser);
+            UserManagerDouble.WithFindByIdAsync(userId.ToString(), _testUser);
             return this;
         }
 
         public Fixture WithSuccessfulPasswordChange()
         {
-            UserManagerMock.Setup(x => x.ChangePasswordAsync(_testUser, "OldPass1", "NewPass1"))
-                .ReturnsAsync(IdentityResult.Success);
+            UserManagerDouble.WithChangePasswordAsync(_testUser, "OldPass1", "NewPass1", IdentityResult.Success);
             return this;
         }
 
         public Fixture WithFailingPasswordChange()
         {
-            UserManagerMock.Setup(x => x.ChangePasswordAsync(_testUser, "WrongPass", "NewPass1"))
-                .ReturnsAsync(IdentityResult.Failed(
-                    new IdentityError { Description = "Incorrect password." }));
+            UserManagerDouble.WithChangePasswordAsync(_testUser, "WrongPass", "NewPass1",
+                IdentityResult.Failed(new IdentityError { Description = "Incorrect password." }));
             return this;
         }
 
         public Fixture WithMissingUser(long userId = 999)
         {
             CurrentUser.WithReturning(userId);
-            UserManagerMock.Setup(x => x.FindByIdAsync(userId.ToString()))
-                .ReturnsAsync((User?)null);
+            UserManagerDouble.WithFindByIdAsync(userId.ToString(), null);
             return this;
         }
     }

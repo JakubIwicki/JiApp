@@ -3,7 +3,7 @@ using JiApp.Common.Models;
 using JiApp.Identity.Configuration;
 using JiApp.Identity.Features.Auth.Login;
 using JiApp.Identity.Models;
-using JiApp.Identity.Services;
+using JiApp.Identity.Tests.Mocks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -26,23 +26,12 @@ public sealed class LoginHandlerTests
             ConcurrencyStamp = "concurrency"
         };
 
-        public Mock<UserManager<User>> UserManagerMock { get; } = new(
-            Mock.Of<IUserStore<User>>(),
-            Mock.Of<Microsoft.Extensions.Options.IOptions<IdentityOptions>>(),
-            Mock.Of<IPasswordHasher<User>>(),
-            Array.Empty<IUserValidator<User>>(),
-            Array.Empty<IPasswordValidator<User>>(),
-            Mock.Of<ILookupNormalizer>(),
-            Mock.Of<IdentityErrorDescriber>(),
-            Mock.Of<IServiceProvider>(),
-            Mock.Of<ILogger<UserManager<User>>>());
-
+        public MockUserManager UserManagerDouble { get; } = MockUserManager.GetSuccessful();
         public Mock<IHttpContextAccessor> HttpContextAccessorMock { get; } = new();
-
-        public Mock<SignInManager<User>> SignInManagerMock { get; }
-        public Mock<IJwtTokenService> JwtTokenServiceMock { get; } = new();
-        public Mock<IRefreshTokenService> RefreshTokenServiceMock { get; } = new();
-        public Mock<IUserAccessService> AccessServiceMock { get; } = new();
+        public MockSignInManager SignInManagerDouble { get; }
+        public MockJwtTokenService JwtTokenDouble { get; } = MockJwtTokenService.GetSuccessful();
+        public MockRefreshTokenService RefreshTokenDouble { get; } = MockRefreshTokenService.GetSuccessful();
+        public MockUserAccessService AccessServiceDouble { get; } = MockUserAccessService.GetSuccessful();
         public Mock<IPasswordHasher<User>> PasswordHasherMock { get; } = new();
         public IdentitySettings Settings { get; } = new()
         {
@@ -53,14 +42,8 @@ public sealed class LoginHandlerTests
 
         public Fixture()
         {
-            SignInManagerMock = new Mock<SignInManager<User>>(
-                UserManagerMock.Object,
-                HttpContextAccessorMock.Object,
-                Mock.Of<IUserClaimsPrincipalFactory<User>>(),
-                Mock.Of<Microsoft.Extensions.Options.IOptions<IdentityOptions>>(),
-                Mock.Of<ILogger<SignInManager<User>>>(),
-                Mock.Of<IAuthenticationSchemeProvider>(),
-                Mock.Of<IUserConfirmation<User>>());
+            SignInManagerDouble = MockSignInManager.GetSuccessful(
+                UserManagerDouble, HttpContextAccessorMock.Object);
 
             PasswordHasherMock
                 .Setup(x => x.HashPassword(It.IsAny<User>(), It.IsAny<string>()))
@@ -70,11 +53,11 @@ public sealed class LoginHandlerTests
                 .Returns(PasswordVerificationResult.Failed);
 
             Sut = new LoginHandler(
-                SignInManagerMock.Object,
-                UserManagerMock.Object,
-                JwtTokenServiceMock.Object,
-                RefreshTokenServiceMock.Object,
-                AccessServiceMock.Object,
+                SignInManagerDouble,
+                UserManagerDouble,
+                JwtTokenDouble.Object,
+                RefreshTokenDouble.Object,
+                AccessServiceDouble.Object,
                 PasswordHasherMock.Object,
                 Settings,
                 Mock.Of<ILogger<LoginHandler>>());
@@ -82,50 +65,33 @@ public sealed class LoginHandlerTests
 
         public Fixture WithExistingUser()
         {
-            UserManagerMock.Setup(x => x.FindByNameAsync("testuser"))
-                .ReturnsAsync(_testUser);
-            SignInManagerMock
-                .Setup(x => x.CheckPasswordSignInAsync(_testUser, "correct-password", true))
-                .ReturnsAsync(SignInResult.Success);
-            JwtTokenServiceMock
-                .Setup(x => x.GenerateToken(_testUser.Id, _testUser.UserName!, It.IsAny<IEnumerable<string>>(), It.IsAny<IEnumerable<string>>(), It.IsAny<string>()))
-                .Returns("access-token");
-            RefreshTokenServiceMock
-                .Setup(x => x.CreateAsync(_testUser.Id, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new RefreshToken { Token = "refresh-token", Id = 10 });
-            UserManagerMock
-                .Setup(x => x.GetRolesAsync(_testUser))
-                .ReturnsAsync(["User"]);
-            AccessServiceMock
-                .Setup(x => x.GetEffectivePermissionsAsync(_testUser.Id))
-                .ReturnsAsync(["ytdownloader.access", "scheduler.access"]);
+            UserManagerDouble.WithFindByNameAsync("testuser", _testUser);
+            SignInManagerDouble.WithCheckPasswordSignInAsyncSuccess(_testUser, "correct-password");
+            JwtTokenDouble.WithGenerateTokenAny("access-token");
+            RefreshTokenDouble.WithCreateAsync(_testUser.Id, new RefreshToken { Token = "refresh-token", Id = 10 });
+            UserManagerDouble.WithGetRolesAsync(_testUser, ["User"]);
+            AccessServiceDouble.WithGetEffectivePermissionsAsync(_testUser.Id,
+                ["ytdownloader.access", "scheduler.access"]);
             return this;
         }
 
         public Fixture WithNonexistentUser()
         {
-            UserManagerMock.Setup(x => x.FindByNameAsync("unknown"))
-                .ReturnsAsync((User?)null);
+            UserManagerDouble.WithFindByNameAsync("unknown", null);
             return this;
         }
 
         public Fixture WithWrongPassword()
         {
-            UserManagerMock.Setup(x => x.FindByNameAsync("testuser"))
-                .ReturnsAsync(_testUser);
-            SignInManagerMock
-                .Setup(x => x.CheckPasswordSignInAsync(_testUser, "wrong-password", true))
-                .ReturnsAsync(SignInResult.Failed);
+            UserManagerDouble.WithFindByNameAsync("testuser", _testUser);
+            SignInManagerDouble.WithCheckPasswordSignInAsyncFailed(_testUser, "wrong-password");
             return this;
         }
 
         public Fixture WithLockedAccount()
         {
-            UserManagerMock.Setup(x => x.FindByNameAsync("testuser"))
-                .ReturnsAsync(_testUser);
-            SignInManagerMock
-                .Setup(x => x.CheckPasswordSignInAsync(_testUser, It.IsAny<string>(), true))
-                .ReturnsAsync(SignInResult.LockedOut);
+            UserManagerDouble.WithFindByNameAsync("testuser", _testUser);
+            SignInManagerDouble.WithCheckPasswordSignInAsyncLockedOut(_testUser);
             return this;
         }
     }
@@ -154,12 +120,10 @@ public sealed class LoginHandlerTests
 
         await fixture.Sut.HandleAsync(new LoginRequest("testuser", "correct-password"), CancellationToken.None);
 
-        fixture.JwtTokenServiceMock.Verify(x => x.GenerateToken(
+        fixture.JwtTokenDouble.VerifyGeneratedTokenWithRolesAndPermissions(
             1, "testuser",
-            It.Is<IEnumerable<string>>(r => r.SequenceEqual(new[] { "User" })),
-            It.Is<IEnumerable<string>>(p => p.SequenceEqual(new[] { "ytdownloader.access", "scheduler.access" })),
-            "stamp"),
-            Times.Once);
+            ["User"], ["ytdownloader.access", "scheduler.access"],
+            "stamp");
     }
 
     [Fact]
@@ -219,33 +183,21 @@ public sealed class LoginHandlerTests
             DisplayName = "Test User",
             SecurityStamp = null
         };
-        fixture.UserManagerMock.Setup(x => x.FindByNameAsync("testuser"))
-            .ReturnsAsync(userWithNullStamp);
-        fixture.SignInManagerMock
-            .Setup(x => x.CheckPasswordSignInAsync(userWithNullStamp, "pass", true))
-            .ReturnsAsync(SignInResult.Success);
-        fixture.UserManagerMock
-            .Setup(x => x.UpdateSecurityStampAsync(userWithNullStamp))
-            .Callback<User>(u => u.SecurityStamp = "generated-stamp")
-            .ReturnsAsync(IdentityResult.Success);
-        fixture.JwtTokenServiceMock
-            .Setup(x => x.GenerateToken(1, "testuser", It.IsAny<IEnumerable<string>>(), It.IsAny<IEnumerable<string>>(), "generated-stamp"))
-            .Returns("access-token");
-        fixture.RefreshTokenServiceMock
-            .Setup(x => x.CreateAsync(1, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new RefreshToken { Token = "refresh-token", Id = 10 });
-        fixture.UserManagerMock
-            .Setup(x => x.GetRolesAsync(userWithNullStamp))
-            .ReturnsAsync(["User"]);
-        fixture.AccessServiceMock
-            .Setup(x => x.GetEffectivePermissionsAsync(1))
-            .ReturnsAsync(["ytdownloader.access"]);
+        fixture.UserManagerDouble.WithFindByNameAsync("testuser", userWithNullStamp);
+        fixture.SignInManagerDouble.WithCheckPasswordSignInAsyncSuccess(userWithNullStamp, "pass");
+        fixture.UserManagerDouble.WithUpdateSecurityStampAsync(userWithNullStamp, IdentityResult.Success,
+            callback: u => u.SecurityStamp = "generated-stamp");
+        fixture.JwtTokenDouble.WithGenerateToken(1, "testuser",
+            It.IsAny<IEnumerable<string>>(), It.IsAny<IEnumerable<string>>(), "generated-stamp",
+            "access-token");
+        fixture.RefreshTokenDouble.WithCreateAsync(1, new RefreshToken { Token = "refresh-token", Id = 10 });
+        fixture.UserManagerDouble.WithGetRolesAsync(userWithNullStamp, ["User"]);
+        fixture.AccessServiceDouble.WithGetEffectivePermissionsAsync(1, ["ytdownloader.access"]);
 
         var result = await fixture.Sut.HandleAsync(new LoginRequest("testuser", "pass"), CancellationToken.None);
 
         AssertSuccess(result);
-        fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(userWithNullStamp), Times.Once);
-        fixture.JwtTokenServiceMock.Verify(x => x.GenerateToken(1, "testuser",
-            It.IsAny<IEnumerable<string>>(), It.IsAny<IEnumerable<string>>(), "generated-stamp"), Times.Once);
+        fixture.UserManagerDouble.VerifyUpdatedSecurityStamp(userWithNullStamp);
+        fixture.JwtTokenDouble.VerifyGeneratedToken(1, "testuser", "generated-stamp");
     }
 }

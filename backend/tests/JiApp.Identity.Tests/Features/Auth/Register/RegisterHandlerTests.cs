@@ -1,10 +1,8 @@
 using JiApp.Common.Models;
 using JiApp.Common.Abstractions;
 using JiApp.Identity.Features.Auth.Register;
-using JiApp.Identity.Services;
+using JiApp.Identity.Tests.Mocks;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -14,49 +12,34 @@ public sealed class RegisterHandlerTests
 {
     private sealed class Fixture
     {
-        public Mock<UserManager<User>> UserManagerMock { get; } = new(
-            Mock.Of<IUserStore<User>>(),
-            Mock.Of<Microsoft.Extensions.Options.IOptions<IdentityOptions>>(),
-            Mock.Of<IPasswordHasher<User>>(),
-            Array.Empty<IUserValidator<User>>(),
-            Array.Empty<IPasswordValidator<User>>(),
-            Mock.Of<ILookupNormalizer>(),
-            Mock.Of<IdentityErrorDescriber>(),
-            Mock.Of<IServiceProvider>(),
-            Mock.Of<ILogger<UserManager<User>>>());
-
-        public Mock<IUserAccessService> AccessServiceMock { get; } = new();
+        public MockUserManager UserManagerDouble { get; } = MockUserManager.GetSuccessful();
+        public MockUserAccessService AccessServiceDouble { get; } = MockUserAccessService.GetSuccessful();
 
         public RegisterHandler Sut { get; }
 
         public Fixture()
         {
-            Sut = new RegisterHandler(UserManagerMock.Object, AccessServiceMock.Object, Mock.Of<ILogger<RegisterHandler>>());
+            Sut = new RegisterHandler(UserManagerDouble, AccessServiceDouble.Object, Mock.Of<ILogger<RegisterHandler>>());
         }
 
         public Fixture WithSuccessfulCreate(long userId = 7)
         {
-            UserManagerMock
-                .Setup(x => x.CreateAsync(It.IsAny<User>(), "Password1"))
-                .Callback<User, string>((user, _) => user.Id = userId)
-                .ReturnsAsync(IdentityResult.Success);
+            UserManagerDouble.WithCreateAsync("Password1", IdentityResult.Success,
+                callback: user => user.Id = userId);
             return this;
         }
 
         public Fixture WithFailingCreate(string errorDescription)
         {
-            UserManagerMock
-                .Setup(x => x.CreateAsync(It.IsAny<User>(), "weak"))
-                .ReturnsAsync(IdentityResult.Failed(
-                    new IdentityError { Description = errorDescription }));
+            UserManagerDouble.WithCreateAsync("weak",
+                IdentityResult.Failed(new IdentityError { Description = errorDescription }));
             return this;
         }
 
         public Fixture WithCreateFailingMultiple()
         {
-            UserManagerMock
-                .Setup(x => x.CreateAsync(It.IsAny<User>(), "weak"))
-                .ReturnsAsync(IdentityResult.Failed(
+            UserManagerDouble.WithCreateAsync("weak",
+                IdentityResult.Failed(
                     new IdentityError { Description = "Passwords must have at least one uppercase ('A'-'Z')." },
                     new IdentityError { Description = "Passwords must have at least one digit ('0'-'9')." }));
             return this;
@@ -64,18 +47,14 @@ public sealed class RegisterHandlerTests
 
         public Fixture WithUniqueConstraintViolation()
         {
-            var innerEx = new SqliteException("UNIQUE constraint failed", 19);
-            UserManagerMock
-                .Setup(x => x.CreateAsync(It.IsAny<User>(), It.IsAny<string>()))
-                .ThrowsAsync(new DbUpdateException("An error occurred while saving the entity changes", innerEx));
+            UserManagerDouble.WithCreateThrowsUniqueConstraint();
             return this;
         }
 
         public Fixture WithFailingDefaultRoleAssignment(long userId)
         {
-            AccessServiceMock
-                .Setup(x => x.AssignDefaultRoleAsync(userId))
-                .ThrowsAsync(new InvalidOperationException("DB unavailable"));
+            AccessServiceDouble.WithFailingDefaultRoleAssignment(userId,
+                new InvalidOperationException("DB unavailable"));
             return this;
         }
     }
@@ -100,7 +79,7 @@ public sealed class RegisterHandlerTests
         await fixture.Sut.HandleAsync(
             new RegisterRequest("newuser", "new@test.com", "Password1", "New User"), CancellationToken.None);
 
-        fixture.AccessServiceMock.Verify(x => x.AssignDefaultRoleAsync(createdUserId), Times.Once);
+        fixture.AccessServiceDouble.VerifyAssignedDefaultRole(createdUserId);
     }
 
     [Fact]
@@ -111,7 +90,7 @@ public sealed class RegisterHandlerTests
         await fixture.Sut.HandleAsync(
             new RegisterRequest("newuser", "new@test.com", "weak", "New User"), CancellationToken.None);
 
-        fixture.AccessServiceMock.Verify(x => x.AssignDefaultRoleAsync(It.IsAny<long>()), Times.Never);
+        fixture.AccessServiceDouble.VerifyAssignedDefaultRole_NotCalled();
     }
 
     [Fact]
@@ -162,9 +141,7 @@ public sealed class RegisterHandlerTests
         var result = await fixture.Sut.HandleAsync(
             new RegisterRequest("newuser", "new@test.com", "Password1", "New User"), CancellationToken.None);
 
-        fixture.UserManagerMock.Verify(
-            x => x.DeleteAsync(It.Is<User>(u => u.Id == createdUserId)),
-            Times.Once);
+        fixture.UserManagerDouble.VerifyDeletedUser(createdUserId);
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Registration failed");
     }

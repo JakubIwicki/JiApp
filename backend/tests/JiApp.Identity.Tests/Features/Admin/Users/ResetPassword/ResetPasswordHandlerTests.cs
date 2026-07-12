@@ -1,9 +1,8 @@
 using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Identity.Features.Admin.Users.ResetPassword;
-using JiApp.Identity.Services;
+using JiApp.Identity.Tests.Mocks;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace JiApp.Identity.Tests.Features.Admin.Users.ResetPassword;
@@ -18,55 +17,37 @@ public sealed class ResetPasswordHandlerTests
 			UserName = "testuser"
 		};
 
-		public Mock<UserManager<User>> UserManagerMock { get; } = new(
-			Mock.Of<IUserStore<User>>(),
-			Mock.Of<Microsoft.Extensions.Options.IOptions<IdentityOptions>>(),
-			Mock.Of<IPasswordHasher<User>>(),
-			Array.Empty<IUserValidator<User>>(),
-			Array.Empty<IPasswordValidator<User>>(),
-			Mock.Of<ILookupNormalizer>(),
-			Mock.Of<IdentityErrorDescriber>(),
-			Mock.Of<IServiceProvider>(),
-			Mock.Of<ILogger<UserManager<User>>>());
-
-		public Mock<IRefreshTokenService> RefreshTokenServiceMock { get; } = new();
+		public MockUserManager UserManagerDouble { get; } = MockUserManager.GetSuccessful();
+		public MockRefreshTokenService RefreshTokenDouble { get; } = MockRefreshTokenService.GetSuccessful();
 
 		public ResetPasswordHandler Sut { get; }
 
 		public Fixture()
 		{
-			Sut = new ResetPasswordHandler(UserManagerMock.Object, RefreshTokenServiceMock.Object);
+			Sut = new ResetPasswordHandler(UserManagerDouble, RefreshTokenDouble.Object);
 		}
 
 		public Fixture WithSuccessfulReset()
 		{
-			UserManagerMock.Setup(x => x.FindByIdAsync("1"))
-				.ReturnsAsync(_testUser);
-			UserManagerMock.Setup(x => x.GeneratePasswordResetTokenAsync(_testUser))
-				.ReturnsAsync("reset-token");
-			UserManagerMock.Setup(x => x.ResetPasswordAsync(_testUser, "reset-token", "NewPassword1"))
-				.ReturnsAsync(IdentityResult.Success);
-			RefreshTokenServiceMock.Setup(x => x.RevokeAllForUserAsync(1, It.IsAny<CancellationToken>()))
-				.Returns(Task.CompletedTask);
+			UserManagerDouble.WithFindByIdAsync("1", _testUser);
+			UserManagerDouble.WithGeneratePasswordResetTokenAsync(_testUser, "reset-token");
+			UserManagerDouble.WithResetPasswordAsync(_testUser, "reset-token", "NewPassword1", IdentityResult.Success);
+			RefreshTokenDouble.WithRevokeAllForUserAsync(1);
 			return this;
 		}
 
 		public Fixture WithFailingReset(string errorDescription)
 		{
-			UserManagerMock.Setup(x => x.FindByIdAsync("1"))
-				.ReturnsAsync(_testUser);
-			UserManagerMock.Setup(x => x.GeneratePasswordResetTokenAsync(_testUser))
-				.ReturnsAsync("reset-token");
-			UserManagerMock.Setup(x => x.ResetPasswordAsync(_testUser, "reset-token", "weak"))
-				.ReturnsAsync(IdentityResult.Failed(
-					new IdentityError { Description = errorDescription }));
+			UserManagerDouble.WithFindByIdAsync("1", _testUser);
+			UserManagerDouble.WithGeneratePasswordResetTokenAsync(_testUser, "reset-token");
+			UserManagerDouble.WithResetPasswordAsync(_testUser, "reset-token", "weak",
+				IdentityResult.Failed(new IdentityError { Description = errorDescription }));
 			return this;
 		}
 
 		public Fixture WithNonexistentUser()
 		{
-			UserManagerMock.Setup(x => x.FindByIdAsync("999"))
-				.ReturnsAsync((User?)null);
+			UserManagerDouble.WithFindByIdAsync("999", null);
 			return this;
 		}
 	}
@@ -79,7 +60,7 @@ public sealed class ResetPasswordHandlerTests
 		var result = await fixture.Sut.HandleAsync(1, new ResetPasswordRequest("NewPassword1"), CancellationToken.None);
 
 		AssertSuccess(result);
-		fixture.RefreshTokenServiceMock.Verify(x => x.RevokeAllForUserAsync(1, It.IsAny<CancellationToken>()), Times.Once);
+		fixture.RefreshTokenDouble.VerifyRevokedAllForUser(1);
 	}
 
 	[Fact]
@@ -101,6 +82,6 @@ public sealed class ResetPasswordHandlerTests
 
 		result.IsSuccess.Should().BeFalse();
 		result.ErrorCategory.Should().Be(ResultCategories.Validation);
-		fixture.RefreshTokenServiceMock.Verify(x => x.RevokeAllForUserAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
+		fixture.RefreshTokenDouble.VerifyRevokedAllForUser_NotCalled();
 	}
 }
