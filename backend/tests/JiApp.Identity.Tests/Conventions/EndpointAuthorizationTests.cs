@@ -61,11 +61,13 @@ public sealed class EndpointAuthorizationTests
 		};
 
 		using var fixture = Fixture.Init();
-		var violations = EndpointAuthorizationConvention.CollectUnauthorizedEndpoints(
+		var result = EndpointAuthorizationConvention.CollectUnauthorizedEndpoints(
 			fixture.DataSources, allowList);
 
-		Assert.True(violations.Count == 0,
-			$"The following {violations.Count} endpoint(s) lack authorization:\n" +
-			string.Join("\n", violations));
+		Assert.True(result.ScannedCount > 0,
+			"0 endpoints discovered — the fitness test ran vacuously");
+		Assert.True(result.Violations.Count == 0,
+			$"The following {result.Violations.Count} endpoint(s) lack authorization:\n" +
+			string.Join("\n", result.Violations));
 	}
 }

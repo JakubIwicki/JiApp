@@ -20,13 +20,14 @@ public static class DependencyInjectionConvention
 	/// <param name="productionAssemblies">
 	/// Only descriptors whose service type belongs to one of these assemblies are checked.
 	/// </param>
-	/// <returns>One violation string per unresolvable descriptor, empty if all resolved.</returns>
-	public static List<string> CollectUnresolvableServices(
+	/// <returns>A <see cref="ConventionResult"/> with violations and the count of matching descriptors scanned.</returns>
+	public static ConventionResult CollectUnresolvableServices(
 		IServiceCollection services,
 		IServiceProvider provider,
 		Assembly[] productionAssemblies)
 	{
 		var violations = new List<string>();
+		var scannedCount = 0;
 		var assemblyNames = new HashSet<string>(
 			productionAssemblies.Select(a => a.GetName().Name!),
 			StringComparer.OrdinalIgnoreCase);
@@ -42,6 +43,8 @@ public static class DependencyInjectionConvention
 			var asmName = descriptor.ServiceType.Assembly.GetName().Name;
 			if (asmName is null || !assemblyNames.Contains(asmName))
 				continue;
+
+			scannedCount++;
 
 			try
 			{
@@ -62,6 +65,6 @@ public static class DependencyInjectionConvention
 			}
 		}
 
-		return violations;
+		return new ConventionResult(violations, scannedCount);
 	}
 }

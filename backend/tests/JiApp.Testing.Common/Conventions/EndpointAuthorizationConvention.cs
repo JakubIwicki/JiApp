@@ -23,8 +23,8 @@ public static class EndpointAuthorizationConvention
 	/// that are intentionally anonymous. Every entry must carry a comment in the
 	/// test file explaining why.
 	/// </param>
-	/// <returns>One violation string per offender, empty if no violations.</returns>
-	public static List<string> CollectUnauthorizedEndpoints(
+	/// <returns>A <see cref="ConventionResult"/> with violations and the count of distinct endpoints scanned.</returns>
+	public static ConventionResult CollectUnauthorizedEndpoints(
 		IEnumerable<EndpointDataSource> dataSources,
 		HashSet<string> allowList)
 	{
@@ -72,6 +72,6 @@ public static class EndpointAuthorizationConvention
 			}
 		}
 
-		return violations;
+		return new ConventionResult(violations, processedPatterns.Count);
 	}
 }

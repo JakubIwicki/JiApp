@@ -66,11 +66,13 @@ public sealed class DependencyInjectionTests
 	public void AllRegisteredServices_AreResolvable()
 	{
 		var fixture = Fixture.Init();
-		var violations = DependencyInjectionConvention.CollectUnresolvableServices(
+		var result = DependencyInjectionConvention.CollectUnresolvableServices(
 			fixture.Services, fixture.Provider, fixture.ProductionAssemblies);
 
-		Assert.True(violations.Count == 0,
-			$"The following {violations.Count} service(s) could not be resolved:\n" +
-			string.Join("\n", violations));
+		Assert.True(result.ScannedCount > 0,
+			"0 services matched — the fitness test ran vacuously");
+		Assert.True(result.Violations.Count == 0,
+			$"The following {result.Violations.Count} service(s) could not be resolved:\n" +
+			string.Join("\n", result.Violations));
 	}
 }
