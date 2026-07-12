@@ -12,6 +12,7 @@ public static class ResultAssertions
 
     public static T AssertSuccessWithValue<T>(Result<T> result, T expected)
     {
+        result.IsSuccess.Should().BeTrue();
         result.Value.Should().Be(expected);
         return result.Value!;
     }
