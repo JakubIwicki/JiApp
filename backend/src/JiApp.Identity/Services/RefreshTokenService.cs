@@ -9,10 +9,10 @@ namespace JiApp.Identity.Services;
 
 public interface IRefreshTokenService
 {
-    Task<RefreshToken> CreateAsync(long userId);
-    Task<RefreshToken?> ValidateAsync(string rawToken);
-    Task<bool> RevokeAsync(long refreshTokenId);
-    Task RevokeAllForUserAsync(long userId);
+    Task<RefreshToken> CreateAsync(long userId, CancellationToken ct);
+    Task<RefreshToken?> ValidateAsync(string rawToken, CancellationToken ct);
+    Task<bool> RevokeAsync(long refreshTokenId, CancellationToken ct);
+    Task RevokeAllForUserAsync(long userId, CancellationToken ct);
     Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken ct = default);
 }
 
@@ -24,7 +24,7 @@ public sealed class RefreshTokenService(IdentityDbContext dbContext, int refresh
         return Convert.ToHexStringLower(bytes);
     }
 
-    public async Task<RefreshToken> CreateAsync(long userId)
+    public async Task<RefreshToken> CreateAsync(long userId, CancellationToken ct)
     {
         var rawBytes = new byte[64];
         RandomNumberGenerator.Fill(rawBytes);
@@ -40,7 +40,7 @@ public sealed class RefreshTokenService(IdentityDbContext dbContext, int refresh
         };
 
         dbContext.RefreshTokens.Add(entity);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(ct);
 
         // Return a new instance with the raw (unhashed) token.
         // Do NOT mutate entity.Token on the tracked entity — that would persist
@@ -56,7 +56,7 @@ public sealed class RefreshTokenService(IdentityDbContext dbContext, int refresh
         };
     }
 
-    public async Task<RefreshToken?> ValidateAsync(string rawToken)
+    public async Task<RefreshToken?> ValidateAsync(string rawToken, CancellationToken ct)
     {
         var hashed = HashToken(rawToken);
 
@@ -66,14 +66,14 @@ public sealed class RefreshTokenService(IdentityDbContext dbContext, int refresh
             .AsNoTracking()
             .FirstOrDefaultAsync(rt =>
                 rt.Token == hashed &&
-                rt.ExpiresAt > DateTime.UtcNow);
+                rt.ExpiresAt > DateTime.UtcNow, ct);
     }
 
-    public async Task<bool> RevokeAsync(long refreshTokenId)
+    public async Task<bool> RevokeAsync(long refreshTokenId, CancellationToken ct)
     {
         var rowsAffected = await dbContext.RefreshTokens
             .Where(rt => rt.Id == refreshTokenId && !rt.IsRevoked)
-            .ExecuteUpdateAsync(setters => setters.SetProperty(rt => rt.IsRevoked, true));
+            .ExecuteUpdateAsync(setters => setters.SetProperty(rt => rt.IsRevoked, true), ct);
 
         return rowsAffected > 0;
     }
@@ -83,10 +83,10 @@ public sealed class RefreshTokenService(IdentityDbContext dbContext, int refresh
         return await dbContext.Database.BeginTransactionAsync(ct);
     }
 
-    public async Task RevokeAllForUserAsync(long userId)
+    public async Task RevokeAllForUserAsync(long userId, CancellationToken ct)
     {
         await dbContext.RefreshTokens
             .Where(rt => rt.UserId == userId && !rt.IsRevoked)
-            .ExecuteUpdateAsync(setters => setters.SetProperty(rt => rt.IsRevoked, true));
+            .ExecuteUpdateAsync(setters => setters.SetProperty(rt => rt.IsRevoked, true), ct);
     }
 }

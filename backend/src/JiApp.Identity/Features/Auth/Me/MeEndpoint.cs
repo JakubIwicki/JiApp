@@ -11,9 +11,10 @@ public static class MeEndpoint
     public static IEndpointRouteBuilder MapMe(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapGet("/me", async (
-                MeHandler handler) =>
+                MeHandler handler,
+                CancellationToken ct) =>
             {
-                var result = await handler.HandleAsync();
+                var result = await handler.HandleAsync(ct);
                 if (result.IsSuccess)
                     return Results.Ok(result.Value);
 

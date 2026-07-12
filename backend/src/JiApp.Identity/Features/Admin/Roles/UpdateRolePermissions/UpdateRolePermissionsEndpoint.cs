@@ -15,13 +15,14 @@ public static class UpdateRolePermissionsEndpoint
 				string roleName,
 				UpdateRolePermissionsRequest request,
 				IValidator<UpdateRolePermissionsRequest> validator,
-				UpdateRolePermissionsHandler handler) =>
+				UpdateRolePermissionsHandler handler,
+				CancellationToken ct) =>
 			{
-				var validationResult = await validator.ValidateAsync(request);
+				var validationResult = await validator.ValidateAsync(request, ct);
 				if (!validationResult.IsValid)
 					return Results.Extensions.ValidationError(validationResult.ErrorMessages());
 
-				var result = await handler.HandleAsync(roleName, request);
+				var result = await handler.HandleAsync(roleName, request, ct);
 				if (result.IsSuccess)
 					return Results.Ok();
 

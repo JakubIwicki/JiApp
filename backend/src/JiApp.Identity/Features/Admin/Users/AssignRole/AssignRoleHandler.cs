@@ -14,7 +14,7 @@ public sealed class AssignRoleHandler(
 	AdminAccessGuard guard,
 	ILogger<AssignRoleHandler> logger)
 {
-	public async Task<Result<bool>> HandleAsync(long userId, AssignRoleRequest request)
+	public async Task<Result<bool>> HandleAsync(long userId, AssignRoleRequest request, CancellationToken ct)
 	{
 		if (request.RoleName == RoleNames.Admin)
 		{

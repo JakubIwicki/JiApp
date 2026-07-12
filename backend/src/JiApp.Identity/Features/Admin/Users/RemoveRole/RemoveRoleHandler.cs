@@ -13,7 +13,7 @@ public sealed class RemoveRoleHandler(
 	AdminAccessGuard guard,
 	ILogger<RemoveRoleHandler> logger)
 {
-	public async Task<Result<bool>> HandleAsync(long userId, string roleName)
+	public async Task<Result<bool>> HandleAsync(long userId, string roleName, CancellationToken ct)
 	{
 		if (roleName == RoleNames.Admin)
 		{

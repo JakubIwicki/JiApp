@@ -16,7 +16,7 @@ public sealed class RegisterHandler(
     IUserAccessService accessService,
     ILogger<RegisterHandler> logger)
 {
-    public async Task<Result<RegisterResponse>> HandleAsync(RegisterRequest request)
+    public async Task<Result<RegisterResponse>> HandleAsync(RegisterRequest request, CancellationToken ct)
     {
         logger.ProcessingRegistration(request.Username);
 

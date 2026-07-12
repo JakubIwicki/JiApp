@@ -64,7 +64,7 @@ public sealed class RefreshHandlerTests
         public Fixture WithValidRefreshToken(string rawToken = "valid-refresh-token")
         {
             var storedToken = new RefreshToken { Id = 10, Token = "raw-token", UserId = 1, IsRevoked = false };
-            RefreshTokenServiceMock.Setup(x => x.ValidateAsync(rawToken))
+            RefreshTokenServiceMock.Setup(x => x.ValidateAsync(rawToken, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(storedToken);
             UserManagerMock.Setup(x => x.FindByIdAsync("1"))
                 .ReturnsAsync(_testUser);
@@ -73,16 +73,16 @@ public sealed class RefreshHandlerTests
                 .Returns("new-access-token");
             UserManagerMock.Setup(x => x.GetRolesAsync(_testUser))
                 .ReturnsAsync(["User"]);
-            RefreshTokenServiceMock.Setup(x => x.RevokeAsync(10))
+            RefreshTokenServiceMock.Setup(x => x.RevokeAsync(10, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(true);
-            RefreshTokenServiceMock.Setup(x => x.CreateAsync(_testUser.Id))
+            RefreshTokenServiceMock.Setup(x => x.CreateAsync(_testUser.Id, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new RefreshToken { Token = "new-refresh-token" });
             return this;
         }
 
         public Fixture WithInvalidToken(string rawToken = "invalid-token")
         {
-            RefreshTokenServiceMock.Setup(x => x.ValidateAsync(rawToken))
+            RefreshTokenServiceMock.Setup(x => x.ValidateAsync(rawToken, It.IsAny<CancellationToken>()))
                 .ReturnsAsync((RefreshToken?)null);
             return this;
         }
@@ -90,7 +90,7 @@ public sealed class RefreshHandlerTests
         public Fixture WithTokenForMissingUser(string rawToken = "token-for-missing-user")
         {
             var storedToken = new RefreshToken { Id = 10, Token = "raw-token", UserId = 999, IsRevoked = false };
-            RefreshTokenServiceMock.Setup(x => x.ValidateAsync(rawToken))
+            RefreshTokenServiceMock.Setup(x => x.ValidateAsync(rawToken, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(storedToken);
             UserManagerMock.Setup(x => x.FindByIdAsync("999"))
                 .ReturnsAsync((User?)null);
@@ -100,7 +100,7 @@ public sealed class RefreshHandlerTests
         public Fixture WithReusedToken(string rawToken = "reused-token")
         {
             var revokedToken = new RefreshToken { Id = 10, Token = "raw-token", UserId = 1, IsRevoked = true };
-            RefreshTokenServiceMock.Setup(x => x.ValidateAsync(rawToken))
+            RefreshTokenServiceMock.Setup(x => x.ValidateAsync(rawToken, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(revokedToken);
             return this;
         }
@@ -108,11 +108,11 @@ public sealed class RefreshHandlerTests
         public Fixture WithConcurrentRevocation(string rawToken = "concurrent-token")
         {
             var storedToken = new RefreshToken { Id = 10, Token = "raw-token", UserId = 1, IsRevoked = false };
-            RefreshTokenServiceMock.Setup(x => x.ValidateAsync(rawToken))
+            RefreshTokenServiceMock.Setup(x => x.ValidateAsync(rawToken, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(storedToken);
             UserManagerMock.Setup(x => x.FindByIdAsync("1"))
                 .ReturnsAsync(_testUser);
-            RefreshTokenServiceMock.Setup(x => x.RevokeAsync(10))
+            RefreshTokenServiceMock.Setup(x => x.RevokeAsync(10, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(false); // already revoked by another request
             return this;
         }
@@ -123,7 +123,7 @@ public sealed class RefreshHandlerTests
     {
         var fixture = new Fixture().WithValidRefreshToken();
 
-        var result = await fixture.Sut.HandleAsync(new RefreshRequest("valid-refresh-token"));
+        var result = await fixture.Sut.HandleAsync(new RefreshRequest("valid-refresh-token"), CancellationToken.None);
 
         AssertSuccess(result);
         result.Value.Should().NotBeNull();
@@ -137,9 +137,9 @@ public sealed class RefreshHandlerTests
     {
         var fixture = new Fixture().WithValidRefreshToken();
 
-        await fixture.Sut.HandleAsync(new RefreshRequest("valid-refresh-token"));
+        await fixture.Sut.HandleAsync(new RefreshRequest("valid-refresh-token"), CancellationToken.None);
 
-        fixture.RefreshTokenServiceMock.Verify(x => x.RevokeAsync(10), Times.Once);
+        fixture.RefreshTokenServiceMock.Verify(x => x.RevokeAsync(10, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -147,7 +147,7 @@ public sealed class RefreshHandlerTests
     {
         var fixture = new Fixture().WithInvalidToken();
 
-        var result = await fixture.Sut.HandleAsync(new RefreshRequest("invalid-token"));
+        var result = await fixture.Sut.HandleAsync(new RefreshRequest("invalid-token"), CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Invalid or expired refresh token");
@@ -158,7 +158,7 @@ public sealed class RefreshHandlerTests
     {
         var fixture = new Fixture().WithTokenForMissingUser();
 
-        var result = await fixture.Sut.HandleAsync(new RefreshRequest("token-for-missing-user"));
+        var result = await fixture.Sut.HandleAsync(new RefreshRequest("token-for-missing-user"), CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("User not found");
@@ -169,11 +169,11 @@ public sealed class RefreshHandlerTests
     {
         var fixture = new Fixture().WithReusedToken();
 
-        var result = await fixture.Sut.HandleAsync(new RefreshRequest("reused-token"));
+        var result = await fixture.Sut.HandleAsync(new RefreshRequest("reused-token"), CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Invalid or expired refresh token");
-        fixture.RefreshTokenServiceMock.Verify(x => x.RevokeAllForUserAsync(1), Times.Once);
+        fixture.RefreshTokenServiceMock.Verify(x => x.RevokeAllForUserAsync(1, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -181,11 +181,11 @@ public sealed class RefreshHandlerTests
     {
         var fixture = new Fixture().WithConcurrentRevocation();
 
-        var result = await fixture.Sut.HandleAsync(new RefreshRequest("concurrent-token"));
+        var result = await fixture.Sut.HandleAsync(new RefreshRequest("concurrent-token"), CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Invalid or expired refresh token");
-        fixture.RefreshTokenServiceMock.Verify(x => x.RevokeAllForUserAsync(1), Times.Once);
+        fixture.RefreshTokenServiceMock.Verify(x => x.RevokeAllForUserAsync(1, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -199,7 +199,7 @@ public sealed class RefreshHandlerTests
             UserName = "testuser",
             SecurityStamp = null
         };
-        fixture.RefreshTokenServiceMock.Setup(x => x.ValidateAsync("valid-token"))
+        fixture.RefreshTokenServiceMock.Setup(x => x.ValidateAsync("valid-token", It.IsAny<CancellationToken>()))
             .ReturnsAsync(storedToken);
         fixture.UserManagerMock.Setup(x => x.FindByIdAsync("1"))
             .ReturnsAsync(userWithNullStamp);
@@ -212,12 +212,12 @@ public sealed class RefreshHandlerTests
             .Returns("new-access-token");
         fixture.UserManagerMock.Setup(x => x.GetRolesAsync(userWithNullStamp))
             .ReturnsAsync(["User"]);
-        fixture.RefreshTokenServiceMock.Setup(x => x.RevokeAsync(10))
+        fixture.RefreshTokenServiceMock.Setup(x => x.RevokeAsync(10, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
-        fixture.RefreshTokenServiceMock.Setup(x => x.CreateAsync(1))
+        fixture.RefreshTokenServiceMock.Setup(x => x.CreateAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new RefreshToken { Token = "new-refresh-token" });
 
-        var result = await fixture.Sut.HandleAsync(new RefreshRequest("valid-token"));
+        var result = await fixture.Sut.HandleAsync(new RefreshRequest("valid-token"), CancellationToken.None);
 
         AssertSuccess(result);
         fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(userWithNullStamp), Times.Once);

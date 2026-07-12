@@ -14,15 +14,16 @@ public static class LogoutEndpoint
         endpoints.MapPost("/logout", async (
                 LogoutRequest request,
                 IValidator<LogoutRequest> validator,
-                LogoutHandler handler) =>
+                LogoutHandler handler,
+                CancellationToken ct) =>
             {
-                var validationResult = await validator.ValidateAsync(request);
+                var validationResult = await validator.ValidateAsync(request, ct);
                 if (!validationResult.IsValid)
                 {
                     return Results.Extensions.ValidationError(validationResult.ErrorMessages());
                 }
 
-                await handler.HandleAsync(request);
+                await handler.HandleAsync(request, ct);
                 return Results.Ok();
             })
             .WithTags(SwaggerConstants.Tags.Auth)

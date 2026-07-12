@@ -62,8 +62,8 @@ public sealed class RefreshTokenServiceTests : IDisposable
     [Fact]
     public async Task CreateAsync_GeneratesUniqueTokens()
     {
-        var t1 = await _fixture.Sut.CreateAsync(1);
-        var t2 = await _fixture.Sut.CreateAsync(1);
+        var t1 = await _fixture.Sut.CreateAsync(1, CancellationToken.None);
+        var t2 = await _fixture.Sut.CreateAsync(1, CancellationToken.None);
 
         t1.Token.Should().NotBe(t2.Token);
     }
@@ -71,9 +71,9 @@ public sealed class RefreshTokenServiceTests : IDisposable
     [Fact]
     public async Task ValidateAsync_ReturnsEntity_ForValidToken()
     {
-        var created = await _fixture.Sut.CreateAsync(1);
+        var created = await _fixture.Sut.CreateAsync(1, CancellationToken.None);
 
-        var validated = await _fixture.Sut.ValidateAsync(created.Token);
+        var validated = await _fixture.Sut.ValidateAsync(created.Token, CancellationToken.None);
 
         validated.Should().NotBeNull();
         validated!.UserId.Should().Be(1);
@@ -82,7 +82,7 @@ public sealed class RefreshTokenServiceTests : IDisposable
     [Fact]
     public async Task ValidateAsync_ReturnsNull_ForInvalidToken()
     {
-        var result = await _fixture.Sut.ValidateAsync("not-a-valid-token");
+        var result = await _fixture.Sut.ValidateAsync("not-a-valid-token", CancellationToken.None);
 
         result.Should().BeNull();
     }
@@ -90,10 +90,10 @@ public sealed class RefreshTokenServiceTests : IDisposable
     [Fact]
     public async Task ValidateAsync_ReturnsRevokedToken_AfterRevoke()
     {
-        var created = await _fixture.Sut.CreateAsync(1);
-        await _fixture.Sut.RevokeAsync(created.Id);
+        var created = await _fixture.Sut.CreateAsync(1, CancellationToken.None);
+        await _fixture.Sut.RevokeAsync(created.Id, CancellationToken.None);
 
-        var result = await _fixture.Sut.ValidateAsync(created.Token);
+        var result = await _fixture.Sut.ValidateAsync(created.Token, CancellationToken.None);
 
         result.Should().NotBeNull();
         result!.IsRevoked.Should().BeTrue();
@@ -102,7 +102,7 @@ public sealed class RefreshTokenServiceTests : IDisposable
     [Fact]
     public async Task RevokeAsync_DoesNotThrow_ForNonexistentId()
     {
-        var act = () => _fixture.Sut.RevokeAsync(99999);
+        var act = () => _fixture.Sut.RevokeAsync(99999, CancellationToken.None);
 
         await act.Should().NotThrowAsync();
     }
@@ -110,12 +110,12 @@ public sealed class RefreshTokenServiceTests : IDisposable
     [Fact]
     public async Task RevokeAllForUserAsync_RevokesAllUserTokens()
     {
-        var t1 = await _fixture.Sut.CreateAsync(1);
-        var t2 = await _fixture.Sut.CreateAsync(1);
+        var t1 = await _fixture.Sut.CreateAsync(1, CancellationToken.None);
+        var t2 = await _fixture.Sut.CreateAsync(1, CancellationToken.None);
 
-        await _fixture.Sut.RevokeAllForUserAsync(1);
+        await _fixture.Sut.RevokeAllForUserAsync(1, CancellationToken.None);
 
-        (await _fixture.Sut.ValidateAsync(t1.Token))!.IsRevoked.Should().BeTrue();
-        (await _fixture.Sut.ValidateAsync(t2.Token))!.IsRevoked.Should().BeTrue();
+        (await _fixture.Sut.ValidateAsync(t1.Token, CancellationToken.None))!.IsRevoked.Should().BeTrue();
+        (await _fixture.Sut.ValidateAsync(t2.Token, CancellationToken.None))!.IsRevoked.Should().BeTrue();
     }
 }

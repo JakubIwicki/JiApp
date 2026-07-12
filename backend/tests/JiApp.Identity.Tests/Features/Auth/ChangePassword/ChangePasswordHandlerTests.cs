@@ -75,7 +75,7 @@ public sealed class ChangePasswordHandlerTests
         var fixture = new Fixture().WithExistingUser().WithSuccessfulPasswordChange();
 
         var result = await fixture.Sut.HandleAsync(
-            new ChangePasswordRequest("OldPass1", "NewPass1"));
+            new ChangePasswordRequest("OldPass1", "NewPass1"), CancellationToken.None);
 
         AssertSuccess(result);
         result.Value.Should().BeTrue();
@@ -87,7 +87,7 @@ public sealed class ChangePasswordHandlerTests
         var fixture = new Fixture().WithExistingUser().WithFailingPasswordChange();
 
         var result = await fixture.Sut.HandleAsync(
-            new ChangePasswordRequest("WrongPass", "NewPass1"));
+            new ChangePasswordRequest("WrongPass", "NewPass1"), CancellationToken.None);
 
         AssertFailure(result, ResultCategories.Validation);
         result.Error.Should().Contain("Incorrect password");
@@ -99,7 +99,7 @@ public sealed class ChangePasswordHandlerTests
         var fixture = new Fixture().WithMissingUser();
 
         var result = await fixture.Sut.HandleAsync(
-            new ChangePasswordRequest("OldPass1", "NewPass1"));
+            new ChangePasswordRequest("OldPass1", "NewPass1"), CancellationToken.None);
 
         AssertFailure(result, ResultCategories.NotFound);
         result.Error.Should().Be("User not found");

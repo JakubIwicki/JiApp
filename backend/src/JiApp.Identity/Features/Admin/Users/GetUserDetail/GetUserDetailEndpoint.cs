@@ -12,9 +12,10 @@ public static class GetUserDetailEndpoint
 	{
 		endpoints.MapGet("/users/{userId:long}", async (
 				long userId,
-				GetUserDetailHandler handler) =>
+				GetUserDetailHandler handler,
+				CancellationToken ct) =>
 			{
-				var result = await handler.HandleAsync(userId);
+				var result = await handler.HandleAsync(userId, ct);
 				if (result.IsSuccess)
 					return Results.Ok(result.Value);
 

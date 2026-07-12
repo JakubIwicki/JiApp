@@ -12,7 +12,7 @@ public sealed class CreateUserHandler(
 	UserManager<User> userManager,
 	RoleManager<IdentityRole<long>> roleManager)
 {
-	public async Task<Result<CreateUserResponse>> HandleAsync(CreateUserRequest request)
+	public async Task<Result<CreateUserResponse>> HandleAsync(CreateUserRequest request, CancellationToken ct)
 	{
 		foreach (var roleName in request.Roles)
 		{

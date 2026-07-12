@@ -18,7 +18,7 @@ public sealed class LoginHandler(
     IdentitySettings settings,
     ILogger<LoginHandler> logger)
 {
-    public async Task<Result<LoginResponse>> HandleAsync(LoginRequest request)
+    public async Task<Result<LoginResponse>> HandleAsync(LoginRequest request, CancellationToken ct)
     {
         logger.LoginAttempt(request.Username);
 
@@ -55,7 +55,7 @@ public sealed class LoginHandler(
         var roles = await userManager.GetRolesAsync(user);
         var permissions = await accessService.GetEffectivePermissionsAsync(user.Id);
         var accessToken = jwtTokenService.GenerateToken(user.Id, user.UserName!, roles, permissions, user.SecurityStamp!);
-        var refreshToken = await refreshTokenService.CreateAsync(user.Id);
+        var refreshToken = await refreshTokenService.CreateAsync(user.Id, ct);
         var expiresIn = settings.GetAccessTokenExpireMinutes() * 60;
 
         logger.LoginSuccessful(request.Username);

@@ -12,9 +12,10 @@ public static class DeleteUserEndpoint
 	{
 		endpoints.MapDelete("/users/{userId:long}", async (
 				long userId,
-				DeleteUserHandler handler) =>
+				DeleteUserHandler handler,
+				CancellationToken ct) =>
 			{
-				var result = await handler.HandleAsync(userId);
+				var result = await handler.HandleAsync(userId, ct);
 				if (result.IsSuccess)
 					return Results.Ok();
 

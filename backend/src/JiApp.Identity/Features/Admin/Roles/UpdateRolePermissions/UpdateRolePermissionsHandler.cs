@@ -14,7 +14,7 @@ public sealed class UpdateRolePermissionsHandler(
 	AdminAccessGuard guard,
 	ILogger<UpdateRolePermissionsHandler> logger)
 {
-	public async Task<Result<bool>> HandleAsync(string roleName, UpdateRolePermissionsRequest request)
+	public async Task<Result<bool>> HandleAsync(string roleName, UpdateRolePermissionsRequest request, CancellationToken ct)
 	{
 		var editableCheck = guard.EnsureRoleIsEditable(roleName);
 		if (!editableCheck.IsSuccess)

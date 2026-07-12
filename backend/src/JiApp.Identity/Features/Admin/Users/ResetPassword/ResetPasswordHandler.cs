@@ -11,7 +11,7 @@ public sealed class ResetPasswordHandler(
 	UserManager<User> userManager,
 	IRefreshTokenService refreshTokenService)
 {
-	public async Task<Result<bool>> HandleAsync(long userId, ResetPasswordRequest request)
+	public async Task<Result<bool>> HandleAsync(long userId, ResetPasswordRequest request, CancellationToken ct)
 	{
 		var user = await userManager.FindByIdAsync(userId.ToString(CultureInfo.InvariantCulture));
 		if (user is null)
@@ -25,7 +25,7 @@ public sealed class ResetPasswordHandler(
 			return Result<bool>.Failure(errors, ResultCategories.Validation);
 		}
 
-		await refreshTokenService.RevokeAllForUserAsync(userId);
+		await refreshTokenService.RevokeAllForUserAsync(userId, ct);
 
 		return Result<bool>.Success(true);
 	}
