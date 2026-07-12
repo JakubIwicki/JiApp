@@ -26,7 +26,8 @@ public sealed class RemoteSecurityStampValidator(
 		}
 
 		var authToken = header[0]!;
-		var policy = retryPolicy.RetryOnTransientHttp_WithExponentialBackoff();
+		// Request-path auth check fails closed — one retry bounds worst-case latency (~11s) while covering restarts.
+		var policy = retryPolicy.RetryOnTransientHttp_WithExponentialBackoff(retries: 1);
 
 		try
 		{
