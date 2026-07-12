@@ -162,6 +162,7 @@ public sealed class AppointmentHandlerTests : HandlerTestBase
         var result = await sut.HandleAsync(request, CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
+        AssertEntityCount<Appointment>((SchedulerDbContext)DbContext, 1);
     }
 
     [Fact]
@@ -177,6 +178,7 @@ public sealed class AppointmentHandlerTests : HandlerTestBase
         var result = await sut.HandleAsync(request, CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
+        AssertNoEntityInDb<Appointment>((SchedulerDbContext)DbContext);
     }
 
     [Fact]
@@ -295,6 +297,8 @@ public sealed class AppointmentHandlerTests : HandlerTestBase
             CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
+        var reloaded = Db.FindFresh<Appointment>(appointmentId);
+        reloaded!.Status.Should().Be(AppointmentStatus.Done);
     }
 
     [Fact]
@@ -308,6 +312,8 @@ public sealed class AppointmentHandlerTests : HandlerTestBase
             CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
+        var reloaded = Db.FindFresh<Appointment>(appointmentId);
+        reloaded!.Status.Should().Be(AppointmentStatus.Cancelled);
     }
 
     [Fact]
@@ -384,6 +390,7 @@ public sealed class AppointmentHandlerTests : HandlerTestBase
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Cannot delete a completed appointment");
+        AssertEntityExists<Appointment>((SchedulerDbContext)DbContext, appointmentId);
     }
 
     [Fact]
@@ -432,6 +439,7 @@ public sealed class AppointmentHandlerTests : HandlerTestBase
         var result = await sut.HandleAsync(appointment.Id, CancellationToken.None);
 
         AssertAccessDenied(result);
+        AssertEntityExists<Appointment>((SchedulerDbContext)DbContext, appointment.Id);
     }
 
     [Fact]
@@ -444,6 +452,7 @@ public sealed class AppointmentHandlerTests : HandlerTestBase
         var result = await sut.HandleAsync(appointmentId, CancellationToken.None);
 
         AssertConflict(result);
+        AssertEntityExists<Appointment>((SchedulerDbContext)DbContext, appointmentId);
     }
 
     [Fact]
@@ -457,6 +466,8 @@ public sealed class AppointmentHandlerTests : HandlerTestBase
             CancellationToken.None);
 
         AssertValidationFailure(result);
+        var reloaded = Db.FindFresh<Appointment>(appointmentId);
+        reloaded!.Status.Should().Be(AppointmentStatus.Created);
     }
 
     [Fact]
@@ -470,6 +481,8 @@ public sealed class AppointmentHandlerTests : HandlerTestBase
             CancellationToken.None);
 
         AssertValidationFailure(result);
+        var reloaded = Db.FindFresh<Appointment>(appointmentId);
+        reloaded!.Status.Should().Be(AppointmentStatus.Done);
     }
 
     [Fact]
@@ -485,6 +498,7 @@ public sealed class AppointmentHandlerTests : HandlerTestBase
         var result = await sut.HandleAsync(request, CancellationToken.None);
 
         AssertNotFound(result);
+        AssertNoEntityInDb<Appointment>((SchedulerDbContext)DbContext);
     }
 
     [Fact]
@@ -503,6 +517,7 @@ public sealed class AppointmentHandlerTests : HandlerTestBase
         var result = await sut.HandleAsync(request, CancellationToken.None);
 
         AssertAccessDenied(result);
+        AssertNoEntityInDb<Appointment>((SchedulerDbContext)DbContext);
     }
 
     [Fact]

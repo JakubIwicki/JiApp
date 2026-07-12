@@ -108,6 +108,7 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
 
         AssertValidationFailure(result);
         result.Error.Should().Contain("Maximum number of boards");
+        AssertEntityCount<Board>((LovingBoardsDbContext)DbContext, DefaultSettings.MaxBoardsPerUser);
     }
 
     [Fact]
@@ -200,6 +201,8 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
         var result = await sut.HandleAsync(boardId, new UpdateBoardRequest("Test"), CancellationToken.None);
 
         AssertAccessDenied(result);
+        var reloaded = Db.FindFresh<Board>(boardId);
+        reloaded!.Name.Should().Be("Test");
     }
 
     [Fact]
@@ -249,6 +252,7 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Access denied");
+        AssertEntityExists<Board>((LovingBoardsDbContext)DbContext, boardId);
     }
 
     [Fact]
@@ -260,6 +264,7 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
         var result = await sut.HandleAsync(boardId, CancellationToken.None);
 
         AssertAccessDenied(result);
+        AssertEntityExists<Board>((LovingBoardsDbContext)DbContext, boardId);
     }
 
     [Fact]
@@ -332,6 +337,8 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Contain("already a member");
+        var reloaded = Db.FindFresh<Board>(boardId);
+        reloaded!.MemberUserIds.Should().ContainSingle().Which.Should().Be(1L);
     }
 
     [Fact]
@@ -344,6 +351,8 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Access denied");
+        var reloaded = Db.FindFresh<Board>(boardId);
+        reloaded!.MemberUserIds.Should().Contain([1L, 2L]);
     }
 
     [Fact]
@@ -355,6 +364,8 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
         var result = await sut.HandleAsync(boardId, new AddBoardMemberRequest(3L), CancellationToken.None);
 
         AssertAccessDenied(result);
+        var reloaded = Db.FindFresh<Board>(boardId);
+        reloaded!.MemberUserIds.Should().Contain([1L, 2L]);
     }
 
     [Fact]
@@ -403,6 +414,8 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Access denied");
+        var reloaded = Db.FindFresh<Board>(boardId);
+        reloaded!.MemberUserIds.Should().Contain([1L, 3L]);
     }
 
     [Fact]
@@ -414,6 +427,8 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
         var result = await sut.HandleAsync(boardId, 3L, CancellationToken.None);
 
         AssertAccessDenied(result);
+        var reloaded = Db.FindFresh<Board>(boardId);
+        reloaded!.MemberUserIds.Should().Contain([1L, 3L]);
     }
 
     [Fact]
@@ -426,6 +441,8 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Member not found");
+        var reloaded = Db.FindFresh<Board>(boardId);
+        reloaded!.MemberUserIds.Should().Contain([1L, 2L]);
     }
 
     [Fact]
@@ -437,6 +454,8 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
         var result = await sut.HandleAsync(boardId, 999L, CancellationToken.None);
 
         AssertNotFound(result);
+        var reloaded = Db.FindFresh<Board>(boardId);
+        reloaded!.MemberUserIds.Should().Contain([1L, 2L]);
     }
 
     [Fact]
@@ -449,6 +468,8 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Cannot remove the last member");
+        var reloaded = Db.FindFresh<Board>(boardId);
+        reloaded!.MemberUserIds.Should().ContainSingle().Which.Should().Be(2L);
     }
 
     [Fact]
@@ -460,6 +481,8 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
         var result = await sut.HandleAsync(boardId, 2L, CancellationToken.None);
 
         AssertConflict(result);
+        var reloaded = Db.FindFresh<Board>(boardId);
+        reloaded!.MemberUserIds.Should().ContainSingle().Which.Should().Be(2L);
     }
 
     // GetBoard with items
@@ -781,6 +804,8 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("The board owner cannot be removed");
+        var reloaded = Db.FindFresh<Board>(boardId);
+        reloaded!.MemberUserIds.Should().Contain([1L, 2L]);
     }
 
     [Fact]
@@ -792,5 +817,7 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
         var result = await sut.HandleAsync(boardId, 1L, CancellationToken.None);
 
         AssertConflict(result);
+        var reloaded = Db.FindFresh<Board>(boardId);
+        reloaded!.MemberUserIds.Should().Contain([1L, 2L]);
     }
 }

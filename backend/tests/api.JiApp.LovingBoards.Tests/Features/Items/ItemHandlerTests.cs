@@ -147,6 +147,7 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
 
         AssertValidationFailure(result);
         result.Error.Should().Contain("Maximum number of items");
+        AssertEntityCount<BoardItem>((LovingBoardsDbContext)DbContext, DefaultSettings.MaxItemsPerBoard);
     }
 
     [Fact]
@@ -179,6 +180,7 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
         var result = await sut.HandleAsync(boardId, new CreateItemRequest("Milk"), CancellationToken.None);
 
         AssertAccessDenied(result);
+        AssertNoEntityInDb<BoardItem>((LovingBoardsDbContext)DbContext);
     }
 
     [Fact]
@@ -190,6 +192,7 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
         var result = await sut.HandleAsync(999L, new CreateItemRequest("Milk"), CancellationToken.None);
 
         AssertNotFound(result);
+        AssertNoEntityInDb<BoardItem>((LovingBoardsDbContext)DbContext);
     }
 
     // UpdateItem
@@ -238,6 +241,7 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
         var result = await sut.HandleAsync(boardId, 999L, new UpdateItemRequest(Title: new Optional<string>("Updated")), CancellationToken.None);
 
         AssertNotFound(result);
+        AssertEntityDoesNotExist<BoardItem>((LovingBoardsDbContext)DbContext, 999L);
     }
 
     [Fact]
@@ -252,6 +256,9 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
         var result = await sut.HandleAsync(boardId1, itemId, new UpdateItemRequest(Title: new Optional<string>("Updated")), CancellationToken.None);
 
         AssertNotFound(result);
+        var reloaded = Db.FindFresh<BoardItem>(itemId);
+        reloaded!.Title.Should().Be("Test Item");
+        reloaded.BoardId.Should().Be(boardId2);
     }
 
     [Fact]
@@ -475,6 +482,7 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
         var result = await sut.HandleAsync(boardId, 999L, new SetItemStatusRequest("Completed"), CancellationToken.None);
 
         AssertNotFound(result);
+        AssertEntityDoesNotExist<BoardItem>((LovingBoardsDbContext)DbContext, 999L);
     }
 
     [Fact]
@@ -486,6 +494,7 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
         var result = await sut.HandleAsync(boardId, 1L, new SetItemStatusRequest("Completed"), CancellationToken.None);
 
         AssertAccessDenied(result);
+        AssertNoEntityInDb<BoardItem>((LovingBoardsDbContext)DbContext);
     }
 
     // DeleteItem
@@ -513,6 +522,7 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
         var result = await sut.HandleAsync(boardId, 999L, CancellationToken.None);
 
         AssertNotFound(result);
+        AssertEntityDoesNotExist<BoardItem>((LovingBoardsDbContext)DbContext, 999L);
     }
 
     [Fact]
@@ -524,6 +534,7 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
         var result = await sut.HandleAsync(boardId, 1L, CancellationToken.None);
 
         AssertAccessDenied(result);
+        AssertNoEntityInDb<BoardItem>((LovingBoardsDbContext)DbContext);
     }
 
     // ClearCompleted
@@ -570,6 +581,7 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
         var result = await sut.HandleAsync(boardId, CancellationToken.None);
 
         AssertAccessDenied(result);
+        AssertNoEntityInDb<BoardItem>((LovingBoardsDbContext)DbContext);
     }
 
     // Publish events

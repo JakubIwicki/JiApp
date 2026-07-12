@@ -83,6 +83,7 @@ public sealed class ExpenseHandlerTests : HandlerTestBase
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Board not found");
+        AssertNoEntityInDb<Expense>((SchedulerDbContext)DbContext);
     }
 
     [Fact]
@@ -99,6 +100,7 @@ public sealed class ExpenseHandlerTests : HandlerTestBase
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Invalid expense category: InvalidCategory");
+        AssertNoEntityInDb<Expense>((SchedulerDbContext)DbContext);
     }
 
     [Fact]
@@ -228,6 +230,7 @@ public sealed class ExpenseHandlerTests : HandlerTestBase
         var result = await sut.HandleAsync(request, CancellationToken.None);
 
         AssertValidationFailure(result);
+        AssertNoEntityInDb<Expense>((SchedulerDbContext)DbContext);
     }
 
     [Fact]
@@ -244,6 +247,8 @@ public sealed class ExpenseHandlerTests : HandlerTestBase
         var result = await sut.HandleAsync(expense.Id, request, CancellationToken.None);
 
         AssertValidationFailure(result);
+        var reloaded = Db.FindFresh<Expense>(expense.Id);
+        reloaded!.Category.Should().Be(ExpenseCategory.Fuel);
     }
 
     [Fact]
