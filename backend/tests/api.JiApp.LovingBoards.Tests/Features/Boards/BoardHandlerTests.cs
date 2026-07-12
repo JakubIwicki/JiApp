@@ -198,7 +198,7 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
         var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L]);
         var sut = fixture.UpdateBoard;
 
-        var result = await sut.HandleAsync(boardId, new UpdateBoardRequest("Test"), CancellationToken.None);
+        var result = await sut.HandleAsync(boardId, new UpdateBoardRequest("Hacked by non-member"), CancellationToken.None);
 
         AssertAccessDenied(result);
         var reloaded = Db.FindFresh<Board>(boardId);
