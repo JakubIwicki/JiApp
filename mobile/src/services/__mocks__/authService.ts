@@ -1,5 +1,4 @@
 import { createMockFn } from '../../test/createMockFn';
-import type { ProfileResponse } from '../authService';
 import type { LoginResponse, RefreshResponse } from '../../types/api';
 
 // ── Default stub data ──────────────────────────────────────────────────────
@@ -8,14 +7,6 @@ const defaultUser: LoginResponse = {
   id: 1,
   displayName: 'Mock User',
   token: 'mock-jwt-token',
-  roles: ['User'],
-  permissions: ['ytdownloader.access', 'scheduler.access'],
-};
-
-const defaultProfile: ProfileResponse = {
-  id: 1,
-  displayName: 'Mock User',
-  email: 'mock@test.com',
   roles: ['User'],
   permissions: ['ytdownloader.access', 'scheduler.access'],
 };
@@ -33,11 +24,7 @@ let _loginError: Error | null = null;
 let _registerError: Error | null = null;
 let _checkTokenResponse: LoginResponse = { ...defaultUser };
 let _checkTokenError: Error | null = null;
-let _getProfileResponse: ProfileResponse = { ...defaultProfile };
-let _getProfileError: Error | null = null;
-let _updateProfileResponse: ProfileResponse = { ...defaultProfile };
 let _updateProfileError: Error | null = null;
-let _changePasswordError: Error | null = null;
 let _refreshTokenResponse: RefreshResponse = { ...defaultRefresh };
 let _refreshTokenError: Error | null = null;
 
@@ -68,21 +55,9 @@ export const checkToken = createMockFn(
   },
 );
 
-export const getProfile = createMockFn(async (): Promise<ProfileResponse> => {
-  if (_getProfileError) throw _getProfileError;
-  return _getProfileResponse;
-});
-
 export const updateProfile = createMockFn(
-  async (_displayName: string, _email: string): Promise<ProfileResponse> => {
+  async (_displayName: string, _email: string): Promise<void> => {
     if (_updateProfileError) throw _updateProfileError;
-    return _updateProfileResponse;
-  },
-);
-
-export const changePassword = createMockFn(
-  async (_currentPassword: string, _newPassword: string): Promise<void> => {
-    if (_changePasswordError) throw _changePasswordError;
   },
 );
 
@@ -136,44 +111,14 @@ export function withCheckTokenFailure(
   return error;
 }
 
-export function withGetProfileSuccess(
-  overrides?: Partial<ProfileResponse>,
-): ProfileResponse {
-  _getProfileError = null;
-  _getProfileResponse = { ...defaultProfile, ...overrides };
-  return _getProfileResponse;
-}
-
-export function withGetProfileFailure(
-  error: Error = new Error('Failed to fetch profile'),
-): Error {
-  _getProfileError = error;
-  return error;
-}
-
-export function withUpdateProfileSuccess(
-  overrides?: Partial<ProfileResponse>,
-): ProfileResponse {
+export function withUpdateProfileSuccess(): void {
   _updateProfileError = null;
-  _updateProfileResponse = { ...defaultProfile, ...overrides };
-  return _updateProfileResponse;
 }
 
 export function withUpdateProfileFailure(
   error: Error = new Error('Failed to update profile'),
 ): Error {
   _updateProfileError = error;
-  return error;
-}
-
-export function withChangePasswordSuccess(): void {
-  _changePasswordError = null;
-}
-
-export function withChangePasswordFailure(
-  error: Error = new Error('Password change failed'),
-): Error {
-  _changePasswordError = error;
   return error;
 }
 
@@ -200,11 +145,7 @@ export function reset(): void {
   _registerError = null;
   _checkTokenError = null;
   _checkTokenResponse = { ...defaultUser };
-  _getProfileError = null;
-  _getProfileResponse = { ...defaultProfile };
   _updateProfileError = null;
-  _updateProfileResponse = { ...defaultProfile };
-  _changePasswordError = null;
   _refreshTokenError = null;
   _refreshTokenResponse = { ...defaultRefresh };
 
@@ -212,9 +153,7 @@ export function reset(): void {
     login.mockClear();
     register.mockClear();
     checkToken.mockClear();
-    getProfile.mockClear();
     updateProfile.mockClear();
-    changePassword.mockClear();
     refreshToken.mockClear();
   }
 }
