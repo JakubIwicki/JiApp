@@ -118,6 +118,7 @@ public sealed class ServiceHandlerTests : HandlerTestBase
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Invalid service category: InvalidCategory");
+        AssertNoEntityInDb<Service>((SchedulerDbContext)DbContext);
     }
 
     [Fact]
@@ -231,6 +232,7 @@ public sealed class ServiceHandlerTests : HandlerTestBase
             new UpdateServiceRequest("Test", "Other", 30, new PriceRequest(100)), CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
+        AssertEntityDoesNotExist<Service>((SchedulerDbContext)DbContext, 999L);
     }
 
     [Fact]
@@ -262,6 +264,7 @@ public sealed class ServiceHandlerTests : HandlerTestBase
         var result = await sut.HandleAsync(service.Id, CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
+        AssertEntityExists<Service>((SchedulerDbContext)DbContext, service.Id);
     }
 
     [Fact]
@@ -275,6 +278,7 @@ public sealed class ServiceHandlerTests : HandlerTestBase
         var result = await sut.HandleAsync(request, CancellationToken.None);
 
         AssertValidationFailure(result);
+        AssertNoEntityInDb<Service>((SchedulerDbContext)DbContext);
     }
 
     [Fact]
@@ -289,6 +293,8 @@ public sealed class ServiceHandlerTests : HandlerTestBase
             new UpdateServiceRequest("New", "InvalidCategory", 60, new PriceRequest(250)), CancellationToken.None);
 
         AssertValidationFailure(result);
+        var reloaded = Db.FindFresh<Service>(service.Id);
+        reloaded!.Category.Should().Be(ServiceCategory.MensHaircut);
     }
 
     [Fact]

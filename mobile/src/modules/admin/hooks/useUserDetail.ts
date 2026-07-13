@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import * as adminService from '../services/adminService';
+import { getFriendlyErrorMessage } from '../../../utils/errorUtils';
 import type { UserDetail } from '../types/api';
 
 interface UseUserDetailResult {
@@ -42,7 +43,7 @@ const useUserDetail = (userId: number): UseUserDetailResult => {
       setUser(data);
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') return;
-      setError(err instanceof Error ? err.message : 'Failed to load user');
+      setError(getFriendlyErrorMessage(err, 'Failed to load user'));
       setUser(null);
     } finally {
       if (!controller.signal.aborted) {
@@ -66,7 +67,7 @@ const useUserDetail = (userId: number): UseUserDetailResult => {
         await adminService.assignRole(userId, { roleName });
         await fetchUser();
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to assign role');
+        setError(getFriendlyErrorMessage(err, 'Failed to assign role'));
         throw err;
       }
     },
@@ -80,7 +81,7 @@ const useUserDetail = (userId: number): UseUserDetailResult => {
         await adminService.removeRole(userId, roleName);
         await fetchUser();
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to remove role');
+        setError(getFriendlyErrorMessage(err, 'Failed to remove role'));
         throw err;
       }
     },
@@ -93,9 +94,7 @@ const useUserDetail = (userId: number): UseUserDetailResult => {
       try {
         await adminService.resetPassword(userId, { newPassword });
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'Failed to reset password',
-        );
+        setError(getFriendlyErrorMessage(err, 'Failed to reset password'));
         throw err;
       }
     },
@@ -108,7 +107,7 @@ const useUserDetail = (userId: number): UseUserDetailResult => {
       await adminService.disableUser(userId);
       await fetchUser();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to disable user');
+      setError(getFriendlyErrorMessage(err, 'Failed to disable user'));
       throw err;
     }
   }, [userId, fetchUser]);
@@ -119,7 +118,7 @@ const useUserDetail = (userId: number): UseUserDetailResult => {
       await adminService.enableUser(userId);
       await fetchUser();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to enable user');
+      setError(getFriendlyErrorMessage(err, 'Failed to enable user'));
       throw err;
     }
   }, [userId, fetchUser]);
@@ -129,7 +128,7 @@ const useUserDetail = (userId: number): UseUserDetailResult => {
     try {
       await adminService.deleteUser(userId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete user');
+      setError(getFriendlyErrorMessage(err, 'Failed to delete user'));
       throw err;
     }
   }, [userId]);

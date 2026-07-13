@@ -201,6 +201,7 @@ public sealed class ClientHandlerTests : HandlerTestBase
         var result = await sut.HandleAsync(client.Id, CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
+        AssertEntityExists<Client>((SchedulerDbContext)DbContext, client.Id);
     }
 
     [Fact]
@@ -213,6 +214,7 @@ public sealed class ClientHandlerTests : HandlerTestBase
         var result = await sut.HandleAsync(request, CancellationToken.None);
 
         AssertNotFound(result);
+        AssertNoEntityInDb<Client>((SchedulerDbContext)DbContext);
     }
 
     [Fact]
@@ -225,6 +227,7 @@ public sealed class ClientHandlerTests : HandlerTestBase
         var result = await sut.HandleAsync(request, CancellationToken.None);
 
         AssertAccessDenied(result);
+        AssertNoEntityInDb<Client>((SchedulerDbContext)DbContext);
     }
 
     [Fact]
@@ -275,6 +278,8 @@ public sealed class ClientHandlerTests : HandlerTestBase
             CancellationToken.None);
 
         AssertAccessDenied(result);
+        var reloaded = Db.FindFresh<Client>(client.Id);
+        reloaded!.Name.Should().Be("Bob");
     }
 
     [Fact]
@@ -298,6 +303,7 @@ public sealed class ClientHandlerTests : HandlerTestBase
         var result = await sut.HandleAsync(client.Id, CancellationToken.None);
 
         AssertAccessDenied(result);
+        AssertEntityExists<Client>((SchedulerDbContext)DbContext, client.Id);
     }
 
     [Fact]
@@ -324,5 +330,6 @@ public sealed class ClientHandlerTests : HandlerTestBase
         var result = await sut.HandleAsync(client.Id, CancellationToken.None);
 
         AssertConflict(result);
+        AssertEntityExists<Client>((SchedulerDbContext)DbContext, client.Id);
     }
 }

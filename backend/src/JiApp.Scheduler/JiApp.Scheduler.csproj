@@ -31,4 +31,8 @@
         <Compile Remove="Migrations\20260528110937_InitialCreate.Designer.cs" />
     </ItemGroup>
 
+    <ItemGroup>
+        <Content Update="appsettings.Test.json" CopyToPublishDirectory="Never" />
+    </ItemGroup>
+
 </Project>
