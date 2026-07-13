@@ -81,7 +81,7 @@ public sealed class AssignRoleHandlerTests
 	{
 		var fixture = new Fixture().WithExistingUserAndRole();
 
-		var result = await fixture.Sut.HandleAsync(1, new AssignRoleRequest("Admin"));
+		var result = await fixture.Sut.HandleAsync(1, new AssignRoleRequest("Admin"), CancellationToken.None);
 
 		AssertSuccess(result);
 		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Once);
@@ -92,7 +92,7 @@ public sealed class AssignRoleHandlerTests
 	{
 		var fixture = new Fixture().WithNonexistentRole();
 
-		var result = await fixture.Sut.HandleAsync(1, new AssignRoleRequest("FakeRole"));
+		var result = await fixture.Sut.HandleAsync(1, new AssignRoleRequest("FakeRole"), CancellationToken.None);
 
 		AssertValidationFailure(result);
 		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Never);
@@ -107,7 +107,7 @@ public sealed class AssignRoleHandlerTests
 		fixture.RoleManagerMock.Setup(x => x.RoleExistsAsync("Admin"))
 			.ReturnsAsync(true);
 
-		var result = await fixture.Sut.HandleAsync(9999, new AssignRoleRequest("Admin"));
+		var result = await fixture.Sut.HandleAsync(9999, new AssignRoleRequest("Admin"), CancellationToken.None);
 
 		AssertNotFound(result);
 		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Never);
@@ -118,7 +118,7 @@ public sealed class AssignRoleHandlerTests
 	{
 		var fixture = new Fixture().WithSelfTarget();
 
-		var result = await fixture.Sut.HandleAsync(1, new AssignRoleRequest("Admin"));
+		var result = await fixture.Sut.HandleAsync(1, new AssignRoleRequest("Admin"), CancellationToken.None);
 
 		AssertAccessDenied(result);
 		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Never);
@@ -137,7 +137,7 @@ public sealed class AssignRoleHandlerTests
 		fixture.UserManagerMock.Setup(x => x.UpdateSecurityStampAsync(It.IsAny<User>()))
 			.ReturnsAsync(IdentityResult.Success);
 
-		var result = await fixture.Sut.HandleAsync(1, new AssignRoleRequest("User"));
+		var result = await fixture.Sut.HandleAsync(1, new AssignRoleRequest("User"), CancellationToken.None);
 
 		AssertSuccess(result);
 	}

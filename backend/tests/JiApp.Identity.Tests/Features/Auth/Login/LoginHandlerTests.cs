@@ -91,7 +91,7 @@ public sealed class LoginHandlerTests
                 .Setup(x => x.GenerateToken(_testUser.Id, _testUser.UserName!, It.IsAny<IEnumerable<string>>(), It.IsAny<IEnumerable<string>>(), It.IsAny<string>()))
                 .Returns("access-token");
             RefreshTokenServiceMock
-                .Setup(x => x.CreateAsync(_testUser.Id))
+                .Setup(x => x.CreateAsync(_testUser.Id, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new RefreshToken { Token = "refresh-token", Id = 10 });
             UserManagerMock
                 .Setup(x => x.GetRolesAsync(_testUser))
@@ -135,7 +135,7 @@ public sealed class LoginHandlerTests
     {
         var fixture = new Fixture().WithExistingUser();
 
-        var result = await fixture.Sut.HandleAsync(new LoginRequest("testuser", "correct-password"));
+        var result = await fixture.Sut.HandleAsync(new LoginRequest("testuser", "correct-password"), CancellationToken.None);
 
         AssertSuccess(result);
         result.Value.Should().NotBeNull();
@@ -152,7 +152,7 @@ public sealed class LoginHandlerTests
     {
         var fixture = new Fixture().WithExistingUser();
 
-        await fixture.Sut.HandleAsync(new LoginRequest("testuser", "correct-password"));
+        await fixture.Sut.HandleAsync(new LoginRequest("testuser", "correct-password"), CancellationToken.None);
 
         fixture.JwtTokenServiceMock.Verify(x => x.GenerateToken(
             1, "testuser",
@@ -167,7 +167,7 @@ public sealed class LoginHandlerTests
     {
         var fixture = new Fixture().WithNonexistentUser();
 
-        var result = await fixture.Sut.HandleAsync(new LoginRequest("unknown", "any-password"));
+        var result = await fixture.Sut.HandleAsync(new LoginRequest("unknown", "any-password"), CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Invalid username or password");
@@ -178,7 +178,7 @@ public sealed class LoginHandlerTests
     {
         var fixture = new Fixture().WithNonexistentUser();
 
-        await fixture.Sut.HandleAsync(new LoginRequest("unknown", "any-password"));
+        await fixture.Sut.HandleAsync(new LoginRequest("unknown", "any-password"), CancellationToken.None);
 
         fixture.PasswordHasherMock.Verify(
             x => x.HashPassword(It.IsAny<User>(), It.IsAny<string>()), Times.Once);
@@ -191,7 +191,7 @@ public sealed class LoginHandlerTests
     {
         var fixture = new Fixture().WithWrongPassword();
 
-        var result = await fixture.Sut.HandleAsync(new LoginRequest("testuser", "wrong-password"));
+        var result = await fixture.Sut.HandleAsync(new LoginRequest("testuser", "wrong-password"), CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Invalid username or password");
@@ -202,7 +202,7 @@ public sealed class LoginHandlerTests
     {
         var fixture = new Fixture().WithLockedAccount();
 
-        var result = await fixture.Sut.HandleAsync(new LoginRequest("testuser", "any-password"));
+        var result = await fixture.Sut.HandleAsync(new LoginRequest("testuser", "any-password"), CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Account is locked. Please try again later.");
@@ -232,7 +232,7 @@ public sealed class LoginHandlerTests
             .Setup(x => x.GenerateToken(1, "testuser", It.IsAny<IEnumerable<string>>(), It.IsAny<IEnumerable<string>>(), "generated-stamp"))
             .Returns("access-token");
         fixture.RefreshTokenServiceMock
-            .Setup(x => x.CreateAsync(1))
+            .Setup(x => x.CreateAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new RefreshToken { Token = "refresh-token", Id = 10 });
         fixture.UserManagerMock
             .Setup(x => x.GetRolesAsync(userWithNullStamp))
@@ -241,7 +241,7 @@ public sealed class LoginHandlerTests
             .Setup(x => x.GetEffectivePermissionsAsync(1))
             .ReturnsAsync(["ytdownloader.access"]);
 
-        var result = await fixture.Sut.HandleAsync(new LoginRequest("testuser", "pass"));
+        var result = await fixture.Sut.HandleAsync(new LoginRequest("testuser", "pass"), CancellationToken.None);
 
         AssertSuccess(result);
         fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(userWithNullStamp), Times.Once);

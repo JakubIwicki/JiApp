@@ -9,12 +9,12 @@ public sealed class LogoutHandler(
     IRefreshTokenService refreshTokenService,
     ILogger<LogoutHandler> logger)
 {
-    public async Task HandleAsync(LogoutRequest request)
+    public async Task HandleAsync(LogoutRequest request, CancellationToken ct)
     {
-        var storedToken = await refreshTokenService.ValidateAsync(request.RefreshToken);
+        var storedToken = await refreshTokenService.ValidateAsync(request.RefreshToken, ct);
         if (storedToken is not null)
         {
-            await refreshTokenService.RevokeAsync(storedToken.Id);
+            await refreshTokenService.RevokeAsync(storedToken.Id, ct);
             logger.RefreshTokenRevoked(storedToken.Id);
         }
     }

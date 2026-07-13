@@ -90,7 +90,7 @@ public sealed class UpdateRolePermissionsHandlerTests
 		var fixture = new Fixture().WithEditableRole();
 
 		var result = await fixture.Sut.HandleAsync("User", new UpdateRolePermissionsRequest(
-			["ytdownloader.access", "scheduler.access"]));
+			["ytdownloader.access", "scheduler.access"]), CancellationToken.None);
 
 		AssertSuccess(result);
 	}
@@ -101,7 +101,7 @@ public sealed class UpdateRolePermissionsHandlerTests
 		var fixture = new Fixture();
 
 		var result = await fixture.Sut.HandleAsync("Admin", new UpdateRolePermissionsRequest(
-			["scheduler.access"]));
+			["scheduler.access"]), CancellationToken.None);
 
 		AssertAccessDenied(result);
 	}
@@ -112,7 +112,7 @@ public sealed class UpdateRolePermissionsHandlerTests
 		var fixture = new Fixture().WithNonexistentRole();
 
 		var result = await fixture.Sut.HandleAsync("FakeRole", new UpdateRolePermissionsRequest(
-			["scheduler.access"]));
+			["scheduler.access"]), CancellationToken.None);
 
 		AssertNotFound(result);
 	}
@@ -123,7 +123,7 @@ public sealed class UpdateRolePermissionsHandlerTests
 		var fixture = new Fixture().WithEditableRole();
 
 		var result = await fixture.Sut.HandleAsync("User", new UpdateRolePermissionsRequest(
-			["invalid.permission"]));
+			["invalid.permission"]), CancellationToken.None);
 
 		AssertValidationFailure(result);
 	}
@@ -134,7 +134,7 @@ public sealed class UpdateRolePermissionsHandlerTests
 		var fixture = new Fixture().WithEditableRole();
 
 		await fixture.Sut.HandleAsync("User", new UpdateRolePermissionsRequest(
-			["ytdownloader.access", "scheduler.access"]));
+			["ytdownloader.access", "scheduler.access"]), CancellationToken.None);
 
 		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Exactly(2));
 	}
@@ -145,7 +145,7 @@ public sealed class UpdateRolePermissionsHandlerTests
 		var fixture = new Fixture().WithEditableRole();
 
 		await fixture.Sut.HandleAsync("User", new UpdateRolePermissionsRequest(
-			["scheduler.access"]));
+			["scheduler.access"]), CancellationToken.None);
 
 		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Never);
 	}
@@ -156,7 +156,7 @@ public sealed class UpdateRolePermissionsHandlerTests
 		var fixture = new Fixture();
 
 		await fixture.Sut.HandleAsync("Admin", new UpdateRolePermissionsRequest(
-			["ytdownloader.access"]));
+			["ytdownloader.access"]), CancellationToken.None);
 
 		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Never);
 	}
@@ -167,7 +167,7 @@ public sealed class UpdateRolePermissionsHandlerTests
 		var fixture = new Fixture().WithNonexistentRole();
 
 		await fixture.Sut.HandleAsync("FakeRole", new UpdateRolePermissionsRequest(
-			["scheduler.access"]));
+			["scheduler.access"]), CancellationToken.None);
 
 		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Never);
 	}

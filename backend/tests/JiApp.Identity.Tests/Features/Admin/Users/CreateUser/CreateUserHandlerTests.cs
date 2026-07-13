@@ -97,7 +97,7 @@ public sealed class CreateUserHandlerTests
 			.WithSuccessfulCreate();
 
 		var result = await fixture.Sut.HandleAsync(new CreateUserRequest(
-			"newuser", "new@test.com", "Password1", "New User", ["User"]));
+			"newuser", "new@test.com", "Password1", "New User", ["User"]), CancellationToken.None);
 
 		AssertSuccess(result);
 		result.Value!.UserId.Should().Be(7);
@@ -111,7 +111,7 @@ public sealed class CreateUserHandlerTests
 			.ReturnsAsync(false);
 
 		var result = await fixture.Sut.HandleAsync(new CreateUserRequest(
-			"newuser", "new@test.com", "Password1", "New User", ["FakeRole"]));
+			"newuser", "new@test.com", "Password1", "New User", ["FakeRole"]), CancellationToken.None);
 
 		AssertValidationFailure(result);
 	}
@@ -122,7 +122,7 @@ public sealed class CreateUserHandlerTests
 		var fixture = new Fixture().WithFailingCreate();
 
 		var result = await fixture.Sut.HandleAsync(new CreateUserRequest(
-			"newuser", "new@test.com", "weak", "New User", []));
+			"newuser", "new@test.com", "weak", "New User", []), CancellationToken.None);
 
 		AssertValidationFailure(result);
 	}
@@ -133,7 +133,7 @@ public sealed class CreateUserHandlerTests
 		var fixture = new Fixture().WithUniqueConstraintViolation();
 
 		var result = await fixture.Sut.HandleAsync(new CreateUserRequest(
-			"existinguser", "existing@test.com", "Password1", "New User", []));
+			"existinguser", "existing@test.com", "Password1", "New User", []), CancellationToken.None);
 
 		AssertConflict(result);
 	}
@@ -147,7 +147,7 @@ public sealed class CreateUserHandlerTests
 			.WithFailingRoleAssignment(createdUserId);
 
 		var result = await fixture.Sut.HandleAsync(new CreateUserRequest(
-			"newuser", "new@test.com", "Password1", "New User", ["Admin"]));
+			"newuser", "new@test.com", "Password1", "New User", ["Admin"]), CancellationToken.None);
 
 		fixture.UserManagerMock.Verify(
 			x => x.DeleteAsync(It.Is<User>(u => u.Id == createdUserId)),

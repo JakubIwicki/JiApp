@@ -69,7 +69,7 @@ public sealed class RemoveRoleHandlerTests
 	{
 		var fixture = new Fixture().WithTargetUserAndRole("User");
 
-		var result = await fixture.Sut.HandleAsync(2, "User");
+		var result = await fixture.Sut.HandleAsync(2, "User", CancellationToken.None);
 
 		AssertSuccess(result);
 		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Once);
@@ -80,7 +80,7 @@ public sealed class RemoveRoleHandlerTests
 	{
 		var fixture = new Fixture().WithTargetAsLastAdmin();
 
-		var result = await fixture.Sut.HandleAsync(2, "Admin");
+		var result = await fixture.Sut.HandleAsync(2, "Admin", CancellationToken.None);
 
 		AssertAccessDenied(result);
 		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Never);
@@ -93,7 +93,7 @@ public sealed class RemoveRoleHandlerTests
 		fixture.UserManagerMock.Setup(x => x.FindByIdAsync("999"))
 			.ReturnsAsync((User?)null);
 
-		var result = await fixture.Sut.HandleAsync(999, "User");
+		var result = await fixture.Sut.HandleAsync(999, "User", CancellationToken.None);
 
 		AssertNotFound(result);
 		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Never);

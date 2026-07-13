@@ -10,7 +10,7 @@ public sealed class DeleteUserHandler(
 	UserManager<User> userManager,
 	AdminAccessGuard guard)
 {
-	public async Task<Result<bool>> HandleAsync(long userId)
+	public async Task<Result<bool>> HandleAsync(long userId, CancellationToken ct)
 	{
 		var notSelf = guard.EnsureNotSelf(userId);
 		if (!notSelf.IsSuccess)

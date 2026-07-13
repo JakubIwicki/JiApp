@@ -7,7 +7,7 @@ namespace JiApp.Identity.Features.Admin.Users.GetUserDetail;
 
 public sealed class GetUserDetailHandler(UserManager<User> userManager)
 {
-	public async Task<Result<GetUserDetailResponse>> HandleAsync(long userId)
+	public async Task<Result<GetUserDetailResponse>> HandleAsync(long userId, CancellationToken ct)
 	{
 		var user = await userManager.FindByIdAsync(userId.ToString(CultureInfo.InvariantCulture));
 		if (user is null)

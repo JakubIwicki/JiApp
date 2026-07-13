@@ -78,7 +78,7 @@ public sealed class UpdateProfileHandlerTests
         var fixture = new Fixture().WithExistingUser().WithSuccessfulEmailChange();
 
         var result = await fixture.Sut.HandleAsync(
-            new UpdateProfileRequest("New Name", "new@test.com"));
+            new UpdateProfileRequest("New Name", "new@test.com"), CancellationToken.None);
 
         AssertSuccess(result);
         result.Value.Should().NotBeNull();
@@ -94,7 +94,7 @@ public sealed class UpdateProfileHandlerTests
         var fixture = new Fixture().WithExistingUser();
 
         var result = await fixture.Sut.HandleAsync(
-            new UpdateProfileRequest("New Name", "old@test.com"));
+            new UpdateProfileRequest("New Name", "old@test.com"), CancellationToken.None);
 
         AssertSuccess(result);
         fixture.UserManagerMock.Verify(
@@ -108,7 +108,7 @@ public sealed class UpdateProfileHandlerTests
         var fixture = new Fixture().WithMissingUser();
 
         var result = await fixture.Sut.HandleAsync(
-            new UpdateProfileRequest("New Name", "new@test.com"));
+            new UpdateProfileRequest("New Name", "new@test.com"), CancellationToken.None);
 
         AssertFailure(result, ResultCategories.NotFound);
         result.Error.Should().Be("User not found");
@@ -120,7 +120,7 @@ public sealed class UpdateProfileHandlerTests
         var fixture = new Fixture().WithExistingUser().WithDuplicateEmailFailure();
 
         var result = await fixture.Sut.HandleAsync(
-            new UpdateProfileRequest("New Name", "new@test.com"));
+            new UpdateProfileRequest("New Name", "new@test.com"), CancellationToken.None);
 
         AssertFailure(result, ResultCategories.Conflict);
         result.Error.Should().Contain("already taken");

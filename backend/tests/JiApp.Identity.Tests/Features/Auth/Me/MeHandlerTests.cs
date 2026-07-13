@@ -72,7 +72,7 @@ public sealed class MeHandlerTests
     {
         var fixture = new Fixture().WithExistingUser();
 
-        var result = await fixture.Sut.HandleAsync();
+        var result = await fixture.Sut.HandleAsync(CancellationToken.None);
 
         AssertSuccess(result);
         result.Value.Should().NotBeNull();
@@ -89,7 +89,7 @@ public sealed class MeHandlerTests
     {
         var fixture = new Fixture().WithMissingUser();
 
-        var result = await fixture.Sut.HandleAsync();
+        var result = await fixture.Sut.HandleAsync(CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("User not found");

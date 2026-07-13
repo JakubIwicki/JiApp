@@ -14,7 +14,7 @@ public sealed class MeHandler(
     IUserAccessService accessService,
     ILogger<MeHandler> logger)
 {
-    public async Task<Result<MeResponse>> HandleAsync()
+    public async Task<Result<MeResponse>> HandleAsync(CancellationToken ct)
     {
         logger.FetchingCurrentUser();
 

@@ -65,7 +65,7 @@ public sealed class GetUserDetailHandlerTests
 	{
 		var fixture = new Fixture().WithExistingUser();
 
-		var result = await fixture.Sut.HandleAsync(1);
+		var result = await fixture.Sut.HandleAsync(1, CancellationToken.None);
 
 		AssertSuccess(result);
 		result.Value!.Id.Should().Be(1);
@@ -78,7 +78,7 @@ public sealed class GetUserDetailHandlerTests
 	{
 		var fixture = new Fixture().WithNonexistentUser();
 
-		var result = await fixture.Sut.HandleAsync(999);
+		var result = await fixture.Sut.HandleAsync(999, CancellationToken.None);
 
 		AssertNotFound(result);
 	}
@@ -88,7 +88,7 @@ public sealed class GetUserDetailHandlerTests
 	{
 		var fixture = new Fixture().WithLockedOutUser();
 
-		var result = await fixture.Sut.HandleAsync(1);
+		var result = await fixture.Sut.HandleAsync(1, CancellationToken.None);
 
 		AssertSuccess(result);
 		result.Value!.IsLockedOut.Should().BeTrue();

@@ -9,9 +9,9 @@ public static class ListRolesEndpoint
 {
 	public static IEndpointRouteBuilder MapListRoles(this IEndpointRouteBuilder endpoints)
 	{
-		endpoints.MapGet("/roles", async (ListRolesHandler handler) =>
+		endpoints.MapGet("/roles", async (ListRolesHandler handler, CancellationToken ct) =>
 			{
-				var result = await handler.HandleAsync();
+				var result = await handler.HandleAsync(ct);
 				return Results.Ok(result.Value);
 			})
 			.WithTags(SwaggerConstants.Tags.Admin)

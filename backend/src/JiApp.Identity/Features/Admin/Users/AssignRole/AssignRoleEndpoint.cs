@@ -15,13 +15,14 @@ public static class AssignRoleEndpoint
 				long userId,
 				AssignRoleRequest request,
 				IValidator<AssignRoleRequest> validator,
-				AssignRoleHandler handler) =>
+				AssignRoleHandler handler,
+				CancellationToken ct) =>
 			{
-				var validationResult = await validator.ValidateAsync(request);
+				var validationResult = await validator.ValidateAsync(request, ct);
 				if (!validationResult.IsValid)
 					return Results.Extensions.ValidationError(validationResult.ErrorMessages());
 
-				var result = await handler.HandleAsync(userId, request);
+				var result = await handler.HandleAsync(userId, request, ct);
 				if (result.IsSuccess)
 					return Results.Ok();
 

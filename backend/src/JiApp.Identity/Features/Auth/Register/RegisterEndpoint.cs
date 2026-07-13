@@ -14,15 +14,16 @@ public static class RegisterEndpoint
         endpoints.MapPost("/register", async (
                 RegisterRequest request,
                 IValidator<RegisterRequest> validator,
-                RegisterHandler handler) =>
+                RegisterHandler handler,
+                CancellationToken ct) =>
             {
-                var validationResult = await validator.ValidateAsync(request);
+                var validationResult = await validator.ValidateAsync(request, ct);
                 if (!validationResult.IsValid)
                 {
                     return Results.Extensions.ValidationError(validationResult.ErrorMessages());
                 }
 
-                var result = await handler.HandleAsync(request);
+                var result = await handler.HandleAsync(request, ct);
                 if (result.IsSuccess)
                     return Results.Created((Uri?)null, result.Value);
 

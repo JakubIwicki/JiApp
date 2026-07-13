@@ -70,7 +70,7 @@ public sealed class DeleteRoleHandlerTests
 	{
 		var fixture = new Fixture().WithDeletableRole();
 
-		var result = await fixture.Sut.HandleAsync("Moderator");
+		var result = await fixture.Sut.HandleAsync("Moderator", CancellationToken.None);
 
 		AssertSuccess(result);
 	}
@@ -80,7 +80,7 @@ public sealed class DeleteRoleHandlerTests
 	{
 		var fixture = new Fixture();
 
-		var result = await fixture.Sut.HandleAsync("Admin");
+		var result = await fixture.Sut.HandleAsync("Admin", CancellationToken.None);
 
 		AssertAccessDenied(result);
 	}
@@ -90,7 +90,7 @@ public sealed class DeleteRoleHandlerTests
 	{
 		var fixture = new Fixture();
 
-		var result = await fixture.Sut.HandleAsync("Guest");
+		var result = await fixture.Sut.HandleAsync("Guest", CancellationToken.None);
 
 		AssertAccessDenied(result);
 	}
@@ -100,7 +100,7 @@ public sealed class DeleteRoleHandlerTests
 	{
 		var fixture = new Fixture().WithRoleHavingUsers();
 
-		var result = await fixture.Sut.HandleAsync("Moderator");
+		var result = await fixture.Sut.HandleAsync("Moderator", CancellationToken.None);
 
 		AssertConflict(result);
 	}
@@ -112,7 +112,7 @@ public sealed class DeleteRoleHandlerTests
 		fixture.RoleManagerMock.Setup(x => x.FindByNameAsync("FakeRole"))
 			.ReturnsAsync((IdentityRole<long>?)null);
 
-		var result = await fixture.Sut.HandleAsync("FakeRole");
+		var result = await fixture.Sut.HandleAsync("FakeRole", CancellationToken.None);
 
 		AssertNotFound(result);
 	}

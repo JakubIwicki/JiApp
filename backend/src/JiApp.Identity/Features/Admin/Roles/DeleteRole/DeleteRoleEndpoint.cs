@@ -12,9 +12,10 @@ public static class DeleteRoleEndpoint
 	{
 		endpoints.MapDelete("/roles/{roleName}", async (
 				string roleName,
-				DeleteRoleHandler handler) =>
+				DeleteRoleHandler handler,
+				CancellationToken ct) =>
 			{
-				var result = await handler.HandleAsync(roleName);
+				var result = await handler.HandleAsync(roleName, ct);
 				if (result.IsSuccess)
 					return Results.Ok();
 

@@ -50,7 +50,7 @@ public sealed class CreateRoleHandlerTests
 		var fixture = new Fixture().WithNewRoleNameAvailable();
 
 		var result = await fixture.Sut.HandleAsync(new CreateRoleRequest(
-			"Moderator", ["scheduler.access"]));
+			"Moderator", ["scheduler.access"]), CancellationToken.None);
 
 		AssertSuccess(result);
 	}
@@ -61,7 +61,7 @@ public sealed class CreateRoleHandlerTests
 		var fixture = new Fixture().WithRoleAlreadyExisting();
 
 		var result = await fixture.Sut.HandleAsync(new CreateRoleRequest(
-			"Existing", ["scheduler.access"]));
+			"Existing", ["scheduler.access"]), CancellationToken.None);
 
 		AssertConflict(result);
 	}
@@ -72,7 +72,7 @@ public sealed class CreateRoleHandlerTests
 		var fixture = new Fixture().WithNewRoleNameAvailable();
 
 		var result = await fixture.Sut.HandleAsync(new CreateRoleRequest(
-			"Moderator", ["invalid.permission"]));
+			"Moderator", ["invalid.permission"]), CancellationToken.None);
 
 		AssertValidationFailure(result);
 	}
