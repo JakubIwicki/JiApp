@@ -50,7 +50,7 @@ describe('useRoles', () => {
       await Promise.resolve();
     });
 
-    expect(result.current.error).toBe('Server error');
+    expect(result.current.error).toBe('Failed to load roles');
     expect(result.current.isLoading).toBe(false);
   });
 

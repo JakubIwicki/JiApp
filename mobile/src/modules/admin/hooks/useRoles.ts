@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import * as adminService from '../services/adminService';
+import { getFriendlyErrorMessage } from '../../../utils/errorUtils';
 import type { RoleSummary } from '../types/api';
 
 interface UseRolesResult {
@@ -39,7 +40,7 @@ const useRoles = (): UseRolesResult => {
       setRoles(data);
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') return;
-      setError(err instanceof Error ? err.message : 'Failed to load roles');
+      setError(getFriendlyErrorMessage(err, 'Failed to load roles'));
       setRoles([]);
     } finally {
       if (!controller.signal.aborted) {
@@ -63,7 +64,7 @@ const useRoles = (): UseRolesResult => {
         await adminService.createRole(data);
         await fetchRoles();
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to create role');
+        setError(getFriendlyErrorMessage(err, 'Failed to create role'));
         throw err;
       }
     },
@@ -81,9 +82,7 @@ const useRoles = (): UseRolesResult => {
           prev.map(r => (r.name === roleName ? { ...r, permissions } : r)),
         );
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'Failed to update permissions',
-        );
+        setError(getFriendlyErrorMessage(err, 'Failed to update permissions'));
         throw err;
       }
     },
@@ -96,7 +95,7 @@ const useRoles = (): UseRolesResult => {
       await adminService.deleteRole(roleName);
       setRoles(prev => prev.filter(r => r.name !== roleName));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete role');
+      setError(getFriendlyErrorMessage(err, 'Failed to delete role'));
       throw err;
     }
   }, []);

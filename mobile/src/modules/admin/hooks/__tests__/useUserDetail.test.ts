@@ -55,7 +55,7 @@ describe('useUserDetail', () => {
       await Promise.resolve();
     });
 
-    expect(result.current.error).toBe('Not found');
+    expect(result.current.error).toBe('Failed to load user');
     expect(result.current.isLoading).toBe(false);
   });
 
