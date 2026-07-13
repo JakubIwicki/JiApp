@@ -4,7 +4,11 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { Meta, StoryObj } from '@storybook/react';
 import SearchScreen from './SearchScreen';
 import type { MainStackParamList } from '../navigation/types';
-import { setSearchMode } from '../services/__mocks__/searchService';
+import {
+  withSearchResults,
+  withEmptySearchResults,
+  withSearchFailure,
+} from '../services/__mocks__/searchService';
 
 const Stack = createNativeStackNavigator<MainStackParamList>();
 
@@ -12,7 +16,7 @@ const meta: Meta<typeof SearchScreen> = {
   title: 'Screens/SearchScreen',
   component: SearchScreen,
   decorators: [
-    (Story) => (
+    Story => (
       <NavigationContainer>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Search" component={Story} />
@@ -28,8 +32,8 @@ type Story = StoryObj<typeof SearchScreen>;
 
 export const WithResults: Story = {
   decorators: [
-    (Story) => {
-      setSearchMode('success');
+    Story => {
+      withSearchResults();
       return <Story />;
     },
   ],
@@ -45,8 +49,8 @@ export const WithResults: Story = {
 
 export const EmptyResults: Story = {
   decorators: [
-    (Story) => {
-      setSearchMode('empty');
+    Story => {
+      withEmptySearchResults();
       return <Story />;
     },
   ],
@@ -62,8 +66,8 @@ export const EmptyResults: Story = {
 
 export const WithError: Story = {
   decorators: [
-    (Story) => {
-      setSearchMode('error');
+    Story => {
+      withSearchFailure();
       return <Story />;
     },
   ],

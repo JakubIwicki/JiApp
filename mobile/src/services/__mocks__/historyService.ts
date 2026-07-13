@@ -1,19 +1,20 @@
+import { createMockFn } from '../../test/createMockFn';
 import type { HistoryResponse } from '../../types/api';
 
-type Mode = 'success' | 'empty' | 'error' | 'loading';
+// ── Default stub data ──────────────────────────────────────────────────────
 
-let _mode: Mode = 'success';
-let _delayMs = 0;
-
-export const setHistoryMode = (mode: Mode, delayMs = 0) => {
-  _mode = mode;
-  _delayMs = delayMs;
-};
-
-const fakeData: HistoryResponse = {
+const fakeHistory: HistoryResponse = {
   searches: [
-    { id: 1, searchText: 'never gonna give you up', searchedAt: new Date(Date.now() - 3600000).toISOString() },
-    { id: 2, searchText: 'gangnam style', searchedAt: new Date(Date.now() - 86400000).toISOString() },
+    {
+      id: 1,
+      searchText: 'never gonna give you up',
+      searchedAt: new Date(Date.now() - 3600000).toISOString(),
+    },
+    {
+      id: 2,
+      searchText: 'gangnam style',
+      searchedAt: new Date(Date.now() - 86400000).toISOString(),
+    },
   ],
   downloads: [
     {
@@ -28,13 +29,53 @@ const fakeData: HistoryResponse = {
   ],
 };
 
-export const getHistory = async (
-  _limit?: number,
-  _signal?: AbortSignal,
-): Promise<HistoryResponse> => {
-  if (_delayMs) await new Promise(r => setTimeout(r, _delayMs));
-  if (_mode === 'loading') await new Promise(() => {});
-  if (_mode === 'error') throw new Error('Mock history error');
-  if (_mode === 'empty') return { searches: [], downloads: [] };
-  return fakeData;
-};
+// ── Internal state ─────────────────────────────────────────────────────────
+
+let _historyResult: HistoryResponse = { ...fakeHistory };
+let _historyError: Error | null = null;
+
+// ── Mock functions ─────────────────────────────────────────────────────────
+
+export const getHistory = createMockFn(
+  async (_limit?: number, _signal?: AbortSignal): Promise<HistoryResponse> => {
+    if (_historyError) throw _historyError;
+    return _historyResult;
+  },
+);
+
+// ── Fluent scenario builders (.withX()) ────────────────────────────────────
+
+export function withHistory(
+  overrides?: Partial<HistoryResponse>,
+): HistoryResponse {
+  _historyError = null;
+  _historyResult = {
+    searches: overrides?.searches ?? fakeHistory.searches,
+    downloads: overrides?.downloads ?? fakeHistory.downloads,
+  };
+  return _historyResult;
+}
+
+export function withEmptyHistory(): HistoryResponse {
+  _historyError = null;
+  _historyResult = { searches: [], downloads: [] };
+  return _historyResult;
+}
+
+export function withHistoryFailure(
+  error: Error = new Error('Mock history error'),
+): Error {
+  _historyError = error;
+  return error;
+}
+
+// ── Reset ──────────────────────────────────────────────────────────────────
+
+export function reset(): void {
+  _historyResult = { ...fakeHistory };
+  _historyError = null;
+
+  if (typeof jest !== 'undefined') {
+    getHistory.mockClear();
+  }
+}

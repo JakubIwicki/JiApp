@@ -51,6 +51,13 @@ const config: StorybookConfig = {
       // which doesn't exist in react-native-web. The mock below renders real DOM
       // <svg> elements instead — icons are visible, Fabric imports are avoided.
       'react-native-svg': path.join(mocksDir, 'react-native-svg.tsx'),
+
+      // react-native-markdown-display contains Flow-annotated source that Vite
+      // can't parse. The stub renders markdown content as plain <Text>.
+      'react-native-markdown-display': path.join(
+        mocksDir,
+        'react-native-markdown-display.tsx',
+      ),
     };
 
     // Plugin: redirect real service imports to __mocks__/ (not apiClient or storageService)
@@ -60,6 +67,9 @@ const config: StorybookConfig = {
       enforce: 'pre',
       resolveId(source, importer) {
         if (!importer) return null;
+        // Only intercept relative imports — bare specifiers (node_modules
+        // packages) should resolve normally.
+        if (!source.startsWith('.')) return null;
         const resolved = path.resolve(path.dirname(importer), source);
         // Guard: reject paths that escape the project directory
         if (!resolved.startsWith(projectDir + path.sep)) return null;
