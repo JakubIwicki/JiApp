@@ -1,4 +1,5 @@
 using System.Net;
+using JiApp.Common.Resilience;
 using JiApp.Common.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -24,6 +25,8 @@ public sealed class RemoteSecurityStampValidatorTests
 
 	private static ILogger<T> NullLogger<T>() => NullLoggerFactory.Instance.CreateLogger<T>();
 
+	private static IRetryPolicyFactory RetryPolicy => new RetryPolicyFactory();
+
 	private static IHttpContextAccessor CreateHttpContextAccessor(string? authHeader = "Bearer testtoken")
 	{
 		var httpContext = new DefaultHttpContext();
@@ -38,7 +41,7 @@ public sealed class RemoteSecurityStampValidatorTests
 		var handler = new StubHttpMessageHandler(HttpStatusCode.NoContent);
 		using var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://identity:6701") };
 		var accessor = CreateHttpContextAccessor();
-		var validator = new RemoteSecurityStampValidator(httpClient, accessor, NullLogger<RemoteSecurityStampValidator>());
+		var validator = new RemoteSecurityStampValidator(httpClient, accessor, NullLogger<RemoteSecurityStampValidator>(), RetryPolicy);
 
 		var result = await validator.ValidateCurrentAsync();
 
@@ -51,7 +54,7 @@ public sealed class RemoteSecurityStampValidatorTests
 		var handler = new StubHttpMessageHandler(HttpStatusCode.Unauthorized);
 		using var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://identity:6701") };
 		var accessor = CreateHttpContextAccessor();
-		var validator = new RemoteSecurityStampValidator(httpClient, accessor, NullLogger<RemoteSecurityStampValidator>());
+		var validator = new RemoteSecurityStampValidator(httpClient, accessor, NullLogger<RemoteSecurityStampValidator>(), RetryPolicy);
 
 		var result = await validator.ValidateCurrentAsync();
 
@@ -64,7 +67,7 @@ public sealed class RemoteSecurityStampValidatorTests
 		var handler = new StubHttpMessageHandler(HttpStatusCode.InternalServerError);
 		using var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://identity:6701") };
 		var accessor = CreateHttpContextAccessor();
-		var validator = new RemoteSecurityStampValidator(httpClient, accessor, NullLogger<RemoteSecurityStampValidator>());
+		var validator = new RemoteSecurityStampValidator(httpClient, accessor, NullLogger<RemoteSecurityStampValidator>(), RetryPolicy);
 
 		var result = await validator.ValidateCurrentAsync();
 
@@ -80,7 +83,7 @@ public sealed class RemoteSecurityStampValidatorTests
 		};
 		using var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://identity:6701") };
 		var accessor = CreateHttpContextAccessor();
-		var validator = new RemoteSecurityStampValidator(httpClient, accessor, NullLogger<RemoteSecurityStampValidator>());
+		var validator = new RemoteSecurityStampValidator(httpClient, accessor, NullLogger<RemoteSecurityStampValidator>(), RetryPolicy);
 
 		var result = await validator.ValidateCurrentAsync();
 
@@ -93,7 +96,7 @@ public sealed class RemoteSecurityStampValidatorTests
 		var handler = new StubHttpMessageHandler(HttpStatusCode.NoContent);
 		using var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://identity:6701") };
 		var accessor = CreateHttpContextAccessor(authHeader: null);
-		var validator = new RemoteSecurityStampValidator(httpClient, accessor, NullLogger<RemoteSecurityStampValidator>());
+		var validator = new RemoteSecurityStampValidator(httpClient, accessor, NullLogger<RemoteSecurityStampValidator>(), RetryPolicy);
 
 		var result = await validator.ValidateCurrentAsync();
 
@@ -109,7 +112,7 @@ public sealed class RemoteSecurityStampValidatorTests
 		};
 		using var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://identity:6701") };
 		var accessor = CreateHttpContextAccessor();
-		var validator = new RemoteSecurityStampValidator(httpClient, accessor, NullLogger<RemoteSecurityStampValidator>());
+		var validator = new RemoteSecurityStampValidator(httpClient, accessor, NullLogger<RemoteSecurityStampValidator>(), RetryPolicy);
 
 		var result = await validator.ValidateCurrentAsync();
 
@@ -122,7 +125,7 @@ public sealed class RemoteSecurityStampValidatorTests
 		var handler = new StubHttpMessageHandler(HttpStatusCode.NoContent);
 		using var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://identity:6701") };
 		var accessor = new HttpContextAccessor { HttpContext = null! }; // no HttpContext
-		var validator = new RemoteSecurityStampValidator(httpClient, accessor, NullLogger<RemoteSecurityStampValidator>());
+		var validator = new RemoteSecurityStampValidator(httpClient, accessor, NullLogger<RemoteSecurityStampValidator>(), RetryPolicy);
 
 		var result = await validator.ValidateCurrentAsync();
 
