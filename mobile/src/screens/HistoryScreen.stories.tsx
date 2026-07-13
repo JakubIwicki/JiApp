@@ -4,7 +4,11 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { Meta, StoryObj } from '@storybook/react';
 import HistoryScreen from './HistoryScreen';
 import type { MainStackParamList } from '../navigation/types';
-import { setHistoryMode } from '../services/__mocks__/historyService';
+import {
+  withHistory,
+  withEmptyHistory,
+  withHistoryFailure,
+} from '../services/__mocks__/historyService';
 
 const Stack = createNativeStackNavigator<MainStackParamList>();
 
@@ -12,7 +16,7 @@ const meta: Meta<typeof HistoryScreen> = {
   title: 'Screens/HistoryScreen',
   component: HistoryScreen,
   decorators: [
-    (Story) => (
+    Story => (
       <NavigationContainer>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="History" component={Story} />
@@ -28,8 +32,8 @@ type Story = StoryObj<typeof HistoryScreen>;
 
 export const WithItems: Story = {
   decorators: [
-    (Story) => {
-      setHistoryMode('success');
+    Story => {
+      withHistory();
       return <Story />;
     },
   ],
@@ -37,8 +41,8 @@ export const WithItems: Story = {
 
 export const Empty: Story = {
   decorators: [
-    (Story) => {
-      setHistoryMode('empty');
+    Story => {
+      withEmptyHistory();
       return <Story />;
     },
   ],
@@ -46,8 +50,8 @@ export const Empty: Story = {
 
 export const WithError: Story = {
   decorators: [
-    (Story) => {
-      setHistoryMode('error');
+    Story => {
+      withHistoryFailure();
       return <Story />;
     },
   ],

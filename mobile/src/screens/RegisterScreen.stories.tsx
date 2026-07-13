@@ -4,7 +4,10 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { Meta, StoryObj } from '@storybook/react';
 import RegisterScreen from './RegisterScreen';
 import { AuthContext } from '../context/AuthContext';
-import * as authService from '../services/__mocks__/authService';
+import {
+  register as mockRegister,
+  withRegisterFailure,
+} from '../services/__mocks__/authService';
 import type { AuthStackParamList } from '../navigation/types';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
@@ -28,7 +31,7 @@ const mockAuthValue = {
     password: string,
     displayName: string,
   ) => {
-    await authService.register(username, email, password, displayName);
+    await mockRegister(username, email, password, displayName);
   },
   logout: async () => {},
   checkToken: async () => {},
@@ -62,7 +65,7 @@ export const Default: Story = {};
 export const WithError: Story = {
   decorators: [
     Story => {
-      authService.setAuthMode('error');
+      withRegisterFailure();
       return <Story />;
     },
   ],

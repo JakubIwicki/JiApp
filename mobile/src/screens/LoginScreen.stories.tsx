@@ -4,7 +4,10 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { Meta, StoryObj } from '@storybook/react';
 import LoginScreen from './LoginScreen';
 import { AuthContext } from '../context/AuthContext';
-import * as authService from '../services/__mocks__/authService';
+import {
+  login as mockLogin,
+  withLoginFailure,
+} from '../services/__mocks__/authService';
 import type { AuthStackParamList } from '../navigation/types';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
@@ -22,7 +25,7 @@ const mockAuthValue = {
   showFarewell: false,
   isAdmin: false,
   login: async (username: string, password: string) => {
-    await authService.login(username, password);
+    await mockLogin(username, password);
   },
   register: async () => {},
   logout: async () => {},
@@ -57,7 +60,7 @@ export const Default: Story = {};
 export const WithError: Story = {
   decorators: [
     Story => {
-      authService.setAuthMode('error');
+      withLoginFailure(new Error('Invalid credentials'));
       return <Story />;
     },
   ],

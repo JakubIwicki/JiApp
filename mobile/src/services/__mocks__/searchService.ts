@@ -1,14 +1,7 @@
+import { createMockFn } from '../../test/createMockFn';
 import type { SearchResponse, SearchHistoryItem } from '../../types/api';
 
-type Mode = 'success' | 'empty' | 'error' | 'loading';
-
-let _mode: Mode = 'success';
-let _delayMs = 0;
-
-export const setSearchMode = (mode: Mode, delayMs = 0) => {
-  _mode = mode;
-  _delayMs = delayMs;
-};
+// ── Default stub data ──────────────────────────────────────────────────────
 
 const fakeResults = [
   {
@@ -42,21 +35,110 @@ const fakeHistory: SearchHistoryItem[] = [
   },
 ];
 
-export const searchVideos = async (
-  _query: string,
-  _page = 0,
-  _signal?: AbortSignal,
-): Promise<SearchResponse> => {
-  if (_delayMs) await new Promise(r => setTimeout(r, _delayMs));
-  if (_mode === 'loading') await new Promise(() => {});
-  if (_mode === 'error') throw new Error('Mock search error');
-  if (_mode === 'empty') return { results: [], hasMore: false };
-  return { results: fakeResults, hasMore: false };
-};
+// ── Internal state ─────────────────────────────────────────────────────────
 
-export const getSearchHistory = async (
-  _limit?: number,
-): Promise<SearchHistoryItem[]> => {
-  if (_mode === 'error') throw new Error('Mock history error');
-  return fakeHistory;
-};
+let _searchResults: SearchResponse = { results: fakeResults, hasMore: false };
+let _searchError: Error | null = null;
+let _historyResults: SearchHistoryItem[] = [...fakeHistory];
+let _historyError: Error | null = null;
+let _archiveError: Error | null = null;
+
+// ── Mock functions ─────────────────────────────────────────────────────────
+
+export const searchVideos = createMockFn(
+  async (
+    _query: string,
+    _page = 0,
+    _signal?: AbortSignal,
+  ): Promise<SearchResponse> => {
+    if (_searchError) throw _searchError;
+    return _searchResults;
+  },
+);
+
+export const getSearchHistory = createMockFn(
+  async (_limit?: number): Promise<SearchHistoryItem[]> => {
+    if (_historyError) throw _historyError;
+    return _historyResults;
+  },
+);
+
+export const archiveSearchHistory = createMockFn(
+  async (_id: number): Promise<void> => {
+    if (_archiveError) throw _archiveError;
+  },
+);
+
+// ── Fluent scenario builders (.withX()) ────────────────────────────────────
+
+export function withSearchResults(
+  results?: Partial<SearchResponse>,
+): SearchResponse {
+  _searchError = null;
+  _searchResults = {
+    results: results?.results ?? fakeResults,
+    hasMore: results?.hasMore ?? false,
+  };
+  return _searchResults;
+}
+
+export function withEmptySearchResults(): SearchResponse {
+  _searchError = null;
+  _searchResults = { results: [], hasMore: false };
+  return _searchResults;
+}
+
+export function withSearchFailure(
+  error: Error = new Error('Mock search error'),
+): Error {
+  _searchError = error;
+  return error;
+}
+
+export function withSearchHistory(
+  items?: SearchHistoryItem[],
+): SearchHistoryItem[] {
+  _historyError = null;
+  _historyResults = items ?? [...fakeHistory];
+  return _historyResults;
+}
+
+export function withEmptySearchHistory(): SearchHistoryItem[] {
+  _historyError = null;
+  _historyResults = [];
+  return [];
+}
+
+export function withHistoryFailure(
+  error: Error = new Error('Mock history error'),
+): Error {
+  _historyError = error;
+  return error;
+}
+
+export function withArchiveSuccess(): void {
+  _archiveError = null;
+}
+
+export function withArchiveFailure(
+  error: Error = new Error('Mock archive error'),
+): Error {
+  _archiveError = error;
+  return error;
+}
+
+// ── Reset ──────────────────────────────────────────────────────────────────
+
+export function reset(): void {
+  _searchResults = { results: fakeResults, hasMore: false };
+  _searchError = null;
+  _historyResults = [...fakeHistory];
+  _historyError = null;
+  _archiveError = null;
+
+  if (typeof jest !== 'undefined') {
+    searchVideos.mockClear();
+    getSearchHistory.mockClear();
+    archiveSearchHistory.mockClear();
+  }
+}

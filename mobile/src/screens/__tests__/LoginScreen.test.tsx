@@ -1,24 +1,24 @@
 import React from 'react';
-import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
+import { fireEvent, waitFor, act } from '@testing-library/react-native';
+import { composeStories } from '@storybook/react';
 
-// Mock useAuth
-const mockLogin = jest.fn();
-jest.mock('../../hooks/useAuth', () => ({
-  __esModule: true,
-  default: () => ({
-    login: mockLogin,
-  }),
-}));
-
-// Mock react-i18next
-jest.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
-// Mock @react-navigation/native useNavigation
 const mockNavigate = jest.fn();
+
+jest.mock('@react-navigation/native-stack', () => {
+  const React = require('react');
+  return {
+    createNativeStackNavigator: () => ({
+      Navigator: ({ children }: { children: React.ReactNode }) =>
+        React.createElement(React.Fragment, null, children),
+      Screen: ({
+        component: Component,
+      }: {
+        component?: React.ComponentType<unknown>;
+      }) => (Component ? React.createElement(Component) : null),
+    }),
+  };
+});
+
 jest.mock('@react-navigation/native', () => {
   const actual = jest.requireActual('@react-navigation/native');
   return {
@@ -30,32 +30,55 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 
-// Mock storageService
-jest.mock('../../services/storageService', () => ({
-  getUsername: jest.fn(() => Promise.resolve(null)),
-}));
+jest.mock('react-i18next', () => {
+  const actual = jest.requireActual('react-i18next');
+  return {
+    ...actual,
+    useTranslation: () => ({
+      t: (key: string) => key,
+    }),
+  };
+});
 
-import LoginScreen from '../LoginScreen';
+jest.mock('../../services/authService');
+jest.mock('../../services/storageService', () => {
+  const actual = jest.requireActual('../../services/storageService');
+  return {
+    ...actual,
+    getUsername: jest.fn(() => Promise.resolve(null)),
+  };
+});
+
+import * as stories from '../LoginScreen.stories';
+import { rtlRender } from '../../test/rtlUtils';
+import {
+  withLoginSuccess,
+  withLoginFailure,
+  login as mockAuthLogin,
+  reset,
+} from '../../services/__mocks__/authService';
+
+const { Default } = composeStories(stories);
 
 describe('LoginScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    reset();
   });
 
   it('renders login form with username, password, remember me, and login button', () => {
-    const { getByPlaceholderText, getAllByText, getByText } = render(
-      <LoginScreen />,
+    const { getByPlaceholderText, getAllByText, getByText } = rtlRender(
+      <Default />,
     );
     expect(getByPlaceholderText('auth.username')).toBeTruthy();
     expect(getByPlaceholderText('auth.password')).toBeTruthy();
-    // Title and button both show 'auth.login'
     expect(getAllByText('auth.login').length).toBeGreaterThanOrEqual(2);
     expect(getByText('auth.rememberMe')).toBeTruthy();
     expect(getByText('auth.goToRegister')).toBeTruthy();
   });
 
   it('calls validation errors when fields empty and login pressed', async () => {
-    const { getByTestId, findByText } = render(<LoginScreen />);
+    const { getByTestId, findByText } = rtlRender(<Default />);
     fireEvent.press(getByTestId('button'));
 
     expect(await findByText('auth.usernameRequired')).toBeTruthy();
@@ -63,8 +86,8 @@ describe('LoginScreen', () => {
   });
 
   it('calls AuthContext.login with trimmed values', async () => {
-    mockLogin.mockResolvedValueOnce(undefined);
-    const { getByPlaceholderText, getByTestId } = render(<LoginScreen />);
+    withLoginSuccess();
+    const { getByPlaceholderText, getByTestId } = rtlRender(<Default />);
 
     fireEvent.changeText(getByPlaceholderText('auth.username'), '  testuser  ');
     fireEvent.changeText(getByPlaceholderText('auth.password'), '  pass123  ');
@@ -72,14 +95,14 @@ describe('LoginScreen', () => {
     fireEvent.press(getByTestId('button'));
 
     await waitFor(() => {
-      expect(mockLogin).toHaveBeenCalledWith('testuser', 'pass123');
+      expect(mockAuthLogin).toHaveBeenCalledWith('testuser', 'pass123');
     });
   });
 
   it('shows API error on login failure', async () => {
-    mockLogin.mockRejectedValueOnce(new Error('Invalid'));
-    const { getByPlaceholderText, getByTestId, findByText } = render(
-      <LoginScreen />,
+    withLoginFailure(new Error('Invalid'));
+    const { getByPlaceholderText, getByTestId, findByText } = rtlRender(
+      <Default />,
     );
 
     fireEvent.changeText(getByPlaceholderText('auth.username'), 'testuser');
@@ -91,22 +114,24 @@ describe('LoginScreen', () => {
   });
 
   it('navigates to Register on link press', () => {
-    const { getByText } = render(<LoginScreen />);
+    const { getByText } = rtlRender(<Default />);
     fireEvent.press(getByText('auth.goToRegister'));
     expect(mockNavigate).toHaveBeenCalledWith('Register');
   });
 
   it('displays the server error message when login fails with _serverError on 401', async () => {
-    mockLogin.mockRejectedValueOnce({
-      isAxiosError: true,
-      response: {
-        status: 401,
-        data: { error: 'Account is locked. Try again in 15 minutes.' },
-      },
-      _serverError: 'Account is locked. Try again in 15 minutes.',
-    });
-    const { getByPlaceholderText, getByTestId, findByText } = render(
-      <LoginScreen />,
+    withLoginFailure(
+      Object.assign(new Error('Unauthorized'), {
+        isAxiosError: true,
+        response: {
+          status: 401,
+          data: { error: 'Account is locked. Try again in 15 minutes.' },
+        },
+        _serverError: 'Account is locked. Try again in 15 minutes.',
+      }),
+    );
+    const { getByPlaceholderText, getByTestId, findByText } = rtlRender(
+      <Default />,
     );
 
     fireEvent.changeText(getByPlaceholderText('auth.username'), 'testuser');
@@ -119,12 +144,14 @@ describe('LoginScreen', () => {
   });
 
   it('displays server error from response.data.error on non-401 failures', async () => {
-    mockLogin.mockRejectedValueOnce({
-      isAxiosError: true,
-      response: { status: 500, data: { error: 'Internal server error' } },
-    });
-    const { getByPlaceholderText, getByTestId, findByText } = render(
-      <LoginScreen />,
+    withLoginFailure(
+      Object.assign(new Error('Server Error'), {
+        isAxiosError: true,
+        response: { status: 500, data: { error: 'Internal server error' } },
+      }),
+    );
+    const { getByPlaceholderText, getByTestId, findByText } = rtlRender(
+      <Default />,
     );
 
     fireEvent.changeText(getByPlaceholderText('auth.username'), 'testuser');
@@ -135,39 +162,35 @@ describe('LoginScreen', () => {
   });
 
   it('can be unmounted without errors during async load', async () => {
-    // Verify that unmounting before async load completes does not throw
-    const { unmount } = render(<LoginScreen />);
+    const { unmount } = rtlRender(<Default />);
     unmount();
-    // Allow any pending promises to settle
     await act(async () => {});
   });
 
   it('can be unmounted without errors during async login', async () => {
     let resolvePromise!: (value: unknown) => void;
-    mockLogin.mockReturnValue(
-      new Promise(resolve => {
-        resolvePromise = resolve;
-      }),
+    (mockAuthLogin as jest.Mock).mockImplementation(
+      () =>
+        new Promise(resolve => {
+          resolvePromise = resolve;
+        }),
     );
 
     const consoleErrorSpy = jest
       .spyOn(console, 'error')
       .mockImplementation(() => {});
 
-    const { getByPlaceholderText, getByTestId, unmount } = render(
-      <LoginScreen />,
+    const { getByPlaceholderText, getByTestId, unmount } = rtlRender(
+      <Default />,
     );
 
     fireEvent.changeText(getByPlaceholderText('auth.username'), 'testuser');
     fireEvent.changeText(getByPlaceholderText('auth.password'), 'pass123');
 
-    // Trigger the async operation
     fireEvent.press(getByTestId('button'));
 
-    // Unmount before the async operation completes
     unmount();
 
-    // Resolve after unmount to trigger catch/finally
     resolvePromise(undefined);
 
     await act(async () => {});
