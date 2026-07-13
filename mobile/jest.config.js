@@ -33,5 +33,6 @@ module.exports = {
       __dirname,
       'node_modules/@react-native/jest-preset/jest/setup.js',
     ),
+    './jest.setup.storybook.ts',
   ],
 };
