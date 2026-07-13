@@ -59,7 +59,7 @@ describe('useUsers', () => {
       await Promise.resolve();
     });
 
-    expect(result.current.error).toBe('Network error');
+    expect(result.current.error).toBe('Failed to load users');
     expect(result.current.isLoading).toBe(false);
   });
 
