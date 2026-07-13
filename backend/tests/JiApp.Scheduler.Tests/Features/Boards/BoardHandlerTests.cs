@@ -147,6 +147,8 @@ public sealed class BoardHandlerTests : HandlerTestBase
         var result = await sut.HandleAsync(boardId, new AddBoardMemberRequest(1L), CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
+        var reloaded = Db.FindFresh<Board>(boardId);
+        reloaded!.MemberUserIds.Should().ContainSingle().Which.Should().Be(1L);
     }
 
     [Fact]
@@ -185,6 +187,7 @@ public sealed class BoardHandlerTests : HandlerTestBase
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Access denied");
+        AssertEntityExists<Board>((SchedulerDbContext)DbContext, boardId);
     }
 
     [Fact]
@@ -254,6 +257,8 @@ public sealed class BoardHandlerTests : HandlerTestBase
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Access denied");
+        var reloaded = Db.FindFresh<Board>(boardId);
+        reloaded!.MemberUserIds.Should().Contain([2L, 3L]);
     }
 
     [Fact]
@@ -266,6 +271,8 @@ public sealed class BoardHandlerTests : HandlerTestBase
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Member not found");
+        var reloaded = Db.FindFresh<Board>(boardId);
+        reloaded!.MemberUserIds.Should().Contain([1L, 2L]);
     }
 
     [Fact]
@@ -278,6 +285,8 @@ public sealed class BoardHandlerTests : HandlerTestBase
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Cannot remove the last member");
+        var reloaded = Db.FindFresh<Board>(boardId);
+        reloaded!.MemberUserIds.Should().ContainSingle().Which.Should().Be(2L);
     }
 
     [Fact]
@@ -300,6 +309,7 @@ public sealed class BoardHandlerTests : HandlerTestBase
         var result = await sut.HandleAsync(boardId, CancellationToken.None);
 
         AssertAccessDenied(result);
+        AssertEntityExists<Board>((SchedulerDbContext)DbContext, boardId);
     }
 
     [Fact]
@@ -322,6 +332,8 @@ public sealed class BoardHandlerTests : HandlerTestBase
         var result = await sut.HandleAsync(boardId, 3L, CancellationToken.None);
 
         AssertAccessDenied(result);
+        var reloaded = Db.FindFresh<Board>(boardId);
+        reloaded!.MemberUserIds.Should().Contain([2L, 3L]);
     }
 
     [Fact]
@@ -333,6 +345,8 @@ public sealed class BoardHandlerTests : HandlerTestBase
         var result = await sut.HandleAsync(boardId, 999L, CancellationToken.None);
 
         AssertNotFound(result);
+        var reloaded = Db.FindFresh<Board>(boardId);
+        reloaded!.MemberUserIds.Should().Contain([1L, 2L]);
     }
 
     [Fact]
@@ -344,6 +358,8 @@ public sealed class BoardHandlerTests : HandlerTestBase
         var result = await sut.HandleAsync(boardId, 2L, CancellationToken.None);
 
         AssertConflict(result);
+        var reloaded = Db.FindFresh<Board>(boardId);
+        reloaded!.MemberUserIds.Should().ContainSingle().Which.Should().Be(2L);
     }
 
     [Fact]
@@ -385,9 +401,11 @@ public sealed class BoardHandlerTests : HandlerTestBase
         var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L]);
         var sut = fixture.UpdateBoard;
 
-        var result = await sut.HandleAsync(boardId, new UpdateBoardRequest("Test"), CancellationToken.None);
+        var result = await sut.HandleAsync(boardId, new UpdateBoardRequest("Hacked by non-member"), CancellationToken.None);
 
         AssertAccessDenied(result);
+        var reloaded = Db.FindFresh<Board>(boardId);
+        reloaded!.Name.Should().Be("Test");
     }
 
     [Fact]
@@ -413,6 +431,7 @@ public sealed class BoardHandlerTests : HandlerTestBase
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Access denied");
+        AssertEntityExists<Board>((SchedulerDbContext)DbContext, boardId);
     }
 
     [Fact]
@@ -425,6 +444,8 @@ public sealed class BoardHandlerTests : HandlerTestBase
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Access denied");
+        var reloaded = Db.FindFresh<Board>(boardId);
+        reloaded!.MemberUserIds.Should().Contain([1L, 2L]);
     }
 
     [Fact]
@@ -437,6 +458,8 @@ public sealed class BoardHandlerTests : HandlerTestBase
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Access denied");
+        var reloaded = Db.FindFresh<Board>(boardId);
+        reloaded!.MemberUserIds.Should().Contain([1L, 2L]);
     }
 
     [Fact]

@@ -1,3 +1,4 @@
+using JiApp.Common.Resilience;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
@@ -6,7 +7,8 @@ namespace JiApp.Common.Services;
 public sealed class RemoteSecurityStampValidator(
 	HttpClient httpClient,
 	IHttpContextAccessor httpContextAccessor,
-	ILogger<RemoteSecurityStampValidator> logger) : ISecurityStampValidator
+	ILogger<RemoteSecurityStampValidator> logger,
+	IRetryPolicyFactory retryPolicy) : ISecurityStampValidator
 {
 	public async Task<StampValidationResult> ValidateCurrentAsync(CancellationToken ct = default)
 	{
@@ -23,12 +25,18 @@ public sealed class RemoteSecurityStampValidator(
 			return StampValidationResult.Unavailable;
 		}
 
-		var request = new HttpRequestMessage(HttpMethod.Get, "api/v1/auth/validate");
-		request.Headers.TryAddWithoutValidation("Authorization", header[0]);
+		var authToken = header[0]!;
+		// Request-path auth check fails closed — one retry bounds worst-case latency (~11s) while covering restarts.
+		var policy = retryPolicy.RetryOnTransientHttp_WithExponentialBackoff(retries: 1);
 
 		try
 		{
-			using var response = await httpClient.SendAsync(request, ct);
+			using var response = await policy.ExecuteAsync(async ctInner =>
+			{
+				var request = new HttpRequestMessage(HttpMethod.Get, "api/v1/auth/validate");
+				request.Headers.TryAddWithoutValidation("Authorization", authToken);
+				return await httpClient.SendAsync(request, ctInner);
+			}, ct);
 
 			if (response.IsSuccessStatusCode)
 				return StampValidationResult.Valid;

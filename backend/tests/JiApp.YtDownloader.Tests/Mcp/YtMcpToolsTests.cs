@@ -48,7 +48,6 @@ public class YtMcpToolsTests
     [Fact]
     public async Task SearchYoutube_ReturnsMappedVideos_ForQuery()
     {
-        // Arrange
         var youtubeClient = new Mock<IYoutubeClient>();
         youtubeClient
             .Setup(c => c.SearchVideosAsync("lofi", It.IsAny<int>(), It.IsAny<CancellationToken>()))
@@ -57,11 +56,9 @@ public class YtMcpToolsTests
         var sut = CreateService(youtubeClient: youtubeClient);
         var currentUser = CreateCurrentUser();
 
-        // Act
         var results = await YtMcpTools.SearchYoutube(
             sut, currentUser, "lofi", null, CancellationToken.None);
 
-        // Assert
         var video = results.Should().ContainSingle().Which;
         video.VideoId.Should().Be("dQw4w9WgXcQ");
         video.Title.Should().Be("A title");
@@ -72,7 +69,6 @@ public class YtMcpToolsTests
     [Fact]
     public void OfferDownload_ReturnsOffer_WithoutDownloading()
     {
-        // Arrange
         var youtubeClient = new Mock<IYoutubeClient>(MockBehavior.Strict);
         var searchHistoryRepo = new Mock<ISearchHistoryRepository>(MockBehavior.Strict);
         var downloadHistoryRepo = new Mock<IDownloadHistoryRepository>(MockBehavior.Strict);
@@ -83,11 +79,9 @@ public class YtMcpToolsTests
             downloadHistoryRepo: downloadHistoryRepo);
         var currentUser = CreateCurrentUser();
 
-        // Act
         var offer = YtMcpTools.OfferDownload(
             sut, currentUser, "vid123", "https://youtu.be/vid123", "Title", null);
 
-        // Assert
         offer.VideoId.Should().Be("vid123");
         offer.VideoUrl.Should().Be("https://youtu.be/vid123");
         offer.Title.Should().Be("Title");
