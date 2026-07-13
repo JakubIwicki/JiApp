@@ -2,6 +2,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -79,15 +80,20 @@ const SearchRecentView: React.FC<{
   return (
     <View style={styles.recentContainer}>
       <Text style={styles.recentTitle}>{title}</Text>
-      {recentSearches.map(item => (
-        <Text
-          key={item.id}
-          style={styles.recentItem}
-          onPress={() => onItemPress(item.searchText)}
-        >
-          {item.searchText}
-        </Text>
-      ))}
+      <ScrollView
+        contentContainerStyle={styles.recentScrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        {recentSearches.map(item => (
+          <Text
+            key={item.id}
+            style={styles.recentItem}
+            onPress={() => onItemPress(item.searchText)}
+          >
+            {item.searchText}
+          </Text>
+        ))}
+      </ScrollView>
     </View>
   );
 };
@@ -302,7 +308,11 @@ const makeStyles = (t: Theme) =>
       lineHeight: 22,
     },
     recentContainer: {
+      flex: 1,
       padding: spacing.lg,
+    },
+    recentScrollContent: {
+      paddingBottom: spacing.lg,
     },
     recentTitle: {
       fontSize: 14,

@@ -1,4 +1,8 @@
-import { getErrorMessage, getDownloadErrorMessage } from '../errorUtils';
+import {
+  getErrorMessage,
+  getFriendlyErrorMessage,
+  getDownloadErrorMessage,
+} from '../errorUtils';
 
 describe('getErrorMessage', () => {
   it('returns the message from an Error instance', () => {
@@ -31,6 +35,130 @@ describe('getErrorMessage', () => {
   it('handles Error with empty message', () => {
     const err = new Error('');
     expect(getErrorMessage(err, 'Fallback')).toBe('');
+  });
+});
+
+describe('getFriendlyErrorMessage', () => {
+  it('returns network message for axios error with no response', () => {
+    const err = {
+      isAxiosError: true,
+      response: undefined,
+      code: 'ERR_NETWORK',
+    };
+    expect(getFriendlyErrorMessage(err, 'Fallback')).toBe(
+      'Connection failed — check your network',
+    );
+  });
+
+  it('returns network message for axios error with ECONNABORTED', () => {
+    const err = {
+      isAxiosError: true,
+      response: undefined,
+      code: 'ECONNABORTED',
+    };
+    expect(getFriendlyErrorMessage(err, 'Fallback')).toBe(
+      'Connection failed — check your network',
+    );
+  });
+
+  it('returns session expired for 401', () => {
+    const err = {
+      isAxiosError: true,
+      response: { status: 401, data: {} },
+    };
+    expect(getFriendlyErrorMessage(err, 'Fallback')).toBe(
+      'Your session expired — please sign in again',
+    );
+  });
+
+  it('returns permission denied for 403', () => {
+    const err = {
+      isAxiosError: true,
+      response: { status: 403, data: {} },
+    };
+    expect(getFriendlyErrorMessage(err, 'Fallback')).toBe(
+      "You don't have permission to do that",
+    );
+  });
+
+  it('returns server error for 500', () => {
+    const err = {
+      isAxiosError: true,
+      response: { status: 500, data: { error: 'Internal error' } },
+    };
+    expect(getFriendlyErrorMessage(err, 'Fallback')).toBe(
+      'Server error — please try again later',
+    );
+  });
+
+  it('returns server error for 503', () => {
+    const err = {
+      isAxiosError: true,
+      response: { status: 503, data: {} },
+    };
+    expect(getFriendlyErrorMessage(err, 'Fallback')).toBe(
+      'Server error — please try again later',
+    );
+  });
+
+  it('returns _serverError for 4xx with server message', () => {
+    const err = {
+      isAxiosError: true,
+      response: { status: 400, data: { error: 'Username already taken' } },
+      _serverError: 'Username already taken',
+    };
+    expect(getFriendlyErrorMessage(err, 'Fallback')).toBe(
+      'Username already taken',
+    );
+  });
+
+  it('returns _serverError for 422 with server message', () => {
+    const err = {
+      isAxiosError: true,
+      response: { status: 422, data: { error: 'Cannot delete own account' } },
+      _serverError: 'Cannot delete own account',
+    };
+    expect(getFriendlyErrorMessage(err, 'Fallback')).toBe(
+      'Cannot delete own account',
+    );
+  });
+
+  it('returns fallback for plain Error (non-axios)', () => {
+    const err = new Error('Raw technical string');
+    expect(getFriendlyErrorMessage(err, 'Default fallback')).toBe(
+      'Default fallback',
+    );
+  });
+
+  it('returns fallback for non-Error values', () => {
+    expect(getFriendlyErrorMessage(null, 'Null fallback')).toBe(
+      'Null fallback',
+    );
+    expect(getFriendlyErrorMessage(undefined, 'Undefined fallback')).toBe(
+      'Undefined fallback',
+    );
+    expect(getFriendlyErrorMessage('string error', 'String fallback')).toBe(
+      'String fallback',
+    );
+  });
+
+  it('returns fallback for axios 404 without _serverError', () => {
+    const err = {
+      isAxiosError: true,
+      response: { status: 404, data: {} },
+    };
+    expect(getFriendlyErrorMessage(err, 'Not found fallback')).toBe(
+      'Not found fallback',
+    );
+  });
+
+  it('returns _serverError for axios 404 with server error string', () => {
+    const err = {
+      isAxiosError: true,
+      response: { status: 404, data: { error: 'User not found' } },
+      _serverError: 'User not found',
+    };
+    expect(getFriendlyErrorMessage(err, 'Fallback')).toBe('User not found');
   });
 });
 

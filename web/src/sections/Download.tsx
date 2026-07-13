@@ -1,15 +1,8 @@
-import { useEffect, useState } from "react";
-import { APK_METADATA_URL } from "../config";
+import { useApkMetadata } from "../hooks/useApkMetadata";
 import { isAndroid } from "../lib/device";
-import { fetchApkMetadata, type ApkMetadata } from "../lib/apkMetadata";
 import { DownloadButton } from "../components/DownloadButton";
 import { QrCode } from "../components/QrCode";
 import styles from "./Download.module.css";
-
-type MetadataState =
-  | { status: "loading" }
-  | { status: "ready"; data: ApkMetadata }
-  | { status: "unavailable" };
 
 function formatSize(bytes: number): string {
   const mb = bytes / 1_048_576;
@@ -17,21 +10,8 @@ function formatSize(bytes: number): string {
 }
 
 export function Download() {
-  const [metadata, setMetadata] = useState<MetadataState>({
-    status: "loading",
-  });
+  const metadata = useApkMetadata();
   const android = isAndroid();
-
-  useEffect(() => {
-    let cancelled = false;
-    fetchApkMetadata(APK_METADATA_URL).then((data) => {
-      if (cancelled) return;
-      setMetadata(data ? { status: "ready", data } : { status: "unavailable" });
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   return (
     <section id="download" className={styles.section}>

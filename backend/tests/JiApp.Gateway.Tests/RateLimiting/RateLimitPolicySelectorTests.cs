@@ -323,6 +323,28 @@ public sealed class RateLimitPolicySelectorTests
     }
 
     [Fact]
+    public async Task Matches_admin_prefix_path_without_rate_limiting()
+    {
+        var context = Fixture.CreateContext("/api/v1/auth/admin/users");
+        // Simulate YARP having routed this request (proxied route has an endpoint)
+        context.SetEndpoint(new Endpoint(
+            _ => Task.CompletedTask,
+            EndpointMetadataCollection.Empty,
+            "admin-route"));
+        var nextCalled = false;
+        var fixture = new Fixture(_ =>
+        {
+            nextCalled = true;
+            return Task.CompletedTask;
+        });
+
+        await fixture.Sut.InvokeAsync(context);
+
+        nextCalled.Should().BeTrue();
+        context.Response.StatusCode.Should().Be(StatusCodes.Status200OK);
+    }
+
+    [Fact]
     public async Task Matches_imagetools_root_path_without_rate_limiting()
     {
         var context = Fixture.CreateContext("/api/v1/imagetools");

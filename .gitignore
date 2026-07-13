@@ -75,6 +75,7 @@ mobile/android/app/src/main/res/raw/ca_cert_dev.der
 # Production certificates (private keys + deployment-generated files MUST NOT be committed)
 backend/certs/prod/jiapp-ca.key
 backend/certs/prod/jiapp-ca.srl
+backend/certs/prod/jiapp-ca.crt
 backend/certs/prod/jiapp-server.key
 backend/certs/prod/jiapp-server.csr
 backend/certs/prod/jiapp-server.crt
@@ -100,6 +101,7 @@ backend/.api-debug.log
 
 .env
 .venv
+.claude/
 
 # AWS prod secrets (template is tracked)
 aws/.env.prod
@@ -129,3 +131,4 @@ mobile/src/config.generated.ts
 # Media
 *.mp3
 backend/.tools/
+
