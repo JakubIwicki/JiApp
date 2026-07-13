@@ -7,7 +7,7 @@ namespace JiApp.Identity.Features.Admin.Roles.CreateRole;
 
 public sealed class CreateRoleHandler(RoleManager<IdentityRole<long>> roleManager)
 {
-	public async Task<Result<bool>> HandleAsync(CreateRoleRequest request)
+	public async Task<Result<bool>> HandleAsync(CreateRoleRequest request, CancellationToken ct)
 	{
 		if (await roleManager.RoleExistsAsync(request.Name))
 			return Result<bool>.Failure($"Role '{request.Name}' already exists", ResultCategories.Conflict);

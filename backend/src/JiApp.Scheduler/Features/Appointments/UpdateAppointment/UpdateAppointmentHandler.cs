@@ -1,4 +1,5 @@
 using JiApp.Common.Abstractions;
+using JiApp.Common.Resilience;
 using JiApp.Common.Services;
 using JiApp.Scheduler.Domain;
 using JiApp.Scheduler.Features.Common;
@@ -7,7 +8,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace JiApp.Scheduler.Features.Appointments.UpdateAppointment;
 
-public sealed class UpdateAppointmentHandler(ISchedulerDbContext db, ICurrentUserService currentUser)
+public sealed class UpdateAppointmentHandler(
+    ISchedulerDbContext db,
+    ICurrentUserService currentUser,
+    IRetryPolicyFactory retryPolicy)
 {
     public async Task<Result<long>> HandleAsync(long id, UpdateAppointmentRequest request, CancellationToken ct)
     {
@@ -28,35 +32,34 @@ public sealed class UpdateAppointmentHandler(ISchedulerDbContext db, ICurrentUse
 
         var price = AppointmentDomainHelpers.ResolvePrice(request.Price, service.BasePrice);
 
-        const int maxRetries = 1;
-        for (var attempt = 0; attempt <= maxRetries; attempt++)
+        var policy = retryPolicy.RetryOnDbConflict(retries: 1, delay: TimeSpan.Zero);
+
+        try
         {
-            try
+            return await policy.ExecuteAsync(async ctInner =>
             {
                 await using var tx =
-                    await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable, ct);
+                    await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable, ctInner);
 
                 // Re-load within transaction to get fresh state
                 if (await AppointmentHelpers.HasOverlapAsync(db, appointment.BoardId, request.Date, request.StartTime,
-                        request.EndTime, id, ct))
+                        request.EndTime, id, ctInner))
                     return Result<long>.Failure("Appointment time overlaps with an existing appointment",
                         ResultCategories.Conflict);
 
                 appointment.Price = price;
                 ApplyRequest(appointment, request);
 
-                await db.SaveChangesAsync(ct);
-                await tx.CommitAsync(ct);
+                await db.SaveChangesAsync(ctInner);
+                await tx.CommitAsync(ctInner);
                 return Result<long>.Success(appointment.Id);
-            }
-            catch (DbUpdateException) when (attempt < maxRetries)
-            {
-                // Serialization conflict — retry once
-            }
+            }, ct);
         }
-
-        return Result<long>.Failure("Could not update appointment due to a concurrent update. Please try again.",
-            ResultCategories.Conflict);
+        catch (DbUpdateException)
+        {
+            return Result<long>.Failure("Could not update appointment due to a concurrent update. Please try again.",
+                ResultCategories.Conflict);
+        }
     }
 
     private async Task<Appointment?> FindAppointmentAsync(long id, CancellationToken ct)

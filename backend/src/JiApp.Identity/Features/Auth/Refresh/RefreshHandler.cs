@@ -17,9 +17,9 @@ public sealed class RefreshHandler(
     IdentitySettings settings,
     ILogger<RefreshHandler> logger)
 {
-    public async Task<Result<RefreshResponse>> HandleAsync(RefreshRequest request)
+    public async Task<Result<RefreshResponse>> HandleAsync(RefreshRequest request, CancellationToken ct)
     {
-        var storedToken = await refreshTokenService.ValidateAsync(request.RefreshToken);
+        var storedToken = await refreshTokenService.ValidateAsync(request.RefreshToken, ct);
         if (storedToken is null)
         {
             logger.RefreshTokenInvalid();
@@ -31,7 +31,8 @@ public sealed class RefreshHandler(
         if (storedToken.IsRevoked)
         {
             logger.RefreshTokenReuseDetected(storedToken.Id, storedToken.UserId);
-            await refreshTokenService.RevokeAllForUserAsync(storedToken.UserId);
+            // Security cleanup must complete even if the request aborts — never cancel the revoke.
+            await refreshTokenService.RevokeAllForUserAsync(storedToken.UserId, CancellationToken.None);
             return Result<RefreshResponse>.Failure("Invalid or expired refresh token");
         }
 
@@ -45,14 +46,14 @@ public sealed class RefreshHandler(
         // from concurrent requests. RevokeAsync uses ExecuteUpdateAsync and returns
         // true only if a row was actually modified. If another concurrent request
         // already revoked this token, RevokeAsync returns false — treat as token theft.
-        await using var transaction = await refreshTokenService.BeginTransactionAsync();
+        await using var transaction = await refreshTokenService.BeginTransactionAsync(ct);
 
-        var wasRevoked = await refreshTokenService.RevokeAsync(storedToken.Id);
+        var wasRevoked = await refreshTokenService.RevokeAsync(storedToken.Id, ct);
         if (!wasRevoked)
         {
             logger.RefreshTokenReuseDetected(storedToken.Id, storedToken.UserId);
-            await refreshTokenService.RevokeAllForUserAsync(storedToken.UserId);
-            await transaction.RollbackAsync();
+            await refreshTokenService.RevokeAllForUserAsync(storedToken.UserId, ct);
+            await transaction.RollbackAsync(ct);
             return Result<RefreshResponse>.Failure("Invalid or expired refresh token");
         }
 
@@ -64,10 +65,10 @@ public sealed class RefreshHandler(
         var roles = await userManager.GetRolesAsync(user);
         var permissions = await accessService.GetEffectivePermissionsAsync(user.Id);
         var accessToken = jwtTokenService.GenerateToken(user.Id, user.UserName!, roles, permissions, user.SecurityStamp!);
-        var newRefreshToken = await refreshTokenService.CreateAsync(user.Id);
+        var newRefreshToken = await refreshTokenService.CreateAsync(user.Id, ct);
         var expiresIn = settings.GetAccessTokenExpireMinutes() * 60;
 
-        await transaction.CommitAsync();
+        await transaction.CommitAsync(ct);
 
         return Result<RefreshResponse>.Success(new RefreshResponse(accessToken, newRefreshToken.Token, expiresIn));
     }

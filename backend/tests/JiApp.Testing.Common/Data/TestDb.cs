@@ -32,6 +32,12 @@ public sealed class TestDb
     public T? Find<T>(object id) where T : class =>
         _db.Set<T>().Find(id);
 
+    public T? FindFresh<T>(object id) where T : class
+    {
+        _db.ChangeTracker.Clear();
+        return _db.Set<T>().Find(id);
+    }
+
     public IQueryable<T> Query<T>() where T : class =>
         _db.Set<T>();
 }

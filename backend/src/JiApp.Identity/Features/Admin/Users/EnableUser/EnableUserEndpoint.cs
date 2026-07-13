@@ -12,9 +12,10 @@ public static class EnableUserEndpoint
 	{
 		endpoints.MapPost("/users/{userId:long}/enable", async (
 				long userId,
-				EnableUserHandler handler) =>
+				EnableUserHandler handler,
+				CancellationToken ct) =>
 			{
-				var result = await handler.HandleAsync(userId);
+				var result = await handler.HandleAsync(userId, ct);
 				if (result.IsSuccess)
 					return Results.Ok();
 

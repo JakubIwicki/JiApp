@@ -86,7 +86,7 @@ public sealed class RegisterHandlerTests
         var fixture = new Fixture().WithSuccessfulCreate();
 
         var result = await fixture.Sut.HandleAsync(
-            new RegisterRequest("newuser", "new@test.com", "Password1", "New User"));
+            new RegisterRequest("newuser", "new@test.com", "Password1", "New User"), CancellationToken.None);
 
         AssertSuccess(result);
     }
@@ -98,7 +98,7 @@ public sealed class RegisterHandlerTests
         var fixture = new Fixture().WithSuccessfulCreate(createdUserId);
 
         await fixture.Sut.HandleAsync(
-            new RegisterRequest("newuser", "new@test.com", "Password1", "New User"));
+            new RegisterRequest("newuser", "new@test.com", "Password1", "New User"), CancellationToken.None);
 
         fixture.AccessServiceMock.Verify(x => x.AssignDefaultRoleAsync(createdUserId), Times.Once);
     }
@@ -109,7 +109,7 @@ public sealed class RegisterHandlerTests
         var fixture = new Fixture().WithFailingCreate("Passwords must have at least one uppercase ('A'-'Z').");
 
         await fixture.Sut.HandleAsync(
-            new RegisterRequest("newuser", "new@test.com", "weak", "New User"));
+            new RegisterRequest("newuser", "new@test.com", "weak", "New User"), CancellationToken.None);
 
         fixture.AccessServiceMock.Verify(x => x.AssignDefaultRoleAsync(It.IsAny<long>()), Times.Never);
     }
@@ -120,7 +120,7 @@ public sealed class RegisterHandlerTests
         var fixture = new Fixture().WithUniqueConstraintViolation();
 
         var result = await fixture.Sut.HandleAsync(
-            new RegisterRequest("existinguser", "existing@test.com", "Password1", "New User"));
+            new RegisterRequest("existinguser", "existing@test.com", "Password1", "New User"), CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Registration failed");
@@ -132,7 +132,7 @@ public sealed class RegisterHandlerTests
         var fixture = new Fixture().WithFailingCreate("Passwords must have at least one uppercase ('A'-'Z').");
 
         var result = await fixture.Sut.HandleAsync(
-            new RegisterRequest("newuser", "new@test.com", "weak", "New User"));
+            new RegisterRequest("newuser", "new@test.com", "weak", "New User"), CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Contain("uppercase");
@@ -144,7 +144,7 @@ public sealed class RegisterHandlerTests
         var fixture = new Fixture().WithCreateFailingMultiple();
 
         var result = await fixture.Sut.HandleAsync(
-            new RegisterRequest("newuser", "new@test.com", "weak", "New User"));
+            new RegisterRequest("newuser", "new@test.com", "weak", "New User"), CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Contain("uppercase");
@@ -160,7 +160,7 @@ public sealed class RegisterHandlerTests
             .WithFailingDefaultRoleAssignment(createdUserId);
 
         var result = await fixture.Sut.HandleAsync(
-            new RegisterRequest("newuser", "new@test.com", "Password1", "New User"));
+            new RegisterRequest("newuser", "new@test.com", "Password1", "New User"), CancellationToken.None);
 
         fixture.UserManagerMock.Verify(
             x => x.DeleteAsync(It.Is<User>(u => u.Id == createdUserId)),

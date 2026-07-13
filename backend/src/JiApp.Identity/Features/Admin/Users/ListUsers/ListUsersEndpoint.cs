@@ -14,12 +14,13 @@ public static class ListUsersEndpoint
 				string? search,
 				int? page,
 				int? pageSize,
-				ListUsersHandler handler) =>
+				ListUsersHandler handler,
+				CancellationToken ct) =>
 			{
 				var p = Math.Max(1, page ?? 1);
 				var ps = Math.Clamp(pageSize ?? 20, 1, 100);
 
-				var result = await handler.HandleAsync(search, p, ps);
+				var result = await handler.HandleAsync(search, p, ps, ct);
 				return Results.Ok(result.Value);
 			})
 			.WithTags(SwaggerConstants.Tags.Admin)

@@ -76,7 +76,7 @@ public sealed class DeleteUserHandlerTests
 	{
 		var fixture = new Fixture().WithTargetUser();
 
-		var result = await fixture.Sut.HandleAsync(2);
+		var result = await fixture.Sut.HandleAsync(2, CancellationToken.None);
 
 		AssertSuccess(result);
 		fixture.UserManagerMock.Verify(x => x.DeleteAsync(It.IsAny<User>()), Times.Once);
@@ -87,7 +87,7 @@ public sealed class DeleteUserHandlerTests
 	{
 		var fixture = new Fixture().WithTargetAsSelf();
 
-		var result = await fixture.Sut.HandleAsync(2);
+		var result = await fixture.Sut.HandleAsync(2, CancellationToken.None);
 
 		AssertAccessDenied(result);
 	}
@@ -97,7 +97,7 @@ public sealed class DeleteUserHandlerTests
 	{
 		var fixture = new Fixture().WithTargetAsLastAdmin();
 
-		var result = await fixture.Sut.HandleAsync(2);
+		var result = await fixture.Sut.HandleAsync(2, CancellationToken.None);
 
 		AssertAccessDenied(result);
 	}
@@ -109,7 +109,7 @@ public sealed class DeleteUserHandlerTests
 		fixture.UserManagerMock.Setup(x => x.FindByIdAsync("999"))
 			.ReturnsAsync((User?)null);
 
-		var result = await fixture.Sut.HandleAsync(999);
+		var result = await fixture.Sut.HandleAsync(999, CancellationToken.None);
 
 		AssertNotFound(result);
 	}

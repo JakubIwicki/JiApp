@@ -12,7 +12,7 @@ public sealed class UpdateProfileHandler(
     ICurrentUserService currentUser,
     ILogger<UpdateProfileHandler> logger)
 {
-    public async Task<Result<UpdateProfileResponse>> HandleAsync(UpdateProfileRequest request)
+    public async Task<Result<UpdateProfileResponse>> HandleAsync(UpdateProfileRequest request, CancellationToken ct)
     {
         var userId = currentUser.UserId;
         var user = await userManager.FindByIdAsync(userId.ToString(CultureInfo.InvariantCulture));

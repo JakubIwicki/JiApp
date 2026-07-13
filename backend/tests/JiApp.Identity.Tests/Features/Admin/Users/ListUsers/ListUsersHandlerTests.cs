@@ -67,7 +67,7 @@ public sealed class ListUsersHandlerTests
 	{
 		var fixture = new Fixture().WithUsers(5);
 
-		var result = await fixture.Sut.HandleAsync(null, 1, 20);
+		var result = await fixture.Sut.HandleAsync(null, 1, 20, CancellationToken.None);
 
 		AssertSuccess(result);
 		result.Value!.Users.Should().HaveCount(5);
@@ -79,7 +79,7 @@ public sealed class ListUsersHandlerTests
 	{
 		var fixture = new Fixture().WithUsers(5);
 
-		var result = await fixture.Sut.HandleAsync(null, 1, 2);
+		var result = await fixture.Sut.HandleAsync(null, 1, 2, CancellationToken.None);
 
 		AssertSuccess(result);
 		result.Value!.Users.Should().HaveCount(2);
@@ -91,7 +91,7 @@ public sealed class ListUsersHandlerTests
 	{
 		var fixture = new Fixture().WithUsers(1).WithUserLockedOut(1);
 
-		var result = await fixture.Sut.HandleAsync(null, 1, 20);
+		var result = await fixture.Sut.HandleAsync(null, 1, 20, CancellationToken.None);
 
 		AssertSuccess(result);
 		result.Value!.Users.Single().IsLockedOut.Should().BeTrue();
@@ -102,7 +102,7 @@ public sealed class ListUsersHandlerTests
 	{
 		var fixture = new Fixture().WithUsers(10);
 
-		var result = await fixture.Sut.HandleAsync(null, 2, 3);
+		var result = await fixture.Sut.HandleAsync(null, 2, 3, CancellationToken.None);
 
 		AssertSuccess(result);
 		result.Value!.Users.Should().HaveCount(3);

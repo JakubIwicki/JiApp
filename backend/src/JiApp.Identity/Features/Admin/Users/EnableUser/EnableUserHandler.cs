@@ -12,7 +12,7 @@ public sealed class EnableUserHandler(
 	AdminAccessGuard guard,
 	ILogger<EnableUserHandler> logger)
 {
-	public async Task<Result<bool>> HandleAsync(long userId)
+	public async Task<Result<bool>> HandleAsync(long userId, CancellationToken ct)
 	{
 		var notSelf = guard.EnsureNotSelf(userId);
 		if (!notSelf.IsSuccess)

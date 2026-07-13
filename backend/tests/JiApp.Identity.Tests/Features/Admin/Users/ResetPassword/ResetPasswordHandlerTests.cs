@@ -46,7 +46,7 @@ public sealed class ResetPasswordHandlerTests
 				.ReturnsAsync("reset-token");
 			UserManagerMock.Setup(x => x.ResetPasswordAsync(_testUser, "reset-token", "NewPassword1"))
 				.ReturnsAsync(IdentityResult.Success);
-			RefreshTokenServiceMock.Setup(x => x.RevokeAllForUserAsync(1))
+			RefreshTokenServiceMock.Setup(x => x.RevokeAllForUserAsync(1, It.IsAny<CancellationToken>()))
 				.Returns(Task.CompletedTask);
 			return this;
 		}
@@ -76,10 +76,10 @@ public sealed class ResetPasswordHandlerTests
 	{
 		var fixture = new Fixture().WithSuccessfulReset();
 
-		var result = await fixture.Sut.HandleAsync(1, new ResetPasswordRequest("NewPassword1"));
+		var result = await fixture.Sut.HandleAsync(1, new ResetPasswordRequest("NewPassword1"), CancellationToken.None);
 
 		AssertSuccess(result);
-		fixture.RefreshTokenServiceMock.Verify(x => x.RevokeAllForUserAsync(1), Times.Once);
+		fixture.RefreshTokenServiceMock.Verify(x => x.RevokeAllForUserAsync(1, It.IsAny<CancellationToken>()), Times.Once);
 	}
 
 	[Fact]
@@ -87,7 +87,7 @@ public sealed class ResetPasswordHandlerTests
 	{
 		var fixture = new Fixture().WithNonexistentUser();
 
-		var result = await fixture.Sut.HandleAsync(999, new ResetPasswordRequest("NewPassword1"));
+		var result = await fixture.Sut.HandleAsync(999, new ResetPasswordRequest("NewPassword1"), CancellationToken.None);
 
 		AssertNotFound(result);
 	}
@@ -97,10 +97,10 @@ public sealed class ResetPasswordHandlerTests
 	{
 		var fixture = new Fixture().WithFailingReset("Passwords must be at least 6 characters.");
 
-		var result = await fixture.Sut.HandleAsync(1, new ResetPasswordRequest("weak"));
+		var result = await fixture.Sut.HandleAsync(1, new ResetPasswordRequest("weak"), CancellationToken.None);
 
 		result.IsSuccess.Should().BeFalse();
 		result.ErrorCategory.Should().Be(ResultCategories.Validation);
-		fixture.RefreshTokenServiceMock.Verify(x => x.RevokeAllForUserAsync(It.IsAny<long>()), Times.Never);
+		fixture.RefreshTokenServiceMock.Verify(x => x.RevokeAllForUserAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
 	}
 }

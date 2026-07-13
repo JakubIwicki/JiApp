@@ -12,7 +12,7 @@ public sealed class ChangePasswordHandler(
     ICurrentUserService currentUser,
     ILogger<ChangePasswordHandler> logger)
 {
-    public async Task<Result<bool>> HandleAsync(ChangePasswordRequest request)
+    public async Task<Result<bool>> HandleAsync(ChangePasswordRequest request, CancellationToken ct)
     {
         var userId = currentUser.UserId;
         var user = await userManager.FindByIdAsync(userId.ToString(CultureInfo.InvariantCulture));

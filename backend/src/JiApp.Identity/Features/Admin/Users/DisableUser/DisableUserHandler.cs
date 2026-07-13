@@ -14,7 +14,7 @@ public sealed class DisableUserHandler(
 	AdminAccessGuard guard,
 	ILogger<DisableUserHandler> logger)
 {
-	public async Task<Result<bool>> HandleAsync(long userId)
+	public async Task<Result<bool>> HandleAsync(long userId, CancellationToken ct)
 	{
 		var notSelf = guard.EnsureNotSelf(userId);
 		if (!notSelf.IsSuccess)
@@ -36,7 +36,8 @@ public sealed class DisableUserHandler(
 			logger.LogWarning("Failed to invalidate outstanding tokens for user {UserId} after account disable: {Errors}",
 				user.Id, string.Join(", ", stampResult.Errors.Select(e => e.Description)));
 
-		await refreshTokenService.RevokeAllForUserAsync(userId);
+		// Security cleanup must complete even if the request aborts — never cancel the revoke.
+		await refreshTokenService.RevokeAllForUserAsync(userId, CancellationToken.None);
 
 		return Result<bool>.Success(true);
 	}

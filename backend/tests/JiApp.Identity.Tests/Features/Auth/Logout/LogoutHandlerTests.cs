@@ -22,7 +22,7 @@ public sealed class LogoutHandlerTests
         public Fixture WithValidToken(string rawToken = "valid-token")
         {
             RefreshTokenServiceMock
-                .Setup(x => x.ValidateAsync(rawToken))
+                .Setup(x => x.ValidateAsync(rawToken, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new RefreshToken { Id = 10, Token = "raw-token", UserId = 1 });
             return this;
         }
@@ -30,7 +30,7 @@ public sealed class LogoutHandlerTests
         public Fixture WithAlreadyRevokedToken(string rawToken = "already-revoked")
         {
             RefreshTokenServiceMock
-                .Setup(x => x.ValidateAsync(rawToken))
+                .Setup(x => x.ValidateAsync(rawToken, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new RefreshToken { Id = 10, Token = "raw-token", UserId = 1, IsRevoked = true });
             return this;
         }
@@ -38,7 +38,7 @@ public sealed class LogoutHandlerTests
         public Fixture WithNonexistentToken(string rawToken = "nonexistent-token")
         {
             RefreshTokenServiceMock
-                .Setup(x => x.ValidateAsync(rawToken))
+                .Setup(x => x.ValidateAsync(rawToken, It.IsAny<CancellationToken>()))
                 .ReturnsAsync((RefreshToken?)null);
             return this;
         }
@@ -49,9 +49,9 @@ public sealed class LogoutHandlerTests
     {
         var fixture = new Fixture().WithValidToken();
 
-        await fixture.Sut.HandleAsync(new LogoutRequest("valid-token"));
+        await fixture.Sut.HandleAsync(new LogoutRequest("valid-token"), CancellationToken.None);
 
-        fixture.RefreshTokenServiceMock.Verify(x => x.RevokeAsync(10), Times.Once);
+        fixture.RefreshTokenServiceMock.Verify(x => x.RevokeAsync(10, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -59,11 +59,11 @@ public sealed class LogoutHandlerTests
     {
         var fixture = new Fixture().WithAlreadyRevokedToken();
 
-        await fixture.Sut.HandleAsync(new LogoutRequest("already-revoked"));
+        await fixture.Sut.HandleAsync(new LogoutRequest("already-revoked"), CancellationToken.None);
 
         // RevokeAsync is idempotent; the call is made regardless since
         // ValidateAsync now returns revoked tokens for reuse detection
-        fixture.RefreshTokenServiceMock.Verify(x => x.RevokeAsync(10), Times.Once);
+        fixture.RefreshTokenServiceMock.Verify(x => x.RevokeAsync(10, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -71,8 +71,8 @@ public sealed class LogoutHandlerTests
     {
         var fixture = new Fixture().WithNonexistentToken();
 
-        await fixture.Sut.HandleAsync(new LogoutRequest("nonexistent-token"));
+        await fixture.Sut.HandleAsync(new LogoutRequest("nonexistent-token"), CancellationToken.None);
 
-        fixture.RefreshTokenServiceMock.Verify(x => x.RevokeAsync(It.IsAny<long>()), Times.Never);
+        fixture.RefreshTokenServiceMock.Verify(x => x.RevokeAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }

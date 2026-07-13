@@ -72,7 +72,7 @@ public sealed class EnableUserHandlerTests
 	{
 		var fixture = new Fixture().WithExistingUser();
 
-		var result = await fixture.Sut.HandleAsync(1);
+		var result = await fixture.Sut.HandleAsync(1, CancellationToken.None);
 
 		AssertSuccess(result);
 		fixture.UserManagerMock.Verify(x => x.SetLockoutEndDateAsync(It.IsAny<User>(), null), Times.Once);
@@ -84,7 +84,7 @@ public sealed class EnableUserHandlerTests
 	{
 		var fixture = new Fixture().WithNonexistentUser();
 
-		var result = await fixture.Sut.HandleAsync(999);
+		var result = await fixture.Sut.HandleAsync(999, CancellationToken.None);
 
 		AssertNotFound(result);
 		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Never);
@@ -95,7 +95,7 @@ public sealed class EnableUserHandlerTests
 	{
 		var fixture = new Fixture().WithSelfTarget();
 
-		var result = await fixture.Sut.HandleAsync(1);
+		var result = await fixture.Sut.HandleAsync(1, CancellationToken.None);
 
 		AssertAccessDenied(result);
 		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Never);

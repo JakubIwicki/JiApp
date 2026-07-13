@@ -10,7 +10,7 @@ public sealed class DeleteRoleHandler(
 	UserManager<User> userManager,
 	AdminAccessGuard guard)
 {
-	public async Task<Result<bool>> HandleAsync(string roleName)
+	public async Task<Result<bool>> HandleAsync(string roleName, CancellationToken ct)
 	{
 		var deletableCheck = guard.EnsureRoleIsDeletable(roleName);
 		if (!deletableCheck.IsSuccess)

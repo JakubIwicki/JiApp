@@ -12,9 +12,10 @@ public static class DisableUserEndpoint
 	{
 		endpoints.MapPost("/users/{userId:long}/disable", async (
 				long userId,
-				DisableUserHandler handler) =>
+				DisableUserHandler handler,
+				CancellationToken ct) =>
 			{
-				var result = await handler.HandleAsync(userId);
+				var result = await handler.HandleAsync(userId, ct);
 				if (result.IsSuccess)
 					return Results.Ok();
 

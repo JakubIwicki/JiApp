@@ -6,7 +6,7 @@ namespace JiApp.Identity.Features.Admin.Roles.ListRoles;
 
 public sealed class ListRolesHandler(RoleManager<IdentityRole<long>> roleManager)
 {
-	public async Task<Result<ListRolesResponse>> HandleAsync()
+	public async Task<Result<ListRolesResponse>> HandleAsync(CancellationToken ct)
 	{
 		var roles = roleManager.Roles.ToList();
 		var summaries = new List<RoleSummary>(roles.Count);

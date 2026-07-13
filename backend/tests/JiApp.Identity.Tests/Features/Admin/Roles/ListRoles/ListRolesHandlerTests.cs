@@ -49,7 +49,7 @@ public sealed class ListRolesHandlerTests
 	{
 		var fixture = new Fixture().WithRoles();
 
-		var result = await fixture.Sut.HandleAsync();
+		var result = await fixture.Sut.HandleAsync(CancellationToken.None);
 
 		AssertSuccess(result);
 		result.Value!.Roles.Should().HaveCount(2);
