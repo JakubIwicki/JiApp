@@ -2,9 +2,8 @@ using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Identity.Features.Admin.Common;
 using JiApp.Identity.Features.Admin.Users.DeleteUser;
+using JiApp.Identity.Tests.Mocks;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Logging;
-using Moq;
 
 namespace JiApp.Identity.Tests.Features.Admin.Users.DeleteUser;
 
@@ -19,54 +18,38 @@ public sealed class DeleteUserHandlerTests
 			Email = "target@test.com"
 		};
 
-		public Mock<UserManager<User>> UserManagerMock { get; } = new(
-			Mock.Of<IUserStore<User>>(),
-			Mock.Of<Microsoft.Extensions.Options.IOptions<IdentityOptions>>(),
-			Mock.Of<IPasswordHasher<User>>(),
-			Array.Empty<IUserValidator<User>>(),
-			Array.Empty<IPasswordValidator<User>>(),
-			Mock.Of<ILookupNormalizer>(),
-			Mock.Of<IdentityErrorDescriber>(),
-			Mock.Of<IServiceProvider>(),
-			Mock.Of<ILogger<UserManager<User>>>());
-
-		public Mock<ICurrentUserService> CurrentUserMock { get; } = new();
+		public MockUserManager UserManagerDouble { get; } = MockUserManager.GetSuccessful();
+		public MockCurrentUserService CurrentUserMock { get; } = new();
 
 		public AdminAccessGuard Guard { get; }
 		public DeleteUserHandler Sut { get; }
 
 		public Fixture()
 		{
-			CurrentUserMock.Setup(x => x.UserId).Returns(1);
-			Guard = new AdminAccessGuard(UserManagerMock.Object, CurrentUserMock.Object);
-			Sut = new DeleteUserHandler(UserManagerMock.Object, Guard);
+			CurrentUserMock.WithReturning(1);
+			Guard = new AdminAccessGuard(UserManagerDouble.Object, CurrentUserMock.Object);
+			Sut = new DeleteUserHandler(UserManagerDouble.Object, Guard);
 		}
 
 		public Fixture WithTargetUser()
 		{
-			UserManagerMock.Setup(x => x.FindByIdAsync("2"))
-				.ReturnsAsync(_testUser);
-			UserManagerMock.Setup(x => x.IsInRoleAsync(_testUser, "Admin"))
-				.ReturnsAsync(false);
-			UserManagerMock.Setup(x => x.DeleteAsync(_testUser))
-				.ReturnsAsync(IdentityResult.Success);
+			UserManagerDouble.WithFindByIdAsync("2", _testUser);
+			UserManagerDouble.WithIsInRoleAsync(_testUser, "Admin", false);
+			UserManagerDouble.WithDeleteAsync(_testUser, IdentityResult.Success);
 			return this;
 		}
 
 		public Fixture WithTargetAsSelf()
 		{
-			CurrentUserMock.Setup(x => x.UserId).Returns(2);
+			CurrentUserMock.WithReturning(2);
 			return this;
 		}
 
 		public Fixture WithTargetAsLastAdmin()
 		{
-			UserManagerMock.Setup(x => x.FindByIdAsync("2"))
-				.ReturnsAsync(_testUser);
-			UserManagerMock.Setup(x => x.IsInRoleAsync(_testUser, "Admin"))
-				.ReturnsAsync(true);
-			UserManagerMock.Setup(x => x.GetUsersInRoleAsync("Admin"))
-				.ReturnsAsync([_testUser]);
+			UserManagerDouble.WithFindByIdAsync("2", _testUser);
+			UserManagerDouble.WithIsInRoleAsync(_testUser, "Admin", true);
+			UserManagerDouble.WithGetUsersInRoleAsync("Admin", [_testUser]);
 			return this;
 		}
 	}
@@ -79,7 +62,7 @@ public sealed class DeleteUserHandlerTests
 		var result = await fixture.Sut.HandleAsync(2, CancellationToken.None);
 
 		AssertSuccess(result);
-		fixture.UserManagerMock.Verify(x => x.DeleteAsync(It.IsAny<User>()), Times.Once);
+		fixture.UserManagerDouble.VerifyDeleteAsync_Once();
 	}
 
 	[Fact]
@@ -106,8 +89,7 @@ public sealed class DeleteUserHandlerTests
 	public async Task HandleAsync_ReturnsNotFound_WhenUserDoesNotExist()
 	{
 		var fixture = new Fixture();
-		fixture.UserManagerMock.Setup(x => x.FindByIdAsync("999"))
-			.ReturnsAsync((User?)null);
+		fixture.UserManagerDouble.WithFindByIdAsync("999", null);
 
 		var result = await fixture.Sut.HandleAsync(999, CancellationToken.None);
 

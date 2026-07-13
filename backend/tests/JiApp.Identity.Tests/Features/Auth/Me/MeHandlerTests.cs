@@ -1,8 +1,7 @@
 using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Identity.Features.Auth.Me;
-using JiApp.Identity.Services;
-using Microsoft.AspNetCore.Identity;
+using JiApp.Identity.Tests.Mocks;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -22,47 +21,33 @@ public sealed class MeHandlerTests
             ConcurrencyStamp = "concurrency"
         };
 
-        public Mock<UserManager<User>> UserManagerMock { get; } = new(
-            Mock.Of<IUserStore<User>>(),
-            Mock.Of<Microsoft.Extensions.Options.IOptions<IdentityOptions>>(),
-            Mock.Of<IPasswordHasher<User>>(),
-            Array.Empty<IUserValidator<User>>(),
-            Array.Empty<IPasswordValidator<User>>(),
-            Mock.Of<ILookupNormalizer>(),
-            Mock.Of<IdentityErrorDescriber>(),
-            Mock.Of<IServiceProvider>(),
-            Mock.Of<ILogger<UserManager<User>>>());
-
+        public MockUserManager UserManagerDouble { get; } = MockUserManager.GetSuccessful();
         public MockCurrentUserService CurrentUserMock { get; } = new();
-        public Mock<IUserAccessService> AccessServiceMock { get; } = new();
+        public MockUserAccessService AccessServiceDouble { get; } = MockUserAccessService.GetSuccessful();
 
         public MeHandler Sut { get; }
 
         public Fixture()
         {
             Sut = new MeHandler(
-                UserManagerMock.Object, CurrentUserMock.Mock.Object, AccessServiceMock.Object,
+                UserManagerDouble, CurrentUserMock.Object, AccessServiceDouble.Object,
                 Mock.Of<ILogger<MeHandler>>());
         }
 
         public Fixture WithExistingUser(long userId = 1)
         {
             CurrentUserMock.WithReturning(userId);
-            CurrentUserMock.Mock.Setup(x => x.Username).Returns("testuser");
-            UserManagerMock.Setup(x => x.FindByIdAsync(userId.ToString()))
-                .ReturnsAsync(_testUser);
-            UserManagerMock.Setup(x => x.GetRolesAsync(_testUser))
-                .ReturnsAsync(["User"]);
-            AccessServiceMock.Setup(x => x.GetEffectivePermissionsAsync(userId))
-                .ReturnsAsync(["ytdownloader.access", "scheduler.access"]);
+            CurrentUserMock.WithUsername("testuser");
+            UserManagerDouble.WithFindByIdAsync(userId.ToString(), _testUser);
+            UserManagerDouble.WithGetRolesAsync(_testUser, ["User"]);
+            AccessServiceDouble.WithGetEffectivePermissionsAsync(userId, ["ytdownloader.access", "scheduler.access"]);
             return this;
         }
 
         public Fixture WithMissingUser(long userId = 999)
         {
             CurrentUserMock.WithReturning(userId);
-            UserManagerMock.Setup(x => x.FindByIdAsync(userId.ToString()))
-                .ReturnsAsync((User?)null);
+            UserManagerDouble.WithFindByIdAsync(userId.ToString(), null);
             return this;
         }
     }

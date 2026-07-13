@@ -1,9 +1,7 @@
 using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Identity.Features.Admin.Users.GetUserDetail;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Logging;
-using Moq;
+using JiApp.Identity.Tests.Mocks;
 
 namespace JiApp.Identity.Tests.Features.Admin.Users.GetUserDetail;
 
@@ -19,37 +17,25 @@ public sealed class GetUserDetailHandlerTests
 			DisplayName = "Test User"
 		};
 
-		public Mock<UserManager<User>> UserManagerMock { get; } = new(
-			Mock.Of<IUserStore<User>>(),
-			Mock.Of<Microsoft.Extensions.Options.IOptions<IdentityOptions>>(),
-			Mock.Of<IPasswordHasher<User>>(),
-			Array.Empty<IUserValidator<User>>(),
-			Array.Empty<IPasswordValidator<User>>(),
-			Mock.Of<ILookupNormalizer>(),
-			Mock.Of<IdentityErrorDescriber>(),
-			Mock.Of<IServiceProvider>(),
-			Mock.Of<ILogger<UserManager<User>>>());
+		public MockUserManager UserManagerDouble { get; } = MockUserManager.GetSuccessful();
 
 		public GetUserDetailHandler Sut { get; }
 
 		public Fixture()
 		{
-			Sut = new GetUserDetailHandler(UserManagerMock.Object);
+			Sut = new GetUserDetailHandler(UserManagerDouble.Object);
 		}
 
 		public Fixture WithExistingUser()
 		{
-			UserManagerMock.Setup(x => x.FindByIdAsync("1"))
-				.ReturnsAsync(_testUser);
-			UserManagerMock.Setup(x => x.GetRolesAsync(_testUser))
-				.ReturnsAsync(["User"]);
+			UserManagerDouble.WithFindByIdAsync("1", _testUser);
+			UserManagerDouble.WithGetRolesAsync(_testUser, ["User"]);
 			return this;
 		}
 
 		public Fixture WithNonexistentUser()
 		{
-			UserManagerMock.Setup(x => x.FindByIdAsync("999"))
-				.ReturnsAsync((User?)null);
+			UserManagerDouble.WithFindByIdAsync("999", null);
 			return this;
 		}
 

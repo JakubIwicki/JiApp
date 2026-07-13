@@ -2,6 +2,7 @@ using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Identity.Features.Admin.Common;
 using JiApp.Identity.Features.Admin.Users.AssignRole;
+using JiApp.Identity.Tests.Mocks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -18,60 +19,39 @@ public sealed class AssignRoleHandlerTests
 			UserName = "testuser"
 		};
 
-		public Mock<UserManager<User>> UserManagerMock { get; } = new(
-			Mock.Of<IUserStore<User>>(),
-			Mock.Of<Microsoft.Extensions.Options.IOptions<IdentityOptions>>(),
-			Mock.Of<IPasswordHasher<User>>(),
-			Array.Empty<IUserValidator<User>>(),
-			Array.Empty<IPasswordValidator<User>>(),
-			Mock.Of<ILookupNormalizer>(),
-			Mock.Of<IdentityErrorDescriber>(),
-			Mock.Of<IServiceProvider>(),
-			Mock.Of<ILogger<UserManager<User>>>());
-
-		public Mock<RoleManager<IdentityRole<long>>> RoleManagerMock { get; } = new(
-			Mock.Of<IRoleStore<IdentityRole<long>>>(),
-			Array.Empty<IRoleValidator<IdentityRole<long>>>(),
-			Mock.Of<ILookupNormalizer>(),
-			Mock.Of<IdentityErrorDescriber>(),
-			Mock.Of<ILogger<RoleManager<IdentityRole<long>>>>());
-
-		public Mock<ICurrentUserService> CurrentUserMock { get; } = new();
+		public MockUserManager UserManagerDouble { get; } = MockUserManager.GetSuccessful();
+		public MockRoleManager RoleManagerDouble { get; } = MockRoleManager.GetSuccessful();
+		public MockCurrentUserService CurrentUserMock { get; } = new();
 
 		public AdminAccessGuard Guard { get; }
 		public AssignRoleHandler Sut { get; }
 
 		public Fixture()
 		{
-			CurrentUserMock.Setup(x => x.UserId).Returns(999);
-			Guard = new AdminAccessGuard(UserManagerMock.Object, CurrentUserMock.Object);
-			Sut = new AssignRoleHandler(UserManagerMock.Object, RoleManagerMock.Object, Guard,
+			CurrentUserMock.WithReturning(999);
+			Guard = new AdminAccessGuard(UserManagerDouble.Object, CurrentUserMock.Object);
+			Sut = new AssignRoleHandler(UserManagerDouble.Object, RoleManagerDouble.Object, Guard,
 				Mock.Of<ILogger<AssignRoleHandler>>());
 		}
 
 		public Fixture WithExistingUserAndRole()
 		{
-			UserManagerMock.Setup(x => x.FindByIdAsync("1"))
-				.ReturnsAsync(_testUser);
-			RoleManagerMock.Setup(x => x.RoleExistsAsync("Admin"))
-				.ReturnsAsync(true);
-			UserManagerMock.Setup(x => x.AddToRoleAsync(_testUser, "Admin"))
-				.ReturnsAsync(IdentityResult.Success);
-			UserManagerMock.Setup(x => x.UpdateSecurityStampAsync(_testUser))
-				.ReturnsAsync(IdentityResult.Success);
+			UserManagerDouble.WithFindByIdAsync("1", _testUser);
+			RoleManagerDouble.WithRoleExistsAsync("Admin", true);
+			UserManagerDouble.WithAddToRoleAsync(_testUser, "Admin", IdentityResult.Success);
+			UserManagerDouble.WithUpdateSecurityStampAsync(_testUser, IdentityResult.Success);
 			return this;
 		}
 
 		public Fixture WithNonexistentRole()
 		{
-			RoleManagerMock.Setup(x => x.RoleExistsAsync("FakeRole"))
-				.ReturnsAsync(false);
+			RoleManagerDouble.WithRoleExistsAsync("FakeRole", false);
 			return this;
 		}
 
 		public Fixture WithSelfTarget()
 		{
-			CurrentUserMock.Setup(x => x.UserId).Returns(1);
+			CurrentUserMock.WithReturning(1);
 			return this;
 		}
 	}
@@ -84,7 +64,7 @@ public sealed class AssignRoleHandlerTests
 		var result = await fixture.Sut.HandleAsync(1, new AssignRoleRequest("Admin"), CancellationToken.None);
 
 		AssertSuccess(result);
-		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Once);
+		fixture.UserManagerDouble.VerifyUpdatedSecurityStamp_Once();
 	}
 
 	[Fact]
@@ -95,22 +75,20 @@ public sealed class AssignRoleHandlerTests
 		var result = await fixture.Sut.HandleAsync(1, new AssignRoleRequest("FakeRole"), CancellationToken.None);
 
 		AssertValidationFailure(result);
-		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Never);
+		fixture.UserManagerDouble.VerifyUpdatedSecurityStamp_NotCalled();
 	}
 
 	[Fact]
 	public async Task HandleAsync_ReturnsNotFound_WhenUserDoesNotExist()
 	{
 		var fixture = new Fixture();
-		fixture.UserManagerMock.Setup(x => x.FindByIdAsync("9999"))
-			.ReturnsAsync((User?)null);
-		fixture.RoleManagerMock.Setup(x => x.RoleExistsAsync("Admin"))
-			.ReturnsAsync(true);
+		fixture.UserManagerDouble.WithFindByIdAsync("9999", null);
+		fixture.RoleManagerDouble.WithRoleExistsAsync("Admin", true);
 
 		var result = await fixture.Sut.HandleAsync(9999, new AssignRoleRequest("Admin"), CancellationToken.None);
 
 		AssertNotFound(result);
-		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Never);
+		fixture.UserManagerDouble.VerifyUpdatedSecurityStamp_NotCalled();
 	}
 
 	[Fact]
@@ -121,21 +99,18 @@ public sealed class AssignRoleHandlerTests
 		var result = await fixture.Sut.HandleAsync(1, new AssignRoleRequest("Admin"), CancellationToken.None);
 
 		AssertAccessDenied(result);
-		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Never);
+		fixture.UserManagerDouble.VerifyUpdatedSecurityStamp_NotCalled();
 	}
 
 	[Fact]
 	public async Task HandleAsync_ReturnsSuccess_WhenSelfAssigningNonAdminRole()
 	{
 		var fixture = new Fixture().WithSelfTarget();
-		fixture.UserManagerMock.Setup(x => x.FindByIdAsync("1"))
-			.ReturnsAsync(new User { Id = 1, UserName = "testuser" });
-		fixture.RoleManagerMock.Setup(x => x.RoleExistsAsync("User"))
-			.ReturnsAsync(true);
-		fixture.UserManagerMock.Setup(x => x.AddToRoleAsync(It.IsAny<User>(), "User"))
-			.ReturnsAsync(IdentityResult.Success);
-		fixture.UserManagerMock.Setup(x => x.UpdateSecurityStampAsync(It.IsAny<User>()))
-			.ReturnsAsync(IdentityResult.Success);
+		var selfUser = new User { Id = 1, UserName = "testuser" };
+		fixture.UserManagerDouble.WithFindByIdAsync("1", selfUser);
+		fixture.RoleManagerDouble.WithRoleExistsAsync("User", true);
+		fixture.UserManagerDouble.WithAddToRoleAsync(selfUser, "User", IdentityResult.Success);
+		fixture.UserManagerDouble.WithUpdateSecurityStampAsync(selfUser, IdentityResult.Success);
 
 		var result = await fixture.Sut.HandleAsync(1, new AssignRoleRequest("User"), CancellationToken.None);
 

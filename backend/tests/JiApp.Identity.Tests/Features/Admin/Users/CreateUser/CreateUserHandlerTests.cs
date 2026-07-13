@@ -1,10 +1,8 @@
 using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Identity.Features.Admin.Users.CreateUser;
+using JiApp.Identity.Tests.Mocks;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace JiApp.Identity.Tests.Features.Admin.Users.CreateUser;
@@ -13,78 +11,50 @@ public sealed class CreateUserHandlerTests
 {
 	private sealed class Fixture
 	{
-		public Mock<UserManager<User>> UserManagerMock { get; } = new(
-			Mock.Of<IUserStore<User>>(),
-			Mock.Of<Microsoft.Extensions.Options.IOptions<IdentityOptions>>(),
-			Mock.Of<IPasswordHasher<User>>(),
-			Array.Empty<IUserValidator<User>>(),
-			Array.Empty<IPasswordValidator<User>>(),
-			Mock.Of<ILookupNormalizer>(),
-			Mock.Of<IdentityErrorDescriber>(),
-			Mock.Of<IServiceProvider>(),
-			Mock.Of<ILogger<UserManager<User>>>());
-
-		public Mock<RoleManager<IdentityRole<long>>> RoleManagerMock { get; } = new(
-			Mock.Of<IRoleStore<IdentityRole<long>>>(),
-			Array.Empty<IRoleValidator<IdentityRole<long>>>(),
-			Mock.Of<ILookupNormalizer>(),
-			Mock.Of<IdentityErrorDescriber>(),
-			Mock.Of<ILogger<RoleManager<IdentityRole<long>>>>());
+		public MockUserManager UserManagerDouble { get; } = MockUserManager.GetSuccessful();
+		public MockRoleManager RoleManagerDouble { get; } = MockRoleManager.GetSuccessful();
 
 		public CreateUserHandler Sut { get; }
 
 		public Fixture()
 		{
-			Sut = new CreateUserHandler(UserManagerMock.Object, RoleManagerMock.Object);
+			Sut = new CreateUserHandler(UserManagerDouble.Object, RoleManagerDouble.Object);
 		}
 
 		public Fixture WithRoleExists(string roleName)
 		{
-			RoleManagerMock.Setup(x => x.RoleExistsAsync(roleName))
-				.ReturnsAsync(true);
+			RoleManagerDouble.WithRoleExistsAsync(roleName, true);
 			return this;
 		}
 
 		public Fixture WithSuccessfulCreate()
 		{
-			UserManagerMock
-				.Setup(x => x.CreateAsync(It.IsAny<User>(), "Password1"))
-				.Callback<User, string>((user, _) => user.Id = 7)
-				.ReturnsAsync(IdentityResult.Success);
-			UserManagerMock
-				.Setup(x => x.AddToRolesAsync(It.IsAny<User>(), It.IsAny<IEnumerable<string>>()))
-				.ReturnsAsync(IdentityResult.Success);
+			UserManagerDouble.WithCreateAsync("Password1", IdentityResult.Success,
+				callback: user => user.Id = 7);
+			UserManagerDouble.WithAddToRolesAsyncSuccess();
 			return this;
 		}
 
 		public Fixture WithFailingCreate()
 		{
-			UserManagerMock
-				.Setup(x => x.CreateAsync(It.IsAny<User>(), "weak"))
-				.ReturnsAsync(IdentityResult.Failed(
+			UserManagerDouble.WithCreateAsync("weak",
+				IdentityResult.Failed(
 					new IdentityError { Description = "Password must contain at least one uppercase letter." }));
 			return this;
 		}
 
 		public Fixture WithUniqueConstraintViolation()
 		{
-			var innerEx = new SqliteException("UNIQUE constraint failed", 19);
-			UserManagerMock
-				.Setup(x => x.CreateAsync(It.IsAny<User>(), It.IsAny<string>()))
-				.ThrowsAsync(new DbUpdateException("An error occurred while saving the entity changes", innerEx));
+			UserManagerDouble.WithCreateThrowsUniqueConstraint();
 			return this;
 		}
 
 		public Fixture WithFailingRoleAssignment(long userId)
 		{
-			UserManagerMock
-				.Setup(x => x.CreateAsync(It.IsAny<User>(), "Password1"))
-				.Callback<User, string>((user, _) => user.Id = userId)
-				.ReturnsAsync(IdentityResult.Success);
-			UserManagerMock
-				.Setup(x => x.AddToRolesAsync(It.Is<User>(u => u.Id == userId), It.IsAny<IEnumerable<string>>()))
-				.ReturnsAsync(IdentityResult.Failed(
-					new IdentityError { Description = "Role assignment failed" }));
+			UserManagerDouble.WithCreateAsync("Password1", IdentityResult.Success,
+				callback: user => user.Id = userId);
+			UserManagerDouble.WithAddToRolesAsyncFailure(userId,
+				new IdentityError { Description = "Role assignment failed" });
 			return this;
 		}
 	}
@@ -107,8 +77,7 @@ public sealed class CreateUserHandlerTests
 	public async Task HandleAsync_ReturnsValidationFailure_WhenRoleDoesNotExist()
 	{
 		var fixture = new Fixture();
-		fixture.RoleManagerMock.Setup(x => x.RoleExistsAsync("FakeRole"))
-			.ReturnsAsync(false);
+		fixture.RoleManagerDouble.WithRoleExistsAsync("FakeRole", false);
 
 		var result = await fixture.Sut.HandleAsync(new CreateUserRequest(
 			"newuser", "new@test.com", "Password1", "New User", ["FakeRole"]), CancellationToken.None);
@@ -149,9 +118,7 @@ public sealed class CreateUserHandlerTests
 		var result = await fixture.Sut.HandleAsync(new CreateUserRequest(
 			"newuser", "new@test.com", "Password1", "New User", ["Admin"]), CancellationToken.None);
 
-		fixture.UserManagerMock.Verify(
-			x => x.DeleteAsync(It.Is<User>(u => u.Id == createdUserId)),
-			Times.Once);
+		fixture.UserManagerDouble.VerifyDeletedUser(createdUserId);
 		result.IsSuccess.Should().BeFalse();
 	}
 }

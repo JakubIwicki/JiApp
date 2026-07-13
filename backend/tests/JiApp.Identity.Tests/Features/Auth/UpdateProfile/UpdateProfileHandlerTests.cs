@@ -1,6 +1,7 @@
 using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Identity.Features.Auth.UpdateProfile;
+using JiApp.Identity.Tests.Mocks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -21,44 +22,31 @@ public sealed class UpdateProfileHandlerTests
             ConcurrencyStamp = "concurrency"
         };
 
-        public Mock<UserManager<User>> UserManagerMock { get; } = new(
-            Mock.Of<IUserStore<User>>(),
-            Mock.Of<Microsoft.Extensions.Options.IOptions<IdentityOptions>>(),
-            Mock.Of<IPasswordHasher<User>>(),
-            Array.Empty<IUserValidator<User>>(),
-            Array.Empty<IPasswordValidator<User>>(),
-            Mock.Of<ILookupNormalizer>(),
-            Mock.Of<IdentityErrorDescriber>(),
-            Mock.Of<IServiceProvider>(),
-            Mock.Of<ILogger<UserManager<User>>>());
-
+        public MockUserManager UserManagerDouble { get; } = MockUserManager.GetSuccessful();
         public MockCurrentUserService CurrentUser { get; } = MockCurrentUserService.GetSuccessful();
 
         public UpdateProfileHandler Sut =>
-            new(UserManagerMock.Object, CurrentUser.Mock.Object, Mock.Of<ILogger<UpdateProfileHandler>>());
+            new(UserManagerDouble.Object, CurrentUser.Object, Mock.Of<ILogger<UpdateProfileHandler>>());
 
         public Fixture WithExistingUser(long userId = 1)
         {
             CurrentUser.WithReturning(userId);
-            UserManagerMock.Setup(x => x.FindByIdAsync(userId.ToString()))
-                .ReturnsAsync(_testUser);
-            UserManagerMock.Setup(x => x.UpdateAsync(_testUser))
-                .ReturnsAsync(IdentityResult.Success);
+            UserManagerDouble.WithFindByIdAsync(userId.ToString(), _testUser);
+            UserManagerDouble.WithUpdateAsync(_testUser, IdentityResult.Success);
             return this;
         }
 
         public Fixture WithSuccessfulEmailChange()
         {
-            UserManagerMock.Setup(x => x.SetEmailAsync(_testUser, It.IsAny<string>()))
-                .Callback<User, string>((u, email) => u.Email = email)
-                .ReturnsAsync(IdentityResult.Success);
+            UserManagerDouble.WithSetEmailAsync(_testUser, IdentityResult.Success,
+                callback: (u, email) => u.Email = email);
             return this;
         }
 
         public Fixture WithDuplicateEmailFailure()
         {
-            UserManagerMock.Setup(x => x.SetEmailAsync(_testUser, It.IsAny<string>()))
-                .ReturnsAsync(IdentityResult.Failed(
+            UserManagerDouble.WithSetEmailAsync(_testUser,
+                IdentityResult.Failed(
                     new IdentityError { Code = "DuplicateEmail", Description = "Email 'new@test.com' is already taken." }));
             return this;
         }
@@ -66,8 +54,7 @@ public sealed class UpdateProfileHandlerTests
         public Fixture WithMissingUser(long userId = 999)
         {
             CurrentUser.WithReturning(userId);
-            UserManagerMock.Setup(x => x.FindByIdAsync(userId.ToString()))
-                .ReturnsAsync((User?)null);
+            UserManagerDouble.WithFindByIdAsync(userId.ToString(), null);
             return this;
         }
     }
@@ -97,9 +84,7 @@ public sealed class UpdateProfileHandlerTests
             new UpdateProfileRequest("New Name", "old@test.com"), CancellationToken.None);
 
         AssertSuccess(result);
-        fixture.UserManagerMock.Verify(
-            x => x.SetEmailAsync(It.IsAny<User>(), It.IsAny<string>()),
-            Times.Never);
+        fixture.UserManagerDouble.VerifySetEmailAsync_NotCalled();
     }
 
     [Fact]

@@ -3,6 +3,7 @@ using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Identity.Features.Admin.Common;
 using JiApp.Identity.Features.Admin.Roles.UpdateRolePermissions;
+using JiApp.Identity.Tests.Mocks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -15,71 +16,38 @@ public sealed class UpdateRolePermissionsHandlerTests
 	{
 		private readonly IdentityRole<long> _role = new("User") { Id = 2 };
 
-		public Mock<RoleManager<IdentityRole<long>>> RoleManagerMock { get; } = new(
-			Mock.Of<IRoleStore<IdentityRole<long>>>(),
-			Array.Empty<IRoleValidator<IdentityRole<long>>>(),
-			Mock.Of<ILookupNormalizer>(),
-			Mock.Of<IdentityErrorDescriber>(),
-			Mock.Of<ILogger<RoleManager<IdentityRole<long>>>>());
-
-		public Mock<UserManager<User>> GuardUserManagerMock { get; } = new(
-			Mock.Of<IUserStore<User>>(),
-			Mock.Of<Microsoft.Extensions.Options.IOptions<IdentityOptions>>(),
-			Mock.Of<IPasswordHasher<User>>(),
-			Array.Empty<IUserValidator<User>>(),
-			Array.Empty<IPasswordValidator<User>>(),
-			Mock.Of<ILookupNormalizer>(),
-			Mock.Of<IdentityErrorDescriber>(),
-			Mock.Of<IServiceProvider>(),
-			Mock.Of<ILogger<UserManager<User>>>());
-
-		public Mock<UserManager<User>> UserManagerMock { get; } = new(
-			Mock.Of<IUserStore<User>>(),
-			Mock.Of<Microsoft.Extensions.Options.IOptions<IdentityOptions>>(),
-			Mock.Of<IPasswordHasher<User>>(),
-			Array.Empty<IUserValidator<User>>(),
-			Array.Empty<IPasswordValidator<User>>(),
-			Mock.Of<ILookupNormalizer>(),
-			Mock.Of<IdentityErrorDescriber>(),
-			Mock.Of<IServiceProvider>(),
-			Mock.Of<ILogger<UserManager<User>>>());
-
-		public Mock<ICurrentUserService> CurrentUserMock { get; } = new();
+		public MockRoleManager RoleManagerDouble { get; } = MockRoleManager.GetSuccessful();
+		public MockUserManager GuardUserManagerDouble { get; } = MockUserManager.GetSuccessful();
+		public MockUserManager UserManagerDouble { get; } = MockUserManager.GetSuccessful();
+		public MockCurrentUserService CurrentUserMock { get; } = new();
 
 		public AdminAccessGuard Guard { get; }
 		public UpdateRolePermissionsHandler Sut { get; }
 
 		public Fixture()
 		{
-			CurrentUserMock.Setup(x => x.UserId).Returns(1);
-			Guard = new AdminAccessGuard(GuardUserManagerMock.Object, CurrentUserMock.Object);
-			Sut = new UpdateRolePermissionsHandler(RoleManagerMock.Object, UserManagerMock.Object, Guard,
+			CurrentUserMock.WithReturning(1);
+			Guard = new AdminAccessGuard(GuardUserManagerDouble.Object, CurrentUserMock.Object);
+			Sut = new UpdateRolePermissionsHandler(RoleManagerDouble.Object, UserManagerDouble.Object, Guard,
 				Mock.Of<ILogger<UpdateRolePermissionsHandler>>());
 		}
 
 		public Fixture WithEditableRole()
 		{
-			RoleManagerMock.Setup(x => x.FindByNameAsync("User"))
-				.ReturnsAsync(_role);
-			RoleManagerMock.Setup(x => x.GetClaimsAsync(_role))
-				.ReturnsAsync([new Claim("permission", "scheduler.access")]);
-			RoleManagerMock
-				.Setup(x => x.RemoveClaimAsync(_role, It.IsAny<Claim>()))
-				.ReturnsAsync(IdentityResult.Success);
-			RoleManagerMock
-				.Setup(x => x.AddClaimAsync(_role, It.IsAny<Claim>()))
-				.ReturnsAsync(IdentityResult.Success);
-			UserManagerMock.Setup(x => x.GetUsersInRoleAsync("User"))
-				.ReturnsAsync([new User { Id = 10, UserName = "user1" }, new User { Id = 20, UserName = "user2" }]);
-			UserManagerMock.Setup(x => x.UpdateSecurityStampAsync(It.IsAny<User>()))
-				.ReturnsAsync(IdentityResult.Success);
+			RoleManagerDouble.WithFindByNameAsync("User", _role);
+			RoleManagerDouble.WithGetClaimsAsync(_role,
+				[new Claim("permission", "scheduler.access")]);
+			RoleManagerDouble.WithRemoveClaimAsync(IdentityResult.Success);
+			RoleManagerDouble.WithAddClaimAsync(IdentityResult.Success);
+			UserManagerDouble.WithGetUsersInRoleAsync("User",
+				[new User { Id = 10, UserName = "user1" }, new User { Id = 20, UserName = "user2" }]);
+			UserManagerDouble.WithUpdateSecurityStampAsyncForAny(IdentityResult.Success);
 			return this;
 		}
 
 		public Fixture WithNonexistentRole()
 		{
-			RoleManagerMock.Setup(x => x.FindByNameAsync("FakeRole"))
-				.ReturnsAsync((IdentityRole<long>?)null);
+			RoleManagerDouble.WithFindByNameAsync("FakeRole", null);
 			return this;
 		}
 	}
@@ -136,7 +104,7 @@ public sealed class UpdateRolePermissionsHandlerTests
 		await fixture.Sut.HandleAsync("User", new UpdateRolePermissionsRequest(
 			["ytdownloader.access", "scheduler.access"]), CancellationToken.None);
 
-		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Exactly(2));
+		fixture.UserManagerDouble.VerifyUpdatedSecurityStamp_Exactly(2);
 	}
 
 	[Fact]
@@ -147,7 +115,7 @@ public sealed class UpdateRolePermissionsHandlerTests
 		await fixture.Sut.HandleAsync("User", new UpdateRolePermissionsRequest(
 			["scheduler.access"]), CancellationToken.None);
 
-		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Never);
+		fixture.UserManagerDouble.VerifyUpdatedSecurityStamp_NotCalled();
 	}
 
 	[Fact]
@@ -158,7 +126,7 @@ public sealed class UpdateRolePermissionsHandlerTests
 		await fixture.Sut.HandleAsync("Admin", new UpdateRolePermissionsRequest(
 			["ytdownloader.access"]), CancellationToken.None);
 
-		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Never);
+		fixture.UserManagerDouble.VerifyUpdatedSecurityStamp_NotCalled();
 	}
 
 	[Fact]
@@ -169,6 +137,6 @@ public sealed class UpdateRolePermissionsHandlerTests
 		await fixture.Sut.HandleAsync("FakeRole", new UpdateRolePermissionsRequest(
 			["scheduler.access"]), CancellationToken.None);
 
-		fixture.UserManagerMock.Verify(x => x.UpdateSecurityStampAsync(It.IsAny<User>()), Times.Never);
+		fixture.UserManagerDouble.VerifyUpdatedSecurityStamp_NotCalled();
 	}
 }
