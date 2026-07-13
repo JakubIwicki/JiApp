@@ -96,8 +96,8 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
 
         var result = await sut.HandleAsync(boardId, request, CancellationToken.None);
 
-        AssertSuccess(result);
-        result.Value.Should().BeGreaterThan(0);
+        var itemId = AssertSuccess(result);
+        itemId.Should().BeGreaterThan(0);
     }
 
     [Fact]
@@ -167,8 +167,8 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
 
         var result = await sut.HandleAsync(boardId, new CreateItemRequest("New One"), CancellationToken.None);
 
-        AssertSuccess(result);
-        result.Value.Should().BeGreaterThan(0);
+        var newItemId = AssertSuccess(result);
+        newItemId.Should().BeGreaterThan(0);
     }
 
     [Fact]

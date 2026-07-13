@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import * as adminService from '../services/adminService';
+import { getFriendlyErrorMessage } from '../../../utils/errorUtils';
 import type { UserSummary } from '../types/api';
 
 interface UseUsersResult {
@@ -49,7 +50,7 @@ const useUsers = (): UseUsersResult => {
       setTotal(data.total);
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') return;
-      setError(err instanceof Error ? err.message : 'Failed to load users');
+      setError(getFriendlyErrorMessage(err, 'Failed to load users'));
       setUsers([]);
       setTotal(0);
     } finally {
@@ -86,7 +87,7 @@ const useUsers = (): UseUsersResult => {
         await refresh();
         return result;
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to create user');
+        setError(getFriendlyErrorMessage(err, 'Failed to create user'));
         throw err;
       }
     },
@@ -101,7 +102,7 @@ const useUsers = (): UseUsersResult => {
         prev.map(u => (u.id === userId ? { ...u, isLockedOut: true } : u)),
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to disable user');
+      setError(getFriendlyErrorMessage(err, 'Failed to disable user'));
       throw err;
     }
   }, []);
@@ -114,7 +115,7 @@ const useUsers = (): UseUsersResult => {
         prev.map(u => (u.id === userId ? { ...u, isLockedOut: false } : u)),
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to enable user');
+      setError(getFriendlyErrorMessage(err, 'Failed to enable user'));
       throw err;
     }
   }, []);
@@ -126,7 +127,7 @@ const useUsers = (): UseUsersResult => {
       setUsers(prev => prev.filter(u => u.id !== userId));
       setTotal(prev => prev - 1);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete user');
+      setError(getFriendlyErrorMessage(err, 'Failed to delete user'));
       throw err;
     }
   }, []);

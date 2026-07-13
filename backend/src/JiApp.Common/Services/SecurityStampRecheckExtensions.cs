@@ -1,6 +1,8 @@
 using JiApp.Common.Middleware;
+using JiApp.Common.Resilience;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 
 namespace JiApp.Common.Services;
@@ -10,6 +12,7 @@ public static class SecurityStampRecheckExtensions
 	public static IServiceCollection AddSecurityStampRecheck(
 		this IServiceCollection services, string? identityBaseUrl, IWebHostEnvironment env)
 	{
+		services.TryAddSingleton<IRetryPolicyFactory, RetryPolicyFactory>();
 		services.AddHttpContextAccessor();
 
 		if (!string.IsNullOrEmpty(identityBaseUrl))

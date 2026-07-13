@@ -1,4 +1,5 @@
 using JiApp.Common.Abstractions;
+using JiApp.Common.Resilience;
 using JiApp.Common.Services;
 using JiApp.Scheduler.Features.Appointments.CreateAppointment;
 using JiApp.Scheduler.Features.Appointments.DeleteAppointment;
@@ -17,6 +18,7 @@ public sealed class AppointmentHandlerTests : HandlerTestBase
         private readonly ISchedulerDbContext _dbContext;
         private readonly SchedulerDbContext _db;
         private readonly ICurrentUserService _currentUser;
+        private readonly IRetryPolicyFactory _retryPolicy;
         private readonly DateOnly _saturday;
         private Board? _board;
         private Client? _client;
@@ -29,6 +31,7 @@ public sealed class AppointmentHandlerTests : HandlerTestBase
             var currentUserMock = MockCurrentUserService.GetSuccessful();
             _currentUser = currentUserMock.Mock.Object;
             CurrentUserMock = currentUserMock;
+            _retryPolicy = new RetryPolicyFactory();
 
             var start = DateOnly.FromDateTime(DateTime.UtcNow);
             while (start.DayOfWeek != DayOfWeek.Saturday)
@@ -42,11 +45,11 @@ public sealed class AppointmentHandlerTests : HandlerTestBase
         public Client Client => _client!;
         public Service Service => _service!;
 
-        public CreateAppointmentHandler Sut => new(_dbContext, _currentUser);
-        public CreateAppointmentHandler CreateAppointment => new(_dbContext, _currentUser);
+        public CreateAppointmentHandler Sut => new(_dbContext, _currentUser, _retryPolicy);
+        public CreateAppointmentHandler CreateAppointment => new(_dbContext, _currentUser, _retryPolicy);
         public GetAppointmentHandler GetAppointment => new(_dbContext, _currentUser);
         public ListAppointmentsHandler ListAppointments => new(_dbContext, _currentUser);
-        public UpdateAppointmentHandler UpdateAppointment => new(_dbContext, _currentUser);
+        public UpdateAppointmentHandler UpdateAppointment => new(_dbContext, _currentUser, _retryPolicy);
         public UpdateAppointmentStatusHandler UpdateAppointmentStatus => new(_dbContext, _currentUser);
         public DeleteAppointmentHandler DeleteAppointment => new(_dbContext, _currentUser);
 
