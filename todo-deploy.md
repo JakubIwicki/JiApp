@@ -67,3 +67,4 @@ _(Add items here as changes land; clear them once deployed. Empty = nothing pend
 
 - [ ] _(none currently — F2 + CORS-prod-config deployed 2026-07-02)_
 - [ ] **Admin-role self-heal env var:** `BOOTSTRAP_ADMIN_USERNAME` (mapped to `Bootstrap__AdminUsername` on the identity service) must be set in `aws/.env.prod` so the Admin role auto-recovers if a future migration empties it.
+- [ ] **RoleSeeder empty-role convergence (fix/roleseeder-converge-empty-role):** No new prod config required. RoleSeeder now converges create-only roles that exist with zero permission claims; prod User role was already fixed manually on 2026-07-16, so this is a no-op on prod.

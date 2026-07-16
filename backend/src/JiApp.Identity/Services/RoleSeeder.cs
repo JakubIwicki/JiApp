@@ -86,7 +86,21 @@ public sealed class RoleSeeder(
 		var role = await roleManager.FindByNameAsync(name);
 		if (role is not null)
 		{
-			logger.LogDebug("Role {RoleName} already exists; skipping seed to preserve admin edits", name);
+			var existingClaims = await roleManager.GetClaimsAsync(role);
+			if (defaultPermissions.Length == 0 || existingClaims.Any(c => c.Type == "permission"))
+			{
+				logger.LogDebug("Role {RoleName} already exists; skipping seed to preserve admin edits", name);
+				return;
+			}
+
+			logger.LogInformation("Role {RoleName} exists with zero permission claims; converging to defaults", name);
+
+			foreach (var permission in defaultPermissions)
+			{
+				await roleManager.AddClaimAsync(role, new System.Security.Claims.Claim("permission", permission));
+			}
+
+			logger.LogInformation("Seeded {Count} default permissions for role {RoleName}", defaultPermissions.Length, name);
 			return;
 		}
 
