@@ -61,6 +61,35 @@ public sealed class RoleSeederTests
 
 			return this;
 		}
+
+		public Fixture WithAllRolesExistWithZeroClaims()
+		{
+			RoleManagerDouble.WithFindByNameAsync("Admin", _adminRole);
+			RoleManagerDouble.WithFindByNameAsync("User", _userRole);
+			RoleManagerDouble.WithFindByNameAsync("Guest", new IdentityRole<long>("Guest") { Id = 3 });
+
+			RoleManagerDouble.WithGetClaimsAsyncForAny([]);
+
+			RoleManagerDouble.WithRemoveClaimAsync(IdentityResult.Success);
+			RoleManagerDouble.WithAddClaimAsync(IdentityResult.Success);
+
+			return this;
+		}
+
+		public Fixture WithUserRoleHavingSinglePermissionClaim()
+		{
+			RoleManagerDouble.WithFindByNameAsync("Admin", _adminRole);
+			RoleManagerDouble.WithFindByNameAsync("User", _userRole);
+			RoleManagerDouble.WithFindByNameAsync("Guest", new IdentityRole<long>("Guest") { Id = 3 });
+
+			RoleManagerDouble.WithGetClaimsAsyncForAny([]);
+			RoleManagerDouble.WithGetClaimsAsync(_userRole, [new Claim("permission", "custom.read")]);
+
+			RoleManagerDouble.WithRemoveClaimAsync(IdentityResult.Success);
+			RoleManagerDouble.WithAddClaimAsync(IdentityResult.Success);
+
+			return this;
+		}
 	}
 
 	[Fact]
@@ -108,6 +137,41 @@ public sealed class RoleSeederTests
 		await fixture.Sut.SeedAsync();
 
 		fixture.RoleManagerDouble.VerifyCreatedRole(3);
+	}
+
+	[Fact]
+	public async Task SeedAsync_SeedsDefaultUserPermissions_WhenUserRoleExistsWithZeroPermissionClaims()
+	{
+		var fixture = new Fixture().WithAllRolesExistWithZeroClaims();
+
+		await fixture.Sut.SeedAsync();
+
+		foreach (var permission in Permissions.ModuleAccess)
+			fixture.RoleManagerDouble.VerifyAddedPermissionToRole("User", permission);
+		fixture.RoleManagerDouble.VerifyAddedClaimsToRole("User", Permissions.ModuleAccess.Length);
+		fixture.RoleManagerDouble.VerifyRemovedClaimFromRole_NotCalled("User");
+	}
+
+	[Fact]
+	public async Task SeedAsync_PreservesUserPermissions_WhenUserRoleHasSinglePermissionClaim()
+	{
+		var fixture = new Fixture().WithUserRoleHavingSinglePermissionClaim();
+
+		await fixture.Sut.SeedAsync();
+
+		fixture.RoleManagerDouble.VerifyAddedClaimToRole_NotCalled("User");
+		fixture.RoleManagerDouble.VerifyRemovedClaimFromRole_NotCalled("User");
+	}
+
+	[Fact]
+	public async Task SeedAsync_DoesNotSeedGuestPermissions_WhenGuestRoleExistsWithZeroClaims()
+	{
+		var fixture = new Fixture().WithAllRolesExistWithZeroClaims();
+
+		await fixture.Sut.SeedAsync();
+
+		fixture.RoleManagerDouble.VerifyAddedClaimToRole_NotCalled("Guest");
+		fixture.RoleManagerDouble.VerifyRemovedClaimFromRole_NotCalled("Guest");
 	}
 
 	[Fact]

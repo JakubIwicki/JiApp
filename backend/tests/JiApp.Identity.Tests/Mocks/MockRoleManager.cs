@@ -124,6 +124,24 @@ public sealed class MockRoleManager
 			Times.AtLeastOnce);
 	}
 
+	public void VerifyAddedPermissionToRole(string roleName, string permission)
+	{
+		_mock.Verify(
+			x => x.AddClaimAsync(
+				It.Is<IdentityRole<long>>(r => r.Name == roleName),
+				It.Is<Claim>(c => c.Type == "permission" && c.Value == permission)),
+			Times.Once);
+	}
+
+	public void VerifyAddedClaimsToRole(string roleName, int count)
+	{
+		_mock.Verify(
+			x => x.AddClaimAsync(
+				It.Is<IdentityRole<long>>(r => r.Name == roleName),
+				It.IsAny<Claim>()),
+			Times.Exactly(count));
+	}
+
 	public void VerifyAddedClaimToRole_NotCalled(string roleName)
 	{
 		_mock.Verify(
