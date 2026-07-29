@@ -11,6 +11,10 @@ WorkingDirectory=/opt/jiapp
 ExecStart=/opt/jiapp/startup.sh
 ExecStop=/usr/bin/docker compose -f docker-compose.yml -f docker-compose.prod.yml stop --timeout 30
 ExecReload=/usr/bin/docker compose -f docker-compose.yml -f docker-compose.prod.yml restart
+Restart=on-failure
+RestartSec=10
+StartLimitBurst=5
+StartLimitIntervalSec=120
 StandardOutput=journal
 StandardError=journal
 
