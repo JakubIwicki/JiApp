@@ -19,16 +19,17 @@ export function Hero() {
 
         <div className={styles.bio}>
           <p>
-            I build full-stack web applications, mobile apps, and backend
-            services — from architecture to deployment. I&rsquo;m comfortable
-            across the stack, with a focus on React, TypeScript, .NET, and cloud
-            infrastructure on AWS.
+            I design and build backend services and distributed systems in .NET
+            &mdash; message-driven architectures over RabbitMQ, transactional
+            consistency, authentication and authorization pipelines, and
+            deployment on AWS with infrastructure-as-code.
           </p>
           <p>
-            I enjoy solving real problems with clean, maintainable code and
-            thoughtful system design. When I&rsquo;m not shipping features,
-            I&rsquo;m exploring new tools, contributing to open-source projects,
-            or tinkering with game prototypes and CLI utilities.
+            I write React and React Native when the product calls for a client,
+            and I care about clean abstractions, testable code, and system
+            design that holds up under real load. Outside of shipping features
+            I&rsquo;m exploring new tooling, contributing to open-source
+            projects, and tinkering with CLI utilities and game prototypes.
           </p>
         </div>
 
