@@ -6,11 +6,11 @@ import type { Project } from "../types";
  */
 export const projects: Project[] = [
   {
-    name: "SlopBot",
+    name: "JjChat",
     description:
-      "An algorithmic trading engine for Capital.com — streaming market data, ML-driven price predictions, and automated position management with risk controls.",
-    tech: ["C#", ".NET", "Machine Learning", "Trading"],
-    githubUrl: "https://github.com/JakubIwicki/SlopBot",
+      "An async LLM chat platform — prompts are queued and processed off the request path, with a worker consuming them over RabbitMQ and publishing results back as statuses update live in the UI.",
+    tech: ["C#", ".NET 10", "RabbitMQ", "PostgreSQL", "React"],
+    githubUrl: "https://github.com/JakubIwicki/JjChat",
   },
   {
     name: "JiApp",
@@ -18,6 +18,13 @@ export const projects: Project[] = [
       "A full-stack YouTube-to-MP3 download app — a .NET microservices backend on AWS with a React Native Android client.",
     tech: ["C#", ".NET", "React Native", "AWS"],
     githubUrl: "https://github.com/JakubIwicki/JiApp",
+  },
+  {
+    name: "SlopBot",
+    description:
+      "An algorithmic trading engine for Capital.com — streaming market data, ML-driven price predictions, and automated position management with risk controls.",
+    tech: ["C#", ".NET", "Machine Learning", "Trading"],
+    githubUrl: "https://github.com/JakubIwicki/SlopBot",
   },
   {
     name: "FruityClassify",
@@ -39,12 +46,5 @@ export const projects: Project[] = [
       "A full-stack CRM for managing clients, orders, products, and services, with a REST API backend and a React dashboard.",
     tech: ["Node.js", "React", "TypeScript", "Prisma"],
     githubUrl: "https://github.com/JakubIwicki/CRM_Pro",
-  },
-  {
-    name: "Bawario-Game",
-    description:
-      "A low-poly Unity arena slasher — infinite levels, an in-game shop, and escalating enemy waves — architected with Zenject dependency-injection containers.",
-    tech: ["C#", "Unity", "Zenject", "Game"],
-    githubUrl: "https://github.com/JakubIwicki/Bawario-Game",
   },
 ];
