@@ -1,4 +1,4 @@
-# JiApp — Salon Management Platform
+# JiApp
 
 A mobile-first salon management platform with a .NET 10 microservices backend and React Native Android app. Handles YouTube-powered background music, client and appointment scheduling, expense tracking, and revenue reporting.
 
