@@ -308,10 +308,44 @@ describe('DownloadStatusSchema', () => {
     );
   });
 
-  it('fails on an unknown status', () => {
-    expect(DownloadStatusSchema.safeParse({ status: 'bogus' }).success).toBe(
-      false,
-    );
+  // The minimal-API Web JSON serializer emits `null` (not absent) for the
+  // optional error fields — these lock the literal backend wire shape.
+  it('parses the pending wire-shape payload with null error fields', () => {
+    const parsed = DownloadStatusSchema.parse({
+      status: 'pending',
+      error: null,
+      errorCategory: null,
+    });
+    expect(parsed.status).toBe('pending');
+  });
+
+  it('parses the ready wire-shape payload with null error fields', () => {
+    const parsed = DownloadStatusSchema.parse({
+      status: 'ready',
+      error: null,
+      errorCategory: null,
+    });
+    expect(parsed.status).toBe('ready');
+  });
+
+  it('parses the failed wire-shape payload with string error fields', () => {
+    const parsed = DownloadStatusSchema.parse({
+      status: 'failed',
+      error: 'boom',
+      errorCategory: 'Generic',
+    });
+    expect(parsed.error).toBe('boom');
+    expect(parsed.errorCategory).toBe('Generic');
+  });
+
+  it('fails on an unknown status in a wire-shape payload', () => {
+    expect(
+      DownloadStatusSchema.safeParse({
+        status: 'garbage',
+        error: null,
+        errorCategory: null,
+      }).success,
+    ).toBe(false);
   });
 });
 

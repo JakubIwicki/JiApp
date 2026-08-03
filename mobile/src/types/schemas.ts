@@ -84,8 +84,9 @@ export const DownloadResponseSchema = z.object({
 
 export const DownloadStatusSchema = z.object({
   status: z.enum(['pending', 'running', 'ready', 'failed']),
-  error: z.string().optional(),
-  errorCategory: z.string().optional(),
+  // The minimal-API JSON serializer emits `null` (not absent) for these — nullable + optional.
+  error: z.string().nullish(),
+  errorCategory: z.string().nullish(),
 });
 
 export const DownloadHistoryResponseSchema = z.object({

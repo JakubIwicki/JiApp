@@ -9,53 +9,6 @@ public sealed class DownloadJobStoreTests
     private const string VideoId = "dQw4w9WgXcQ";
     private static readonly TimeSpan Ttl = TimeSpan.FromMinutes(15);
 
-    private sealed class Fixture : IDisposable
-    {
-        public DownloadJobStore Store { get; }
-        public FakeTimeProvider Clock { get; }
-        public string TempDir { get; }
-
-        public Fixture(TimeSpan ttl, DateTimeOffset now)
-        {
-            Clock = new FakeTimeProvider(now);
-            Store = new DownloadJobStore(ttl, Clock);
-            TempDir = Directory.CreateTempSubdirectory("ytdl-store-tests-").FullName;
-        }
-
-        public string CreateJob(long userId = UserId) =>
-            Store.CreateJob(userId, VideoId, "Title", "Description",
-                "https://example.com/i.jpg", "https://youtube.com/watch?v=dQw4w9WgXcQ");
-
-        public string CreateFile(string fileName = "song.mp3")
-        {
-            var path = Path.Combine(TempDir, fileName);
-            File.WriteAllBytes(path, [0x49, 0x44, 0x33]);
-            return path;
-        }
-
-        public void Dispose()
-        {
-            try
-            {
-                Directory.Delete(TempDir, recursive: true);
-            }
-            catch (IOException)
-            {
-            }
-        }
-    }
-
-    private sealed class FakeTimeProvider : TimeProvider
-    {
-        private DateTimeOffset _now;
-
-        public FakeTimeProvider(DateTimeOffset now) => _now = now;
-
-        public override DateTimeOffset GetUtcNow() => _now;
-
-        public void Advance(TimeSpan delta) => _now += delta;
-    }
-
     // ── CreateJob ──────────────────────────────────────────────────────────
 
     [Fact]
@@ -300,5 +253,52 @@ public sealed class DownloadJobStoreTests
         fixture.Store.CleanupExpired();
 
         fixture.Store.GetStatus(tempId, UserId)!.Status.Should().Be(DownloadJobStatus.Ready);
+    }
+
+    private sealed class Fixture : IDisposable
+    {
+        public DownloadJobStore Store { get; }
+        public FakeTimeProvider Clock { get; }
+        public string TempDir { get; }
+
+        public Fixture(TimeSpan ttl, DateTimeOffset now)
+        {
+            Clock = new FakeTimeProvider(now);
+            Store = new DownloadJobStore(ttl, Clock);
+            TempDir = Directory.CreateTempSubdirectory("ytdl-store-tests-").FullName;
+        }
+
+        public string CreateJob(long userId = UserId) =>
+            Store.CreateJob(userId, VideoId, "Title", "Description",
+                "https://example.com/i.jpg", "https://youtube.com/watch?v=dQw4w9WgXcQ");
+
+        public string CreateFile(string fileName = "song.mp3")
+        {
+            var path = Path.Combine(TempDir, fileName);
+            File.WriteAllBytes(path, [0x49, 0x44, 0x33]);
+            return path;
+        }
+
+        public void Dispose()
+        {
+            try
+            {
+                Directory.Delete(TempDir, recursive: true);
+            }
+            catch (IOException)
+            {
+            }
+        }
+    }
+
+    private sealed class FakeTimeProvider : TimeProvider
+    {
+        private DateTimeOffset _now;
+
+        public FakeTimeProvider(DateTimeOffset now) => _now = now;
+
+        public override DateTimeOffset GetUtcNow() => _now;
+
+        public void Advance(TimeSpan delta) => _now += delta;
     }
 }

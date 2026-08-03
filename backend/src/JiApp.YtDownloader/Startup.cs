@@ -43,6 +43,8 @@ public class Startup(Settings settings, IWebHostEnvironment env)
     {
         services.AddEndpointsApiExplorer();
 
+        services.AddSingleton(TimeProvider.System);
+
         services.AddTransient<GlobalExceptionMiddleware>();
 
         services.AddDbContext<YtDbContext>(options =>

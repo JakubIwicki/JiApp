@@ -10,10 +10,6 @@ namespace JiApp.YtDownloader.Features.GetDownloadLink;
 
 public static class GetDownloadLinkEndpoint
 {
-    private const int MaxTitleLength = 300;
-    private const int MaxDescriptionLength = 1000;
-    private const int MaxImageUrlLength = 300;
-
     public static IEndpointRouteBuilder MapGetDownloadLink(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapPost("/downloads/mp3", async (
@@ -52,14 +48,14 @@ public static class GetDownloadLinkEndpoint
         return endpoints;
     }
 
-    private static DownloadRequest TruncateMetadata(DownloadRequest request) => request with
+    internal static DownloadRequest TruncateMetadata(DownloadRequest request) => request with
     {
-        Title = Truncate(request.Title, MaxTitleLength),
-        Description = Truncate(request.Description, MaxDescriptionLength),
-        ImageUrl = Truncate(request.ImageUrl, MaxImageUrlLength)
+        Title = Truncate(request.Title, DownloadMetadataLimits.MaxTitleLength),
+        Description = Truncate(request.Description, DownloadMetadataLimits.MaxDescriptionLength),
+        ImageUrl = Truncate(request.ImageUrl, DownloadMetadataLimits.MaxImageUrlLength)
     };
 
-    private static string? Truncate(string? value, int maxLength)
+    internal static string? Truncate(string? value, int maxLength)
     {
         if (value is null || value.Length <= maxLength)
             return value;

@@ -25,15 +25,15 @@ public sealed class GetDownloadLinkValidator : AbstractValidator<DownloadRequest
             .WithMessage("VideoUrl must be a valid YouTube URL (youtube.com/watch or youtu.be)");
 
         RuleFor(x => x.Title)
-            .MaximumLength(300)
+            .MaximumLength(DownloadMetadataLimits.MaxTitleLength)
             .When(x => x.Title is not null);
 
         RuleFor(x => x.Description)
-            .MaximumLength(1000)
+            .MaximumLength(DownloadMetadataLimits.MaxDescriptionLength)
             .When(x => x.Description is not null);
 
         RuleFor(x => x.ImageUrl)
-            .MaximumLength(300)
+            .MaximumLength(DownloadMetadataLimits.MaxImageUrlLength)
             .When(x => x.ImageUrl is not null);
     }
 

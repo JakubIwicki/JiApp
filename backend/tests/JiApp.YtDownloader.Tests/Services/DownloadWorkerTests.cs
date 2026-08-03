@@ -18,97 +18,6 @@ public sealed class DownloadWorkerTests
     private const string VideoUrl = "https://youtube.com/watch?v=dQw4w9WgXcQ";
     private static readonly TimeSpan PollTimeout = TimeSpan.FromSeconds(10);
 
-    private sealed class Fixture : IDisposable
-    {
-        public DownloadJobStore JobStore { get; }
-        public Channel<string> Queue { get; } = Channel.CreateUnbounded<string>();
-        public Mock<IYoutubeClient> YoutubeClientMock { get; } = new();
-        public Mock<IDownloadHistoryRepository> HistoryRepoMock { get; } = new();
-        public DownloadWorker Sut { get; }
-        public string TempDir { get; }
-
-        public Fixture(TimeProvider? timeProvider = null, TimeSpan? downloadTimeout = null)
-        {
-            JobStore = new DownloadJobStore(TimeSpan.FromMinutes(15));
-            TempDir = Directory.CreateTempSubdirectory("ytdl-worker-tests-").FullName;
-            var settings = new Settings { App = new Settings.AppSettings { BaseDirectory = TempDir } };
-
-            var services = new ServiceCollection();
-            services.AddScoped(_ => HistoryRepoMock.Object);
-            var provider = services.BuildServiceProvider();
-
-            Sut = new DownloadWorker(
-                JobStore,
-                Queue,
-                YoutubeClientMock.Object,
-                provider.GetRequiredService<IServiceScopeFactory>(),
-                settings,
-                NullLogger<DownloadWorker>.Instance,
-                timeProvider,
-                downloadTimeout);
-        }
-
-        public string CreateJob(string videoId = VideoId) =>
-            JobStore.CreateJob(UserId, videoId, "Title", "Description",
-                "https://example.com/i.jpg", VideoUrl);
-
-        public string CreateReadyFile()
-        {
-            var path = Path.Combine(TempDir, $"{Guid.NewGuid():N}.mp3");
-            File.WriteAllBytes(path, [0x49, 0x44, 0x33]);
-            return path;
-        }
-
-        public void Dispose()
-        {
-            try
-            {
-                Directory.Delete(TempDir, recursive: true);
-            }
-            catch (IOException)
-            {
-            }
-        }
-    }
-
-    private sealed class FixedTimeProvider : TimeProvider
-    {
-        private readonly DateTimeOffset _now;
-
-        public FixedTimeProvider(DateTimeOffset now) => _now = now;
-
-        public override DateTimeOffset GetUtcNow() => _now;
-    }
-
-    private static async Task<DownloadJobStatusResult> RunToTerminalStatusAsync(Fixture fixture, string tempId)
-    {
-        await fixture.Sut.StartAsync(CancellationToken.None);
-        fixture.Queue.Writer.TryWrite(tempId);
-        try
-        {
-            return await WaitForTerminalStatusAsync(fixture.JobStore, tempId);
-        }
-        finally
-        {
-            await fixture.Sut.StopAsync(CancellationToken.None);
-        }
-    }
-
-    private static async Task<DownloadJobStatusResult> WaitForTerminalStatusAsync(DownloadJobStore store, string tempId)
-    {
-        var stopwatch = Stopwatch.StartNew();
-        while (stopwatch.Elapsed < PollTimeout)
-        {
-            var status = store.GetStatus(tempId, UserId);
-            if (status is { Status: DownloadJobStatus.Ready or DownloadJobStatus.Failed })
-                return status;
-
-            await Task.Delay(50);
-        }
-
-        throw new TimeoutException($"Job {tempId} did not reach a terminal state within {PollTimeout}.");
-    }
-
     [Fact]
     public async Task MarksJobReady_AndWritesHistory_WhenDownloadSucceeds()
     {
@@ -335,5 +244,96 @@ public sealed class DownloadWorkerTests
         {
             await fixture.Sut.StopAsync(CancellationToken.None);
         }
+    }
+
+    private static async Task<DownloadJobStatusResult> RunToTerminalStatusAsync(Fixture fixture, string tempId)
+    {
+        await fixture.Sut.StartAsync(CancellationToken.None);
+        fixture.Queue.Writer.TryWrite(tempId);
+        try
+        {
+            return await WaitForTerminalStatusAsync(fixture.JobStore, tempId);
+        }
+        finally
+        {
+            await fixture.Sut.StopAsync(CancellationToken.None);
+        }
+    }
+
+    private static async Task<DownloadJobStatusResult> WaitForTerminalStatusAsync(DownloadJobStore store, string tempId)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        while (stopwatch.Elapsed < PollTimeout)
+        {
+            var status = store.GetStatus(tempId, UserId);
+            if (status is { Status: DownloadJobStatus.Ready or DownloadJobStatus.Failed })
+                return status;
+
+            await Task.Delay(50);
+        }
+
+        throw new TimeoutException($"Job {tempId} did not reach a terminal state within {PollTimeout}.");
+    }
+
+    private sealed class Fixture : IDisposable
+    {
+        public DownloadJobStore JobStore { get; }
+        public Channel<string> Queue { get; } = Channel.CreateUnbounded<string>();
+        public Mock<IYoutubeClient> YoutubeClientMock { get; } = new();
+        public Mock<IDownloadHistoryRepository> HistoryRepoMock { get; } = new();
+        public DownloadWorker Sut { get; }
+        public string TempDir { get; }
+
+        public Fixture(TimeProvider? timeProvider = null, TimeSpan? downloadTimeout = null)
+        {
+            JobStore = new DownloadJobStore(TimeSpan.FromMinutes(15));
+            TempDir = Directory.CreateTempSubdirectory("ytdl-worker-tests-").FullName;
+            var settings = new Settings { App = new Settings.AppSettings { BaseDirectory = TempDir } };
+
+            var services = new ServiceCollection();
+            services.AddScoped(_ => HistoryRepoMock.Object);
+            var provider = services.BuildServiceProvider();
+
+            Sut = new DownloadWorker(
+                JobStore,
+                Queue,
+                YoutubeClientMock.Object,
+                provider.GetRequiredService<IServiceScopeFactory>(),
+                settings,
+                NullLogger<DownloadWorker>.Instance,
+                timeProvider,
+                downloadTimeout);
+        }
+
+        public string CreateJob(string videoId = VideoId) =>
+            JobStore.CreateJob(UserId, videoId, "Title", "Description",
+                "https://example.com/i.jpg", VideoUrl);
+
+        public string CreateReadyFile()
+        {
+            var path = Path.Combine(TempDir, $"{Guid.NewGuid():N}.mp3");
+            File.WriteAllBytes(path, [0x49, 0x44, 0x33]);
+            return path;
+        }
+
+        public void Dispose()
+        {
+            try
+            {
+                Directory.Delete(TempDir, recursive: true);
+            }
+            catch (IOException)
+            {
+            }
+        }
+    }
+
+    private sealed class FixedTimeProvider : TimeProvider
+    {
+        private readonly DateTimeOffset _now;
+
+        public FixedTimeProvider(DateTimeOffset now) => _now = now;
+
+        public override DateTimeOffset GetUtcNow() => _now;
     }
 }
