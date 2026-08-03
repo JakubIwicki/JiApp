@@ -66,4 +66,5 @@ Note: `imagetools` has no CORS/JWT-Validate gate — do not add `CorsAllowedOrig
 _(Add items here as changes land; clear them once deployed. Empty = nothing pending.)_
 
 - [ ] _(none currently — F2 + CORS-prod-config deployed 2026-07-02)_
+- [ ] **Async download jobs (ytdownloader):** new rate-limit policy `DownloadStatus` (120/min) added to gateway config; new endpoint `GET /api/v1/yt/downloads/mp3/status/{id}` is externally-routed — gateway `RateLimitPolicySelector` already maps it, but confirm `RateLimiting:DownloadStatus` is present in gateway prod env/appsettings; ytdownloader `App:DownloadJobTimeoutMinutes` (default 30) is set in appsettings, no env var needed unless override wanted.
 - [ ] **Admin-role self-heal env var:** `BOOTSTRAP_ADMIN_USERNAME` (mapped to `Bootstrap__AdminUsername` on the identity service) must be set in `aws/.env.prod` so the Admin role auto-recovers if a future migration empties it.

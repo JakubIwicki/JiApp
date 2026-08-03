@@ -2,6 +2,7 @@ import { createMockFn } from '../../test/createMockFn';
 import type {
   DownloadRequest,
   DownloadResponse,
+  DownloadStatus,
   DownloadHistoryItem,
 } from '../../types/api';
 
@@ -22,9 +23,12 @@ const fakeHistory: DownloadHistoryItem[] = [
 // ── Internal state ─────────────────────────────────────────────────────────
 
 let _downloadResponse: DownloadResponse = {
+  tempId: 'mock-temp-id',
   downloadUrl: 'https://example.com/downloads/mock-file.mp3',
 };
 let _downloadError: Error | null = null;
+let _downloadStatus: DownloadStatus = { status: 'ready' };
+let _statusError: Error | null = null;
 let _historyResults: DownloadHistoryItem[] = [...fakeHistory];
 let _historyError: Error | null = null;
 let _archiveError: Error | null = null;
@@ -40,6 +44,13 @@ export const requestDownloadLink = createMockFn(
   ): Promise<DownloadResponse> => {
     if (_downloadError) throw _downloadError;
     return _downloadResponse;
+  },
+);
+
+export const getDownloadStatus = createMockFn(
+  async (_tempId: string): Promise<DownloadStatus> => {
+    if (_statusError) throw _statusError;
+    return _downloadStatus;
   },
 );
 
@@ -77,6 +88,19 @@ export function withDownloadLinkFailure(
   error: Error = new Error('Mock download error'),
 ): Error {
   _downloadError = error;
+  return error;
+}
+
+export function withDownloadStatus(status: DownloadStatus): DownloadStatus {
+  _statusError = null;
+  _downloadStatus = status;
+  return status;
+}
+
+export function withDownloadStatusFailure(
+  error: Error = new Error('Mock status error'),
+): Error {
+  _statusError = error;
   return error;
 }
 
@@ -129,9 +153,12 @@ export function withArchiveFailure(
 
 export function reset(): void {
   _downloadResponse = {
+    tempId: 'mock-temp-id',
     downloadUrl: 'https://example.com/downloads/mock-file.mp3',
   };
   _downloadError = null;
+  _downloadStatus = { status: 'ready' };
+  _statusError = null;
   _historyResults = [...fakeHistory];
   _historyError = null;
   _archiveError = null;
@@ -140,6 +167,7 @@ export function reset(): void {
 
   if (typeof jest !== 'undefined') {
     requestDownloadLink.mockClear();
+    getDownloadStatus.mockClear();
     getDownloadHistory.mockClear();
     archiveDownload.mockClear();
     downloadFile.mockClear();

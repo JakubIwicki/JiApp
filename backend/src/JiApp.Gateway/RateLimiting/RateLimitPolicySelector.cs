@@ -26,7 +26,8 @@ public sealed class RateLimitPolicySelector(RequestDelegate next, RateLimitPolic
 
         // YT downloads
         ["/api/v1/yt/downloads/mp3"] = RateLimitPolicyNames.GetDownloadLinkPolicy,
-        ["/api/v1/yt/downloads/file"] = RateLimitPolicyNames.DownloadFilePolicy,
+        ["/api/v1/yt/downloads/mp3/status"] = RateLimitPolicyNames.DownloadStatusPolicy,
+        ["/api/v1/yt/downloads/mp3/file"] = RateLimitPolicyNames.DownloadFilePolicy,
 
         // YT history
         ["/api/v1/yt/search/history"] = RateLimitPolicyNames.SearchHistoryPolicy,

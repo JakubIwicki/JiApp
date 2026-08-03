@@ -9,6 +9,7 @@ import type {
   SearchResponseSchema,
   HistoryResponseSchema,
   DownloadResponseSchema,
+  DownloadStatusSchema,
   RefreshResponseSchema,
 } from './schemas';
 
@@ -94,3 +95,4 @@ export type UpdateProfileApiRaw = z.infer<typeof UpdateProfileApiRawSchema>;
 export type SearchResponse = z.infer<typeof SearchResponseSchema>;
 export type HistoryResponse = z.infer<typeof HistoryResponseSchema>;
 export type DownloadResponse = z.infer<typeof DownloadResponseSchema>;
+export type DownloadStatus = z.infer<typeof DownloadStatusSchema>;

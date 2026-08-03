@@ -177,6 +177,7 @@ All origins accepted. Same policy on all services.
 | GET | `/api/v1/yt/search/history` | `SearchHistoryEndpoint.cs` | 🟢 Live |
 | PATCH | `/api/v1/yt/search/history/{id:long}/archive` | `ArchiveSearchEndpoint.cs` | 🟢 Live |
 | POST | `/api/v1/yt/downloads/mp3` | `GetDownloadLinkEndpoint.cs` | 🟢 Live |
+| GET | `/api/v1/yt/downloads/mp3/status/{id}` | `DownloadStatusEndpoint.cs` | 🟢 Live |
 | GET | `/api/v1/yt/downloads/mp3/file/{id}` | `DownloadFileEndpoint.cs` | 🟢 Live |
 | GET | `/api/v1/yt/downloads/history` | `DownloadHistoryEndpoint.cs` | 🟢 Live |
 | PATCH | `/api/v1/yt/downloads/history/{id:long}/archive` | `ArchiveDownloadEndpoint.cs` | 🟢 Live |
@@ -364,6 +365,7 @@ All calls go through the Gateway at `:6700` and are proxied via YARP.
 | Method | Path | Service File |
 |--------|------|-------------|
 | POST | `/api/v1/yt/downloads/mp3` | `downloadService.ts:13` |
+| GET | `/api/v1/yt/downloads/mp3/status/{id}` | `downloadService.ts` |
 | GET | `/api/v1/yt/downloads/history` | `downloadService.ts:28` |
 | PATCH | `/api/v1/yt/downloads/history/{id}/archive` | `downloadService.ts:36` |
 

@@ -4,6 +4,7 @@ import {
   downloadFile,
   openAudioFile,
 } from '../services/downloadService';
+import { waitForDownload } from '../services/downloadJob';
 import { getDownloadErrorMessage } from '../utils/errorUtils';
 import type { VideoItem } from '../types/api';
 
@@ -43,7 +44,7 @@ const useDownload = (): UseDownloadResult => {
     setLocalFilePath(null);
 
     try {
-      const { downloadUrl } = await requestDownloadLink(
+      const { tempId, downloadUrl } = await requestDownloadLink(
         {
           videoId: video.videoId,
           videoUrl: video.videoUrl,
@@ -53,6 +54,8 @@ const useDownload = (): UseDownloadResult => {
         },
         controller.signal,
       );
+
+      await waitForDownload(tempId, controller.signal);
 
       const file = await downloadFile(downloadUrl, video.title);
       setLocalFilePath(file.displayPath);

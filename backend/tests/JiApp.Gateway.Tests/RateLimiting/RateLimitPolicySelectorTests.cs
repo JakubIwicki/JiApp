@@ -156,7 +156,7 @@ public sealed class RateLimitPolicySelectorTests
     [Fact]
     public async Task Matches_download_file_path_to_DownloadFilePolicy()
     {
-        var context = Fixture.CreateContext("/api/v1/yt/downloads/file");
+        var context = Fixture.CreateContext("/api/v1/yt/downloads/mp3/file/abcdef1234567890abcdef1234567890");
         var fixture = Fixture.Init();
 
         await fixture.Sut.InvokeAsync(context);
@@ -164,6 +164,34 @@ public sealed class RateLimitPolicySelectorTests
         var endpoint = context.GetEndpoint();
         endpoint.Should().NotBeNull();
         endpoint!.DisplayName.Should().Be("DownloadFilePolicy");
+    }
+
+    [Fact]
+    public async Task Matches_download_status_path_to_DownloadStatusPolicy()
+    {
+        var context = Fixture.CreateContext("/api/v1/yt/downloads/mp3/status/abcdef1234567890abcdef1234567890");
+        var fixture = Fixture.Init();
+
+        await fixture.Sut.InvokeAsync(context);
+
+        var endpoint = context.GetEndpoint();
+        endpoint.Should().NotBeNull();
+        endpoint!.DisplayName.Should().Be("DownloadStatusPolicy");
+    }
+
+    [Fact]
+    public async Task Matches_download_status_path_does_not_fall_back_to_post_bucket()
+    {
+        // The longer /mp3/status prefix must win over the /mp3 POST prefix so
+        // polling the status endpoint never consumes the 10/min POST budget.
+        var context = Fixture.CreateContext("/api/v1/yt/downloads/mp3/status/abcdef");
+        var fixture = Fixture.Init();
+
+        await fixture.Sut.InvokeAsync(context);
+
+        var endpoint = context.GetEndpoint();
+        endpoint.Should().NotBeNull();
+        endpoint!.DisplayName.Should().Be("DownloadStatusPolicy");
     }
 
     [Fact]

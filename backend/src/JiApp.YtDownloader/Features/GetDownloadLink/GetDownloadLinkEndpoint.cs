@@ -18,6 +18,8 @@ public static class GetDownloadLinkEndpoint
                 GetDownloadLinkHandler handler,
                 HttpContext httpContext) =>
             {
+                request = TruncateMetadata(request);
+
                 var validationResult = await validator.ValidateAsync(request);
                 if (!validationResult.IsValid)
                 {
@@ -25,36 +27,42 @@ public static class GetDownloadLinkEndpoint
                     return Results.Extensions.ValidationError(errors);
                 }
 
-                var result = await handler.HandleAsync(request, httpContext.RequestAborted);
-                if (result is { IsSuccess: true, Value: not null })
-                {
-                    var scheme = httpContext.Request.Headers["X-Forwarded-Proto"].FirstOrDefault()
-                                 ?? httpContext.Request.Scheme;
-                    var host = httpContext.Request.Headers["X-Forwarded-Host"].FirstOrDefault()
-                               ?? httpContext.Request.Host.Value
-                               ?? "localhost";
-                    var response = DownloadResponse.WithUrl(
-                        result.Value.TempId,
-                        scheme,
-                        host);
-                    return Results.Ok(response);
-                }
-
-                var statusCode = result.ErrorCategory == GetDownloadLinkHandler.YoutubeDlErrorCategory
-                    ? StatusCodes.Status502BadGateway
-                    : StatusCodes.Status500InternalServerError;
-
-                return Results.Json(
-                    new ApiErrorResponse(Error: result.Error ?? ApiErrorResponse.UnknownErrorMessage), statusCode: statusCode);
+                var result = await handler.HandleAsync(request);
+                var scheme = httpContext.Request.Headers["X-Forwarded-Proto"].FirstOrDefault()
+                             ?? httpContext.Request.Scheme;
+                var host = httpContext.Request.Headers["X-Forwarded-Host"].FirstOrDefault()
+                           ?? httpContext.Request.Host.Value
+                           ?? "localhost";
+                var response = DownloadResponse.WithUrl(
+                    result.Value!.TempId,
+                    scheme,
+                    host);
+                return Results.Ok(response);
             })
             .WithTags(SwaggerConstants.Tags.Downloads)
             .WithSummary("Request an MP3 download link for a YouTube video")
             .Produces<DownloadResponse>()
             .ProducesValidationProblem()
-            .Produces<ApiErrorResponse>(StatusCodes.Status500InternalServerError)
-            .Produces<ApiErrorResponse>(StatusCodes.Status502BadGateway)
             .RequireAuthorization();
 
         return endpoints;
+    }
+
+    internal static DownloadRequest TruncateMetadata(DownloadRequest request) => request with
+    {
+        Title = Truncate(request.Title, DownloadMetadataLimits.MaxTitleLength),
+        Description = Truncate(request.Description, DownloadMetadataLimits.MaxDescriptionLength),
+        ImageUrl = Truncate(request.ImageUrl, DownloadMetadataLimits.MaxImageUrlLength)
+    };
+
+    internal static string? Truncate(string? value, int maxLength)
+    {
+        if (value is null || value.Length <= maxLength)
+            return value;
+
+        // Never split a UTF-16 surrogate pair (emoji titles).
+        return char.IsLowSurrogate(value[maxLength])
+            ? value[..(maxLength - 1)]
+            : value[..maxLength];
     }
 }

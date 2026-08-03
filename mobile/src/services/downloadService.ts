@@ -4,10 +4,12 @@ import { getToken } from './storageService';
 import type {
   DownloadRequest,
   DownloadResponse,
+  DownloadStatus,
   DownloadHistoryItem,
 } from '../types/api';
 import {
   DownloadResponseSchema,
+  DownloadStatusSchema,
   DownloadHistoryResponseSchema,
 } from '../types/schemas';
 
@@ -24,6 +26,15 @@ export const requestDownloadLink = async (
     { signal },
   );
   return DownloadResponseSchema.parse(response.data);
+};
+
+export const getDownloadStatus = async (
+  tempId: string,
+): Promise<DownloadStatus> => {
+  const response = await apiClient.get<DownloadStatus>(
+    `/yt/downloads/mp3/status/${tempId}`,
+  );
+  return DownloadStatusSchema.parse(response.data);
 };
 
 export const getDownloadHistory = async (

@@ -21,9 +21,14 @@ public sealed class Settings
         {
             errors.Add("App section is not configured.");
         }
-        else if (App.PreviewDurationSeconds <= 0)
+        else
         {
-            errors.Add("App:PreviewDurationSeconds must be greater than 0.");
+            if (App.PreviewDurationSeconds <= 0)
+                errors.Add("App:PreviewDurationSeconds must be greater than 0.");
+            if (App.DownloadTtlMinutes <= 0)
+                errors.Add("App:DownloadTtlMinutes must be greater than 0.");
+            if (App.DownloadJobTimeoutMinutes <= 0)
+                errors.Add("App:DownloadJobTimeoutMinutes must be greater than 0.");
         }
 
         if (Jwt is null)
@@ -74,6 +79,8 @@ public sealed class Settings
     {
         public string? BaseDirectory { get; set; }
         public int PreviewDurationSeconds { get; set; } = 10;
+        public int DownloadTtlMinutes { get; set; } = 15;
+        public int DownloadJobTimeoutMinutes { get; set; } = 30;
     }
 
     public sealed class JwtSettings

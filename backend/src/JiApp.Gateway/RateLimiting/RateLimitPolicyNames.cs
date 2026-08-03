@@ -14,6 +14,7 @@ public static class RateLimitPolicyNames
 
     // YT downloads
     public const string GetDownloadLinkPolicy = "GetDownloadLinkPolicy";
+    public const string DownloadStatusPolicy = "DownloadStatusPolicy";
     public const string DownloadFilePolicy = "DownloadFilePolicy";
 
     // YT history

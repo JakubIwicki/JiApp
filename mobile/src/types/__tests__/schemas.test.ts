@@ -10,6 +10,7 @@ import {
   SearchHistoryResponseSchema,
   HistoryResponseSchema,
   DownloadResponseSchema,
+  DownloadStatusSchema,
   DownloadHistoryResponseSchema,
 } from '../schemas';
 
@@ -252,15 +253,99 @@ describe('HistoryResponseSchema', () => {
 // ── DownloadResponseSchema ─────────────────────────────────────────────────
 
 describe('DownloadResponseSchema', () => {
-  const valid = { downloadUrl: 'https://example.com/downloads/song.mp3' };
+  const valid = {
+    tempId: 'job-123',
+    downloadUrl: 'https://example.com/downloads/song.mp3',
+  };
 
   it('parses a valid DownloadResponse', () => {
     expect(() => DownloadResponseSchema.parse(valid)).not.toThrow();
   });
 
+  it('fails when tempId is missing', () => {
+    expect(
+      DownloadResponseSchema.safeParse({ downloadUrl: valid.downloadUrl })
+        .success,
+    ).toBe(false);
+  });
+
   it('fails when downloadUrl is missing', () => {
-    const bad = {};
-    expect(DownloadResponseSchema.safeParse(bad).success).toBe(false);
+    expect(
+      DownloadResponseSchema.safeParse({ tempId: valid.tempId }).success,
+    ).toBe(false);
+  });
+});
+
+// ── DownloadStatusSchema ─────────────────────────────────────────────────
+
+describe('DownloadStatusSchema', () => {
+  it('parses each valid status', () => {
+    for (const status of ['pending', 'running', 'ready', 'failed'] as const) {
+      expect(() => DownloadStatusSchema.parse({ status })).not.toThrow();
+    }
+  });
+
+  it('parses an optional error message', () => {
+    const parsed = DownloadStatusSchema.parse({
+      status: 'failed',
+      error: 'Video unavailable',
+    });
+    expect(parsed.error).toBe('Video unavailable');
+  });
+
+  it('parses an optional errorCategory', () => {
+    const parsed = DownloadStatusSchema.parse({
+      status: 'failed',
+      error: 'yt-dlp failed',
+      errorCategory: 'YoutubeDl',
+    });
+    expect(parsed.errorCategory).toBe('YoutubeDl');
+  });
+
+  it('parses without an error message', () => {
+    expect(DownloadStatusSchema.safeParse({ status: 'ready' }).success).toBe(
+      true,
+    );
+  });
+
+  // The minimal-API Web JSON serializer emits `null` (not absent) for the
+  // optional error fields — these lock the literal backend wire shape.
+  it('parses the pending wire-shape payload with null error fields', () => {
+    const parsed = DownloadStatusSchema.parse({
+      status: 'pending',
+      error: null,
+      errorCategory: null,
+    });
+    expect(parsed.status).toBe('pending');
+  });
+
+  it('parses the ready wire-shape payload with null error fields', () => {
+    const parsed = DownloadStatusSchema.parse({
+      status: 'ready',
+      error: null,
+      errorCategory: null,
+    });
+    expect(parsed.status).toBe('ready');
+  });
+
+  it('parses the failed wire-shape payload with string error fields', () => {
+    const parsed = DownloadStatusSchema.parse({
+      status: 'failed',
+      error: 'boom',
+      errorCategory: 'Generic',
+    });
+    expect(parsed.error).toBe('boom');
+    expect(parsed.errorCategory).toBe('Generic');
+  });
+
+  it('fails on an unknown status in a wire-shape payload', () => {
+    expect(
+      DownloadStatusSchema.safeParse({
+        status: 'garbage',
+        error: null,
+        errorCategory: null,
+      }).success,
+    ).toBe(false);
   });
 });
 

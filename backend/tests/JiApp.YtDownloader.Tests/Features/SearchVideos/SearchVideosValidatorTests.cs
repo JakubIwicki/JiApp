@@ -7,10 +7,10 @@ public sealed class SearchVideosValidatorTests
     private static SearchVideosValidator CreateValidator() => new();
 
     [Fact]
-    public void Validator_RejectsQuery_LongerThan100Characters()
+    public void Validator_RejectsQuery_LongerThan2048Characters()
     {
         var validator = CreateValidator();
-        var request = new SearchVideosRequest(new string('x', 101), null);
+        var request = new SearchVideosRequest(new string('x', 2049), null);
 
         var result = validator.Validate(request);
 
@@ -19,10 +19,22 @@ public sealed class SearchVideosValidatorTests
     }
 
     [Fact]
-    public void Validator_AcceptsQuery_Of100Characters()
+    public void Validator_AcceptsQuery_Of2048Characters()
     {
         var validator = CreateValidator();
-        var request = new SearchVideosRequest(new string('x', 100), null);
+        var request = new SearchVideosRequest(new string('x', 2048), null);
+
+        var result = validator.Validate(request);
+
+        result.IsValid.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Validator_AcceptsPastedYouTubeUrl_OfMaxLength()
+    {
+        var validator = CreateValidator();
+        var pastedUrl = new string('x', 2000) + "youtube.com/watch?v=dQw4w9WgXcQ";
+        var request = new SearchVideosRequest(pastedUrl, null);
 
         var result = validator.Validate(request);
 

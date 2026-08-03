@@ -74,6 +74,7 @@ import apiClient from '../apiClient';
 import { getToken } from '../storageService';
 import {
   requestDownloadLink,
+  getDownloadStatus,
   getDownloadHistory,
   archiveDownload,
   downloadFile,
@@ -83,6 +84,7 @@ import ReactNativeBlobUtil from 'react-native-blob-util';
 import type {
   DownloadRequest,
   DownloadResponse,
+  DownloadStatus,
   DownloadHistoryItem,
 } from '../../types/api';
 
@@ -108,6 +110,7 @@ describe('requestDownloadLink', () => {
   };
 
   const mockDownloadResponse: DownloadResponse = {
+    tempId: 'job-123',
     downloadUrl: 'https://example.com/downloads/song.mp3',
   };
 
@@ -143,6 +146,46 @@ describe('requestDownloadLink', () => {
 
     await expect(requestDownloadLink(downloadRequest)).rejects.toThrow(
       'Download link request failed',
+    );
+  });
+});
+
+// --- getDownloadStatus ---
+
+describe('getDownloadStatus', () => {
+  const mockStatus: DownloadStatus = { status: 'ready' };
+
+  it('calls /yt/downloads/mp3/status/:tempId and returns status', async () => {
+    mockGet.mockResolvedValueOnce({ data: mockStatus });
+
+    const result = await getDownloadStatus('job-123');
+
+    expect(mockGet).toHaveBeenCalledWith('/yt/downloads/mp3/status/job-123');
+    expect(result).toEqual(mockStatus);
+  });
+
+  it('parses a failed status with an error message', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: { status: 'failed', error: 'Video unavailable' },
+    });
+
+    const result = await getDownloadStatus('job-123');
+
+    expect(result).toEqual({ status: 'failed', error: 'Video unavailable' });
+  });
+
+  it('rejects an invalid status payload', async () => {
+    mockGet.mockResolvedValueOnce({ data: { status: 'bogus' } });
+
+    await expect(getDownloadStatus('job-123')).rejects.toThrow();
+  });
+
+  it('throws when fetching status fails', async () => {
+    const error = new Error('Status fetch failed');
+    mockGet.mockRejectedValueOnce(error);
+
+    await expect(getDownloadStatus('job-123')).rejects.toThrow(
+      'Status fetch failed',
     );
   });
 });
