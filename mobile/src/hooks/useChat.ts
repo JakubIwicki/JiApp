@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from 'react';
 import i18next from '../i18n';
 import { openChatStream } from '../services/chatService';
 import { requestDownloadLink, downloadFile } from '../services/downloadService';
+import { waitForDownload } from '../services/downloadJob';
 import { getErrorMessage } from '../utils/errorUtils';
 import type { ChatMessage, OfferStatus } from '../types/chat';
 import type {
@@ -101,12 +102,14 @@ const useChat = (): UseChatResult => {
       // Run the existing download flow outside the SSE stream
       (async () => {
         try {
-          const { downloadUrl } = await requestDownloadLink({
+          const { tempId, downloadUrl } = await requestDownloadLink({
             videoId: offer.videoId,
             videoUrl: offer.videoUrl,
             title: offer.title ?? undefined,
             imageUrl: offer.imageUrl ?? undefined,
           });
+
+          await waitForDownload(tempId);
 
           await downloadFile(downloadUrl, title);
 

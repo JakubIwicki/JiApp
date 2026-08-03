@@ -33,20 +33,10 @@ public sealed class YoutubeClient(
     string ffmpegPath,
     string? cookiesFile = null,
     string? cookiesFromBrowser = null,
-    string? proxy = null) : IYoutubeClient, IDisposable
+    string? proxy = null,
+    Google.Apis.Http.IHttpClientFactory? httpClientFactory = null) : IYoutubeClient, IDisposable
 {
-    private readonly YouTubeService _youTubeService = new(new Google.Apis.Services.BaseClientService.Initializer
-    {
-        ApiKey = apiKey
-    });
-
-    private readonly YoutubeDL _youtubeDl = new()
-    {
-        YoutubeDLPath = ytDlpPath,
-        FFmpegPath = ffmpegPath,
-    };
-
-    private readonly SemaphoreSlim _youtubeDlLock = new(1, 1);
+    private readonly YouTubeService _youTubeService = CreateYouTubeService(apiKey, httpClientFactory);
 
     public async Task<IReadOnlyList<YoutubeVideo>> SearchVideosAsync(string query, int maxResults = 10,
         CancellationToken cancellationToken = default)
@@ -57,7 +47,7 @@ public sealed class YoutubeClient(
 
         var response = await searchRequest.ExecuteAsync(cancellationToken);
 
-        return response.Items
+        return (response.Items ?? [])
             .Where(item => item is { Id.Kind: "youtube#video", Snippet: not null })
             .Select(MapToYoutubeVideo)
             .ToList()
@@ -73,10 +63,18 @@ public sealed class YoutubeClient(
 
         var response = await listRequest.ExecuteAsync(cancellationToken);
 
-        return response.Items
+        return (response.Items ?? [])
             .Where(item => item.Snippet is not null)
             .Select(MapToYoutubeVideo)
             .FirstOrDefault();
+    }
+
+    private static YouTubeService CreateYouTubeService(string apiKey, Google.Apis.Http.IHttpClientFactory? httpClientFactory)
+    {
+        var initializer = new Google.Apis.Services.BaseClientService.Initializer { ApiKey = apiKey };
+        if (httpClientFactory is not null)
+            initializer.HttpClientFactory = httpClientFactory;
+        return new YouTubeService(initializer);
     }
 
     private static YoutubeVideo MapToYoutubeVideo(Google.Apis.YouTube.v3.Data.Video video) =>
@@ -118,37 +116,38 @@ public sealed class YoutubeClient(
             Cookies = string.IsNullOrEmpty(cookiesFromBrowser) && !string.IsNullOrEmpty(cookiesFile) ? cookiesFile : null,
             Proxy = string.IsNullOrEmpty(proxy) ? null : proxy,
         };
-        await _youtubeDlLock.WaitAsync(cancellationToken);
-        try
+
+        // A fresh YoutubeDL per call so concurrent downloads each get their own
+        // yt-dlp process — a shared instance would serialize them.
+        var youtubeDl = new YoutubeDL
         {
-            var result = await _youtubeDl.RunWithOptions(videoUrl, options, ct: cancellationToken);
+            YoutubeDLPath = ytDlpPath,
+            FFmpegPath = ffmpegPath,
+        };
 
-            if (!result.Success)
-            {
-                options.ExtractorArgs = null;
-                options.Output = outputTemplate;
-                var fallbackResult = await _youtubeDl.RunWithOptions(videoUrl, options, ct: cancellationToken);
-                if (fallbackResult.Success)
-                    result = fallbackResult;
-            }
+        var result = await youtubeDl.RunWithOptions(videoUrl, options, ct: cancellationToken);
 
-            if (!result.Success)
-                return new YoutubeClientResponse(null, false, result.ErrorOutput ?? []);
-
-            var resolvedPath = result.Data;
-            if (string.IsNullOrEmpty(resolvedPath) || !File.Exists(resolvedPath))
-            {
-                resolvedPath = Directory.GetFiles(outputPath, "*.mp3")
-                    .OrderByDescending(File.GetLastWriteTimeUtc)
-                    .FirstOrDefault();
-            }
-
-            return new YoutubeClientResponse(resolvedPath, !string.IsNullOrEmpty(resolvedPath), []);
-        }
-        finally
+        if (!result.Success)
         {
-            _youtubeDlLock.Release();
+            options.ExtractorArgs = null;
+            options.Output = outputTemplate;
+            var fallbackResult = await youtubeDl.RunWithOptions(videoUrl, options, ct: cancellationToken);
+            if (fallbackResult.Success)
+                result = fallbackResult;
         }
+
+        if (!result.Success)
+            return new YoutubeClientResponse(null, false, result.ErrorOutput ?? []);
+
+        var resolvedPath = result.Data;
+        if (string.IsNullOrEmpty(resolvedPath) || !File.Exists(resolvedPath))
+        {
+            resolvedPath = Directory.GetFiles(outputPath, "*.mp3")
+                .OrderByDescending(File.GetLastWriteTimeUtc)
+                .FirstOrDefault();
+        }
+
+        return new YoutubeClientResponse(resolvedPath, !string.IsNullOrEmpty(resolvedPath), []);
     }
 
     private static void ValidateVideoId(string videoId)
@@ -202,6 +201,5 @@ public sealed class YoutubeClient(
     public void Dispose()
     {
         _youTubeService.Dispose();
-        _youtubeDlLock.Dispose();
     }
 }

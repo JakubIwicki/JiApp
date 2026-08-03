@@ -78,7 +78,14 @@ export const HistoryResponseSchema = z.object({
 });
 
 export const DownloadResponseSchema = z.object({
+  tempId: z.string(),
   downloadUrl: z.string(),
+});
+
+export const DownloadStatusSchema = z.object({
+  status: z.enum(['pending', 'running', 'ready', 'failed']),
+  error: z.string().optional(),
+  errorCategory: z.string().optional(),
 });
 
 export const DownloadHistoryResponseSchema = z.object({

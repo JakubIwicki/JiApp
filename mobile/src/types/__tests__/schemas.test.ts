@@ -10,6 +10,7 @@ import {
   SearchHistoryResponseSchema,
   HistoryResponseSchema,
   DownloadResponseSchema,
+  DownloadStatusSchema,
   DownloadHistoryResponseSchema,
 } from '../schemas';
 
@@ -252,15 +253,65 @@ describe('HistoryResponseSchema', () => {
 // ── DownloadResponseSchema ─────────────────────────────────────────────────
 
 describe('DownloadResponseSchema', () => {
-  const valid = { downloadUrl: 'https://example.com/downloads/song.mp3' };
+  const valid = {
+    tempId: 'job-123',
+    downloadUrl: 'https://example.com/downloads/song.mp3',
+  };
 
   it('parses a valid DownloadResponse', () => {
     expect(() => DownloadResponseSchema.parse(valid)).not.toThrow();
   });
 
+  it('fails when tempId is missing', () => {
+    expect(
+      DownloadResponseSchema.safeParse({ downloadUrl: valid.downloadUrl })
+        .success,
+    ).toBe(false);
+  });
+
   it('fails when downloadUrl is missing', () => {
-    const bad = {};
-    expect(DownloadResponseSchema.safeParse(bad).success).toBe(false);
+    expect(
+      DownloadResponseSchema.safeParse({ tempId: valid.tempId }).success,
+    ).toBe(false);
+  });
+});
+
+// ── DownloadStatusSchema ─────────────────────────────────────────────────
+
+describe('DownloadStatusSchema', () => {
+  it('parses each valid status', () => {
+    for (const status of ['pending', 'running', 'ready', 'failed'] as const) {
+      expect(() => DownloadStatusSchema.parse({ status })).not.toThrow();
+    }
+  });
+
+  it('parses an optional error message', () => {
+    const parsed = DownloadStatusSchema.parse({
+      status: 'failed',
+      error: 'Video unavailable',
+    });
+    expect(parsed.error).toBe('Video unavailable');
+  });
+
+  it('parses an optional errorCategory', () => {
+    const parsed = DownloadStatusSchema.parse({
+      status: 'failed',
+      error: 'yt-dlp failed',
+      errorCategory: 'YoutubeDl',
+    });
+    expect(parsed.errorCategory).toBe('YoutubeDl');
+  });
+
+  it('parses without an error message', () => {
+    expect(DownloadStatusSchema.safeParse({ status: 'ready' }).success).toBe(
+      true,
+    );
+  });
+
+  it('fails on an unknown status', () => {
+    expect(DownloadStatusSchema.safeParse({ status: 'bogus' }).success).toBe(
+      false,
+    );
   });
 });
 

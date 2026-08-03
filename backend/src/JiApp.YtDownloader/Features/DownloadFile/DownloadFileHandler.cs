@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace JiApp.YtDownloader.Features.DownloadFile;
 
 public sealed class DownloadFileHandler(
-    ITempFileStore tempFileStore,
+    IDownloadJobStore jobStore,
     ICurrentUserService currentUser,
     ILogger<DownloadFileHandler> logger)
 {
@@ -14,7 +14,7 @@ public sealed class DownloadFileHandler(
     {
         logger.DownloadRequestedForFile(id);
 
-        var filePath = tempFileStore.Get(id, currentUser.UserId);
+        var filePath = jobStore.GetFilePath(id, currentUser.UserId);
 
         if (filePath is null)
         {

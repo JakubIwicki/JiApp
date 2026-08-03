@@ -8,9 +8,15 @@ jest.mock('../../services/downloadService', () => ({
   downloadFile: jest.fn(),
 }));
 
+jest.mock('../../services/downloadJob', () => ({
+  waitForDownload: jest.fn(),
+}));
+
 const mockRequestDownloadLink =
   downloadService.requestDownloadLink as jest.Mock;
 const mockDownloadFile = downloadService.downloadFile as jest.Mock;
+const mockWaitForDownload = jest.requireMock('../../services/downloadJob')
+  .waitForDownload as jest.Mock;
 
 const createVideoItem = (id: string): VideoItem => ({
   videoId: id,
@@ -24,10 +30,12 @@ const createVideoItem = (id: string): VideoItem => ({
 describe('useDownload', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockWaitForDownload.mockResolvedValue(undefined);
   });
 
   it('passes AbortSignal to requestDownloadLink', async () => {
     mockRequestDownloadLink.mockResolvedValue({
+      tempId: 'job-1',
       downloadUrl: 'https://example.com/dl',
     });
     mockDownloadFile.mockResolvedValue({
@@ -74,9 +82,11 @@ describe('useDownload', () => {
   });
 
   it('download() sets isDownloading=true, then sets localFilePath on success', async () => {
+    const mockTempId = 'job-1';
     const mockDownloadUrl = 'https://example.com/download/abc123';
     const mockFilePath = '/storage/emulated/0/Download/TestVideo.mp3';
     mockRequestDownloadLink.mockResolvedValue({
+      tempId: mockTempId,
       downloadUrl: mockDownloadUrl,
     });
     mockDownloadFile.mockResolvedValue({
@@ -113,39 +123,10 @@ describe('useDownload', () => {
       expect.any(AbortSignal),
     );
     expect(mockDownloadFile).toHaveBeenCalledWith(mockDownloadUrl, video.title);
-  });
-
-  it('download() sets error on API failure showing 502 yt-dlp error message', async () => {
-    const apiError = {
-      isAxiosError: true,
-      response: {
-        status: 502,
-        data: { error: 'Failed to download video: Video unavailable' },
-      },
-      _serverError: 'Failed to download video: Video unavailable',
-    };
-    mockRequestDownloadLink.mockRejectedValue(apiError);
-
-    const video = createVideoItem('1');
-    const { result } = renderHook(() => useDownload());
-
-    let promise: Promise<void>;
-    act(() => {
-      promise = result.current.download(video);
-    });
-
-    expect(result.current.isDownloading).toBe(true);
-
-    await act(async () => {
-      await promise;
-    });
-
-    expect(result.current.isDownloading).toBe(false);
-    expect(result.current.error).toBe(
-      'YouTube download failed: Failed to download video: Video unavailable',
+    expect(mockWaitForDownload).toHaveBeenCalledWith(
+      mockTempId,
+      expect.any(AbortSignal),
     );
-    expect(result.current.localFilePath).toBeNull();
-    expect(mockDownloadFile).not.toHaveBeenCalled();
   });
 
   it('download() sets error on API failure showing 500 generic server message', async () => {
@@ -179,6 +160,7 @@ describe('useDownload', () => {
   it('download() sets error on file download failure (downloadFile fails) with fallback', async () => {
     const mockDownloadUrl = 'https://example.com/download/abc123';
     mockRequestDownloadLink.mockResolvedValue({
+      tempId: 'job-1',
       downloadUrl: mockDownloadUrl,
     });
     const fileError = new Error('File download failed');
@@ -217,5 +199,32 @@ describe('useDownload', () => {
 
     expect(result.current.isDownloading).toBe(false);
     expect(result.current.error).toBe('Download failed');
+  });
+
+  it('download() surfaces the server error message when the job fails', async () => {
+    mockRequestDownloadLink.mockResolvedValue({
+      tempId: 'job-1',
+      downloadUrl: 'https://example.com/download/abc123',
+    });
+    mockWaitForDownload.mockRejectedValue(new Error('Video unavailable'));
+
+    const video = createVideoItem('1');
+    const { result } = renderHook(() => useDownload());
+
+    let promise: Promise<void>;
+    act(() => {
+      promise = result.current.download(video);
+    });
+
+    expect(result.current.isDownloading).toBe(true);
+
+    await act(async () => {
+      await promise;
+    });
+
+    expect(result.current.isDownloading).toBe(false);
+    expect(result.current.error).toBe('Video unavailable');
+    expect(result.current.localFilePath).toBeNull();
+    expect(mockDownloadFile).not.toHaveBeenCalled();
   });
 });

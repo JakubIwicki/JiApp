@@ -61,11 +61,6 @@ export const getDownloadErrorMessage = (err: unknown): string => {
       return 'Connection failed — check your network';
     }
 
-    // 502 Bad Gateway: yt-dlp failure from backend
-    if (axiosErr.response.status === 502 && axiosErr._serverError) {
-      return `YouTube download failed: ${axiosErr._serverError}`;
-    }
-
     // 500 Internal Server Error: generic server failure
     if (axiosErr.response.status === 500) {
       return 'Server error — please try again later';

@@ -163,20 +163,6 @@ describe('getFriendlyErrorMessage', () => {
 });
 
 describe('getDownloadErrorMessage', () => {
-  it('returns server error message for 502 Bad Gateway (yt-dlp failure)', () => {
-    const err = {
-      isAxiosError: true,
-      response: {
-        status: 502,
-        data: { error: 'Failed to download video: Video unavailable' },
-      },
-      _serverError: 'Failed to download video: Video unavailable',
-    };
-    expect(getDownloadErrorMessage(err)).toBe(
-      'YouTube download failed: Failed to download video: Video unavailable',
-    );
-  });
-
   it('returns generic message for 500 Internal Server Error', () => {
     const err = {
       isAxiosError: true,

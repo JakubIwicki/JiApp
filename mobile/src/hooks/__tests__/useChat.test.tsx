@@ -24,10 +24,15 @@ const { openChatStream: mockOpenChatStream } = jest.requireMock(
 
 const mockRequestDownloadLink = jest.fn();
 const mockDownloadFile = jest.fn();
+const mockWaitForDownload = jest.fn();
 
 jest.mock('../../services/downloadService', () => ({
   requestDownloadLink: (...args: unknown[]) => mockRequestDownloadLink(...args),
   downloadFile: (...args: unknown[]) => mockDownloadFile(...args),
+}));
+
+jest.mock('../../services/downloadJob', () => ({
+  waitForDownload: (...args: unknown[]) => mockWaitForDownload(...args),
 }));
 
 jest.mock('../../i18n', () => ({
@@ -50,8 +55,10 @@ beforeEach(() => {
   jest.clearAllMocks();
   capturedParams = null;
   mockRequestDownloadLink.mockResolvedValue({
+    tempId: 'job-123',
     downloadUrl: 'https://example.com/file.mp3',
   });
+  mockWaitForDownload.mockResolvedValue({ status: 'ready' });
   mockDownloadFile.mockResolvedValue({
     contentUri: 'content://test/file.mp3',
     displayPath: 'Download/test.mp3',
@@ -382,6 +389,7 @@ describe('useChat', () => {
       title: 'Cool Song',
       imageUrl: undefined,
     });
+    expect(mockWaitForDownload).toHaveBeenCalledWith('job-123');
     expect(mockDownloadFile).toHaveBeenCalledWith(
       'https://example.com/file.mp3',
       'Cool Song',

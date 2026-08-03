@@ -1,6 +1,6 @@
 namespace JiApp.YtDownloader.Services;
 
-public sealed class TempFileCleanupService(ITempFileStore tempFileStore, ILogger<TempFileCleanupService> logger)
+public sealed class TempFileCleanupService(IDownloadJobStore jobStore, ILogger<TempFileCleanupService> logger)
     : BackgroundService
 {
     private readonly TimeSpan _interval = TimeSpan.FromMinutes(5);
@@ -11,7 +11,7 @@ public sealed class TempFileCleanupService(ITempFileStore tempFileStore, ILogger
         {
             try
             {
-                tempFileStore.CleanupExpired();
+                jobStore.CleanupExpired();
             }
             catch (Exception ex)
             {

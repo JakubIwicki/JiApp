@@ -51,7 +51,7 @@ public sealed class GatewaySettings
         {
             "Login", "Register", "Refresh", "Logout", "Health", "DownloadFile",
             "SearchVideos", "SearchHistory", "DownloadHistory", "GetHistory",
-            "Me", "GetDownloadLink", "Preview", "Scheduler", "LovingBoards", "Assistant"
+            "Me", "GetDownloadLink", "DownloadStatus", "Preview", "Scheduler", "LovingBoards", "Assistant"
         };
 
         foreach (var policy in expectedPolicies)

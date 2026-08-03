@@ -78,6 +78,7 @@
     "viewHistory": "Zobacz historię",
     "fileSaved": "Plik zapisany",
     "pleaseWait": "Proszę czekać, to może chwilę potrwać",
+    "timedOut": "Pobieranie przekroczyło limit czasu — spróbuj ponownie",
     "openInPlayer": "Odtwórz w odtwarzaczu",
     "openWith": "Otwórz za pomocą..."
   },

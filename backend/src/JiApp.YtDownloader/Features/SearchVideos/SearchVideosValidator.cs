@@ -8,7 +8,7 @@ public sealed class SearchVideosValidator : AbstractValidator<SearchVideosReques
     {
         RuleFor(x => x.Query)
             .NotEmpty()
-            .MaximumLength(100);
+            .MaximumLength(2048);
 
         RuleFor(x => x.Page)
             .GreaterThanOrEqualTo(0)

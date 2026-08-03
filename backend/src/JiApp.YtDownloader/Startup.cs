@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using System.Threading.Channels;
 using FluentValidation;
 using JiApp.Common;
 using JiApp.Common.Abstractions;
@@ -15,6 +16,7 @@ using JiApp.YtDownloader.Features.ArchiveSearch;
 using JiApp.YtDownloader.Features.Assistant;
 using JiApp.YtDownloader.Features.DownloadFile;
 using JiApp.YtDownloader.Features.DownloadHistory;
+using JiApp.YtDownloader.Features.DownloadStatus;
 using JiApp.YtDownloader.Features.GetDownloadLink;
 using JiApp.YtDownloader.Features.GetHistory;
 using JiApp.YtDownloader.Features.SearchHistory;
@@ -116,7 +118,9 @@ public class Startup(Settings settings, IWebHostEnvironment env)
         services.AddScoped<IDownloadHistoryRepository, DownloadHistoryRepository>();
         services.AddScoped<IAssistantUsageRepository, AssistantUsageRepository>();
         // Services
-        services.AddSingleton<ITempFileStore, TempFileStore>();
+        services.AddSingleton<IDownloadJobStore>(_ =>
+            new DownloadJobStore(TimeSpan.FromMinutes(settings.App?.DownloadTtlMinutes ?? 15)));
+        services.AddSingleton(_ => Channel.CreateUnbounded<string>());
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddSingleton<IYoutubeClient>(_ =>
             new YoutubeClient(
@@ -152,6 +156,7 @@ public class Startup(Settings settings, IWebHostEnvironment env)
         services.AddScoped<GetDownloadLinkHandler>();
         services.AddScoped<DownloadFileHandler>();
         services.AddScoped<DownloadHistoryHandler>();
+        services.AddScoped<DownloadStatusHandler>();
         services.AddScoped<ArchiveDownloadHandler>();
         services.AddScoped<GetHistoryHandler>();
         services.AddScoped<StreamPreviewHandler>();
@@ -168,6 +173,7 @@ public class Startup(Settings settings, IWebHostEnvironment env)
 
         // Background services
         services.AddHostedService<TempFileCleanupService>();
+        services.AddHostedService<DownloadWorker>();
     }
 
     public static void Configure(WebApplication app)
@@ -210,6 +216,7 @@ public class Startup(Settings settings, IWebHostEnvironment env)
         yt.MapSearchHistory();
         yt.MapArchiveSearch();
         yt.MapGetDownloadLink();
+        yt.MapDownloadStatus();
         yt.MapDownloadFile();
         yt.MapDownloadHistory();
         yt.MapArchiveDownload();
