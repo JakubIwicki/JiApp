@@ -1,14 +1,8 @@
-import axios from 'axios';
 import EventSource from 'react-native-sse';
 import { API_BASE_URL } from '../../../config';
 import { PresenceEventSchema } from '../types/events';
-import {
-  getToken,
-  getRefreshToken,
-  saveToken,
-  saveRefreshToken,
-} from '../../../services/storageService';
-import { RefreshResponseSchema } from '../../../types/schemas';
+import { getToken } from '../../../services/storageService';
+import { refreshAuth } from '../../../services/apiClient';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -133,7 +127,7 @@ export function openBoardStream(params: BoardStreamParams): BoardStreamHandle {
       params.onOpen?.();
     });
 
-    // ── Error handling with 401 re-auth (mirrors chatService) ───────────
+    // ── Error handling with 401 re-auth (shared single-flight refresh) ──
 
     es.addEventListener('error', async event => {
       if (closed) return;
@@ -150,20 +144,8 @@ export function openBoardStream(params: BoardStreamParams): BoardStreamHandle {
         closed = true;
 
         try {
-          const storedRefreshToken = await getRefreshToken();
-          if (storedRefreshToken) {
-            const refreshResponse = await axios.post<unknown>(
-              `${API_BASE_URL}/auth/refresh`,
-              { refreshToken: storedRefreshToken },
-              { headers: { 'Content-Type': 'application/json' } },
-            );
-
-            const data = RefreshResponseSchema.parse(refreshResponse.data);
-            await Promise.all([
-              saveToken(data.accessToken),
-              saveRefreshToken(data.refreshToken),
-            ]);
-
+          const newToken = await refreshAuth();
+          if (newToken) {
             // Reconnect with the fresh token
             closed = false;
             await startConnection(true);

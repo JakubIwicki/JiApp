@@ -1,11 +1,7 @@
 import axios from 'axios';
 import type { VideoItem } from '../../types/api';
-import {
-  getToken,
-  getRefreshToken,
-  saveToken,
-  saveRefreshToken,
-} from '../storageService';
+import { getToken } from '../storageService';
+import { refreshAuth } from '../../services/apiClient';
 import { openChatStream } from '../chatService';
 import type { ChatStreamParams } from '../chatService';
 
@@ -33,9 +29,10 @@ jest.mock('react-native-sse', () => {
 
 jest.mock('../storageService', () => ({
   getToken: jest.fn(() => Promise.resolve('test-token')),
-  getRefreshToken: jest.fn(() => Promise.resolve(null)),
-  saveToken: jest.fn(() => Promise.resolve()),
-  saveRefreshToken: jest.fn(() => Promise.resolve()),
+}));
+
+jest.mock('../../services/apiClient', () => ({
+  refreshAuth: jest.fn(),
 }));
 
 jest.mock('axios', () => ({
@@ -59,7 +56,7 @@ jest.mock('../../i18n', () => ({
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 const mockGetToken = getToken as jest.Mock;
-const mockGetRefreshToken = getRefreshToken as jest.Mock;
+const mockRefreshAuth = refreshAuth as jest.Mock;
 const mockAxiosPost = axios.post as jest.Mock;
 
 function emit(type: string, data: unknown): void {
@@ -101,7 +98,6 @@ beforeEach(() => {
   jest.clearAllMocks();
   capturedListeners?.clear();
   mockGetToken.mockResolvedValue('test-token');
-  mockGetRefreshToken.mockResolvedValue(null);
 });
 
 // ── Tests ──────────────────────────────────────────────────────────────────
@@ -291,18 +287,11 @@ describe('openChatStream', () => {
     expect(onSearchResults).not.toHaveBeenCalled();
   });
 
-  it('attempts refresh-based re-auth and reconnects on 401, then proceeds', async () => {
+  it('re-auths via shared refreshAuth and reconnects on 401, then proceeds', async () => {
     mockGetToken.mockResolvedValueOnce('expired-token');
     // After re-auth, getToken is called again for the reconnection
     mockGetToken.mockResolvedValueOnce('fresh-token');
-    mockGetRefreshToken.mockResolvedValueOnce('old-refresh-token');
-    mockAxiosPost.mockResolvedValueOnce({
-      data: {
-        accessToken: 'fresh-token',
-        refreshToken: 'new-refresh-token',
-        expiresIn: 3600,
-      },
-    });
+    mockRefreshAuth.mockResolvedValueOnce('fresh-token');
 
     const onTextDelta = jest.fn();
     openChatStream(createParams({ onTextDelta }));
@@ -320,15 +309,9 @@ describe('openChatStream', () => {
     }
     await flush();
 
-    // Should have refreshed via /auth/refresh
-    expect(mockGetRefreshToken).toHaveBeenCalled();
-    expect(mockAxiosPost).toHaveBeenCalledWith(
-      'http://test.local/api/v1/auth/refresh',
-      { refreshToken: 'old-refresh-token' },
-      { headers: { 'Content-Type': 'application/json' } },
-    );
-    expect(saveToken).toHaveBeenCalledWith('fresh-token');
-    expect(saveRefreshToken).toHaveBeenCalledWith('new-refresh-token');
+    // Exactly one shared single-flight refresh call; no raw /auth/refresh
+    expect(mockRefreshAuth).toHaveBeenCalledTimes(1);
+    expect(mockAxiosPost).not.toHaveBeenCalled();
 
     // Now the reconnected stream should handle events
     emit('text-delta', { text: 'Hello after re-auth' });

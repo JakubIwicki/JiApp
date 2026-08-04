@@ -1,14 +1,8 @@
-import axios from 'axios';
 import EventSource from 'react-native-sse';
 import { API_BASE_URL } from '../config';
 import i18next from '../i18n';
-import {
-  getToken,
-  getRefreshToken,
-  saveToken,
-  saveRefreshToken,
-} from './storageService';
-import { RefreshResponseSchema } from '../types/schemas';
+import { getToken } from './storageService';
+import { refreshAuth } from './apiClient';
 import {
   TextDeltaEventSchema,
   ToolStepEventSchema,
@@ -169,7 +163,7 @@ export function openChatStream(params: ChatStreamParams): ChatStreamHandle {
       });
     }
 
-    // ── Error handling with 401 re-auth (mirrors apiClient.ts) ──────────
+    // ── Error handling with 401 re-auth (shared single-flight refresh) ──
 
     es.addEventListener('error', async event => {
       if (closed) return;
@@ -186,20 +180,8 @@ export function openChatStream(params: ChatStreamParams): ChatStreamHandle {
         closed = true;
 
         try {
-          const storedRefreshToken = await getRefreshToken();
-          if (storedRefreshToken) {
-            const refreshResponse = await axios.post<unknown>(
-              `${API_BASE_URL}/auth/refresh`,
-              { refreshToken: storedRefreshToken },
-              { headers: { 'Content-Type': 'application/json' } },
-            );
-
-            const data = RefreshResponseSchema.parse(refreshResponse.data);
-            await Promise.all([
-              saveToken(data.accessToken),
-              saveRefreshToken(data.refreshToken),
-            ]);
-
+          const newToken = await refreshAuth();
+          if (newToken) {
             // Reconnect with the fresh token
             closed = false;
             await startConnection(true);

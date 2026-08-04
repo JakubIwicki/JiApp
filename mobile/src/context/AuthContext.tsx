@@ -5,8 +5,11 @@ import React, {
   useMemo,
   useReducer,
 } from 'react';
+import axios from 'axios';
+import { API_BASE_URL } from '../config';
 import * as authService from '../services/authService';
 import * as storageService from '../services/storageService';
+import { onAuthInvalidated } from '../services/authEvents';
 import type { ModuleId } from '../navigation/types';
 import { modulesFromPermissions, isAdminRole } from '../utils/permissions';
 
@@ -205,6 +208,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     checkToken();
   }, [checkToken]);
 
+  useEffect(() => {
+    // mount only
+    return onAuthInvalidated(() => {
+      dispatch({ type: 'LOGOUT' });
+    });
+  }, []);
+
   const login = useCallback(async (username: string, password: string) => {
     dispatch({ type: 'SET_LOADING', isLoading: true });
     try {
@@ -246,15 +256,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     [],
   );
 
-  const logout = useCallback(async () => {
-    dispatch({ type: 'SHOW_FAREWELL', showFarewell: true });
+  const revokeSession = useCallback(async () => {
+    try {
+      const refreshToken = await storageService.getRefreshToken();
+      if (!refreshToken) return;
+      await axios.post(
+        `${API_BASE_URL}/auth/logout`,
+        { refreshToken },
+        {
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 5000,
+        },
+      );
+    } catch {
+      // Best-effort revocation — ignore failures
+    }
   }, []);
+
+  const logout = useCallback(async () => {
+    await revokeSession();
+    dispatch({ type: 'SHOW_FAREWELL', showFarewell: true });
+  }, [revokeSession]);
 
   const dismissWelcome = useCallback(() => {
     dispatch({ type: 'SHOW_WELCOME', showWelcome: false });
   }, []);
 
   const dismissFarewell = useCallback(async () => {
+    // Second idempotent revocation attempt — covers a kill during the
+    // farewell overlay when logout()'s POST never landed server-side.
+    await revokeSession();
     await Promise.all([
       storageService.clearToken(),
       storageService.clearRefreshToken(),
@@ -265,7 +296,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       storageService.clearSelectedModule(),
     ]);
     dispatch({ type: 'LOGOUT' });
-  }, []);
+  }, [revokeSession]);
 
   const updateProfile = useCallback(
     async (displayName: string, email: string) => {

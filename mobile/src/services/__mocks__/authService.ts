@@ -1,5 +1,5 @@
 import { createMockFn } from '../../test/createMockFn';
-import type { LoginResponse, RefreshResponse } from '../../types/api';
+import type { LoginResponse } from '../../types/api';
 
 // ── Default stub data ──────────────────────────────────────────────────────
 
@@ -11,12 +11,6 @@ const defaultUser: LoginResponse = {
   permissions: ['ytdownloader.access', 'scheduler.access'],
 };
 
-const defaultRefresh: RefreshResponse = {
-  accessToken: 'mock-refreshed-jwt',
-  refreshToken: 'mock-refreshed-rt',
-  expiresIn: 3600,
-};
-
 // ── Internal state ─────────────────────────────────────────────────────────
 
 let _loginResponse: LoginResponse = { ...defaultUser };
@@ -25,8 +19,6 @@ let _registerError: Error | null = null;
 let _checkTokenResponse: LoginResponse = { ...defaultUser };
 let _checkTokenError: Error | null = null;
 let _updateProfileError: Error | null = null;
-let _refreshTokenResponse: RefreshResponse = { ...defaultRefresh };
-let _refreshTokenError: Error | null = null;
 
 // ── Mock functions ─────────────────────────────────────────────────────────
 
@@ -58,13 +50,6 @@ export const checkToken = createMockFn(
 export const updateProfile = createMockFn(
   async (_displayName: string, _email: string): Promise<void> => {
     if (_updateProfileError) throw _updateProfileError;
-  },
-);
-
-export const refreshToken = createMockFn(
-  async (_token: string): Promise<RefreshResponse> => {
-    if (_refreshTokenError) throw _refreshTokenError;
-    return _refreshTokenResponse;
   },
 );
 
@@ -122,21 +107,6 @@ export function withUpdateProfileFailure(
   return error;
 }
 
-export function withRefreshTokenSuccess(
-  overrides?: Partial<RefreshResponse>,
-): RefreshResponse {
-  _refreshTokenError = null;
-  _refreshTokenResponse = { ...defaultRefresh, ...overrides };
-  return _refreshTokenResponse;
-}
-
-export function withRefreshTokenFailure(
-  error: Error = new Error('Refresh failed'),
-): Error {
-  _refreshTokenError = error;
-  return error;
-}
-
 // ── Reset ──────────────────────────────────────────────────────────────────
 
 export function reset(): void {
@@ -146,14 +116,11 @@ export function reset(): void {
   _checkTokenError = null;
   _checkTokenResponse = { ...defaultUser };
   _updateProfileError = null;
-  _refreshTokenError = null;
-  _refreshTokenResponse = { ...defaultRefresh };
 
   if (typeof jest !== 'undefined') {
     login.mockClear();
     register.mockClear();
     checkToken.mockClear();
     updateProfile.mockClear();
-    refreshToken.mockClear();
   }
 }

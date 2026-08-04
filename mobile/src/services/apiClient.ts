@@ -14,6 +14,7 @@ import {
 import { RefreshResponseSchema } from '../types/schemas';
 import { API_BASE_URL } from '../config';
 import type { ServerAugmentedError } from '../types/api';
+import { emitAuthInvalidated } from './authEvents';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -44,7 +45,7 @@ interface RetryConfig extends InternalAxiosRequestConfig {
 
 let refreshPromise: Promise<string | null> | null = null;
 
-async function refreshAuth(): Promise<string | null> {
+export async function refreshAuth(): Promise<string | null> {
   if (refreshPromise) return refreshPromise;
 
   refreshPromise = (async () => {
@@ -59,6 +60,7 @@ async function refreshAuth(): Promise<string | null> {
           clearUsername(),
           clearCredentials(),
         ]);
+        emitAuthInvalidated();
         return null;
       }
 
@@ -84,6 +86,7 @@ async function refreshAuth(): Promise<string | null> {
         clearUsername(),
         clearCredentials(),
       ]);
+      emitAuthInvalidated();
       return null;
     } finally {
       refreshPromise = null;
