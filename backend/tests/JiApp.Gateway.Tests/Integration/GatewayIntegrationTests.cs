@@ -3,6 +3,7 @@ using System.Text.Json;
 using JiApp.Gateway.Tests.Integration;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace JiApp.Gateway.Tests.Integration;
@@ -81,6 +82,11 @@ public sealed class GatewayIntegrationTests : IClassFixture<GatewayWebApplicatio
             .WithWebHostBuilder(builder =>
             {
                 builder.UseEnvironment("Development");
+                builder.ConfigureAppConfiguration((_, config) =>
+                    config.AddInMemoryCollection(new Dictionary<string, string?>
+                    {
+                        ["Jwt:Key"] = "test-key-at-least-32-characters!!"
+                    }));
             });
         var client = devFactory.CreateClient();
         var response = await client.GetAsync("/health/dashboard");
