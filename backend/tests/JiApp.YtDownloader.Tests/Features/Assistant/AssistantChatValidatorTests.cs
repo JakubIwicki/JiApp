@@ -1,3 +1,4 @@
+using JiApp.YtDownloader.Configuration;
 using JiApp.YtDownloader.Features.Assistant;
 
 namespace JiApp.YtDownloader.Tests.Features.Assistant;
@@ -6,13 +7,22 @@ public sealed class AssistantChatValidatorTests
 {
     private sealed class Fixture
     {
-        public AssistantChatValidator Sut => new();
+        public AssistantChatValidator Sut { get; }
 
-        public static Fixture Init() => new();
+        private Fixture(AssistantChatValidator sut) => Sut = sut;
+
+        public static Fixture Init() => new(new AssistantChatValidator(TestSettings()));
+
+        private static Settings TestSettings() => new()
+        {
+            Assistant = new Settings.AssistantSettings { MaxMessagesPerTurn = 20 }
+        };
     }
 
     private static ChatMessageDto User(string content = "hello") => new("user", content);
     private static ChatMessageDto Assistant(string content = "hi") => new("assistant", content);
+    private static IReadOnlyList<ChatMessageDto> Messages(int count) =>
+        Enumerable.Range(0, count).Select(_ => User()).ToArray();
 
     [Fact]
     public void Validate_WithValidUserAssistantHistoryEndingInUser_IsValid()
@@ -118,6 +128,29 @@ public sealed class AssistantChatValidatorTests
     {
         var fixture = Fixture.Init();
         var request = new AssistantChatRequest([User(new string('x', 4000))], "en");
+
+        var result = fixture.Sut.Validate(request);
+
+        result.IsValid.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Validate_WithMoreThanMaxMessagesPerTurn_ReturnsError()
+    {
+        var fixture = Fixture.Init();
+        var request = new AssistantChatRequest(Messages(count: 21), "en");
+
+        var result = fixture.Sut.Validate(request);
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(AssistantChatRequest.Messages));
+    }
+
+    [Fact]
+    public void Validate_WithExactlyMaxMessagesPerTurn_IsValid()
+    {
+        var fixture = Fixture.Init();
+        var request = new AssistantChatRequest(Messages(count: 20), "en");
 
         var result = fixture.Sut.Validate(request);
 

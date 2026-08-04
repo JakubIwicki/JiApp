@@ -168,6 +168,10 @@ public class Startup(GatewaySettings settings, IConfiguration configuration, IWe
 
     public static void Configure(WebApplication app)
     {
+        // Trusted proxy config — must run before any middleware that reads the client IP,
+        // scheme, or host (rate-limit partitions, download URLs).
+        app.UseTrustedForwardedHeaders(app.Configuration);
+
         // Global exception handler — catches unhandled exceptions before any middleware
         app.UseMiddleware<GlobalExceptionMiddleware>();
 

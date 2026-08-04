@@ -181,6 +181,7 @@ public class Startup(Settings settings, IWebHostEnvironment env)
     public static void Configure(WebApplication app)
     {
         ArgumentNullException.ThrowIfNull(app);
+        app.UseTrustedForwardedHeaders(app.Configuration);
         app.UseMiddleware<GlobalExceptionMiddleware>();
         app.UseSerilogRequestLogging();
 

@@ -1,6 +1,6 @@
 # JiApp — Code Review & Remediation Backlog
 
-**Branch:** `fix/wave1-security-remediation` · **Date:** 2026-08-03 · **Status:** Wave 1 landed — G1.1, G1.2, G2.2, G2.4, G2.6, G5.1 fixed (see per-finding notes); rest open backlog
+**Branch:** `fix/wave2-rate-limit-forwarded` · **Date:** 2026-08-04 · **Status:** Wave 1 landed — G1.1, G1.2, G2.2, G2.4, G2.6, G5.1 fixed (see per-finding notes); Wave 2 landed — G4.1–G4.5 fixed (see per-finding notes); rest open backlog
 
 This file is the single working document for the review. It is organised into **12 work groups**,
 each sized to be picked up as one PR/session by someone with no prior context. Every finding keeps
@@ -482,6 +482,8 @@ together is one `ForwardedHeaders` + partition-key change.
 
 ### G4.1 (HIGH) — Identity rate limiters are global, not per-client · `H5`
 
+**FIXED (Wave 2).** Identity's four limiters now partition per authenticated user (`user:{sub}`, `ClaimTypes.NameIdentifier`) falling back to client IP (`ip:{...}`); `UseAuthentication` moved before `UseRateLimiter` so the claim is present at limiter time. The Gateway `identity-route` now carries the `X-Forwarded: Set` transform (this PR), so Identity's anonymous `ip:{...}` partition sees real client IPs once the prod trust list is set (`todo-deploy.md`). Covered by new `RateLimitPartitioningTests`.
+
 `backend/src/JiApp.Identity/Startup.cs:193-228`
 
 ```csharp
@@ -504,6 +506,8 @@ product. It also means legitimate concurrent logins collide at ~10/min globally.
 
 ### G4.2 (MEDIUM) — Rate-limit partitions collapse behind the proxy · `H5 (secondary)`
 
+**FIXED (Wave 2).** Shared `JiApp.Common` `UseTrustedForwardedHeaders` extension applied as the first middleware in Gateway, Identity and YtDownloader; it trusts X-Forwarded-* only from `ForwardedHeaders:KnownNetworks`/`KnownProxies`. Unconfigured → safe no-op (no crash, old behavior); configured-but-misformatted (scalar env key, or prefix-less `KnownNetworks` entries) → logs a warning so the disable is never silent. Prod trust list tracked in `todo-deploy.md` — in this topology only identity and ytdownloader should set one; the Gateway's own entry must stay unconfigured (nothing proxies it, and trusting client-supplied X-Forwarded-* there would let clients spoof its rate-limit partition).
+
 The Gateway partitions on `httpContext.Connection.RemoteIpAddress`. Behind AWS API Gateway every
 request arrives from the proxy's address, so that partition also collapses to a single bucket. No
 `UseForwardedHeaders` / `X-Forwarded-For` handling exists anywhere in the solution.
@@ -512,6 +516,8 @@ request arrives from the proxy's address, so that partition also collapses to a 
 partition key from the authenticated user id where available, falling back to a validated client IP.
 
 ### G4.3 (MEDIUM) — Assistant burns the user's daily quota on a 503 · `M3`
+
+**FIXED (Wave 2).** `AssistantStreamGate.TryEnter()` now runs before `PreCheckAsync` consumes the daily quota, so a busy assistant returns 503 without burning a message.
 
 `backend/src/JiApp.YtDownloader/Features/Assistant/AssistantChatEndpoint.cs:45-52`
 
@@ -530,20 +536,26 @@ who hits a busy assistant three times has silently lost 3 of 30 daily messages w
 
 ### G4.4 (MEDIUM) — Download URL built from unvalidated client headers · `M6`
 
-`backend/src/JiApp.YtDownloader/Features/GetDownloadLink/GetDownloadLinkEndpoint.cs:31-39`
+**FIXED (Wave 2).** `GetDownloadLinkEndpoint` builds the download URL from a configured `App:PublicBaseUrl` (scheme + authority, preserving the port) when set, falling back to `Request.Scheme`/`Request.Host` in dev. The host never comes from the client `Host` header — the Gateway's YARP `X-Forwarded: Set` transform would otherwise promote it into a trusted `X-Forwarded-Host`.
+
+`backend/src/JiApp.YtDownloader/Features/GetDownloadLink/GetDownloadLinkEndpoint.cs:31-45`
 
 ```csharp
-var scheme = httpContext.Request.Headers["X-Forwarded-Proto"].FirstOrDefault() ?? httpContext.Request.Scheme;
-var host   = httpContext.Request.Headers["X-Forwarded-Host"].FirstOrDefault() ?? httpContext.Request.Host.Value ?? "localhost";
-var response = DownloadResponse.WithUrl(result.Value.TempId, scheme, host);
+var scheme = httpContext.Request.Scheme;
+var host = httpContext.Request.Host.Value ?? "localhost";
+if (Uri.TryCreate(settings.App?.PublicBaseUrl, UriKind.Absolute, out var parsedBase))
+{
+    scheme = parsedBase.Scheme;
+    host = parsedBase.Authority;
+}
+var response = DownloadResponse.WithUrl(result.Value!.TempId, scheme, host);
 ```
 
-Read directly off the request with no `KnownProxies` validation. A caller sets
-`X-Forwarded-Host: evil.example` and gets back a download URL pointing at the attacker's host over
-cleartext. Self-targeted so impact is limited — but it becomes a redirect/exfiltration primitive the
-moment the URL is shared, cached, logged, or rendered in a notification.
+Originally the URL was built by reading `X-Forwarded-Proto`/`X-Forwarded-Host` directly off the request with no `KnownProxies` validation — a caller set `X-Forwarded-Host: evil.example` and got back a download URL pointing at the attacker's host over cleartext. Self-targeted so impact is limited — but it becomes a redirect/exfiltration primitive the moment the URL is shared, cached, logged, or rendered in a notification.
 
 ### G4.5 (MEDIUM) — Assistant accepts an unbounded number of messages · `M4`
+
+**FIXED (Wave 2).** `AssistantSettings.MaxMessagesPerTurn` (default 20, range-validated at startup) caps `Messages.Count`; the validator rejects over-limit turns. Covered by new validator tests.
 
 `Features/Assistant/AssistantChatValidator.cs:12-32` caps each message at 4000 chars and requires the
 last to be from the user, but **`Messages.Count` has no maximum**. A client can post 10,000 messages
