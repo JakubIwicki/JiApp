@@ -150,6 +150,10 @@ public class Startup(GatewaySettings settings, IConfiguration configuration, IWe
             };
         });
 
+        // Register the bound settings so mapped endpoints can inject GatewaySettings
+        // (e.g. the app version gate reads AppUpdate from config).
+        services.AddSingleton(settings);
+
         // Rate limit policy service — endpoint manipulation for rate limiting
         services.AddSingleton(_ => new RateLimitPolicyService(settings.EndpointCacheMaxEntries));
     }
@@ -218,6 +222,13 @@ public class Startup(GatewaySettings settings, IConfiguration configuration, IWe
         app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
         app.MapGet("/health/live", () => Results.Ok(new { status = "alive" }));
         app.MapGet("/health/ready", () => Results.Ok(new { status = "ready" }));
+        // App version gate — anonymous like /health; AppUpdate may be absent, so defaults keep the gate dormant.
+        app.MapGet("/api/v1/app/version", (GatewaySettings s) =>
+            Results.Ok(new
+            {
+                minVersionCode = s.AppUpdate?.MinVersionCode ?? 0,
+                downloadUrl = s.AppUpdate?.DownloadUrl ?? ""
+            }));
 
         // Health dashboard — dev only
         if (app.Environment.IsDevelopment())

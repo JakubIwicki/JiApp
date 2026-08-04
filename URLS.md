@@ -128,6 +128,7 @@ See `deployment_plan/DEPLOYMENT_PLAN.md` for full architecture.
 | GET | `/health/live` | Liveness probe | 🟢 Live |
 | GET | `/health/ready` | Readiness probe | 🟢 Live |
 | GET | `/health/dashboard` | HTML dashboard (dev only) | 🟢 Live |
+| GET | `/api/v1/app/version` | App version gate (min supported versionCode + download URL) | 🟢 Live |
 
 ### CORS
 
@@ -496,6 +497,8 @@ Custom CA cert `jiapp_dev_ca` trusted for HTTPS with self-signed dev certificate
 | `YT_GC_HEAP_LIMIT` | YtDownloader GC heap hard limit (hex) | *(empty = no cap)* |
 | `JIAPP_API_URL` | Mobile API base URL (build-time) | `https://localhost:6700/api/v1` |
 | `CORS_ALLOWED_ORIGIN` | CORS origin override | *(none)* |
+| `APP_UPDATE_MIN_VERSION_CODE` | App update gate: min supported Android versionCode (0 = dormant) | `0` |
+| `APP_UPDATE_DOWNLOAD_URL` | App update gate: APK download URL for out-of-date clients | *(empty)* |
 
 ---
 
@@ -520,6 +523,7 @@ Identity:    GET /api/v1/auth/health
 YtDownloader: GET /api/v1/yt/health
 Scheduler:   GET /api/v1/scheduler/health
 LovingBoards: GET /api/v1/lovingboards/health
+App version: GET /api/v1/app/version
 ```
 
 ### Base URLs
