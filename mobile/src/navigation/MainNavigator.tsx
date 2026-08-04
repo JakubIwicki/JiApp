@@ -1,5 +1,8 @@
 import React from 'react';
-import { createBottomTabNavigator } from '../navigation/bottomTabs';
+import {
+  createBottomTabNavigator,
+  type BottomTabBarButtonProps,
+} from '../navigation/bottomTabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -42,6 +45,31 @@ const useStackScreenOptions = () => {
     },
   };
 };
+
+const renderTabBarButton = (props: BottomTabBarButtonProps) => (
+  <TabBarButton {...props} />
+);
+
+interface TabBarIconProps {
+  color: string;
+  size: number;
+}
+
+const renderSearchTabIcon = ({ color, size }: TabBarIconProps) => (
+  <TabIcon name="search" color={color} size={size} />
+);
+const renderAssistantTabIcon = ({ color, size }: TabBarIconProps) => (
+  <TabIcon name="assistant" color={color} size={size} />
+);
+const renderDownloadsTabIcon = ({ color, size }: TabBarIconProps) => (
+  <TabIcon name="downloads" color={color} size={size} />
+);
+const renderHistoryTabIcon = ({ color, size }: TabBarIconProps) => (
+  <TabIcon name="history" color={color} size={size} />
+);
+const renderSettingsTabIcon = ({ color, size }: TabBarIconProps) => (
+  <TabIcon name="settings" color={color} size={size} />
+);
 
 const SearchStackScreen: React.FC = () => {
   const screenOptions = useStackScreenOptions();
@@ -100,7 +128,7 @@ const MainNavigator: React.FC = () => {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarButton: props => <TabBarButton {...props} />,
+        tabBarButton: renderTabBarButton,
         tabBarActiveTintColor: tabBar.activeColor,
         tabBarInactiveTintColor: tabBar.inactiveColor,
         tabBarStyle: {
@@ -121,9 +149,7 @@ const MainNavigator: React.FC = () => {
         component={SearchStackScreen}
         options={{
           tabBarLabel: t('nav.search'),
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon name="search" color={color} size={size} />
-          ),
+          tabBarIcon: renderSearchTabIcon,
         }}
       />
       <Tab.Screen
@@ -131,9 +157,7 @@ const MainNavigator: React.FC = () => {
         component={ChatStackScreen}
         options={{
           tabBarLabel: t('nav.assistant'),
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon name="assistant" color={color} size={size} />
-          ),
+          tabBarIcon: renderAssistantTabIcon,
         }}
       />
       <Tab.Screen
@@ -141,9 +165,7 @@ const MainNavigator: React.FC = () => {
         component={DownloadsStackScreen}
         options={{
           tabBarLabel: t('nav.downloads'),
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon name="downloads" color={color} size={size} />
-          ),
+          tabBarIcon: renderDownloadsTabIcon,
         }}
       />
       <Tab.Screen
@@ -151,9 +173,7 @@ const MainNavigator: React.FC = () => {
         component={HistoryStackScreen}
         options={{
           tabBarLabel: t('nav.history'),
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon name="history" color={color} size={size} />
-          ),
+          tabBarIcon: renderHistoryTabIcon,
         }}
       />
       <Tab.Screen
@@ -161,9 +181,7 @@ const MainNavigator: React.FC = () => {
         component={SettingsStackScreen}
         options={{
           tabBarLabel: t('nav.settings'),
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon name="settings" color={color} size={size} />
-          ),
+          tabBarIcon: renderSettingsTabIcon,
         }}
       />
     </Tab.Navigator>

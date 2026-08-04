@@ -1,5 +1,4 @@
 import apiClient from '../../../services/apiClient';
-import type { Item } from '../types/api';
 import { z } from 'zod';
 
 const IdResponseSchema = z.object({ id: z.number() });

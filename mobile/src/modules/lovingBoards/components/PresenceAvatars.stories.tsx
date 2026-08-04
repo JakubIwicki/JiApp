@@ -1,12 +1,19 @@
 import React from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import type { Meta, StoryObj } from '@storybook/react';
 import PresenceAvatars from './PresenceAvatars';
 import { ThemeProvider } from '../../../context/ThemeContext';
 
+const wrapperStyles = StyleSheet.create({
+  wrapper: {
+    padding: 20,
+    backgroundColor: '#F5F0EB',
+  },
+});
+
 const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <ThemeProvider>
-    <View style={{ padding: 20, backgroundColor: '#F5F0EB' }}>{children}</View>
+    <View style={wrapperStyles.wrapper}>{children}</View>
   </ThemeProvider>
 );
 

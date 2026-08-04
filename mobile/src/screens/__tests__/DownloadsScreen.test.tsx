@@ -1,4 +1,4 @@
-import React from 'react';
+import type { PropsWithChildren } from 'react';
 import { render, act } from '@testing-library/react-native';
 
 // Mock downloadService
@@ -93,7 +93,7 @@ jest.mock('../../components/RefreshableScrollView', () => {
     default: ({
       children,
       ...props
-    }: React.PropsWithChildren<Record<string, unknown>>) =>
+    }: PropsWithChildren<Record<string, unknown>>) =>
       React.createElement(
         ScrollView,
         { ...props, testID: 'refreshable-scroll' },

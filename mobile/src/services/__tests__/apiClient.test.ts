@@ -250,9 +250,7 @@ describe('apiClient 401 response interceptor', () => {
       response: { status: 500, data: { details: 'No error property' } },
     };
 
-    const result = await expect(
-      errorHandler(error500),
-    ).rejects.not.toMatchObject({
+    await expect(errorHandler(error500)).rejects.not.toMatchObject({
       _serverError: expect.any(String),
     });
 

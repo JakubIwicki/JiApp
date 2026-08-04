@@ -283,7 +283,7 @@ const useBoard = (boardId: number): UseBoardResult => {
     [boardId, loadBoard],
   );
 
-  const items = board?.items ?? [];
+  const items = useMemo(() => board?.items ?? [], [board]);
 
   const itemsForReminders = useMemo(
     () => items.filter(i => i.expiryDate !== null),

@@ -46,7 +46,7 @@ const LovingBoardsNavigator: React.FC = () => {
       <Stack.Screen
         name="BoardDetail"
         component={BoardDetailScreen}
-        options={({ route }) => ({
+        options={() => ({
           title: '',
           headerBackTitle: t('lovingBoards.boardList.title'),
         })}

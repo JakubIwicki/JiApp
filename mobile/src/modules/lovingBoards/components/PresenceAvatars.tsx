@@ -57,9 +57,9 @@ const PresenceAvatars: React.FC<PresenceAvatarsProps> = ({ userIds }) => {
             key={userId}
             style={[
               styles.avatar,
+              index > 0 && styles.avatarOffset,
               {
                 backgroundColor: avatarAccent(userId, colors),
-                marginLeft: index > 0 ? -OVERLAP : 0,
                 zIndex: MAX_VISIBLE - index,
               },
             ]}
@@ -105,6 +105,9 @@ const makeStyles = (t: Theme) =>
       borderWidth: 1.5,
       borderColor: t.colors.background,
       position: 'relative',
+    },
+    avatarOffset: {
+      marginLeft: -OVERLAP,
     },
     avatarText: {
       fontSize: 9,

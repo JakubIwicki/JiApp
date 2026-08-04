@@ -89,7 +89,6 @@ jest.mock('@react-navigation/native', () => {
 });
 
 import DownloadScreen from '../DownloadScreen';
-import { act } from '@testing-library/react-native';
 
 describe('DownloadScreen', () => {
   beforeEach(() => {

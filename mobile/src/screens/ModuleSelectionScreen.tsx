@@ -351,7 +351,9 @@ const ModuleSelectionScreen: React.FC<ModuleSelectionScreenProps> = ({
                 { backgroundColor: `${colors.warning}1A` },
               ]}
             >
-              <Text style={{ fontSize: 20, color: colors.warning }}>⚙</Text>
+              <Text style={[styles.glyphText, { color: colors.warning }]}>
+                ⚙
+              </Text>
             </View>
             <View style={styles.cardText}>
               <Text style={styles.cardTitle}>{t('modules.admin.name')}</Text>
@@ -430,6 +432,9 @@ const makeStyles = (t: Theme) =>
       alignItems: 'center',
       justifyContent: 'center',
       marginRight: spacing.lg,
+    },
+    glyphText: {
+      fontSize: 20,
     },
     cardText: {
       flex: 1,

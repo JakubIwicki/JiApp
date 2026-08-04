@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent, act } from '@testing-library/react-native';
+import { render, act } from '@testing-library/react-native';
 
 // Mock react-i18next
 jest.mock('react-i18next', () => ({

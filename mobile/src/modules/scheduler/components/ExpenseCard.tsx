@@ -10,7 +10,10 @@ interface ExpenseCardProps {
   onPress?: (expense: Expense) => void;
 }
 
-const ExpenseCard: React.FC<ExpenseCardProps> = ({ expense, onPress }) => {
+const ExpenseCard: React.FC<ExpenseCardProps> = ({
+  expense,
+  onPress: _onPress,
+}) => {
   const styles = useThemedStyles(makeStyles);
   const categoryLabel = expense.category;
   const note = expense.note?.trim();

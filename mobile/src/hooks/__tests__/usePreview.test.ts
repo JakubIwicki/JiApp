@@ -307,7 +307,7 @@ describe('usePreview', () => {
     // Simulate playing state
     mockPlaybackState = { state: 'playing' };
 
-    const { result, rerender } = renderHook(() => usePreview());
+    const { rerender } = renderHook(() => usePreview());
 
     // Position under 10 — pause should not be called
     mockProgress = { position: 5, duration: 30, buffered: 5 };

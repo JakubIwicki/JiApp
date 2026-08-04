@@ -21,11 +21,6 @@ import type { Client } from '../types/api';
 type NavigationProp = NativeStackNavigationProp<SchedulerStackParamList>;
 type ClientListRoute = RouteProp<SchedulerStackParamList, 'ClientList'>;
 
-interface Section {
-  title: string;
-  data: Client[];
-}
-
 const ClientRow: React.FC<{ item: Client; onPress: () => void }> = ({
   item,
   onPress,
@@ -48,6 +43,7 @@ const ClientListScreen: React.FC = () => {
   const { boardId } = route.params;
   const { t } = useTranslation();
   const clients = useClients(boardId);
+  const { loadAll, searchClients } = clients;
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [query, setQuery] = useState('');
@@ -55,16 +51,16 @@ const ClientListScreen: React.FC = () => {
   const [newName, setNewName] = useState('');
 
   useEffect(() => {
-    clients.loadAll();
-  }, [clients.loadAll]);
+    loadAll();
+  }, [loadAll]);
 
   useEffect(() => {
     if (query.trim()) {
-      clients.searchClients(query);
+      searchClients(query);
     } else {
-      clients.loadAll();
+      loadAll();
     }
-  }, [query, clients.searchClients, clients.loadAll]);
+  }, [query, searchClients, loadAll]);
 
   const sections = useMemo(() => {
     const map = new Map<string, Client[]>();
@@ -76,7 +72,7 @@ const ClientListScreen: React.FC = () => {
     });
     return Array.from(map.entries())
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([title, data]) => ({ title, data }));
+      .map(([title, items]) => ({ title, data: items }));
   }, [clients.clients, query]);
 
   const handleClientNavigate = useCallback(

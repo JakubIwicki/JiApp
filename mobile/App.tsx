@@ -7,6 +7,7 @@ import {
 import type { Theme as NavTheme } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { StyleSheet } from 'react-native';
 import TrackPlayer, { Capability } from 'react-native-track-player';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import AppNavigator from './src/navigation/AppNavigator';
@@ -60,7 +61,7 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={styles.root}>
       <KeyboardProvider>
         <SafeAreaProvider>
           <ThemeProvider>
@@ -71,5 +72,11 @@ const App: React.FC = () => {
     </GestureHandlerRootView>
   );
 };
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+});
 
 export default App;

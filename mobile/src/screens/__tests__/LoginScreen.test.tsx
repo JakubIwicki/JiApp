@@ -1,4 +1,3 @@
-import React from 'react';
 import { fireEvent, waitFor, act } from '@testing-library/react-native';
 import { composeStories } from '@storybook/react';
 

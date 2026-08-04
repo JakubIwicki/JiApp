@@ -33,7 +33,8 @@ const TypingDots: React.FC = () => {
   return (
     <Animated.Text
       style={[
-        { fontSize: 14, color: colors.textTertiary, lineHeight: 20 },
+        statusTextStyles.typing,
+        { color: colors.textTertiary },
         animatedStyle,
       ]}
       testID="typing-indicator"
@@ -59,10 +60,7 @@ const StreamCaret: React.FC = () => {
 
   return (
     <Animated.Text
-      style={[
-        { fontSize: 14, color: colors.primary, lineHeight: 20 },
-        animatedStyle,
-      ]}
+      style={[statusTextStyles.caret, { color: colors.primary }, animatedStyle]}
     >
       {'▍'}
     </Animated.Text>
@@ -192,6 +190,17 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ message }) => {
 };
 
 // ── Styles ─────────────────────────────────────────────────────────────────
+
+const statusTextStyles = StyleSheet.create({
+  typing: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  caret: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+});
 
 const baseLayoutStyles = StyleSheet.create({
   row: {

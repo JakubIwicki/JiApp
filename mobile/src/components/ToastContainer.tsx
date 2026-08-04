@@ -13,13 +13,10 @@ const ToastContainer: React.FC = () => {
 
   return (
     <View
-      style={[
-        styles.container,
-        { top: insets.top + 8, left: 16, right: 16 },
-      ]}
+      style={[styles.container, { top: insets.top + 8 }]}
       pointerEvents="box-none"
     >
-      {queue.map((toast) => (
+      {queue.map(toast => (
         <View key={toast.id} style={styles.item}>
           <Toast
             type={toast.type}
@@ -38,6 +35,8 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     zIndex: zIndexScale.toast,
+    left: 16,
+    right: 16,
   },
   item: {
     marginBottom: 8,
