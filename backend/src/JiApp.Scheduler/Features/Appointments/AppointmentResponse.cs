@@ -1,4 +1,6 @@
+using JiApp.Scheduler.Features.Clients;
 using JiApp.Scheduler.Features.Common;
+using JiApp.Scheduler.Features.Services;
 
 namespace JiApp.Scheduler.Features.Appointments;
 
@@ -15,4 +17,6 @@ public sealed record AppointmentResponse(
     PriceResponse Price,
     string Location,
     string Status,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    ClientResponse Client,
+    ServiceResponse Service);

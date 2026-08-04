@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Text;
 using JiApp.Common;
 using JiApp.Common.Services;
+using JiApp.Scheduler.Features.Appointments;
 using JiApp.Scheduler.Features.Appointments.UpdateAppointment;
 using JiApp.Scheduler.Features.Appointments.UpdateAppointmentStatus;
 using JiApp.Scheduler.Features.Common;
@@ -74,6 +75,12 @@ public sealed class GetAppointmentEndpointTests : IDisposable
         var response = await client.GetAsync($"/api/v1/scheduler/appointments/{appointmentId}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<AppointmentResponse>();
+        body.Should().NotBeNull();
+        body!.Client.Name.Should().Be("Alice");
+        body.Service.Name.Should().Be("Haircut");
+        body.Service.Category.Should().Be("MensHaircut");
+        body.Service.BasePrice.Amount.Should().Be(100);
     }
 
     [Fact]

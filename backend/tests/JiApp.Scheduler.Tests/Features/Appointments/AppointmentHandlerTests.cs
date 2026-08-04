@@ -244,6 +244,12 @@ public sealed class AppointmentHandlerTests : HandlerTestBase
         AssertSuccess(result);
         result.Value!.Location.Should().Be("Room 1");
         result.Value.Status.Should().Be("Created");
+        result.Value.Client.Name.Should().Be("Alice");
+        result.Value.Client.BoardId.Should().Be(fixture.Board.Id);
+        result.Value.Service.Name.Should().Be("Haircut");
+        result.Value.Service.Category.Should().Be("MensHaircut");
+        result.Value.Service.BaseDuration.Should().Be(30);
+        result.Value.Service.BasePrice.Amount.Should().Be(100);
     }
 
     [Fact]
@@ -358,6 +364,7 @@ public sealed class AppointmentHandlerTests : HandlerTestBase
 
         AssertSuccess(result);
         result.Value.Should().ContainSingle(a => a.Location == "Room 1");
+        result.Value.Should().OnlyContain(a => a.Client.Name == "Alice" && a.Service.Name == "Haircut");
     }
 
     [Fact]
