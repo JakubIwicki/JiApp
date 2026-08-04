@@ -52,8 +52,15 @@ public sealed class RefreshHandler(
         if (!wasRevoked)
         {
             logger.RefreshTokenReuseDetected(storedToken.Id, storedToken.UserId);
-            await refreshTokenService.RevokeAllForUserAsync(storedToken.UserId, ct);
+
+            // Roll the transaction back first: RevokeAllForUserAsync issues ExecuteUpdateAsync
+            // on the same DbContext and would otherwise enlist in this transaction, and the
+            // RollbackAsync below would silently undo the theft response (G2.2). After the
+            // rollback the revoke-all runs on its own scope with CancellationToken.None so the
+            // security cleanup completes even if the request aborts — matching the fast path above.
             await transaction.RollbackAsync(ct);
+            await refreshTokenService.RevokeAllForUserAsync(storedToken.UserId, CancellationToken.None);
+
             return Result<RefreshResponse>.Failure("Invalid or expired refresh token");
         }
 

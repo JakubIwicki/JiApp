@@ -1,9 +1,11 @@
 using JiApp.Identity.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace JiApp.Identity.Services;
 
-public sealed class RefreshTokenCleanupService(IServiceScopeFactory scopeFactory) : BackgroundService
+public sealed class RefreshTokenCleanupService(IServiceScopeFactory scopeFactory, ILogger<RefreshTokenCleanupService> logger)
+    : BackgroundService
 {
     private static readonly TimeSpan CleanupInterval = TimeSpan.FromHours(1);
 
@@ -11,14 +13,31 @@ public sealed class RefreshTokenCleanupService(IServiceScopeFactory scopeFactory
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            await Task.Delay(CleanupInterval, stoppingToken);
+            try
+            {
+                await Task.Delay(CleanupInterval, stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                return;
+            }
 
-            using var scope = scopeFactory.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
+            try
+            {
+                using var scope = scopeFactory.CreateScope();
+                var dbContext = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
 
-            await dbContext.RefreshTokens
-                .Where(rt => rt.ExpiresAt < DateTime.UtcNow || rt.IsRevoked)
-                .ExecuteDeleteAsync(stoppingToken);
+                await dbContext.RefreshTokens
+                    .Where(rt => rt.ExpiresAt < DateTime.UtcNow || rt.IsRevoked)
+                    .ExecuteDeleteAsync(stoppingToken);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                // A failed sweep (e.g. SQLITE_BUSY under concurrent writes) must not take down the
+                // host — the default BackgroundServiceExceptionBehavior is StopHost. Log and keep
+                // the hourly loop alive.
+                logger.LogError(ex, "Refresh token cleanup sweep failed");
+            }
         }
     }
 }

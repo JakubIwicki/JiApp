@@ -59,6 +59,11 @@ public sealed class MockRefreshTokenService : MockObject<IRefreshTokenService>
 		Mock.Verify(x => x.RevokeAllForUserAsync(userId, It.IsAny<CancellationToken>()), Times.Once);
 	}
 
+	public void VerifyRevokedAllForUser_WithCancellationTokenNone(long userId)
+	{
+		Mock.Verify(x => x.RevokeAllForUserAsync(userId, CancellationToken.None), Times.Once);
+	}
+
 	public void VerifyRevokedAllForUser_NotCalled()
 	{
 		Mock.Verify(x => x.RevokeAllForUserAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
