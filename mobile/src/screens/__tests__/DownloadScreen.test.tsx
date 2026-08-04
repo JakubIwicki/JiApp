@@ -108,6 +108,15 @@ describe('DownloadScreen', () => {
     expect(getByTestId('download-thumbnail')).toBeTruthy();
   });
 
+  it('shows placeholder when thumbnail fails to load', () => {
+    const { queryByTestId, getByTestId } = render(<DownloadScreen />);
+
+    fireEvent(getByTestId('download-thumbnail'), 'error');
+
+    expect(queryByTestId('download-thumbnail')).toBeNull();
+    expect(getByTestId('download-thumbnail-placeholder')).toBeTruthy();
+  });
+
   it('shows "Download MP3" button in initial state', () => {
     const { getByText } = render(<DownloadScreen />);
 

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -18,6 +18,7 @@ interface VideoCardProps {
 const VideoCard: React.FC<VideoCardProps> = ({ video, onPress }) => {
   const fadeAnim = useSharedValue(0);
   const slideAnim = useSharedValue(8);
+  const [imageFailed, setImageFailed] = useState(false);
   const styles = useThemedStyles(makeStyles);
 
   useEffect(() => {
@@ -42,12 +43,13 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onPress }) => {
       accessibilityRole="button"
     >
       <Animated.View style={[styles.card, animatedStyle]}>
-        {video.imageUrl ? (
+        {video.imageUrl && !imageFailed ? (
           <Image
             source={{ uri: video.imageUrl }}
             style={styles.thumbnail}
             testID="video-thumbnail"
             resizeMode="cover"
+            onError={() => setImageFailed(true)}
           />
         ) : (
           <View

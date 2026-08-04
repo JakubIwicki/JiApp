@@ -1,10 +1,7 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import HistoryItem from '../HistoryItem';
-import type {
-  SearchHistoryItem,
-  DownloadHistoryItem,
-} from '../../types/api';
+import type { SearchHistoryItem, DownloadHistoryItem } from '../../types/api';
 
 const createSearchItem = (
   overrides: Partial<SearchHistoryItem> = {},
@@ -55,6 +52,18 @@ describe('HistoryItem', () => {
     const { queryByTestId, getByTestId } = render(
       <HistoryItem type="download" item={item} onPress={jest.fn()} />,
     );
+
+    expect(queryByTestId('history-thumbnail')).toBeNull();
+    expect(getByTestId('history-thumbnail-placeholder')).toBeTruthy();
+  });
+
+  it('download type shows placeholder when thumbnail fails to load', () => {
+    const item = createDownloadItem();
+    const { queryByTestId, getByTestId } = render(
+      <HistoryItem type="download" item={item} onPress={jest.fn()} />,
+    );
+
+    fireEvent(getByTestId('history-thumbnail'), 'error');
 
     expect(queryByTestId('history-thumbnail')).toBeNull();
     expect(getByTestId('history-thumbnail-placeholder')).toBeTruthy();

@@ -51,6 +51,15 @@ describe('VideoCard', () => {
     expect(getByTestId('video-thumbnail-placeholder')).toBeTruthy();
   });
 
+  it('shows placeholder when thumbnail fails to load', () => {
+    const { getByTestId, queryByTestId } = rtlRender(<Default />);
+
+    fireEvent(getByTestId('video-thumbnail'), 'error');
+
+    expect(queryByTestId('video-thumbnail')).toBeNull();
+    expect(getByTestId('video-thumbnail-placeholder')).toBeTruthy();
+  });
+
   it('renders title in bold', () => {
     const { getByText } = rtlRender(<Default />);
     const title = getByText(defaultVideo.title);
