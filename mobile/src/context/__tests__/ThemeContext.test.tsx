@@ -74,6 +74,7 @@ describe('ThemeContext', () => {
   });
 
   it('provides light colors when system color scheme is light', () => {
+    // Spy the top-level export (configurable getter on RN 0.85 module.exports) — the deep-import path was deprecated by no-deep-imports lint.
     jest
       .spyOn(require('react-native'), 'useColorScheme')
       .mockReturnValue('light');
