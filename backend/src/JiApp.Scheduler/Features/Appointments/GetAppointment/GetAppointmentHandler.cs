@@ -19,9 +19,10 @@ public sealed class GetAppointmentHandler(ISchedulerDbContext db, ICurrentUserSe
         if (!boardResult.IsSuccess)
             return Result<AppointmentResponse>.Failure(boardResult.Error!, boardResult.ErrorCategory);
 
-        // Client/Service are required relationships (non-nullable FKs), so the referenced rows always exist.
-        var client = (await db.Clients.FindAsync([appointment.ClientId], ct))!;
-        var service = (await db.Services.FindAsync([appointment.ServiceId], ct))!;
+        var client = await db.Clients.FindAsync([appointment.ClientId], ct);
+        var service = await db.Services.FindAsync([appointment.ServiceId], ct);
+        if (client is null || service is null)
+            return Result<AppointmentResponse>.Failure("Appointment not found", ResultCategories.NotFound);
 
         var response = new AppointmentResponse(
             appointment.Id,
