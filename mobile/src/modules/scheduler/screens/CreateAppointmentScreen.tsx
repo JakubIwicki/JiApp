@@ -47,6 +47,7 @@ const ServiceItemRow = React.memo<{
   startTime: string;
   onSelect: (serviceId: number, endTime: string) => void;
 }>(({ service, isSelected, startTime, onSelect }) => {
+  const { t } = useTranslation();
   const styles = useThemedStyles(makeStyles);
   const endTime = calculateEndTime(startTime, service.baseDuration);
   return (
@@ -61,8 +62,11 @@ const ServiceItemRow = React.memo<{
       <View>
         <Text style={styles.serviceName}>{service.name}</Text>
         <Text style={styles.serviceDetail}>
-          {service.baseDuration} min | {service.basePrice.amount}{' '}
-          {service.basePrice.currency}
+          {t('scheduler.serviceList.durationAndPrice', {
+            duration: service.baseDuration,
+            amount: service.basePrice.amount,
+            currency: service.basePrice.currency,
+          })}
         </Text>
       </View>
     </Pressable>

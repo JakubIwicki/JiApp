@@ -219,8 +219,10 @@
     "delete": "Usuń",
     "deleteConfirm": "Usunąć \"{{name}}\"? Spowoduje to trwałe usunięcie wszystkich wizyt, klientów, usług i wydatków na tej tablicy.",
     "members": "Członkowie",
-    "memberCount": "{{count}} członek",
-    "memberCount_plural": "{{count}} członków",
+    "memberCount_one": "{{count}} członek",
+    "memberCount_few": "{{count}} członków",
+    "memberCount_many": "{{count}} członków",
+    "memberCount_other": "{{count}} członków",
     "addMember": "Dodaj członka",
     "memberIdPlaceholder": "ID użytkownika",
     "remove": "Usuń",
@@ -234,7 +236,7 @@
     "validation": "Weryfikacja",
     "status": {
       "created": "Utworzona",
-      "done": "Zrobione",
+      "done": "Zrealizowana",
       "cancelled": "Anulowana"
     },
     "category": {
@@ -266,7 +268,7 @@
       "price": "Cena",
       "location": "Lokalizacja",
       "notes": "Notatki",
-      "markDone": "Oznacz jako zrobione"
+      "markDone": "Oznacz jako zrealizowaną"
     },
     "createAppointment": {
       "validationSelect": "Wybierz klienta i usługę",
@@ -296,8 +298,14 @@
       "sortVisitCount": "Wizyty",
       "sortTotalSpent": "Łącznie wydane",
       "sortLastVisit": "Ostatnia wizyta",
-      "visits": "{{count}} wizyt",
-      "visitsLast": "{{count}} wizyt | Ostatnio: {{lastVisit}}",
+      "visits_one": "{{count}} wizyta",
+      "visits_few": "{{count}} wizyty",
+      "visits_many": "{{count}} wizyt",
+      "visits_other": "{{count}} wizyt",
+      "visitsLast_one": "{{count}} wizyta | Ostatnio: {{lastVisit}}",
+      "visitsLast_few": "{{count}} wizyty | Ostatnio: {{lastVisit}}",
+      "visitsLast_many": "{{count}} wizyt | Ostatnio: {{lastVisit}}",
+      "visitsLast_other": "{{count}} wizyt | Ostatnio: {{lastVisit}}",
       "na": "N/D",
       "averagePerVisit": "śr. {{amount}} PLN",
       "noData": "Brak danych"
@@ -384,11 +392,6 @@
       "revenue": "Przychody",
       "expenses": "Wydatki",
       "net": "Netto"
-    },
-    "appointmentCard": {
-      "new": "Nowa",
-      "done": "Zrobione",
-      "cancelled": "Anulowana"
     }
   },
   "lovingBoards": {
@@ -399,8 +402,10 @@
       "newBoard": "Nowa tablica",
       "createPrompt": "Nazwa tablicy",
       "create": "Utwórz",
-      "memberCount": "{{count}} członek",
-      "memberCount_plural": "{{count}} członków",
+      "memberCount_one": "{{count}} członek",
+      "memberCount_few": "{{count}} członków",
+      "memberCount_many": "{{count}} członków",
+      "memberCount_other": "{{count}} członków",
       "itemCount": "{{count}} element",
       "itemCount_plural": "{{count}} elementów",
       "loadError": "Nie udało się załadować tablic",

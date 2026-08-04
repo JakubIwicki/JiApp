@@ -17,9 +17,9 @@ function formatTime(time: string): string {
 }
 
 const STATUS_LABELS: Record<string, string> = {
-  Created: 'scheduler.appointmentCard.new',
-  Done: 'scheduler.appointmentCard.done',
-  Cancelled: 'scheduler.appointmentCard.cancelled',
+  Created: 'scheduler.status.created',
+  Done: 'scheduler.status.done',
+  Cancelled: 'scheduler.status.cancelled',
 };
 
 const AppointmentCard: React.FC<AppointmentCardProps> = ({
