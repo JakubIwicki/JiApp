@@ -1,6 +1,6 @@
 # JiApp — Code Review & Remediation Backlog
 
-**Branch:** `fix/wave2-rate-limit-forwarded` · **Date:** 2026-08-04 · **Status:** Wave 1 landed — G1.1, G1.2, G2.2, G2.4, G2.6, G5.1 fixed (see per-finding notes); Wave 2 landed — G4.1–G4.5 fixed (see per-finding notes); rest open backlog
+**Branch:** `fix/wave2-rate-limit-forwarded` · **Date:** 2026-08-04 · **Status:** Wave 1 landed — G1.1, G1.2, G2.2, G2.4, G2.6, G5.1 fixed (see per-finding notes); Wave 2 landed — PR-A G4.1–G4.5, PR-B G3.1, G3.2, G3.3, G4.6, G10.3, PR-C G2.1, G2.3 fixed (see per-finding notes); rest open backlog
 
 This file is the single working document for the review. It is organised into **12 work groups**,
 each sized to be picked up as one PR/session by someone with no prior context. Every finding keeps
@@ -216,6 +216,8 @@ credentials — and several interact. G2.1 and G2.2 are the same incident from t
 
 ### G2.1 (HIGH) — Three uncoordinated refresh implementations trip the server's theft detection · `H2`
 
+**FIXED (Wave 2).** The single-flight `refreshAuth()` is now exported from `apiClient`; the `chatService` and `boardStreamService` 401 handlers call it; the dormant `authService.refreshToken` was deleted. SSE 401 tests assert a single refresh with no raw `/auth/refresh`.
+
 `mobile/src/services/apiClient.ts:45-94` · `mobile/src/services/chatService.ts:189-200` ·
 `mobile/src/modules/lovingBoards/services/boardStreamService.ts:152-170` ·
 `backend/src/JiApp.Identity/Features/Auth/Refresh/RefreshHandler.cs:29-37`
@@ -276,6 +278,8 @@ what makes the discrepancy easy to miss.
 semantics to roll back — see G9.2.
 
 ### G2.3 (HIGH) — Mobile never calls `/auth/logout`; refresh tokens survive logout · `H7`
+
+**FIXED (Wave 2).** `logout()` and `dismissFarewell()` now best-effort revoke `/auth/logout` (idempotent, 5s timeout); a new `authEvents` emitter lets `apiClient` publish `authInvalidated` on refresh failure, and `AuthProvider` subscribes to it → dispatches `LOGOUT`. Covered by tests for the logout POST and `emitAuthInvalidated`.
 
 `mobile/src/context/AuthContext.tsx:249-268`
 
@@ -387,6 +391,8 @@ in Scheduler.
 
 ### G3.1 (HIGH) — Cross-board IDOR: appointments accept Client/Service IDs from other boards · `H4`
 
+**FIXED (Wave 2).** Board-scoped FK lookups: `AppointmentHelpers.ClientExistsAsync`/`FindServiceAsync` now take a `boardId`; Create uses `request.BoardId`, Update uses `appointment.BoardId`. Covered by the `CreateAppointment_WithClientFromAnotherBoard_ReturnsNotFound` and `UpdateAppointment_WithClientFromAnotherBoard_ReturnsNotFound` tests.
+
 `backend/src/JiApp.Scheduler/Features/Common/AppointmentHelpers.cs:9-14` ·
 `…/CreateAppointment/CreateAppointmentHandler.cs:18-29` · `…/UpdateAppointment/UpdateAppointmentHandler.cs:22-33`
 
@@ -414,6 +420,8 @@ enumeration.
 
 ### G3.2 (MEDIUM) — 403-vs-404 existence oracle on Scheduler appointments · `N3`
 
+**FIXED (Wave 2).** GET/PUT/PATCH/DELETE appointment id-routes now collapse `AccessDenied` into a uniform 404 — same status and `"Appointment not found"` body — while the handler keeps the category distinction; the dead `Produces(403)` is dropped. Non-member GET/PUT/PATCH/DELETE endpoint tests return 404.
+
 `Features/Appointments/GetAppointment/GetAppointmentHandler.cs:12-18` + `GetAppointmentEndpoint.cs:19-22`
 
 ```csharp
@@ -436,6 +444,8 @@ tenant's appointments. Same ordering in `UpdateAppointment` and `DeleteAppointme
 **Fix:** check board access first; return `404` for both "missing" and "not yours".
 
 ### G3.3 (MEDIUM) — Scheduler's board-member handlers lack the write lock LovingBoards uses · `N4`
+
+**FIXED (Wave 2).** `BoardWriteLock` ported from LovingBoards (per-board semaphore, `AddSingleton`); the `AddBoardMember`/`RemoveBoardMember` read-modify-write is now locked.
 
 `JiApp.Scheduler/Features/Boards/AddBoardMember/AddBoardMemberHandler.cs:8-23`
 
@@ -565,6 +575,8 @@ one turn can cost arbitrarily much.
 **Fix:** cap via `settings.Assistant.MaxMessagesPerTurn`, not a `const` (backend owns config).
 
 ### G4.6 (MEDIUM) — `take` is unbounded on the Scheduler client list · `M8`
+
+**FIXED (Wave 2).** `SchedulerSettings.ClampTake` (`DefaultPageSize` 50 / `MaxPageSize` 100) added; `ListClients` now clamps `take`. Covered by a `ClampTake` boundary theory.
 
 `Features/Clients/ListClients/ListClientsEndpoint.cs:10-21` — `handler.HandleAsync(q, skip ?? 0, take ?? 50, ct)`,
 no clamp. `take=1000000` is honoured. Identity does it correctly:
@@ -1119,6 +1131,8 @@ singleton whose `CreatePolicyEndpoint` key is `(request path, policy)` — **par
 i.e. unbounded growth keyed on user input.
 
 ### G10.3 (MEDIUM) — `RevenueReport` weekend grouping sorts wrong and is culture-dependent · `M14`
+
+**FIXED (Wave 2).** Weekend grouping is now keyed by the `DateOnly` Saturday and ordered chronologically; labels are formatted with `InvariantCulture` at the boundary. Covered by multi-month and pl-PL culture tests.
 
 `Features/Reports/RevenueReport/RevenueReportHandler.cs:88-93, 84`
 
