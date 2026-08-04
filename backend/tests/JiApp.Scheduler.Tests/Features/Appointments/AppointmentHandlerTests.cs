@@ -121,6 +121,19 @@ public sealed class AppointmentHandlerTests : HandlerTestBase
             _db.ChangeTracker.Clear();
             return this;
         }
+
+        public Fixture WithOtherBoardAndClient(out long boardId, out long clientId)
+        {
+            var board = new Board { Name = "Other", MemberUserIds = [1L] };
+            var client = new Client { Name = "Bob", Board = board };
+            _db.Boards.Add(board);
+            _db.Clients.Add(client);
+            _db.SaveChanges();
+            boardId = board.Id;
+            clientId = client.Id;
+            _db.ChangeTracker.Clear();
+            return this;
+        }
     }
 
     [Fact]
@@ -521,6 +534,43 @@ public sealed class AppointmentHandlerTests : HandlerTestBase
 
         AssertAccessDenied(result);
         AssertNoEntityInDb<Appointment>((SchedulerDbContext)DbContext);
+    }
+
+    [Fact]
+    public async Task CreateAppointment_WithClientFromAnotherBoard_ReturnsNotFound()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithSeededEntities();
+        fixture.WithOtherBoardAndClient(out _, out var otherBoardClientId);
+        var sut = fixture.CreateAppointment;
+        var request = new CreateAppointmentRequest(
+            fixture.Board.Id, otherBoardClientId, fixture.Service.Id,
+            fixture.Saturday, new TimeOnly(10, 0), new TimeOnly(11, 0),
+            null, "Room 1", null);
+
+        var result = await sut.HandleAsync(request, CancellationToken.None);
+
+        AssertNotFound(result);
+        AssertNoEntityInDb<Appointment>((SchedulerDbContext)DbContext);
+    }
+
+    [Fact]
+    public async Task UpdateAppointment_WithClientFromAnotherBoard_ReturnsNotFound()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithSeededEntities();
+        fixture.WithAppointment(out var appointmentId);
+        fixture.WithOtherBoardAndClient(out _, out var otherBoardClientId);
+        var sut = fixture.UpdateAppointment;
+        var request = new UpdateAppointmentRequest(
+            otherBoardClientId, fixture.Service.Id,
+            fixture.Saturday, new TimeOnly(11, 0), new TimeOnly(12, 0),
+            null, "Room 2", new PriceRequest(120));
+
+        var result = await sut.HandleAsync(appointmentId, request, CancellationToken.None);
+
+        AssertNotFound(result);
+        var reloaded = Db.FindFresh<Appointment>(appointmentId);
+        reloaded!.ClientId.Should().Be(fixture.Client.Id);
+        reloaded.Location.Should().Be(string.Empty);
     }
 
     [Fact]

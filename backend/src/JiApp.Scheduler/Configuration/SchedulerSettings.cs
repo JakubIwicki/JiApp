@@ -7,6 +7,10 @@ public sealed class SchedulerSettings
     public JwtSettings? Jwt { get; set; }
     public string[]? CorsAllowedOrigins { get; set; }
     public string? IdentityBaseUrl { get; set; }
+    public int DefaultPageSize { get; set; } = 50;
+    public int MaxPageSize { get; set; } = 100;
+
+    public int ClampTake(int? take) => Math.Clamp(take ?? DefaultPageSize, 1, MaxPageSize);
 
     public void Validate()
     {

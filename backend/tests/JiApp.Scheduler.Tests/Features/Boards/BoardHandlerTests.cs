@@ -7,6 +7,7 @@ using JiApp.Scheduler.Features.Boards.GetBoard;
 using JiApp.Scheduler.Features.Boards.ListBoards;
 using JiApp.Scheduler.Features.Boards.RemoveBoardMember;
 using JiApp.Scheduler.Features.Boards.UpdateBoard;
+using JiApp.Scheduler.Features.Common;
 
 namespace JiApp.Scheduler.Tests.Features.Boards;
 
@@ -17,6 +18,7 @@ public sealed class BoardHandlerTests : HandlerTestBase
         private readonly ISchedulerDbContext _dbContext;
         private readonly TestDb _testDb;
         private readonly ICurrentUserService _currentUser;
+        private readonly BoardWriteLock _boardLock = new();
 
         private Fixture(ISchedulerDbContext dbContext, TestDb testDb)
         {
@@ -30,8 +32,8 @@ public sealed class BoardHandlerTests : HandlerTestBase
         public UpdateBoardHandler UpdateBoard => new(_dbContext, _currentUser);
         public DeleteBoardHandler DeleteBoard => new(_dbContext, _currentUser);
         public ListBoardsHandler ListBoards => new(_dbContext, _currentUser);
-        public AddBoardMemberHandler AddBoardMember => new(_dbContext, _currentUser);
-        public RemoveBoardMemberHandler RemoveBoardMember => new(_dbContext, _currentUser);
+        public AddBoardMemberHandler AddBoardMember => new(_dbContext, _currentUser, _boardLock);
+        public RemoveBoardMemberHandler RemoveBoardMember => new(_dbContext, _currentUser, _boardLock);
 
         public static Fixture Init(ISchedulerDbContext dbContext, TestDb testDb) => new(dbContext, testDb);
 

@@ -26,6 +26,7 @@ using JiApp.Scheduler.Features.Clients.DeleteClient;
 using JiApp.Scheduler.Features.Clients.GetClient;
 using JiApp.Scheduler.Features.Clients.ListClients;
 using JiApp.Scheduler.Features.Clients.UpdateClient;
+using JiApp.Scheduler.Features.Common;
 using JiApp.Scheduler.Features.DayTotals;
 using JiApp.Scheduler.Features.Expenses.CreateExpense;
 using JiApp.Scheduler.Features.Expenses.DeleteExpense;
@@ -127,6 +128,7 @@ public class Startup(SchedulerSettings settings, IWebHostEnvironment env)
 
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddSingleton(settings);
+        services.AddSingleton<BoardWriteLock>();
         services.AddHttpContextAccessor();
 
         services.AddSecurityStampRecheck(settings.IdentityBaseUrl, env);

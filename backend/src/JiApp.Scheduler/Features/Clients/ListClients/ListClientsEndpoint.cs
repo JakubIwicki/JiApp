@@ -11,10 +11,11 @@ public static class ListClientsEndpoint
                 string? q,
                 int? skip,
                 int? take,
+                SchedulerSettings settings,
                 ListClientsHandler handler,
                 CancellationToken ct) =>
             {
-                var result = await handler.HandleAsync(q, skip ?? 0, take ?? 50, ct);
+                var result = await handler.HandleAsync(q, skip ?? 0, settings.ClampTake(take), ct);
                 return result.IsSuccess
                     ? Results.Ok(result.Value)
                     : Results.BadRequest(new ApiErrorResponse(result.Error!));

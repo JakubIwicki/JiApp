@@ -62,4 +62,18 @@ public sealed class SchedulerSettingsTests
 
         act.Should().NotThrow();
     }
+
+    [Theory]
+    [InlineData(null, 50)]
+    [InlineData(1000000, 100)]
+    [InlineData(1, 1)]
+    [InlineData(0, 1)]
+    public void ClampTake_ReturnsValueClampedToPageBounds(int? take, int expected)
+    {
+        var settings = new SchedulerSettings();
+
+        var result = settings.ClampTake(take);
+
+        result.Should().Be(expected);
+    }
 }

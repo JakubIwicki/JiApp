@@ -19,10 +19,10 @@ public sealed class CreateAppointmentHandler(
         if (!boardResult.IsSuccess)
             return Result<long>.Failure(boardResult.Error!, boardResult.ErrorCategory);
 
-        if (!await AppointmentHelpers.ClientExistsAsync(db, request.ClientId, ct))
+        if (!await AppointmentHelpers.ClientExistsAsync(db, request.BoardId, request.ClientId, ct))
             return Result<long>.Failure("Client not found", ResultCategories.NotFound);
 
-        var service = await AppointmentHelpers.FindServiceAsync(db, request.ServiceId, ct);
+        var service = await AppointmentHelpers.FindServiceAsync(db, request.BoardId, request.ServiceId, ct);
         if (service is null)
             return Result<long>.Failure("Service not found", ResultCategories.NotFound);
 
