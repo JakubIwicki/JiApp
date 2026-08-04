@@ -3,13 +3,20 @@ using System.Text.Json;
 using JiApp.Gateway.Tests.Integration;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace JiApp.Gateway.Tests.Integration;
 
 public sealed class GatewayIntegrationTests : IClassFixture<GatewayWebApplicationFactory>
 {
+    static GatewayIntegrationTests()
+    {
+        // The ad-hoc Development factory below (dashboard is dev-only) needs a Jwt:Key;
+        // appsettings.Test.json only loads under env=Test. Supply it via the env var the
+        // app reads in production (compose maps JWT_KEY -> Jwt__Key).
+        Environment.SetEnvironmentVariable("Jwt__Key", "test-key-at-least-32-characters!!");
+    }
+
     private readonly GatewayWebApplicationFactory _factory;
 
     public GatewayIntegrationTests(GatewayWebApplicationFactory factory)
@@ -82,11 +89,6 @@ public sealed class GatewayIntegrationTests : IClassFixture<GatewayWebApplicatio
             .WithWebHostBuilder(builder =>
             {
                 builder.UseEnvironment("Development");
-                builder.ConfigureAppConfiguration((_, config) =>
-                    config.AddInMemoryCollection(new Dictionary<string, string?>
-                    {
-                        ["Jwt:Key"] = "test-key-at-least-32-characters!!"
-                    }));
             });
         var client = devFactory.CreateClient();
         var response = await client.GetAsync("/health/dashboard");
