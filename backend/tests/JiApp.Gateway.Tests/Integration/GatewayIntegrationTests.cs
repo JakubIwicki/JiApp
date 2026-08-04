@@ -9,6 +9,14 @@ namespace JiApp.Gateway.Tests.Integration;
 
 public sealed class GatewayIntegrationTests : IClassFixture<GatewayWebApplicationFactory>
 {
+    static GatewayIntegrationTests()
+    {
+        // The ad-hoc Development factory below (dashboard is dev-only) needs a Jwt:Key;
+        // appsettings.Test.json only loads under env=Test. Supply it via the env var the
+        // app reads in production (compose maps JWT_KEY -> Jwt__Key).
+        Environment.SetEnvironmentVariable("Jwt__Key", "test-key-at-least-32-characters!!");
+    }
+
     private readonly GatewayWebApplicationFactory _factory;
 
     public GatewayIntegrationTests(GatewayWebApplicationFactory factory)

@@ -160,7 +160,25 @@ public sealed class RefreshHandlerTests
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Invalid or expired refresh token");
+        fixture.TransactionMock.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
         fixture.RefreshTokenDouble.VerifyRevokedAllForUser(1);
+        fixture.RefreshTokenDouble.VerifyRevokedAllForUser_WithCancellationTokenNone(1);
+    }
+
+    [Fact]
+    public async Task HandleAsync_RollsBackTransaction_ThenRevokesAllTokens_WhenConcurrentRevocationDetected()
+    {
+        var fixture = new Fixture().WithConcurrentRevocation();
+        var order = new List<string>();
+        fixture.TransactionMock.Setup(t => t.RollbackAsync(It.IsAny<CancellationToken>()))
+            .Callback(() => order.Add("rollback"));
+        fixture.RefreshTokenDouble.Mock.Setup(s => s.RevokeAllForUserAsync(1, CancellationToken.None))
+            .Callback(() => order.Add("revoke-all"));
+
+        var result = await fixture.Sut.HandleAsync(new RefreshRequest("concurrent-token"), CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        order.Should().ContainInOrder("rollback", "revoke-all");
     }
 
     [Fact]

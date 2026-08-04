@@ -24,9 +24,10 @@ public sealed class ChangePasswordHandlerTests
 
         public MockUserManager UserManagerDouble { get; } = MockUserManager.GetSuccessful();
         public MockCurrentUserService CurrentUser { get; } = MockCurrentUserService.GetSuccessful();
+        public MockRefreshTokenService RefreshTokenDouble { get; } = MockRefreshTokenService.GetSuccessful();
 
         public ChangePasswordHandler Sut =>
-            new(UserManagerDouble.Object, CurrentUser.Object, Mock.Of<ILogger<ChangePasswordHandler>>());
+            new(UserManagerDouble.Object, CurrentUser.Object, RefreshTokenDouble.Object, Mock.Of<ILogger<ChangePasswordHandler>>());
 
         public Fixture WithExistingUser(long userId = 1)
         {
@@ -38,6 +39,7 @@ public sealed class ChangePasswordHandlerTests
         public Fixture WithSuccessfulPasswordChange()
         {
             UserManagerDouble.WithChangePasswordAsync(_testUser, "OldPass1", "NewPass1", IdentityResult.Success);
+            RefreshTokenDouble.WithRevokeAllForUserAsync(1);
             return this;
         }
 
@@ -90,5 +92,41 @@ public sealed class ChangePasswordHandlerTests
 
         AssertFailure(result, ResultCategories.NotFound);
         result.Error.Should().Be("User not found");
+    }
+
+    [Fact]
+    public async Task HandleAsync_RevokesAllRefreshTokens_WhenPasswordChangeSucceeds()
+    {
+        var fixture = new Fixture().WithExistingUser().WithSuccessfulPasswordChange();
+
+        var result = await fixture.Sut.HandleAsync(
+            new ChangePasswordRequest("OldPass1", "NewPass1"), CancellationToken.None);
+
+        AssertSuccess(result);
+        fixture.RefreshTokenDouble.VerifyRevokedAllForUser_WithCancellationTokenNone(1);
+    }
+
+    [Fact]
+    public async Task HandleAsync_DoesNotRevokeRefreshTokens_WhenPasswordChangeFails()
+    {
+        var fixture = new Fixture().WithExistingUser().WithFailingPasswordChange();
+
+        var result = await fixture.Sut.HandleAsync(
+            new ChangePasswordRequest("WrongPass", "NewPass1"), CancellationToken.None);
+
+        AssertFailure(result, ResultCategories.Validation);
+        fixture.RefreshTokenDouble.VerifyRevokedAllForUser_NotCalled();
+    }
+
+    [Fact]
+    public async Task HandleAsync_DoesNotRevokeRefreshTokens_WhenUserMissing()
+    {
+        var fixture = new Fixture().WithMissingUser();
+
+        var result = await fixture.Sut.HandleAsync(
+            new ChangePasswordRequest("OldPass1", "NewPass1"), CancellationToken.None);
+
+        AssertFailure(result, ResultCategories.NotFound);
+        fixture.RefreshTokenDouble.VerifyRevokedAllForUser_NotCalled();
     }
 }
