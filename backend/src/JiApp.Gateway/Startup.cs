@@ -137,13 +137,15 @@ public class Startup(GatewaySettings settings, IConfiguration configuration, IWe
             };
         });
 
-        // YARP reverse proxy — in dev, bypass SSL validation for self-signed certs
+        // YARP reverse proxy — bypass SSL validation for self-signed certs in Development only.
+        // Production must validate certificates on every Gateway→service hop.
         services.AddReverseProxy()
             .LoadFromConfig(configuration.GetSection("ReverseProxy"))
             .ConfigureHttpClient((context, handler) =>
             {
-                handler.SslOptions.RemoteCertificateValidationCallback =
-                    (sender, cert, chain, errors) => true;
+                if (env.IsDevelopment())
+                    handler.SslOptions.RemoteCertificateValidationCallback =
+                        (sender, cert, chain, errors) => true;
             });
 
         // Rate limit policy service — endpoint manipulation for rate limiting
@@ -152,11 +154,15 @@ public class Startup(GatewaySettings settings, IConfiguration configuration, IWe
         // Global exception middleware — catches unhandled exceptions, returns JSON
         services.AddScoped<GlobalExceptionMiddleware>();
 
-        // HttpClient for health dashboard — bypass SSL for dev self-signed certs
+        // HttpClient for health dashboard — bypass SSL for dev self-signed certs in Development only.
+        // Production health checks validate certificates like any other client.
         services.AddHttpClient("healthCheck")
-            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+            .ConfigurePrimaryHttpMessageHandler(() =>
             {
-                ServerCertificateCustomValidationCallback = (_, _, _, _) => true
+                var handler = new HttpClientHandler();
+                if (env.IsDevelopment())
+                    handler.ServerCertificateCustomValidationCallback = (_, _, _, _) => true;
+                return handler;
             });
     }
 
