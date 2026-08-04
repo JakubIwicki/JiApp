@@ -8,6 +8,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import * as serviceCatalogService from '../services/serviceCatalogService';
 import { useBoard } from '../hooks/useBoard';
 import { useThemedStyles } from '../../../context/ThemeContext';
@@ -28,6 +29,15 @@ const CATEGORY_ORDER: Record<string, number> = {
   Other: 5,
 };
 
+const CATEGORY_LABELS: Record<string, string> = {
+  MensHaircut: 'scheduler.category.mensHaircut',
+  WomensHaircut: 'scheduler.category.womensHaircut',
+  WomensStyling: 'scheduler.category.womensStyling',
+  Coloring: 'scheduler.category.coloring',
+  Treatment: 'scheduler.category.treatment',
+  Other: 'scheduler.category.other',
+};
+
 interface Section {
   title: string;
   data: ServiceItem[];
@@ -38,6 +48,7 @@ const ServiceRow: React.FC<{
   onNavigate: (id: number, boardId: number) => void;
   onDelete: (id: number, name: string) => void;
 }> = ({ item, onNavigate, onDelete }) => {
+  const { t } = useTranslation();
   const styles = useThemedStyles(makeStyles);
   return (
     <Pressable
@@ -48,8 +59,11 @@ const ServiceRow: React.FC<{
       <View style={styles.serviceInfo}>
         <Text style={styles.serviceName}>{item.name}</Text>
         <Text style={styles.serviceDetail}>
-          {item.baseDuration} min | {item.basePrice.amount}{' '}
-          {item.basePrice.currency}
+          {t('scheduler.serviceList.durationAndPrice', {
+            duration: item.baseDuration,
+            amount: item.basePrice.amount,
+            currency: item.basePrice.currency,
+          })}
         </Text>
       </View>
       <Text style={styles.chevron}>{'>'}</Text>
@@ -59,6 +73,7 @@ const ServiceRow: React.FC<{
 
 const ServiceListScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
+  const { t } = useTranslation();
   const { selectedBoardId } = useBoard();
   const styles = useThemedStyles(makeStyles);
   const [services, setServices] = useState<ServiceItem[]>([]);
@@ -83,23 +98,33 @@ const ServiceListScreen: React.FC = () => {
       .map(([title, data]) => ({ title, data }));
   }, [services]);
 
-  const handleDelete = useCallback((id: number, name: string) => {
-    Alert.alert('Delete Service', `Delete "${name}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await serviceCatalogService.deleteService(id);
-            setServices(prev => prev.filter(s => s.id !== id));
-          } catch {
-            Alert.alert('Error', 'Failed to delete service');
-          }
-        },
-      },
-    ]);
-  }, []);
+  const handleDelete = useCallback(
+    (id: number, name: string) => {
+      Alert.alert(
+        t('scheduler.serviceList.deleteTitle'),
+        t('scheduler.serviceList.deleteConfirm', { name }),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('scheduler.serviceList.delete'),
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await serviceCatalogService.deleteService(id);
+                setServices(prev => prev.filter(s => s.id !== id));
+              } catch {
+                Alert.alert(
+                  t('scheduler.error'),
+                  t('scheduler.serviceList.deleteFailed'),
+                );
+              }
+            },
+          },
+        ],
+      );
+    },
+    [t],
+  );
 
   const handleServiceNavigate = useCallback(
     (id: number, boardId: number) =>
@@ -122,7 +147,7 @@ const ServiceListScreen: React.FC = () => {
     <View style={styles.container}>
       {isLoading ? (
         <View style={styles.center}>
-          <Text style={styles.loadingText}>Loading…</Text>
+          <Text style={styles.loadingText}>{t('common.loading')}</Text>
         </View>
       ) : sections.length > 0 ? (
         <SectionList
@@ -131,12 +156,16 @@ const ServiceListScreen: React.FC = () => {
           contentContainerStyle={styles.listContent}
           renderItem={renderServiceItem}
           renderSectionHeader={({ section: { title } }) => (
-            <Text style={styles.sectionHeader}>{title}</Text>
+            <Text style={styles.sectionHeader}>
+              {t(CATEGORY_LABELS[title] ?? title)}
+            </Text>
           )}
         />
       ) : (
         <View style={styles.center}>
-          <Text style={styles.emptyText}>No services yet</Text>
+          <Text style={styles.emptyText}>
+            {t('scheduler.serviceList.empty')}
+          </Text>
         </View>
       )}
 
@@ -148,7 +177,7 @@ const ServiceListScreen: React.FC = () => {
             boardId: selectedBoardId ?? 0,
           })
         }
-        accessibilityLabel="Create service"
+        accessibilityLabel={t('scheduler.serviceList.createAccessibility')}
         accessibilityRole="button"
       >
         <Text style={styles.fabText}>+</Text>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useThemedStyles } from '../../../context/ThemeContext';
 import type { Theme } from '../../../styles/theme';
 import { spacing, borderRadius } from '../../../styles/theme';
@@ -17,6 +18,7 @@ const WeekendNavigator: React.FC<WeekendNavigatorProps> = ({
   onNext,
   onToday,
 }) => {
+  const { t } = useTranslation();
   const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.container}>
@@ -26,7 +28,9 @@ const WeekendNavigator: React.FC<WeekendNavigatorProps> = ({
           styles.arrowButton,
           pressed && { opacity: 0.7 },
         ]}
-        accessibilityLabel="Previous weekend"
+        accessibilityLabel={t(
+          'scheduler.weekendNavigator.previousAccessibility',
+        )}
         accessibilityRole="button"
       >
         <Text style={styles.arrowText}>{'‹'}</Text>
@@ -40,7 +44,9 @@ const WeekendNavigator: React.FC<WeekendNavigatorProps> = ({
         ]}
       >
         <Text style={styles.labelText}>{weekLabel}</Text>
-        <Text style={styles.todayLabel}>Today</Text>
+        <Text style={styles.todayLabel}>
+          {t('scheduler.weekendNavigator.today')}
+        </Text>
       </Pressable>
 
       <Pressable
@@ -49,7 +55,7 @@ const WeekendNavigator: React.FC<WeekendNavigatorProps> = ({
           styles.arrowButton,
           pressed && { opacity: 0.7 },
         ]}
-        accessibilityLabel="Next weekend"
+        accessibilityLabel={t('scheduler.weekendNavigator.nextAccessibility')}
         accessibilityRole="button"
       >
         <Text style={styles.arrowText}>{'›'}</Text>

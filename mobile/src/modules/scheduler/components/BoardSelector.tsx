@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   View,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useBoard } from '../hooks/useBoard';
 import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
 import type { Theme } from '../../../styles/theme';
@@ -24,6 +25,7 @@ const BoardSelector: React.FC = () => {
     createBoard,
     deleteBoard,
   } = useBoard();
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [modalVisible, setModalVisible] = useState(false);
@@ -42,7 +44,7 @@ const BoardSelector: React.FC = () => {
       setShowCreate(false);
       setModalVisible(false);
     } catch {
-      Alert.alert('Error', 'Failed to create board');
+      Alert.alert(t('scheduler.error'), t('boardManagement.createError'));
     } finally {
       setCreating(false);
     }
@@ -50,12 +52,12 @@ const BoardSelector: React.FC = () => {
 
   const handleDelete = (board: Board) => {
     Alert.alert(
-      'Delete Board',
-      `Delete "${board.name}"? This will permanently delete ALL appointments, clients, services, and expenses in this board.`,
+      t('scheduler.boardSelector.deleteTitle'),
+      t('boardManagement.deleteConfirm', { name: board.name }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Delete',
+          text: t('boardManagement.delete'),
           style: 'destructive',
           onPress: () => deleteBoard(board.id),
         },
@@ -73,7 +75,7 @@ const BoardSelector: React.FC = () => {
           <ActivityIndicator size="small" color={colors.primary} />
         ) : (
           <Text style={styles.selectorText}>
-            {selectedBoard?.name ?? 'No board'} ▾
+            {selectedBoard?.name ?? t('scheduler.boardSelector.noBoard')} ▾
           </Text>
         )}
       </Pressable>
@@ -81,10 +83,10 @@ const BoardSelector: React.FC = () => {
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Boards</Text>
+            <Text style={styles.modalTitle}>{t('boardManagement.title')}</Text>
 
             {boards.length === 0 ? (
-              <Text style={styles.emptyText}>No boards yet</Text>
+              <Text style={styles.emptyText}>{t('boardManagement.empty')}</Text>
             ) : (
               boards.map(board => (
                 <View key={board.id} style={styles.boardRow}>
@@ -103,8 +105,9 @@ const BoardSelector: React.FC = () => {
                       {board.name}
                     </Text>
                     <Text style={styles.memberCount}>
-                      {board.memberUserIds.length} member
-                      {board.memberUserIds.length !== 1 ? 's' : ''}
+                      {t('boardManagement.memberCount', {
+                        count: board.memberUserIds.length,
+                      })}
                     </Text>
                   </Pressable>
                   <Pressable
@@ -124,7 +127,7 @@ const BoardSelector: React.FC = () => {
               <View style={styles.createRow}>
                 <TextInput
                   style={styles.createInput}
-                  placeholder="Board name"
+                  placeholder={t('boardManagement.createPlaceholder')}
                   placeholderTextColor={colors.textTertiary}
                   value={newName}
                   onChangeText={setNewName}
@@ -137,7 +140,7 @@ const BoardSelector: React.FC = () => {
                   style={({ pressed }) => pressed && { opacity: 0.7 }}
                 >
                   <Text style={styles.createBtnText}>
-                    {creating ? '…' : 'Create'}
+                    {creating ? '…' : t('boardManagement.create')}
                   </Text>
                 </Pressable>
                 <Pressable
@@ -147,7 +150,7 @@ const BoardSelector: React.FC = () => {
                   }}
                   style={({ pressed }) => pressed && { opacity: 0.7 }}
                 >
-                  <Text style={styles.cancelBtnText}>Cancel</Text>
+                  <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
                 </Pressable>
               </View>
             ) : (
@@ -158,7 +161,9 @@ const BoardSelector: React.FC = () => {
                 ]}
                 onPress={() => setShowCreate(true)}
               >
-                <Text style={styles.createButtonText}>+ Create New Board</Text>
+                <Text style={styles.createButtonText}>
+                  {t('scheduler.boardSelector.createNew')}
+                </Text>
               </Pressable>
             )}
 
@@ -169,7 +174,9 @@ const BoardSelector: React.FC = () => {
               ]}
               onPress={() => setModalVisible(false)}
             >
-              <Text style={styles.closeButtonText}>Close</Text>
+              <Text style={styles.closeButtonText}>
+                {t('scheduler.boardSelector.close')}
+              </Text>
             </Pressable>
           </View>
         </View>

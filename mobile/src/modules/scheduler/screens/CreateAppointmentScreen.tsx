@@ -10,6 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import ClientPicker from '../components/ClientPicker';
 import useAppointments from '../hooks/useAppointments';
 import useClients from '../hooks/useClients';
@@ -31,12 +32,22 @@ const SERVICE_CATEGORIES = [
   'Other',
 ] as const;
 
+const CATEGORY_LABELS: Record<string, string> = {
+  MensHaircut: 'scheduler.category.mensHaircut',
+  WomensHaircut: 'scheduler.category.womensHaircut',
+  WomensStyling: 'scheduler.category.womensStyling',
+  Coloring: 'scheduler.category.coloring',
+  Treatment: 'scheduler.category.treatment',
+  Other: 'scheduler.category.other',
+};
+
 const ServiceItemRow = React.memo<{
   service: ServiceItem;
   isSelected: boolean;
   startTime: string;
   onSelect: (serviceId: number, endTime: string) => void;
 }>(({ service, isSelected, startTime, onSelect }) => {
+  const { t } = useTranslation();
   const styles = useThemedStyles(makeStyles);
   const endTime = calculateEndTime(startTime, service.baseDuration);
   return (
@@ -51,8 +62,11 @@ const ServiceItemRow = React.memo<{
       <View>
         <Text style={styles.serviceName}>{service.name}</Text>
         <Text style={styles.serviceDetail}>
-          {service.baseDuration} min | {service.basePrice.amount}{' '}
-          {service.basePrice.currency}
+          {t('scheduler.serviceList.durationAndPrice', {
+            duration: service.baseDuration,
+            amount: service.basePrice.amount,
+            currency: service.basePrice.currency,
+          })}
         </Text>
       </View>
     </Pressable>
@@ -130,6 +144,7 @@ const CreateAppointmentScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<CreateRoute>();
   const { boardId } = route.params;
+  const { t } = useTranslation();
 
   const appointments = useAppointments();
   const clients = useClients(boardId);
@@ -181,7 +196,10 @@ const CreateAppointmentScreen: React.FC = () => {
 
   const handleSubmit = useCallback(async () => {
     if (!form.selectedClientId || !form.selectedServiceId) {
-      Alert.alert('Validation', 'Please select client and service');
+      Alert.alert(
+        t('scheduler.validation'),
+        t('scheduler.createAppointment.validationSelect'),
+      );
       return;
     }
 
@@ -206,8 +224,10 @@ const CreateAppointmentScreen: React.FC = () => {
       navigation.goBack();
     } catch (err) {
       Alert.alert(
-        'Error',
-        err instanceof Error ? err.message : 'Failed to create appointment',
+        t('scheduler.error'),
+        err instanceof Error
+          ? err.message
+          : t('scheduler.createAppointment.createFailed'),
       );
     } finally {
       dispatch({ type: 'SET_SUBMITTING', submitting: false });
@@ -224,6 +244,7 @@ const CreateAppointmentScreen: React.FC = () => {
     selectedService,
     appointments,
     navigation,
+    t,
   ]);
 
   const handleCreateClient = useCallback(
@@ -236,10 +257,12 @@ const CreateAppointmentScreen: React.FC = () => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.sectionTitle}>New Appointment</Text>
+      <Text style={styles.sectionTitle}>
+        {t('scheduler.createAppointment.title')}
+      </Text>
 
       {/* Date */}
-      <Text style={styles.label}>Date</Text>
+      <Text style={styles.label}>{t('scheduler.createAppointment.date')}</Text>
       <TextInput
         style={styles.input}
         value={form.date}
@@ -260,7 +283,9 @@ const CreateAppointmentScreen: React.FC = () => {
       />
 
       {/* Category selector */}
-      <Text style={styles.label}>Category</Text>
+      <Text style={styles.label}>
+        {t('scheduler.createAppointment.category')}
+      </Text>
       <View style={styles.categoryRow}>
         {SERVICE_CATEGORIES.map(cat => (
           <Pressable
@@ -278,14 +303,16 @@ const CreateAppointmentScreen: React.FC = () => {
                 form.selectedCategory === cat && styles.categoryChipTextActive,
               ]}
             >
-              {cat}
+              {t(CATEGORY_LABELS[cat])}
             </Text>
           </Pressable>
         ))}
       </View>
 
       {/* Service picker */}
-      <Text style={styles.label}>Service</Text>
+      <Text style={styles.label}>
+        {t('scheduler.createAppointment.service')}
+      </Text>
       <FlatList
         data={services}
         scrollEnabled={false}
@@ -296,7 +323,9 @@ const CreateAppointmentScreen: React.FC = () => {
       {/* Time inputs */}
       <View style={styles.timeRow}>
         <View style={styles.timeField}>
-          <Text style={styles.label}>Start</Text>
+          <Text style={styles.label}>
+            {t('scheduler.createAppointment.start')}
+          </Text>
           <TextInput
             style={styles.input}
             value={form.startTime}
@@ -306,7 +335,9 @@ const CreateAppointmentScreen: React.FC = () => {
           />
         </View>
         <View style={styles.timeField}>
-          <Text style={styles.label}>End</Text>
+          <Text style={styles.label}>
+            {t('scheduler.createAppointment.end')}
+          </Text>
           <TextInput
             style={styles.input}
             value={form.endTime}
@@ -318,24 +349,28 @@ const CreateAppointmentScreen: React.FC = () => {
       </View>
 
       {/* Description */}
-      <Text style={styles.label}>Description (optional)</Text>
+      <Text style={styles.label}>
+        {t('scheduler.createAppointment.descriptionOptional')}
+      </Text>
       <TextInput
         style={[styles.input, styles.textArea]}
         value={form.description}
         onChangeText={text => dispatch({ type: 'SET_DESCRIPTION', text })}
-        placeholder="Notes…"
+        placeholder={t('scheduler.createAppointment.notesPlaceholder')}
         placeholderTextColor={colors.textTertiary}
         multiline
         numberOfLines={3}
       />
 
       {/* Location */}
-      <Text style={styles.label}>Location (optional)</Text>
+      <Text style={styles.label}>
+        {t('scheduler.createAppointment.locationOptional')}
+      </Text>
       <TextInput
         style={styles.input}
         value={form.location}
         onChangeText={text => dispatch({ type: 'SET_LOCATION', text })}
-        placeholder="e.g. Salon"
+        placeholder={t('scheduler.createAppointment.locationPlaceholder')}
         placeholderTextColor={colors.textTertiary}
       />
 
@@ -350,7 +385,9 @@ const CreateAppointmentScreen: React.FC = () => {
         disabled={form.isSubmitting}
       >
         <Text style={styles.submitText}>
-          {form.isSubmitting ? 'Creating…' : 'Create Appointment'}
+          {form.isSubmitting
+            ? t('scheduler.createAppointment.creating')
+            : t('scheduler.createAppointment.submit')}
         </Text>
       </Pressable>
     </ScrollView>

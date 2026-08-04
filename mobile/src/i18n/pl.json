@@ -53,7 +53,8 @@
     "error": "Błąd wyszukiwania",
     "recentSearches": "Ostatnie wyszukiwania",
     "empty": "Szukaj piosenki lub filmu,\naby rozpocząć pobieranie",
-    "backToRecent": "Powrót do ostatnich wyszukiwań"
+    "backToRecent": "Powrót do ostatnich wyszukiwań",
+    "clear": "Wyczyść wyszukiwanie"
   },
   "history": {
     "title": "Historia",
@@ -218,8 +219,10 @@
     "delete": "Usuń",
     "deleteConfirm": "Usunąć \"{{name}}\"? Spowoduje to trwałe usunięcie wszystkich wizyt, klientów, usług i wydatków na tej tablicy.",
     "members": "Członkowie",
-    "memberCount": "{{count}} członek",
-    "memberCount_plural": "{{count}} członków",
+    "memberCount_one": "{{count}} członek",
+    "memberCount_few": "{{count}} członków",
+    "memberCount_many": "{{count}} członków",
+    "memberCount_other": "{{count}} członków",
     "addMember": "Dodaj członka",
     "memberIdPlaceholder": "ID użytkownika",
     "remove": "Usuń",
@@ -227,6 +230,169 @@
     "createError": "Nie udało się utworzyć tablicy",
     "deleteError": "Nie udało się usunąć tablicy",
     "memberError": "Nie udało się zaktualizować członków"
+  },
+  "scheduler": {
+    "error": "Błąd",
+    "validation": "Weryfikacja",
+    "status": {
+      "created": "Utworzona",
+      "done": "Zrealizowana",
+      "cancelled": "Anulowana"
+    },
+    "category": {
+      "mensHaircut": "Strzyżenie mężczyzn",
+      "womensHaircut": "Strzyżenie kobiet",
+      "womensStyling": "Stylizacja kobieca",
+      "coloring": "Koloryzacja",
+      "treatment": "Zabieg",
+      "other": "Inne"
+    },
+    "appointmentDetail": {
+      "loadError": "Nie udało się załadować wizyty",
+      "updateError": "Nie udało się zaktualizować statusu",
+      "cancelTitle": "Anuluj wizytę",
+      "cancelConfirm": "Na pewno?",
+      "no": "Nie",
+      "yes": "Tak",
+      "cancelFailed": "Nie udało się anulować wizyty",
+      "deleteTitle": "Usuń wizytę",
+      "deleteConfirm": "Tej operacji nie można cofnąć.",
+      "cancel": "Anuluj",
+      "delete": "Usuń",
+      "deleteFailed": "Nie udało się usunąć",
+      "notFound": "Nie znaleziono wizyty",
+      "client": "Klient",
+      "service": "Usługa",
+      "serviceDetail": "{{category}} | {{duration}} min",
+      "when": "Kiedy",
+      "price": "Cena",
+      "location": "Lokalizacja",
+      "notes": "Notatki",
+      "markDone": "Oznacz jako zrealizowaną"
+    },
+    "createAppointment": {
+      "validationSelect": "Wybierz klienta i usługę",
+      "createFailed": "Nie udało się utworzyć wizyty",
+      "title": "Nowa wizyta",
+      "date": "Data",
+      "category": "Kategoria",
+      "service": "Usługa",
+      "start": "Początek",
+      "end": "Koniec",
+      "descriptionOptional": "Opis (opcjonalnie)",
+      "locationOptional": "Lokalizacja (opcjonalnie)",
+      "notesPlaceholder": "Notatki…",
+      "locationPlaceholder": "np. Salon",
+      "creating": "Tworzenie…",
+      "submit": "Utwórz wizytę"
+    },
+    "reports": {
+      "tabRevenue": "Przychody",
+      "tabClients": "Klienci",
+      "groupBy": "Grupuj:",
+      "sortBy": "Sortuj:",
+      "groupWeekend": "Weekend",
+      "groupService": "Usługa",
+      "groupLocation": "Lokalizacja",
+      "groupClient": "Klient",
+      "sortVisitCount": "Wizyty",
+      "sortTotalSpent": "Łącznie wydane",
+      "sortLastVisit": "Ostatnia wizyta",
+      "visits_one": "{{count}} wizyta",
+      "visits_few": "{{count}} wizyty",
+      "visits_many": "{{count}} wizyt",
+      "visits_other": "{{count}} wizyt",
+      "visitsLast_one": "{{count}} wizyta | Ostatnio: {{lastVisit}}",
+      "visitsLast_few": "{{count}} wizyty | Ostatnio: {{lastVisit}}",
+      "visitsLast_many": "{{count}} wizyt | Ostatnio: {{lastVisit}}",
+      "visitsLast_other": "{{count}} wizyt | Ostatnio: {{lastVisit}}",
+      "na": "N/D",
+      "averagePerVisit": "śr. {{amount}} PLN",
+      "noData": "Brak danych"
+    },
+    "clientList": {
+      "createFailed": "Nie udało się utworzyć klienta",
+      "searchPlaceholder": "Szukaj klientów…",
+      "empty": "Nie znaleziono klientów",
+      "clientNamePlaceholder": "Imię i nazwisko klienta",
+      "add": "Dodaj",
+      "createAccessibility": "Utwórz klienta"
+    },
+    "serviceList": {
+      "deleteTitle": "Usuń usługę",
+      "deleteConfirm": "Usunąć \"{{name}}\"?",
+      "delete": "Usuń",
+      "deleteFailed": "Nie udało się usunąć usługi",
+      "empty": "Brak usług",
+      "createAccessibility": "Utwórz usługę",
+      "durationAndPrice": "{{duration}} min | {{amount}} {{currency}}"
+    },
+    "serviceEdit": {
+      "loadFailed": "Nie udało się załadować usługi",
+      "nameRequired": "Nazwa jest wymagana",
+      "durationRequired": "Podaj prawidłowy czas trwania",
+      "priceRequired": "Podaj prawidłową cenę",
+      "saveFailed": "Nie udało się zapisać usługi",
+      "editTitle": "Edytuj usługę",
+      "newTitle": "Nowa usługa",
+      "name": "Nazwa",
+      "category": "Kategoria",
+      "durationLabel": "Podstawowy czas trwania (minuty)",
+      "priceLabel": "Podstawowa cena (PLN)",
+      "namePlaceholder": "np. Premium Strzyżenie",
+      "saving": "Zapisywanie…",
+      "updateSubmit": "Zaktualizuj usługę",
+      "createSubmit": "Utwórz usługę"
+    },
+    "weekendGrid": {
+      "noBoard": "Nie wybrano tablicy",
+      "noBoardSubtitle": "Wybierz lub utwórz tablicę, aby rozpocząć",
+      "clients": "Klienci",
+      "services": "Usługi",
+      "reports": "Raporty",
+      "saturday": "Sobota",
+      "sunday": "Niedziela",
+      "createAccessibility": "Utwórz wizytę"
+    },
+    "clientDetail": {
+      "notFound": "Nie znaleziono klienta",
+      "historyTitle": "Historia wizyt ({{count}})",
+      "empty": "Brak wizyt"
+    },
+    "boardSelector": {
+      "deleteTitle": "Usuń tablicę",
+      "createNew": "+ Utwórz nową tablicę",
+      "close": "Zamknij",
+      "noBoard": "Brak tablicy"
+    },
+    "summaryBar": {
+      "revenue": "Przychody",
+      "expenses": "Wydatki",
+      "netProfit": "Zysk netto",
+      "weekend": "Weekend"
+    },
+    "clientPicker": {
+      "client": "Klient",
+      "selectAccessibility": "Wybierz klienta",
+      "selectPlaceholder": "Wybierz klienta…",
+      "searchPlaceholder": "Szukaj klientów…",
+      "empty": "Nie znaleziono klientów",
+      "creating": "Tworzenie…",
+      "createWithName": "Utwórz \"{{name}}\""
+    },
+    "weekendNavigator": {
+      "previousAccessibility": "Poprzedni weekend",
+      "today": "Dziś",
+      "nextAccessibility": "Następny weekend"
+    },
+    "dayColumn": {
+      "noItems": "Brak elementów"
+    },
+    "dayTotalFooter": {
+      "revenue": "Przychody",
+      "expenses": "Wydatki",
+      "net": "Netto"
+    }
   },
   "lovingBoards": {
     "boardList": {
@@ -236,8 +402,10 @@
       "newBoard": "Nowa tablica",
       "createPrompt": "Nazwa tablicy",
       "create": "Utwórz",
-      "memberCount": "{{count}} członek",
-      "memberCount_plural": "{{count}} członków",
+      "memberCount_one": "{{count}} członek",
+      "memberCount_few": "{{count}} członków",
+      "memberCount_many": "{{count}} członków",
+      "memberCount_other": "{{count}} członków",
       "itemCount": "{{count}} element",
       "itemCount_plural": "{{count}} elementów",
       "loadError": "Nie udało się załadować tablic",

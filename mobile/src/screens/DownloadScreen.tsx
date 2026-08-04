@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -118,6 +118,7 @@ const DownloadScreen: React.FC = () => {
   const navigation = useNavigation<DownloadNavigationProp>();
   const route = useRoute<DownloadRouteProp>();
   const { videoId, title, description, imageUrl, videoUrl } = route.params;
+  const [imageFailed, setImageFailed] = useState(false);
   const styles = useThemedStyles(makeStyles);
   const { commonStyles } = useTheme();
 
@@ -160,12 +161,13 @@ const DownloadScreen: React.FC = () => {
     >
       {localFilePath && <FloatingParticles count={8} />}
 
-      {imageUrl ? (
+      {imageUrl && !imageFailed ? (
         <Image
           source={{ uri: imageUrl }}
           style={styles.thumbnail}
           testID="download-thumbnail"
           resizeMode="cover"
+          onError={() => setImageFailed(true)}
         />
       ) : (
         <View

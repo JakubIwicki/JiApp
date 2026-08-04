@@ -133,7 +133,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
             ]}
             testID="search-clear-button"
             accessibilityRole="button"
-            accessibilityLabel="Clear search"
+            accessibilityLabel={t('search.clear')}
           >
             <Text style={styles.clearButtonText}>X</Text>
           </Pressable>

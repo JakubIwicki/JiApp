@@ -7,6 +7,7 @@ import {
   FlatList,
   StyleSheet,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
 import type { Theme } from '../../../styles/theme';
 import { spacing, borderRadius } from '../../../styles/theme';
@@ -56,6 +57,7 @@ const ClientPicker: React.FC<ClientPickerProps> = ({
   onCreateNew,
   isLoading,
 }) => {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [query, setQuery] = useState('');
@@ -109,17 +111,19 @@ const ClientPicker: React.FC<ClientPickerProps> = ({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Client</Text>
+      <Text style={styles.label}>{t('scheduler.clientPicker.client')}</Text>
       <Pressable
         style={({ pressed }) => [styles.selector, pressed && { opacity: 0.7 }]}
         onPress={() => setIsOpen(!isOpen)}
         accessibilityRole="button"
-        accessibilityLabel="Select client"
+        accessibilityLabel={t('scheduler.clientPicker.selectAccessibility')}
       >
         <Text
           style={[styles.selectorText, !selectedClient && styles.placeholder]}
         >
-          {selectedClient ? selectedClient.name : 'Select a client…'}
+          {selectedClient
+            ? selectedClient.name
+            : t('scheduler.clientPicker.selectPlaceholder')}
         </Text>
         <Text style={styles.chevron}>{isOpen ? '▲' : '▼'}</Text>
       </Pressable>
@@ -128,7 +132,7 @@ const ClientPicker: React.FC<ClientPickerProps> = ({
         <View style={styles.dropdown}>
           <TextInput
             style={styles.searchInput}
-            placeholder="Search clients…"
+            placeholder={t('scheduler.clientPicker.searchPlaceholder')}
             placeholderTextColor={colors.textTertiary}
             value={query}
             onChangeText={setQuery}
@@ -137,7 +141,7 @@ const ClientPicker: React.FC<ClientPickerProps> = ({
 
           {isLoading ? (
             <View style={styles.centerState}>
-              <Text style={styles.stateText}>Loading…</Text>
+              <Text style={styles.stateText}>{t('common.loading')}</Text>
             </View>
           ) : filteredClients.length > 0 ? (
             <FlatList
@@ -148,7 +152,9 @@ const ClientPicker: React.FC<ClientPickerProps> = ({
             />
           ) : (
             <View style={styles.centerState}>
-              <Text style={styles.stateText}>No clients found</Text>
+              <Text style={styles.stateText}>
+                {t('scheduler.clientPicker.empty')}
+              </Text>
               <Pressable
                 style={({ pressed }) => [
                   styles.createButton,
@@ -159,7 +165,11 @@ const ClientPicker: React.FC<ClientPickerProps> = ({
                 disabled={isCreating || !query.trim()}
               >
                 <Text style={styles.createButtonText}>
-                  {isCreating ? 'Creating…' : `Create "${query.trim()}"`}
+                  {isCreating
+                    ? t('scheduler.clientPicker.creating')
+                    : t('scheduler.clientPicker.createWithName', {
+                        name: query.trim(),
+                      })}
                 </Text>
               </Pressable>
             </View>

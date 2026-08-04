@@ -8,6 +8,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import * as appointmentService from '../services/appointmentService';
 import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
 import type { Theme } from '../../../styles/theme';
@@ -17,10 +18,26 @@ import type { SchedulerStackParamList } from '../types/navigation';
 
 type DetailRoute = RouteProp<SchedulerStackParamList, 'AppointmentDetail'>;
 
+const STATUS_LABELS: Record<string, string> = {
+  Created: 'scheduler.status.created',
+  Done: 'scheduler.status.done',
+  Cancelled: 'scheduler.status.cancelled',
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  MensHaircut: 'scheduler.category.mensHaircut',
+  WomensHaircut: 'scheduler.category.womensHaircut',
+  WomensStyling: 'scheduler.category.womensStyling',
+  Coloring: 'scheduler.category.coloring',
+  Treatment: 'scheduler.category.treatment',
+  Other: 'scheduler.category.other',
+};
+
 const AppointmentDetailScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<DetailRoute>();
   const { appointmentId } = route.params;
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
@@ -37,61 +54,83 @@ const AppointmentDetailScreen: React.FC = () => {
     appointmentService
       .getAppointment(appointmentId)
       .then(setAppointment)
-      .catch(() => Alert.alert('Error', 'Failed to load appointment'))
+      .catch(() =>
+        Alert.alert(
+          t('scheduler.error'),
+          t('scheduler.appointmentDetail.loadError'),
+        ),
+      )
       .finally(() => setIsLoading(false));
-  }, [appointmentId]);
+  }, [appointmentId, t]);
 
   const handleMarkDone = async () => {
     try {
       await appointmentService.updateStatus(appointmentId, 'Done');
       setAppointment(prev => (prev ? { ...prev, status: 'Done' } : prev));
     } catch {
-      Alert.alert('Error', 'Failed to update status');
+      Alert.alert(
+        t('scheduler.error'),
+        t('scheduler.appointmentDetail.updateError'),
+      );
     }
   };
 
   const handleCancel = async () => {
-    Alert.alert('Cancel Appointment', 'Are you sure?', [
-      { text: 'No', style: 'cancel' },
-      {
-        text: 'Yes',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await appointmentService.updateStatus(appointmentId, 'Cancelled');
-            setAppointment(prev =>
-              prev ? { ...prev, status: 'Cancelled' } : prev,
-            );
-          } catch {
-            Alert.alert('Error', 'Failed to cancel appointment');
-          }
+    Alert.alert(
+      t('scheduler.appointmentDetail.cancelTitle'),
+      t('scheduler.appointmentDetail.cancelConfirm'),
+      [
+        { text: t('scheduler.appointmentDetail.no'), style: 'cancel' },
+        {
+          text: t('scheduler.appointmentDetail.yes'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await appointmentService.updateStatus(appointmentId, 'Cancelled');
+              setAppointment(prev =>
+                prev ? { ...prev, status: 'Cancelled' } : prev,
+              );
+            } catch {
+              Alert.alert(
+                t('scheduler.error'),
+                t('scheduler.appointmentDetail.cancelFailed'),
+              );
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const handleDelete = async () => {
-    Alert.alert('Delete Appointment', 'This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await appointmentService.deleteAppointment(appointmentId);
-            navigation.goBack();
-          } catch {
-            Alert.alert('Error', 'Failed to delete');
-          }
+    Alert.alert(
+      t('scheduler.appointmentDetail.deleteTitle'),
+      t('scheduler.appointmentDetail.deleteConfirm'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('scheduler.appointmentDetail.delete'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await appointmentService.deleteAppointment(appointmentId);
+              navigation.goBack();
+            } catch {
+              Alert.alert(
+                t('scheduler.error'),
+                t('scheduler.appointmentDetail.deleteFailed'),
+              );
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   if (isLoading) {
     return (
       <View style={styles.center}>
-        <Text style={styles.loadingText}>Loading…</Text>
+        <Text style={styles.loadingText}>{t('common.loading')}</Text>
       </View>
     );
   }
@@ -99,22 +138,29 @@ const AppointmentDetailScreen: React.FC = () => {
   if (!appointment) {
     return (
       <View style={styles.center}>
-        <Text style={styles.errorText}>Appointment not found</Text>
+        <Text style={styles.errorText}>
+          {t('scheduler.appointmentDetail.notFound')}
+        </Text>
       </View>
     );
   }
 
   const statusColor = STATUS_COLORS[appointment.status] || colors.textSecondary;
+  const statusLabel = t(
+    STATUS_LABELS[appointment.status] ?? appointment.status,
+  );
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Status badge */}
       <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-        <Text style={styles.statusText}>{appointment.status}</Text>
+        <Text style={styles.statusText}>{statusLabel}</Text>
       </View>
 
       {/* Client info */}
-      <Text style={styles.sectionTitle}>Client</Text>
+      <Text style={styles.sectionTitle}>
+        {t('scheduler.appointmentDetail.client')}
+      </Text>
       <View style={styles.card}>
         <Text style={styles.cardTitle}>{appointment.client.name}</Text>
         {appointment.client.phone ? (
@@ -123,17 +169,26 @@ const AppointmentDetailScreen: React.FC = () => {
       </View>
 
       {/* Service info */}
-      <Text style={styles.sectionTitle}>Service</Text>
+      <Text style={styles.sectionTitle}>
+        {t('scheduler.appointmentDetail.service')}
+      </Text>
       <View style={styles.card}>
         <Text style={styles.cardTitle}>{appointment.service.name}</Text>
         <Text style={styles.cardDetail}>
-          {appointment.service.category} | {appointment.service.baseDuration}{' '}
-          min
+          {t('scheduler.appointmentDetail.serviceDetail', {
+            category: t(
+              CATEGORY_LABELS[appointment.service.category] ??
+                appointment.service.category,
+            ),
+            duration: appointment.service.baseDuration,
+          })}
         </Text>
       </View>
 
       {/* Time & Date */}
-      <Text style={styles.sectionTitle}>When</Text>
+      <Text style={styles.sectionTitle}>
+        {t('scheduler.appointmentDetail.when')}
+      </Text>
       <View style={styles.card}>
         <Text style={styles.cardTitle}>
           {appointment.date} | {appointment.startTime} - {appointment.endTime}
@@ -141,7 +196,9 @@ const AppointmentDetailScreen: React.FC = () => {
       </View>
 
       {/* Price */}
-      <Text style={styles.sectionTitle}>Price</Text>
+      <Text style={styles.sectionTitle}>
+        {t('scheduler.appointmentDetail.price')}
+      </Text>
       <View style={styles.card}>
         <Text style={styles.priceValue}>
           {appointment.price.amount.toFixed(0)} {appointment.price.currency}
@@ -151,7 +208,9 @@ const AppointmentDetailScreen: React.FC = () => {
       {/* Location */}
       {appointment.location ? (
         <>
-          <Text style={styles.sectionTitle}>Location</Text>
+          <Text style={styles.sectionTitle}>
+            {t('scheduler.appointmentDetail.location')}
+          </Text>
           <View style={styles.card}>
             <Text style={styles.cardTitle}>{appointment.location}</Text>
           </View>
@@ -161,7 +220,9 @@ const AppointmentDetailScreen: React.FC = () => {
       {/* Description */}
       {appointment.description ? (
         <>
-          <Text style={styles.sectionTitle}>Notes</Text>
+          <Text style={styles.sectionTitle}>
+            {t('scheduler.appointmentDetail.notes')}
+          </Text>
           <View style={styles.card}>
             <Text style={styles.cardDetail}>{appointment.description}</Text>
           </View>
@@ -179,7 +240,9 @@ const AppointmentDetailScreen: React.FC = () => {
               ]}
               onPress={handleMarkDone}
             >
-              <Text style={styles.actionButtonText}>Mark Done</Text>
+              <Text style={styles.actionButtonText}>
+                {t('scheduler.appointmentDetail.markDone')}
+              </Text>
             </Pressable>
             <Pressable
               style={({ pressed }) => [
@@ -188,7 +251,7 @@ const AppointmentDetailScreen: React.FC = () => {
               ]}
               onPress={handleCancel}
             >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
+              <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
             </Pressable>
           </>
         ) : null}
@@ -199,7 +262,9 @@ const AppointmentDetailScreen: React.FC = () => {
           ]}
           onPress={handleDelete}
         >
-          <Text style={styles.deleteButtonText}>Delete</Text>
+          <Text style={styles.deleteButtonText}>
+            {t('scheduler.appointmentDetail.delete')}
+          </Text>
         </Pressable>
       </View>
     </ScrollView>

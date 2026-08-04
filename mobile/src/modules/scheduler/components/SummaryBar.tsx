@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
 import type { Theme } from '../../../styles/theme';
 import { spacing, borderRadius } from '../../../styles/theme';
@@ -20,6 +21,7 @@ const SummaryBar: React.FC<SummaryBarProps> = ({
   saturdayTotal,
   sundayTotal,
 }) => {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const total = {
@@ -33,24 +35,24 @@ const SummaryBar: React.FC<SummaryBarProps> = ({
     <View style={styles.container}>
       <View style={styles.row}>
         <SummaryCell
-          label="Revenue"
+          label={t('scheduler.summaryBar.revenue')}
           value={formatCurrency(total.revenue)}
           color={colors.success}
         />
         <SummaryCell
-          label="Expenses"
+          label={t('scheduler.summaryBar.expenses')}
           value={formatCurrency(total.expenses)}
           color={colors.warning}
         />
       </View>
       <View style={styles.row}>
         <SummaryCell
-          label="Net Profit"
+          label={t('scheduler.summaryBar.netProfit')}
           value={formatCurrency(total.net)}
           color={total.net >= 0 ? colors.success : colors.error}
         />
         <SummaryCell
-          label="Weekend"
+          label={t('scheduler.summaryBar.weekend')}
           value={`${saturdayTotal.revenue.toFixed(
             0,
           )} / ${sundayTotal.revenue.toFixed(0)}`}

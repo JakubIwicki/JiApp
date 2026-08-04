@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, Pressable, FlatList, StyleSheet } from 'react-native';
 import { useRoute, RouteProp } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import useReports from '../hooks/useReports';
 import { useThemedStyles } from '../../../context/ThemeContext';
 import type { Theme } from '../../../styles/theme';
@@ -13,12 +14,15 @@ type ReportsRoute = RouteProp<SchedulerStackParamList, 'Reports'>;
 type Tab = 'revenue' | 'clients';
 
 const RevenueRow: React.FC<{ item: RevenueReport }> = ({ item }) => {
+  const { t } = useTranslation();
   const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.reportRow}>
       <View style={styles.reportLeft}>
         <Text style={styles.reportKey}>{item.groupKey}</Text>
-        <Text style={styles.reportCount}>{item.appointmentCount} visits</Text>
+        <Text style={styles.reportCount}>
+          {t('scheduler.reports.visits', { count: item.appointmentCount })}
+        </Text>
       </View>
       <View style={styles.reportRight}>
         <Text style={styles.reportRevenue}>{item.revenue.toFixed(0)} PLN</Text>
@@ -39,13 +43,17 @@ const RevenueRow: React.FC<{ item: RevenueReport }> = ({ item }) => {
 };
 
 const ClientReportRow: React.FC<{ item: ClientReportItem }> = ({ item }) => {
+  const { t } = useTranslation();
   const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.reportRow}>
       <View style={styles.reportLeft}>
         <Text style={styles.reportKey}>{item.client.name}</Text>
         <Text style={styles.reportCount}>
-          {item.visitCount} visits | Last: {item.lastVisit || 'N/A'}
+          {t('scheduler.reports.visitsLast', {
+            count: item.visitCount,
+            lastVisit: item.lastVisit || t('scheduler.reports.na'),
+          })}
         </Text>
       </View>
       <View style={styles.reportRight}>
@@ -53,7 +61,9 @@ const ClientReportRow: React.FC<{ item: ClientReportItem }> = ({ item }) => {
           {item.totalSpent.toFixed(0)} PLN
         </Text>
         <Text style={styles.reportExpenses}>
-          avg {item.averagePerVisit.toFixed(0)} PLN
+          {t('scheduler.reports.averagePerVisit', {
+            amount: item.averagePerVisit.toFixed(0),
+          })}
         </Text>
       </View>
     </View>
@@ -63,9 +73,23 @@ const ClientReportRow: React.FC<{ item: ClientReportItem }> = ({ item }) => {
 const GROUP_BY_OPTIONS = ['weekend', 'service', 'location', 'client'] as const;
 const SORT_BY_OPTIONS = ['visitCount', 'totalSpent', 'lastVisit'] as const;
 
+const GROUP_LABELS: Record<string, string> = {
+  weekend: 'scheduler.reports.groupWeekend',
+  service: 'scheduler.reports.groupService',
+  location: 'scheduler.reports.groupLocation',
+  client: 'scheduler.reports.groupClient',
+};
+
+const SORT_LABELS: Record<string, string> = {
+  visitCount: 'scheduler.reports.sortVisitCount',
+  totalSpent: 'scheduler.reports.sortTotalSpent',
+  lastVisit: 'scheduler.reports.sortLastVisit',
+};
+
 const ReportsScreen: React.FC = () => {
   const route = useRoute<ReportsRoute>();
   const { boardId } = route.params;
+  const { t } = useTranslation();
   const reports = useReports();
   const styles = useThemedStyles(makeStyles);
 
@@ -116,7 +140,7 @@ const ReportsScreen: React.FC = () => {
               activeTab === 'revenue' && styles.tabTextActive,
             ]}
           >
-            Revenue
+            {t('scheduler.reports.tabRevenue')}
           </Text>
         </Pressable>
         <Pressable
@@ -133,7 +157,7 @@ const ReportsScreen: React.FC = () => {
               activeTab === 'clients' && styles.tabTextActive,
             ]}
           >
-            Clients
+            {t('scheduler.reports.tabClients')}
           </Text>
         </Pressable>
       </View>
@@ -142,7 +166,9 @@ const ReportsScreen: React.FC = () => {
       <View style={styles.controlsRow}>
         {activeTab === 'revenue' ? (
           <View style={styles.pickerRow}>
-            <Text style={styles.controlLabel}>Group:</Text>
+            <Text style={styles.controlLabel}>
+              {t('scheduler.reports.groupBy')}
+            </Text>
             {GROUP_BY_OPTIONS.map(opt => (
               <Pressable
                 key={opt}
@@ -159,14 +185,16 @@ const ReportsScreen: React.FC = () => {
                     groupBy === opt && styles.optionChipTextActive,
                   ]}
                 >
-                  {opt}
+                  {t(GROUP_LABELS[opt])}
                 </Text>
               </Pressable>
             ))}
           </View>
         ) : (
           <View style={styles.pickerRow}>
-            <Text style={styles.controlLabel}>Sort:</Text>
+            <Text style={styles.controlLabel}>
+              {t('scheduler.reports.sortBy')}
+            </Text>
             {SORT_BY_OPTIONS.map(opt => (
               <Pressable
                 key={opt}
@@ -183,7 +211,7 @@ const ReportsScreen: React.FC = () => {
                     sortBy === opt && styles.optionChipTextActive,
                   ]}
                 >
-                  {opt}
+                  {t(SORT_LABELS[opt])}
                 </Text>
               </Pressable>
             ))}
@@ -194,7 +222,7 @@ const ReportsScreen: React.FC = () => {
       {/* Content */}
       {reports.isLoading ? (
         <View style={styles.center}>
-          <Text style={styles.loadingText}>Loading…</Text>
+          <Text style={styles.loadingText}>{t('common.loading')}</Text>
         </View>
       ) : activeTab === 'revenue' ? (
         <FlatList
@@ -204,7 +232,9 @@ const ReportsScreen: React.FC = () => {
           renderItem={renderRevenueItem}
           ListEmptyComponent={
             <View style={styles.center}>
-              <Text style={styles.emptyText}>No data</Text>
+              <Text style={styles.emptyText}>
+                {t('scheduler.reports.noData')}
+              </Text>
             </View>
           }
         />
@@ -216,7 +246,9 @@ const ReportsScreen: React.FC = () => {
           renderItem={renderClientReportItem}
           ListEmptyComponent={
             <View style={styles.center}>
-              <Text style={styles.emptyText}>No data</Text>
+              <Text style={styles.emptyText}>
+                {t('scheduler.reports.noData')}
+              </Text>
             </View>
           }
         />

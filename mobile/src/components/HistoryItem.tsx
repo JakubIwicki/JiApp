@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
@@ -29,6 +29,7 @@ const HistoryItem: React.FC<BaseProps> = ({
   onArchive,
 }) => {
   const { t } = useTranslation();
+  const [imageFailed, setImageFailed] = useState(false);
   const styles = useThemedStyles(makeStyles);
 
   const renderRightActions = (
@@ -85,12 +86,13 @@ const HistoryItem: React.FC<BaseProps> = ({
             testID="history-item-download"
             accessibilityRole="button"
           >
-            {downloadItem.imageUrl ? (
+            {downloadItem.imageUrl && !imageFailed ? (
               <Image
                 source={{ uri: downloadItem.imageUrl }}
                 style={styles.thumbnail}
                 testID="history-thumbnail"
                 resizeMode="cover"
+                onError={() => setImageFailed(true)}
               />
             ) : (
               <View
