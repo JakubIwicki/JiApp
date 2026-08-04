@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using System.Threading.RateLimiting;
 using FluentValidation;
 using JiApp.Common;
 using JiApp.Common.Abstractions;
@@ -194,37 +195,48 @@ public class Startup(IdentitySettings settings, IWebHostEnvironment env)
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
-            options.AddFixedWindowLimiter("Register", config =>
-            {
-                config.PermitLimit = 5;
-                config.Window = TimeSpan.FromMinutes(1);
-                config.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
-                config.QueueLimit = 0;
-            });
+            // One bucket per authenticated user (falling back to client IP) rather than
+            // a single shared bucket for the whole service — a flood by one client can no
+            // longer exhaust the login/refresh budget for everyone else.
+            options.AddPolicy("Register", httpContext =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    RateLimitPartitioning.GetPartitionKey(httpContext),
+                    _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 5,
+                        Window = TimeSpan.FromMinutes(1),
+                        QueueLimit = 0
+                    }));
 
-            options.AddFixedWindowLimiter("Login", config =>
-            {
-                config.PermitLimit = 10;
-                config.Window = TimeSpan.FromMinutes(1);
-                config.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
-                config.QueueLimit = 0;
-            });
+            options.AddPolicy("Login", httpContext =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    RateLimitPartitioning.GetPartitionKey(httpContext),
+                    _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 10,
+                        Window = TimeSpan.FromMinutes(1),
+                        QueueLimit = 0
+                    }));
 
-            options.AddFixedWindowLimiter("Refresh", config =>
-            {
-                config.PermitLimit = 10;
-                config.Window = TimeSpan.FromMinutes(1);
-                config.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
-                config.QueueLimit = 0;
-            });
+            options.AddPolicy("Refresh", httpContext =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    RateLimitPartitioning.GetPartitionKey(httpContext),
+                    _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 10,
+                        Window = TimeSpan.FromMinutes(1),
+                        QueueLimit = 0
+                    }));
 
-            options.AddFixedWindowLimiter("Logout", config =>
-            {
-                config.PermitLimit = 10;
-                config.Window = TimeSpan.FromMinutes(1);
-                config.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
-                config.QueueLimit = 0;
-            });
+            options.AddPolicy("Logout", httpContext =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    RateLimitPartitioning.GetPartitionKey(httpContext),
+                    _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 10,
+                        Window = TimeSpan.FromMinutes(1),
+                        QueueLimit = 0
+                    }));
         });
 
         services.AddHostedService<RefreshTokenCleanupService>();
@@ -233,6 +245,7 @@ public class Startup(IdentitySettings settings, IWebHostEnvironment env)
     public static void Configure(WebApplication app)
     {
         ArgumentNullException.ThrowIfNull(app);
+        app.UseTrustedForwardedHeaders(app.Configuration);
         app.UseMiddleware<GlobalExceptionMiddleware>();
         app.UseSerilogRequestLogging();
 
@@ -256,8 +269,8 @@ public class Startup(IdentitySettings settings, IWebHostEnvironment env)
         app.UseRouting();
 
         app.UseCors();
-        app.UseRateLimiter();
         app.UseAuthentication();
+        app.UseRateLimiter();
         app.UseAuthorization();
 
         var auth = app.MapGroup("/api/v1/auth");

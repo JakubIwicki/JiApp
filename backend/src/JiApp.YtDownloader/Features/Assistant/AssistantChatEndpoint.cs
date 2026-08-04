@@ -42,17 +42,17 @@ public static class AssistantChatEndpoint
                 var language = NormalizeLanguage(request.Language);
                 var dailyLimit = settings.Assistant?.DailyMessageLimitPerUser ?? 30;
 
-                var preCheck = await handler.PreCheckAsync(userId, dailyLimit, httpContext.RequestAborted);
-                if (preCheck == AssistantChatPreCheck.QuotaExceeded)
-                    return QuotaExceeded(language);
-                if (preCheck == AssistantChatPreCheck.NotConfigured)
-                    return NotConfigured(language);
-
                 if (!streamGate.TryEnter())
                     return Busy(language);
 
                 try
                 {
+                    var preCheck = await handler.PreCheckAsync(userId, dailyLimit, httpContext.RequestAborted);
+                    if (preCheck == AssistantChatPreCheck.QuotaExceeded)
+                        return QuotaExceeded(language);
+                    if (preCheck == AssistantChatPreCheck.NotConfigured)
+                        return NotConfigured(language);
+
                     await StreamSseAsync(httpContext, orchestrator, request.Messages, language, userId);
                 }
                 finally

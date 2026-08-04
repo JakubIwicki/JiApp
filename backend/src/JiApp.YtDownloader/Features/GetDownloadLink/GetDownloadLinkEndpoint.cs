@@ -16,6 +16,7 @@ public static class GetDownloadLinkEndpoint
                 DownloadRequest request,
                 IValidator<DownloadRequest> validator,
                 GetDownloadLinkHandler handler,
+                Settings settings,
                 HttpContext httpContext) =>
             {
                 request = TruncateMetadata(request);
@@ -28,11 +29,15 @@ public static class GetDownloadLinkEndpoint
                 }
 
                 var result = await handler.HandleAsync(request);
-                var scheme = httpContext.Request.Headers["X-Forwarded-Proto"].FirstOrDefault()
-                             ?? httpContext.Request.Scheme;
-                var host = httpContext.Request.Headers["X-Forwarded-Host"].FirstOrDefault()
-                           ?? httpContext.Request.Host.Value
-                           ?? "localhost";
+                var scheme = httpContext.Request.Scheme;
+                var host = httpContext.Request.Host.Value ?? "localhost";
+
+                if (Uri.TryCreate(settings.App?.PublicBaseUrl, UriKind.Absolute, out var parsedBase))
+                {
+                    scheme = parsedBase.Scheme;
+                    host = parsedBase.Authority;
+                }
+
                 var response = DownloadResponse.WithUrl(
                     result.Value!.TempId,
                     scheme,

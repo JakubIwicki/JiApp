@@ -69,6 +69,8 @@ public sealed class Settings
 
         if (Assistant is { DailyMessageLimitPerUser: <= 0 })
             errors.Add("Assistant:DailyMessageLimitPerUser must be greater than 0.");
+        if (Assistant is { MaxMessagesPerTurn: <= 0 })
+            errors.Add("Assistant:MaxMessagesPerTurn must be greater than 0.");
 
         if (errors.Count > 0)
             throw new InvalidOperationException(
@@ -81,6 +83,7 @@ public sealed class Settings
         public int PreviewDurationSeconds { get; set; } = 10;
         public int DownloadTtlMinutes { get; set; } = 15;
         public int DownloadJobTimeoutMinutes { get; set; } = 30;
+        public string? PublicBaseUrl { get; set; }
     }
 
     public sealed class JwtSettings
@@ -117,5 +120,6 @@ public sealed class Settings
     public sealed class AssistantSettings
     {
         public int DailyMessageLimitPerUser { get; set; } = 30;
+        public int MaxMessagesPerTurn { get; set; } = 20;
     }
 }
