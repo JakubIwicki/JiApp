@@ -1,6 +1,7 @@
 import React, { use } from 'react';
-import { render, waitFor } from '@testing-library/react-native';
+import { act, render, waitFor } from '@testing-library/react-native';
 import { AuthProvider, AuthContext } from '../AuthContext';
+import { emitAuthInvalidated } from '../../services/authEvents';
 
 // Mock authService
 const mockLogin = jest.fn();
@@ -28,6 +29,7 @@ const mockClearCredentials = jest.fn();
 const mockClearSelectedModule = jest.fn();
 const mockSaveRefreshToken = jest.fn();
 const mockClearRefreshToken = jest.fn();
+const mockGetRefreshToken = jest.fn();
 
 jest.mock('../../services/storageService', () => ({
   getToken: (...args: unknown[]) => mockGetToken(...args),
@@ -42,10 +44,25 @@ jest.mock('../../services/storageService', () => ({
   clearUsername: (...args: unknown[]) => mockClearUsername(...args),
   saveRefreshToken: (...args: unknown[]) => mockSaveRefreshToken(...args),
   clearRefreshToken: (...args: unknown[]) => mockClearRefreshToken(...args),
+  getRefreshToken: (...args: unknown[]) => mockGetRefreshToken(...args),
   clearCredentials: (...args: unknown[]) => mockClearCredentials(...args),
   clearSelectedModule: (...args: unknown[]) => mockClearSelectedModule(...args),
   getUserId: jest.fn(() => Promise.resolve(null)),
   getDisplayName: jest.fn(() => Promise.resolve(null)),
+}));
+
+// Mock axios (raw POST for best-effort session revocation)
+const mockAxiosPost = jest.fn();
+
+jest.mock('axios', () => ({
+  __esModule: true,
+  default: {
+    post: (...args: unknown[]) => mockAxiosPost(...args),
+  },
+}));
+
+jest.mock('../../config', () => ({
+  API_BASE_URL: 'http://test.local/api/v1',
 }));
 
 describe('AuthContext', () => {
@@ -61,6 +78,7 @@ describe('AuthContext', () => {
     jest.clearAllMocks();
     capturedCtx = undefined;
     mockGetToken.mockResolvedValue(null);
+    mockGetRefreshToken.mockResolvedValue(null);
   });
 
   const renderProvider = () => {
@@ -413,5 +431,51 @@ describe('AuthContext', () => {
     expect(mockSaveDisplayName).toHaveBeenCalledWith('User Two');
     expect(mockSaveUsername).toHaveBeenCalledWith('user2');
     expect(mockSaveRefreshToken).toHaveBeenCalledWith('refresh-two');
+  });
+
+  it('logout() calls POST /auth/logout with the stored refresh token', async () => {
+    mockGetRefreshToken.mockResolvedValue('mock-refresh-token');
+
+    renderProvider();
+    await waitForLoggedOut();
+
+    await capturedCtx!.logout();
+
+    expect(mockAxiosPost).toHaveBeenCalledWith(
+      'http://test.local/api/v1/auth/logout',
+      { refreshToken: 'mock-refresh-token' },
+      {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 5000,
+      },
+    );
+  });
+
+  it('emitAuthInvalidated() transitions an authenticated session to logged out', async () => {
+    mockLogin.mockResolvedValueOnce({
+      id: 1,
+      displayName: 'Test User',
+      token: 'mock-token',
+      roles: [],
+      permissions: [],
+    });
+
+    renderProvider();
+    await waitForLoggedOut();
+
+    await capturedCtx!.login('testuser', 'pass123');
+    await waitFor(() => {
+      expect(capturedCtx!.token).toBe('mock-token');
+    });
+
+    act(() => {
+      emitAuthInvalidated();
+    });
+
+    await waitFor(() => {
+      expect(capturedCtx!.token).toBeNull();
+      expect(capturedCtx!.userId).toBeNull();
+      expect(capturedCtx!.displayName).toBeNull();
+    });
   });
 });
