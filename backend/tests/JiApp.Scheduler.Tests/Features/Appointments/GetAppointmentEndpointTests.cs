@@ -4,8 +4,10 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using JiApp.Common;
 using JiApp.Common.Services;
+using JiApp.Scheduler.Features.Appointments;
 using JiApp.Scheduler.Features.Appointments.UpdateAppointment;
 using JiApp.Scheduler.Features.Appointments.UpdateAppointmentStatus;
 using JiApp.Scheduler.Features.Common;
@@ -74,6 +76,23 @@ public sealed class GetAppointmentEndpointTests : IDisposable
         var response = await client.GetAsync($"/api/v1/scheduler/appointments/{appointmentId}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
+        // The response stream is single-pass, so capture it once and derive both
+        // the typed body and the wire-casing assertions from the same string.
+        var rawBody = await response.Content.ReadAsStringAsync();
+        var body = JsonSerializer.Deserialize<AppointmentResponse>(rawBody, JsonSerializerOptions.Web);
+        body.Should().NotBeNull();
+        body!.Client.Name.Should().Be("Alice");
+        body.Service.Name.Should().Be("Haircut");
+        body.Service.Category.Should().Be("MensHaircut");
+        body.Service.BasePrice.Amount.Should().Be(100);
+
+        // Pin the ACTUAL wire casing: the typed read is case-insensitive, so a
+        // PascalCase serializer rename would still pass above.
+        using var doc = JsonDocument.Parse(rawBody);
+        var root = doc.RootElement;
+        root.GetProperty("client").GetProperty("name").GetString().Should().Be("Alice");
+        root.GetProperty("service").GetProperty("name").GetString().Should().Be("Haircut");
+        root.GetProperty("service").GetProperty("category").GetString().Should().Be("MensHaircut");
     }
 
     [Fact]

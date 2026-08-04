@@ -82,8 +82,8 @@ const ClientPicker: React.FC<ClientPickerProps> = ({
           id: newId,
           boardId: 1,
           name,
-          phone: undefined,
-          notes: undefined,
+          phone: null,
+          notes: null,
         });
         setQuery('');
         setIsOpen(false);

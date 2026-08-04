@@ -1,6 +1,8 @@
 using JiApp.Common.Abstractions;
 using JiApp.Common.Services;
+using JiApp.Scheduler.Features.Clients;
 using JiApp.Scheduler.Features.Common;
+using JiApp.Scheduler.Features.Services;
 using JiApp.Scheduler.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -35,7 +37,10 @@ public sealed class ListAppointmentsHandler(ISchedulerDbContext db, ICurrentUser
                 new PriceResponse(a.Price.Amount, a.Price.Currency),
                 a.Location,
                 a.Status.ToString(),
-                a.CreatedAt))
+                a.CreatedAt,
+                new ClientResponse(a.Client.Id, a.Client.BoardId, a.Client.Name, a.Client.Phone, a.Client.Notes),
+                new ServiceResponse(a.Service.Id, a.Service.BoardId, a.Service.Name, a.Service.Category.ToString(),
+                    a.Service.BaseDuration, new PriceResponse(a.Service.BasePrice.Amount, a.Service.BasePrice.Currency))))
             .ToListAsync(ct);
 
         return Result<List<AppointmentResponse>>.Success(appointments);

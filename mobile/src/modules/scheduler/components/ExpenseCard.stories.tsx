@@ -19,14 +19,14 @@ const expenseWithoutNote: Expense = {
   date: '2026-05-31',
   category: 'Supplies',
   amount: { amount: 89, currency: 'PLN' },
-  note: undefined,
+  note: null,
 };
 
 const meta: Meta<typeof ExpenseCard> = {
   title: 'Scheduler/ExpenseCard',
   component: ExpenseCard,
   decorators: [
-    (Story) => (
+    Story => (
       <View style={styles.decorator}>
         <Story />
       </View>

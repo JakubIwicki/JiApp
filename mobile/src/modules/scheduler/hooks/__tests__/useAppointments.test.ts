@@ -18,11 +18,24 @@ const mockDeleteAppointment = appointmentService.deleteAppointment as jest.Mock;
 const mockUpdateStatus = appointmentService.updateStatus as jest.Mock;
 
 const mockAppointment: Appointment = {
-  id: 1, boardId: 1,
-  client: { id: 2, boardId: 1, name: 'Jane' },
-  service: { id: 3, boardId: 1, name: 'Cut', category: 'WomensHaircut', baseDuration: 30, basePrice: { amount: 80, currency: 'PLN' } },
-  date: '2026-05-23', startTime: '10:00', endTime: '10:30',
-  price: { amount: 80, currency: 'PLN' }, location: 'Salon', status: 'Created',
+  id: 1,
+  boardId: 1,
+  client: { id: 2, boardId: 1, name: 'Jane', phone: null, notes: null },
+  service: {
+    id: 3,
+    boardId: 1,
+    name: 'Cut',
+    category: 'WomensHaircut',
+    baseDuration: 30,
+    basePrice: { amount: 80, currency: 'PLN' },
+  },
+  description: null,
+  date: '2026-05-23',
+  startTime: '10:00',
+  endTime: '10:30',
+  price: { amount: 80, currency: 'PLN' },
+  location: 'Salon',
+  status: 'Created',
 };
 
 describe('useAppointments', () => {
@@ -46,13 +59,18 @@ describe('useAppointments', () => {
       await result.current.loadAppointments(1, ['2026-05-23', '2026-05-24']);
     });
 
-    expect(mockListAppointments).toHaveBeenCalledWith(1, ['2026-05-23', '2026-05-24']);
+    expect(mockListAppointments).toHaveBeenCalledWith(1, [
+      '2026-05-23',
+      '2026-05-24',
+    ]);
     expect(result.current.appointments).toEqual([mockAppointment]);
     expect(result.current.isLoading).toBe(false);
   });
 
   it('sets loading state during fetch', async () => {
-    mockListAppointments.mockImplementation(() => new Promise((r) => setTimeout(r, 100)));
+    mockListAppointments.mockImplementation(
+      () => new Promise(r => setTimeout(r, 100)),
+    );
 
     const { result } = renderHook(() => useAppointments());
 
@@ -88,9 +106,14 @@ describe('useAppointments', () => {
     const { result } = renderHook(() => useAppointments());
 
     const data = {
-      boardId: 1, clientId: 2, serviceId: 3,
-      date: '2026-05-23', startTime: '10:00', endTime: '11:00',
-      description: '', location: 'Salon',
+      boardId: 1,
+      clientId: 2,
+      serviceId: 3,
+      date: '2026-05-23',
+      startTime: '10:00',
+      endTime: '11:00',
+      description: '',
+      location: 'Salon',
       price: { amount: 80, currency: 'PLN' },
     };
 
@@ -118,7 +141,9 @@ describe('useAppointments', () => {
     expect(result.current.appointments).toHaveLength(1);
 
     await act(async () => {
-      await expect(result.current.removeAppointment(1)).rejects.toThrow('Delete failed');
+      await expect(result.current.removeAppointment(1)).rejects.toThrow(
+        'Delete failed',
+      );
     });
   });
 

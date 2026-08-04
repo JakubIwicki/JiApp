@@ -10,17 +10,40 @@ export const setClientMode = (mode: Mode) => {
 };
 
 const mockClients: Client[] = [
-  { id: 1, boardId: 1, name: 'Anna Kowalska', phone: '+48 601 111 222' },
-  { id: 2, boardId: 1, name: 'Marta Zielinska', phone: '+48 602 222 333' },
-  { id: 3, boardId: 1, name: 'Piotr Nowak' },
-  { id: 4, boardId: 1, name: 'Katarzyna Adamczyk', phone: '+48 603 333 444' },
-  { id: 5, boardId: 1, name: 'Michał Lewandowski', phone: '+48 604 555 666' },
-  { id: 6, boardId: 1, name: 'Joanna Wisniewska' },
+  {
+    id: 1,
+    boardId: 1,
+    name: 'Anna Kowalska',
+    phone: '+48 601 111 222',
+    notes: null,
+  },
+  {
+    id: 2,
+    boardId: 1,
+    name: 'Marta Zielinska',
+    phone: '+48 602 222 333',
+    notes: null,
+  },
+  { id: 3, boardId: 1, name: 'Piotr Nowak', phone: null, notes: null },
+  {
+    id: 4,
+    boardId: 1,
+    name: 'Katarzyna Adamczyk',
+    phone: '+48 603 333 444',
+    notes: null,
+  },
+  {
+    id: 5,
+    boardId: 1,
+    name: 'Michał Lewandowski',
+    phone: '+48 604 555 666',
+    notes: null,
+  },
+  { id: 6, boardId: 1, name: 'Joanna Wisniewska', phone: null, notes: null },
 ];
 
 const mockClientDetail: ClientWithAppointments = {
   id: 1,
-  boardId: 1,
   name: 'Anna Kowalska',
   phone: '+48 601 111 222',
   notes: 'Stala klientka od 2023. Preferuje wizyty w godzinach porannych.',
@@ -60,24 +83,32 @@ const mockClientDetail: ClientWithAppointments = {
   ],
 };
 
-export const listClients = async (_boardId?: number, _q?: string): Promise<Client[]> => {
+export const listClients = async (
+  _boardId?: number,
+  _q?: string,
+): Promise<Client[]> => {
   if (_mode === 'error') throw new Error('Mock error');
   if (_mode === 'empty') return [];
 
   if (_q) {
     const q = _q.toLowerCase();
-    return mockClients.filter((c) => c.name.toLowerCase().includes(q));
+    return mockClients.filter(c => c.name.toLowerCase().includes(q));
   }
   return mockClients;
 };
 
-export const getClient = async (id: number): Promise<ClientWithAppointments> => {
+export const getClient = async (
+  id: number,
+): Promise<ClientWithAppointments> => {
   if (_mode === 'error') throw new Error('Mock error');
   if (id === 1) return mockClientDetail;
   return { ...mockClientDetail, id, name: 'Unknown Client' };
 };
 
-export const createClient = async (_boardId?: number, _data?: { name: string; phone?: string; notes?: string }): Promise<{ id: number }> => {
+export const createClient = async (
+  _boardId?: number,
+  _data?: { name: string; phone?: string; notes?: string },
+): Promise<{ id: number }> => {
   return { id: 99 };
 };
 

@@ -1,32 +1,37 @@
+import { z } from 'zod';
 import apiClient from '../../../services/apiClient';
+import { BoardSchema } from '../types/api';
 import type { Board } from '../types/api';
 
-interface IdResponse {
-  id: number;
-}
+const IdResponseSchema = z.object({ id: z.number() });
+type IdResponse = z.infer<typeof IdResponseSchema>;
 
-interface ListBoardsResponse {
-  boards: Board[];
-}
+const ListBoardsResponseSchema = z.object({ boards: z.array(BoardSchema) });
 
 export const listBoards = async (): Promise<Board[]> => {
-  const response = await apiClient.get<ListBoardsResponse>('/scheduler/boards');
-  return response.data.boards;
+  const response = await apiClient.get('/scheduler/boards');
+  return ListBoardsResponseSchema.parse(response.data).boards;
 };
 
 export const createBoard = async (name: string): Promise<IdResponse> => {
-  const response = await apiClient.post<IdResponse>('/scheduler/boards', { name });
-  return response.data;
+  const response = await apiClient.post('/scheduler/boards', { name });
+  return IdResponseSchema.parse(response.data);
 };
 
 export const deleteBoard = async (id: number): Promise<void> => {
   await apiClient.delete(`/scheduler/boards/${id}`);
 };
 
-export const addBoardMember = async (boardId: number, userId: number): Promise<void> => {
+export const addBoardMember = async (
+  boardId: number,
+  userId: number,
+): Promise<void> => {
   await apiClient.post(`/scheduler/boards/${boardId}/members`, { userId });
 };
 
-export const removeBoardMember = async (boardId: number, userId: number): Promise<void> => {
+export const removeBoardMember = async (
+  boardId: number,
+  userId: number,
+): Promise<void> => {
   await apiClient.delete(`/scheduler/boards/${boardId}/members/${userId}`);
 };

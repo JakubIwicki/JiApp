@@ -34,7 +34,13 @@ const baseAppointments: Omit<Appointment, 'date'>[] = [
   {
     id: 1,
     boardId: 1,
-    client: { id: 1, boardId: 1, name: 'Anna Kowalska', phone: '+48 601 111 222' },
+    client: {
+      id: 1,
+      boardId: 1,
+      name: 'Anna Kowalska',
+      phone: '+48 601 111 222',
+      notes: null,
+    },
     service: {
       id: 1,
       boardId: 1,
@@ -43,7 +49,7 @@ const baseAppointments: Omit<Appointment, 'date'>[] = [
       baseDuration: 30,
       basePrice: { amount: 60, currency: 'PLN' },
     },
-    description: undefined,
+    description: null,
     startTime: '09:00',
     endTime: '09:30',
     price: { amount: 60, currency: 'PLN' },
@@ -53,7 +59,13 @@ const baseAppointments: Omit<Appointment, 'date'>[] = [
   {
     id: 2,
     boardId: 1,
-    client: { id: 2, boardId: 1, name: 'Marta Zielinska', phone: '+48 602 222 333' },
+    client: {
+      id: 2,
+      boardId: 1,
+      name: 'Marta Zielinska',
+      phone: '+48 602 222 333',
+      notes: null,
+    },
     service: {
       id: 5,
       boardId: 1,
@@ -73,7 +85,13 @@ const baseAppointments: Omit<Appointment, 'date'>[] = [
   {
     id: 3,
     boardId: 1,
-    client: { id: 3, boardId: 1, name: 'Piotr Nowak' },
+    client: {
+      id: 3,
+      boardId: 1,
+      name: 'Piotr Nowak',
+      phone: null,
+      notes: null,
+    },
     service: {
       id: 3,
       boardId: 1,
@@ -82,7 +100,7 @@ const baseAppointments: Omit<Appointment, 'date'>[] = [
       baseDuration: 15,
       basePrice: { amount: 25, currency: 'PLN' },
     },
-    description: undefined,
+    description: null,
     startTime: '11:00',
     endTime: '11:15',
     price: { amount: 25, currency: 'PLN' },
@@ -92,7 +110,13 @@ const baseAppointments: Omit<Appointment, 'date'>[] = [
   {
     id: 4,
     boardId: 1,
-    client: { id: 4, boardId: 1, name: 'Katarzyna Adamczyk', phone: '+48 603 333 444' },
+    client: {
+      id: 4,
+      boardId: 1,
+      name: 'Katarzyna Adamczyk',
+      phone: '+48 603 333 444',
+      notes: null,
+    },
     service: {
       id: 7,
       boardId: 1,
@@ -120,7 +144,7 @@ export const listAppointments = async (
 
   const { saturday, sunday } = getThisWeekend();
 
-  return baseAppointments.map((a) => ({
+  return baseAppointments.map(a => ({
     ...a,
     // First 3 appointments go on Saturday, the rest on Sunday
     date: a.id <= 3 ? saturday : sunday,
@@ -130,7 +154,7 @@ export const listAppointments = async (
 export const getAppointment = async (id: number): Promise<Appointment> => {
   if (_mode === 'error') throw new Error('Mock error');
   const { saturday, sunday } = getThisWeekend();
-  const base = baseAppointments.find((a) => a.id === id);
+  const base = baseAppointments.find(a => a.id === id);
   if (!base) throw new Error('Appointment not found');
   return {
     ...base,

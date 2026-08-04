@@ -8,7 +8,13 @@ const appointments: Appointment[] = [
   {
     id: 1,
     boardId: 1,
-    client: { id: 1, boardId: 1, name: 'Anna Kowalska', phone: '+48 601 111 222' },
+    client: {
+      id: 1,
+      boardId: 1,
+      name: 'Anna Kowalska',
+      phone: '+48 601 111 222',
+      notes: null,
+    },
     service: {
       id: 1,
       boardId: 1,
@@ -17,7 +23,7 @@ const appointments: Appointment[] = [
       baseDuration: 30,
       basePrice: { amount: 60, currency: 'PLN' },
     },
-    description: undefined,
+    description: null,
     date: '2026-05-30',
     startTime: '09:00',
     endTime: '09:30',
@@ -28,7 +34,13 @@ const appointments: Appointment[] = [
   {
     id: 2,
     boardId: 1,
-    client: { id: 2, boardId: 1, name: 'Marta Zielinska', phone: '+48 602 222 333' },
+    client: {
+      id: 2,
+      boardId: 1,
+      name: 'Marta Zielinska',
+      phone: '+48 602 222 333',
+      notes: null,
+    },
     service: {
       id: 5,
       boardId: 1,
@@ -37,7 +49,7 @@ const appointments: Appointment[] = [
       baseDuration: 90,
       basePrice: { amount: 200, currency: 'PLN' },
     },
-    description: undefined,
+    description: null,
     date: '2026-05-30',
     startTime: '10:00',
     endTime: '11:30',
@@ -48,7 +60,13 @@ const appointments: Appointment[] = [
   {
     id: 3,
     boardId: 1,
-    client: { id: 3, boardId: 1, name: 'Piotr Nowak' },
+    client: {
+      id: 3,
+      boardId: 1,
+      name: 'Piotr Nowak',
+      phone: null,
+      notes: null,
+    },
     service: {
       id: 3,
       boardId: 1,
@@ -57,7 +75,7 @@ const appointments: Appointment[] = [
       baseDuration: 15,
       basePrice: { amount: 25, currency: 'PLN' },
     },
-    description: undefined,
+    description: null,
     date: '2026-05-30',
     startTime: '11:00',
     endTime: '11:15',
@@ -96,7 +114,7 @@ const meta: Meta<typeof DayColumn> = {
   title: 'Scheduler/DayColumn',
   component: DayColumn,
   decorators: [
-    (Story) => (
+    Story => (
       <View style={styles.decorator}>
         <Story />
       </View>
@@ -115,7 +133,7 @@ export const WithAppointments: Story = {
     appointments,
     expenses,
     dayTotal,
-    onAppointmentPress: (appt) => console.log('Pressed', appt.id),
+    onAppointmentPress: appt => console.log('Pressed', appt.id),
     isToday: true,
   },
 };
@@ -127,7 +145,7 @@ export const Empty: Story = {
     appointments: [],
     expenses: [],
     dayTotal: { revenue: 0, expenses: 0, net: 0 },
-    onAppointmentPress: (appt) => console.log('Pressed', appt.id),
+    onAppointmentPress: appt => console.log('Pressed', appt.id),
     isToday: false,
   },
 };

@@ -48,7 +48,7 @@ const baseExpenses: Omit<Expense, 'date'>[] = [
     boardId: 1,
     category: 'Supplies',
     amount: { amount: 89, currency: 'PLN' },
-    note: undefined,
+    note: null,
   },
 ];
 
@@ -62,12 +62,12 @@ export const listExpenses = async (
   const { saturday, sunday } = getThisWeekend();
 
   return baseExpenses
-    .filter((e) => {
+    .filter(e => {
       // First 2 expenses on Saturday, last on Sunday
       const expenseDate = e.id <= 2 ? saturday : sunday;
       return expenseDate === date;
     })
-    .map((e) => {
+    .map(e => {
       const expenseDate = e.id <= 2 ? saturday : sunday;
       return { ...e, date: expenseDate };
     });
@@ -76,7 +76,7 @@ export const listExpenses = async (
 export const getExpense = async (id: number): Promise<Expense> => {
   if (_mode === 'error') throw new Error('Mock error');
   const { saturday, sunday } = getThisWeekend();
-  const base = baseExpenses.find((e) => e.id === id);
+  const base = baseExpenses.find(e => e.id === id);
   if (!base) throw new Error('Expense not found');
   return {
     ...base,
