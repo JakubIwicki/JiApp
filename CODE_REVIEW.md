@@ -1,6 +1,6 @@
 # JiApp — Code Review & Remediation Backlog
 
-**Branch:** `fix/wave2-rate-limit-forwarded` · **Date:** 2026-08-04 · **Status:** Wave 1 landed — G1.1, G1.2, G2.2, G2.4, G2.6, G5.1 fixed (see per-finding notes); Wave 2 landed — PR-A G4.1–G4.5, PR-B G3.1, G3.2, G3.3, G4.6, G10.3, PR-C G2.1, G2.3 fixed (see per-finding notes); rest open backlog
+**Branch:** `main` · **Date:** 2026-08-04 · **Status:** Wave 1 landed — G1.1, G1.2, G2.2, G2.4, G2.6, G5.1 fixed (see per-finding notes); Wave 2 landed — PR-A G4.1–G4.5, PR-B G3.1, G3.2, G3.3, G4.6, G10.3, PR-C G2.1, G2.3 fixed (see per-finding notes); Wave 3 COMPLETE — PR-D G6.1, G6.2, PR-E G7.1, G7.3, PR-F G12.1 fixed (see per-finding notes); 52 of 84 open
 
 This file is the single working document for the review. It is organised into **12 work groups**,
 each sized to be picked up as one PR/session by someone with no prior context. Every finding keeps
@@ -696,6 +696,8 @@ docs override the global standards, so these outrank most Mediums above regardle
 
 ### G6.1 (HIGH) — ~76 hardcoded user-facing strings, ~95% in the Scheduler module · `H8` + `C1` + `C2`
 
+**FIXED (Wave 3).** PR #99 extracted every Scheduler user-facing string into a new `scheduler` i18n namespace — 126 keys + plural forms in both `en.json` and `pl.json` — including `SearchBar`'s clear label and the `AppointmentCard` status badges. The `i18n.test.ts` key-parity guard now covers it.
+
 > Rule: *"All user-facing strings use i18n — no hardcoded text; every key must exist in both `en.json` and `pl.json`."*
 
 **Corrected count: ~76.** (Pass 1 reported 45 by grepping only `<Text>` children; pass 2 found 31
@@ -737,6 +739,8 @@ Polish user with TalkBack hears an English label app-wide.
 
 ### G6.2 (HIGH) — Three network `<Image>` without `onError` · `H9`
 
+**FIXED (Wave 3).** PR #99 added `onError` state + grey-box placeholder to `HistoryItem`, `VideoCard` and `DownloadScreen`; covered by 3 new tests.
+
 > Rule: *"Every `<Image>` with a network `uri` has `onError` fallback — broken URLs must render a placeholder, not a blank box."*
 
 Verified — none of these files contains `onError`:
@@ -762,7 +766,7 @@ Pass 1 marked this **Unverified** (CI has no ESLint step). Pass 2 checked all 43
 components by hand: **zero violations**, including in the five longest screens. The rule is being
 followed by discipline.
 
-**No fix needed — but it is unguarded mechanically (G12.1) and can regress silently.**
+**No fix needed — and now machine-guarded:** PR #101's `eslint` gate (G12.1) enforces `react-hooks/rules-of-hooks` and `react-hooks/exhaustive-deps` with `--max-warnings=0`, so the rule can no longer regress silently.
 
 ---
 
@@ -773,6 +777,8 @@ followed by discipline.
 happened outside a service". Three of four centre on Scheduler, matching G6.
 
 ### G7.1 (MEDIUM) — Scheduler services perform zero runtime validation · `M9`
+
+**FIXED (Wave 3).** PR #100 added 12 Zod schemas; all 6 Scheduler services now parse at the boundary instead of blind-casting. The backend `AppointmentResponse` now returns nested `Client`/`Service`, so the wire shape matches the schemas.
 
 `mobile/src/modules/scheduler/services/*.ts` — **0 `parse`/`safeParse` calls across all 6 services.**
 
@@ -817,6 +823,8 @@ Also importing services directly into screens/components rather than going throu
 (`storageService` in a navigator).
 
 ### G7.3 (LOW) — Type assertions launder unvalidated persisted data · `N15`
+
+**FIXED (Wave 3).** PR #100 replaced the `expenseService` `category as Expense['category']` cast with `ExpenseApiRawSchema` enum validation. (The three storage-read casts in `storageService.ts` and `ThemeContext.tsx` remain open — not addressed by Wave 3.)
 
 ```
 services/storageService.ts:130                   return value as ModuleId | null;
@@ -1231,7 +1239,7 @@ highest by leverage on everything above.
 
 | # | Gap | Detail |
 |---|---|---|
-| G12.1 | **No lint step** | The mobile job runs `tsc --noEmit` and `jest`. No `eslint`, despite `mobile/.eslintrc.js` existing. `react-hooks/rules-of-hooks` — the mechanical guard for non-negotiable #3 (G6.3, currently clean) — never runs. `react-doctor.yml` is advisory only. |
+| G12.1 | **FIXED (Wave 3)** — lint gate added | `npx eslint . --max-warnings=0` now runs in the mobile CI job (PR #101); 94 findings fixed to zero. `react-hooks/rules-of-hooks` + `react-hooks/exhaustive-deps` — the mechanical guard for non-negotiable #3 (G6.3) — now run on every push. `react-doctor.yml` stays advisory. |
 | G12.2 | **Warnings not errors** | `dotnet build backend/JiApp.sln` — no `-warnaserror`, no `--configuration Release`. Warnings and NuGet advisories pass silently. |
 | G12.3 | **No format gate** | No `dotnet format --verify-no-changes`, which is why G11.2/G11.3 survive. |
 | G12.4 | **No coverage** | Neither stack collects or gates coverage, so G9.1's blind spots are invisible to CI. |
@@ -1277,9 +1285,9 @@ Already present and working: the CI-vs-`PathPolicyMap` rate-limit-policy drift c
 | `zod-boundary-validation` | **Uneven** | Core, admin, LovingBoards services and SSE events all validate. Scheduler validates nothing (G7.1); storage reads unvalidated (G7.3). |
 | `storybook-component-testing` | **Built, unadopted** | G9.4. |
 | `solid-principles` | **Good** | Dependency direction holds; domain never depends outward. SRP breach: `boardStreamService` owns streaming *and* token refresh (G2.1 / G5.2). |
-| **Project non-negotiable #1 (i18n)** | **BREACHED** | G6.1 |
-| **Project non-negotiable #2 (Image onError)** | **BREACHED** | G6.2 |
-| **Project non-negotiable #3 (hooks first)** | **✅ CLEAN** | G6.3 — verified by hand, unguarded by CI |
+| **Project non-negotiable #1 (i18n)** | **✅ FIXED** | G6.1 — Scheduler fully extracted to the `scheduler` namespace (PR #99) |
+| **Project non-negotiable #2 (Image onError)** | **✅ FIXED** | G6.2 — all network `<Image>` have `onError` + placeholder (PR #99) |
+| **Project non-negotiable #3 (hooks first)** | **✅ CLEAN + machine-guarded** | G6.3 — verified by hand; now enforced by the eslint gate (G12.1, PR #101) |
 
 ---
 
