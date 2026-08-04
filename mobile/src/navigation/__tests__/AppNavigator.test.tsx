@@ -1,4 +1,4 @@
-import React from 'react';
+import type { ReactElement } from 'react';
 import { render, waitFor, act } from '@testing-library/react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -71,14 +71,15 @@ jest.mock('../../screens/ChatScreen', () => {
 jest.mock('../../screens/ServerWakeScreen', () => {
   const React = require('react');
   const { Text } = require('react-native');
+  const MockServerWakeScreen = ({ onComplete }: { onComplete: () => void }) => {
+    React.useEffect(() => {
+      capturedOnWakeComplete = onComplete;
+    }, [onComplete]);
+    return React.createElement(Text, null, 'ServerWakeScreen');
+  };
   return {
     __esModule: true,
-    default: ({ onComplete }: { onComplete: () => void }) => {
-      React.useEffect(() => {
-        capturedOnWakeComplete = onComplete;
-      }, [onComplete]);
-      return React.createElement(Text, null, 'ServerWakeScreen');
-    },
+    default: MockServerWakeScreen,
   };
 });
 
@@ -144,14 +145,15 @@ jest.mock('../../services/authService', () => ({
 
 jest.mock('../../components/WelcomeOverlay', () => {
   const React = require('react');
+  const MockWelcomeOverlay = ({ onComplete }: { onComplete: () => void }) => {
+    React.useEffect(() => {
+      onComplete();
+    }, [onComplete]);
+    return null;
+  };
   return {
     __esModule: true,
-    default: ({ onComplete }: { onComplete: () => void }) => {
-      React.useEffect(() => {
-        onComplete();
-      }, [onComplete]);
-      return null;
-    },
+    default: MockWelcomeOverlay,
   };
 });
 
@@ -163,28 +165,29 @@ let capturedOnWakeComplete: (() => void) | null = null;
 jest.mock('../../components/ConnectionFailureOverlay', () => {
   const React = require('react');
   const { Text } = require('react-native');
+  const MockConnectionFailureOverlay = ({
+    visible,
+    onTimeout,
+  }: {
+    visible: boolean;
+    onTimeout: () => void;
+  }) => {
+    React.useEffect(() => {
+      if (visible && onTimeout) {
+        capturedOnTimeout = onTimeout;
+      }
+    }, [visible, onTimeout]);
+    return visible
+      ? React.createElement(
+          Text,
+          { testID: 'connection-overlay-mock' },
+          'ConnectionFailureOverlay',
+        )
+      : null;
+  };
   return {
     __esModule: true,
-    default: ({
-      visible,
-      onTimeout,
-    }: {
-      visible: boolean;
-      onTimeout: () => void;
-    }) => {
-      React.useEffect(() => {
-        if (visible && onTimeout) {
-          capturedOnTimeout = onTimeout;
-        }
-      }, [visible, onTimeout]);
-      return visible
-        ? React.createElement(
-            Text,
-            { testID: 'connection-overlay-mock' },
-            'ConnectionFailureOverlay',
-          )
-        : null;
-    },
+    default: MockConnectionFailureOverlay,
   };
 });
 
@@ -216,7 +219,7 @@ describe('AppNavigator', () => {
     frame: { x: 0, y: 0, width: 390, height: 844 },
   };
 
-  const renderWithProviders = (ui: React.ReactElement) =>
+  const renderWithProviders = (ui: ReactElement) =>
     render(
       <SafeAreaProvider initialMetrics={testMetrics}>
         <NavigationContainer>{ui}</NavigationContainer>
@@ -271,7 +274,7 @@ describe('AppNavigator', () => {
     // Single-module login auto-skips the module picker → MainNavigator (SearchScreen)
     mockGetTokenImpl = () => Promise.resolve(null);
 
-    const { findByText, rerender } = renderWithProviders(<AppNavigator />);
+    const { findByText } = renderWithProviders(<AppNavigator />);
 
     // Start on login screen (no token)
     expect(await findByText('LoginScreen')).toBeTruthy();

@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';

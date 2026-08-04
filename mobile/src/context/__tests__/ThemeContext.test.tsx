@@ -74,11 +74,9 @@ describe('ThemeContext', () => {
   });
 
   it('provides light colors when system color scheme is light', () => {
+    // Spy the top-level export (configurable getter on RN 0.85 module.exports) — the deep-import path was deprecated by no-deep-imports lint.
     jest
-      .spyOn(
-        require('react-native/Libraries/Utilities/useColorScheme'),
-        'default',
-      )
+      .spyOn(require('react-native'), 'useColorScheme')
       .mockReturnValue('light');
 
     render(
@@ -96,10 +94,7 @@ describe('ThemeContext', () => {
 
   it('provides dark colors when system color scheme is dark', () => {
     jest
-      .spyOn(
-        require('react-native/Libraries/Utilities/useColorScheme'),
-        'default',
-      )
+      .spyOn(require('react-native'), 'useColorScheme')
       .mockReturnValue('dark');
 
     render(
@@ -115,12 +110,7 @@ describe('ThemeContext', () => {
   });
 
   it('defaults to light when useColorScheme returns null', () => {
-    jest
-      .spyOn(
-        require('react-native/Libraries/Utilities/useColorScheme'),
-        'default',
-      )
-      .mockReturnValue(null);
+    jest.spyOn(require('react-native'), 'useColorScheme').mockReturnValue(null);
 
     render(
       <ThemeProvider>
@@ -134,10 +124,7 @@ describe('ThemeContext', () => {
 
   it('defaults to light when useColorScheme returns undefined', () => {
     jest
-      .spyOn(
-        require('react-native/Libraries/Utilities/useColorScheme'),
-        'default',
-      )
+      .spyOn(require('react-native'), 'useColorScheme')
       .mockReturnValue(undefined);
 
     render(
@@ -159,10 +146,7 @@ describe('ThemeContext', () => {
   it('manual dark mode overrides a light system scheme', async () => {
     jest.spyOn(storageService, 'getThemeMode').mockResolvedValue('dark');
     jest
-      .spyOn(
-        require('react-native/Libraries/Utilities/useColorScheme'),
-        'default',
-      )
+      .spyOn(require('react-native'), 'useColorScheme')
       .mockReturnValue('light');
 
     render(
@@ -180,10 +164,7 @@ describe('ThemeContext', () => {
   it('manual light mode overrides a dark system scheme', async () => {
     jest.spyOn(storageService, 'getThemeMode').mockResolvedValue('light');
     jest
-      .spyOn(
-        require('react-native/Libraries/Utilities/useColorScheme'),
-        'default',
-      )
+      .spyOn(require('react-native'), 'useColorScheme')
       .mockReturnValue('dark');
 
     render(
@@ -201,10 +182,7 @@ describe('ThemeContext', () => {
   it('system mode follows the OS (dark)', async () => {
     jest.spyOn(storageService, 'getThemeMode').mockResolvedValue('system');
     jest
-      .spyOn(
-        require('react-native/Libraries/Utilities/useColorScheme'),
-        'default',
-      )
+      .spyOn(require('react-native'), 'useColorScheme')
       .mockReturnValue('dark');
 
     render(

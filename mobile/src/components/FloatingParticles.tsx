@@ -42,7 +42,7 @@ const ParticleItem: React.FC<ParticleItemProps> = React.memo(({ particle }) => {
       false,
     );
     // No cleanup needed — shared value lifecycle is component-bound
-  }, [particle.delay, particle.duration, animValue]);
+  }, [particle, animValue]);
 
   const animatedStyle = useAnimatedStyle(() => {
     const translateY = interpolate(animValue.value, [0, 1], [0, -60]);

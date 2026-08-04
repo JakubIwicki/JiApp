@@ -2,13 +2,12 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import type { Meta, StoryObj } from '@storybook/react';
 import DayTotalFooter from './DayTotalFooter';
-import type { DayTotal } from '../types/api';
 
 const meta: Meta<typeof DayTotalFooter> = {
   title: 'Scheduler/DayTotalFooter',
   component: DayTotalFooter,
   decorators: [
-    (Story) => (
+    Story => (
       <View style={styles.decorator}>
         <Story />
       </View>

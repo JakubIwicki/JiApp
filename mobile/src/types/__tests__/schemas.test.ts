@@ -96,7 +96,9 @@ describe('LoginApiRawSchema', () => {
   });
 
   it('parses without optional roles and permissions fields', () => {
-    const { roles: _, permissions: __, ...withoutOpt } = valid;
+    const { roles, permissions, ...withoutOpt } = valid;
+    expect(roles).toBeDefined();
+    expect(permissions).toBeDefined();
     expect(() => LoginApiRawSchema.parse(withoutOpt)).not.toThrow();
   });
 

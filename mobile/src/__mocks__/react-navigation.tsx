@@ -3,24 +3,17 @@ import { View, Text, StyleSheet } from 'react-native';
 
 // Mutable state — stories set these before rendering
 let _routeParams: Record<string, unknown> = {};
-let _screenTitle = '';
 
 export const setRouteParams = (params: Record<string, unknown>) => {
   _routeParams = params;
 };
-export const setScreenTitle = (title: string) => {
-  _screenTitle = title;
-};
 export const resetNavigationMocks = () => {
   _routeParams = {};
-  _screenTitle = '';
 };
 
 const navigation = {
   navigate: (..._args: unknown[]) => {},
-  setOptions: (_opts: Record<string, unknown>) => {
-    if (typeof _opts.title === 'string') _screenTitle = _opts.title;
-  },
+  setOptions: (_opts: Record<string, unknown>) => {},
   goBack: () => {},
   addListener: () => () => {},
   removeListener: () => {},
@@ -34,10 +27,18 @@ export const NavigationContainer: React.FC<{ children: React.ReactNode }> = ({
 
 export const useNavigation = <T,>() => navigation as T;
 export const useRoute = <T,>() =>
-  ({ params: _routeParams, name: '', key: '' }) as T;
+  ({ params: _routeParams, name: '', key: '' } as T);
 export const useIsFocused = () => true;
-export const CommonActions = { navigate: () => {}, reset: () => {}, goBack: () => {} };
-export const StackActions = { push: () => {}, pop: () => {}, replace: () => {} };
+export const CommonActions = {
+  navigate: () => {},
+  reset: () => {},
+  goBack: () => {},
+};
+export const StackActions = {
+  push: () => {},
+  pop: () => {},
+  replace: () => {},
+};
 
 // @react-navigation/native-stack mocks
 export const createNativeStackNavigator = () => ({
@@ -81,16 +82,16 @@ export const createBottomTabNavigator = () => ({
       name?: string;
       initialParams?: Record<string, unknown>;
     }>[];
-    const activeChild = childrenArr.find(
-      (c) => c.props?.initialParams?.active === true,
-    ) || childrenArr[0];
+    const activeChild =
+      childrenArr.find(c => c.props?.initialParams?.active === true) ||
+      childrenArr[0];
     const activeName = activeChild?.props?.name || 'SearchTab';
 
     return (
       <View style={btStyles.shell}>
         <View style={btStyles.content}>{children}</View>
         <View style={btStyles.tabBar}>
-          {childrenArr.map((child) => {
+          {childrenArr.map(child => {
             const name = child.props?.name || '';
             const isActive = name === activeName;
             return (
@@ -99,7 +100,10 @@ export const createBottomTabNavigator = () => ({
                 <Text
                   style={[
                     btStyles.tabLabel,
-                    { color: isActive ? '#8B7E74' : '#C0B8AE', fontWeight: isActive ? '600' : '400' },
+                    {
+                      color: isActive ? '#8B7E74' : '#C0B8AE',
+                      fontWeight: isActive ? '600' : '400',
+                    },
                   ]}
                 >
                   {TAB_LABELS[name] || name}

@@ -4,7 +4,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import useRoles from '../hooks/useRoles';
 import useToast from '../../../hooks/useToast';
-import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
+import { useThemedStyles } from '../../../context/ThemeContext';
 import type { Theme } from '../../../styles/theme';
 import { spacing, borderRadius } from '../../../styles/theme';
 import { ALL_PERMISSIONS } from '../types/api';
@@ -19,7 +19,6 @@ const RoleEditScreen: React.FC = () => {
   const route = useRoute<EditRoute>();
   const { roleName } = route.params;
   const { t } = useTranslation();
-  const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { roles, updatePermissions } = useRoles();
   const { showSuccess, showError } = useToast();

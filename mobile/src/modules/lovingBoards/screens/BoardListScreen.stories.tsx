@@ -4,7 +4,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { Meta, StoryObj } from '@storybook/react';
 import BoardListScreen from './BoardListScreen';
 import { setBoardMode, setBoards } from '../services/__mocks__/boardService';
-import { setItemMode } from '../services/__mocks__/itemService';
 import type { Board } from '../types/api';
 import type { LovingBoardsStackParamList } from '../../../navigation/types';
 

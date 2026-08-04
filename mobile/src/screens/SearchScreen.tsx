@@ -7,7 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MainStackParamList } from '../navigation/types';

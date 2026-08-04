@@ -38,8 +38,6 @@ const WeekendGridScreen: React.FC = () => {
     goToPreviousWeekend,
     goToNextWeekend,
     goToToday,
-    refresh,
-    isLoading,
   } = useWeekendGrid(boardId);
 
   const { colors } = useTheme();

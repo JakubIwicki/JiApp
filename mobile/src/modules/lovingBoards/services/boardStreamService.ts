@@ -115,7 +115,7 @@ export function openBoardStream(params: BoardStreamParams): BoardStreamHandle {
 
     // All board/item change events → single onChange callback
     for (const name of CHANGE_EVENT_NAMES) {
-      es.addEventListener(name, event => {
+      es.addEventListener(name, _event => {
         if (closed) return;
         params.onChange();
       });

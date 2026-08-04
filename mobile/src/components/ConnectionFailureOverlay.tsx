@@ -9,7 +9,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemedStyles } from '../context/ThemeContext';
 import type { Theme } from '../styles/theme';
-import { animation, borderRadius, spacing, zIndexScale } from '../styles/theme';
+import { borderRadius, spacing, zIndexScale } from '../styles/theme';
 
 interface Props {
   visible: boolean;

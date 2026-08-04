@@ -22,8 +22,6 @@ type DetailRoute = RouteProp<AdminStackParamList, 'UserDetail'>;
 
 const MIN_TOUCH = 44;
 
-const RESERVED_NAMES = ['Admin', 'User', 'Guest'];
-
 const UserDetailScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<DetailRoute>();

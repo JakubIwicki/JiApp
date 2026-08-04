@@ -1,4 +1,3 @@
-import React from 'react';
 import { render } from '@testing-library/react-native';
 import TabIcon from '../TabIcon';
 
@@ -26,7 +25,9 @@ describe('TabIcon', () => {
   });
 
   it('renders downloads icon', () => {
-    const { getByTestId } = render(<TabIcon name="downloads" color="#8B7E74" />);
+    const { getByTestId } = render(
+      <TabIcon name="downloads" color="#8B7E74" />,
+    );
     expect(getByTestId('tab-icon-svg')).toBeTruthy();
   });
 

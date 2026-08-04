@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import { useRef, type FC } from 'react';
 import { render, waitFor, act } from '@testing-library/react-native';
 import {
   NavigationContainer,
@@ -62,7 +62,7 @@ const testMetrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
 };
 
-const NavigatorWithRef: React.FC<{
+const NavigatorWithRef: FC<{
   onReady: (ref: NavigationContainerRef<any>) => void;
 }> = ({ onReady }) => {
   const navRef = useRef<NavigationContainerRef<any>>(null);

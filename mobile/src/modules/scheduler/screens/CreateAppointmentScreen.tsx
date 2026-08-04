@@ -148,6 +148,7 @@ const CreateAppointmentScreen: React.FC = () => {
 
   const appointments = useAppointments();
   const clients = useClients(boardId);
+  const { loadAll } = clients;
 
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -159,8 +160,8 @@ const CreateAppointmentScreen: React.FC = () => {
   const [services, setServices] = useState<ServiceItem[]>([]);
 
   useEffect(() => {
-    clients.loadAll();
-  }, [clients.loadAll]);
+    loadAll();
+  }, [loadAll]);
 
   useEffect(() => {
     serviceCatalogService

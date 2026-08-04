@@ -13,7 +13,7 @@ import * as serviceCatalogService from '../services/serviceCatalogService';
 import { useBoard } from '../hooks/useBoard';
 import { useThemedStyles } from '../../../context/ThemeContext';
 import type { Theme } from '../../../styles/theme';
-import { spacing, borderRadius } from '../../../styles/theme';
+import { spacing } from '../../../styles/theme';
 import type { ServiceItem } from '../types/api';
 import type { SchedulerStackParamList } from '../types/navigation';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -37,11 +37,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   Treatment: 'scheduler.category.treatment',
   Other: 'scheduler.category.other',
 };
-
-interface Section {
-  title: string;
-  data: ServiceItem[];
-}
 
 const ServiceRow: React.FC<{
   item: ServiceItem;

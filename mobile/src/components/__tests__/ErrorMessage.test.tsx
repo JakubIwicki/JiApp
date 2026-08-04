@@ -11,16 +11,14 @@ describe('ErrorMessage', () => {
   });
 
   it('renders retry button when onRetry is provided', () => {
-    const { getByTestId, queryByTestId } = render(
+    const { getByTestId } = render(
       <ErrorMessage message="Error" onRetry={jest.fn()} />,
     );
     expect(getByTestId('error-retry-button')).toBeTruthy();
   });
 
   it('does not render retry button when onRetry is not provided', () => {
-    const { queryByTestId } = render(
-      <ErrorMessage message="Error" />,
-    );
+    const { queryByTestId } = render(<ErrorMessage message="Error" />);
     expect(queryByTestId('error-retry-button')).toBeNull();
   });
 

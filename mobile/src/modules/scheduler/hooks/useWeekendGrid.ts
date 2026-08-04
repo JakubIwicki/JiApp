@@ -42,18 +42,20 @@ const useWeekendGrid = (boardId: number): UseWeekendGridResult => {
   const [referenceDate, setReferenceDate] = useState(() => new Date());
   const appointments = useAppointments();
   const expenses = useExpenses();
+  const { loadAppointments } = appointments;
+  const { loadExpenses } = expenses;
 
   const { saturday, sunday } = getWeekendDates(referenceDate);
   const weekLabel = `${saturday} / ${sunday}`;
 
   const loadData = useCallback(async () => {
     await Promise.all([
-      appointments.loadAppointments(boardId, [saturday, sunday]),
-      expenses.loadExpenses(boardId, saturday),
+      loadAppointments(boardId, [saturday, sunday]),
+      loadExpenses(boardId, saturday),
     ]);
     // Also load Sunday expenses
-    await expenses.loadExpenses(boardId, sunday);
-  }, [boardId, saturday, sunday, appointments.loadAppointments, expenses.loadExpenses]);
+    await loadExpenses(boardId, sunday);
+  }, [boardId, saturday, sunday, loadAppointments, loadExpenses]);
 
   useEffect(() => {
     loadData();

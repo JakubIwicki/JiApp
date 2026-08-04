@@ -10,7 +10,6 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import useUsers from '../hooks/useUsers';
-import useRoles from '../hooks/useRoles';
 import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
 import type { Theme } from '../../../styles/theme';
 import { spacing, borderRadius } from '../../../styles/theme';
@@ -57,7 +56,6 @@ const UserListScreen: React.FC = () => {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { users, isLoading, error, search } = useUsers();
-  const { roles } = useRoles();
   const [query, setQuery] = useState('');
 
   const handleSearch = useCallback(

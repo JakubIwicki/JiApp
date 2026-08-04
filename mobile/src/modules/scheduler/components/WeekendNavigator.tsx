@@ -3,7 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useThemedStyles } from '../../../context/ThemeContext';
 import type { Theme } from '../../../styles/theme';
-import { spacing, borderRadius } from '../../../styles/theme';
+import { spacing } from '../../../styles/theme';
 
 interface WeekendNavigatorProps {
   weekLabel: string;

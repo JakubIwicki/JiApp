@@ -91,6 +91,7 @@ const ReportsScreen: React.FC = () => {
   const { boardId } = route.params;
   const { t } = useTranslation();
   const reports = useReports();
+  const { fetchRevenueReport, fetchClientReport } = reports;
   const styles = useThemedStyles(makeStyles);
 
   const [activeTab, setActiveTab] = useState<Tab>('revenue');
@@ -99,17 +100,17 @@ const ReportsScreen: React.FC = () => {
 
   useEffect(() => {
     if (activeTab === 'revenue') {
-      reports.fetchRevenueReport(boardId, '2026-01-01', '2026-12-31', groupBy);
+      fetchRevenueReport(boardId, '2026-01-01', '2026-12-31', groupBy);
     } else {
-      reports.fetchClientReport(boardId, sortBy);
+      fetchClientReport(boardId, sortBy);
     }
   }, [
     activeTab,
     groupBy,
     sortBy,
     boardId,
-    reports.fetchRevenueReport,
-    reports.fetchClientReport,
+    fetchRevenueReport,
+    fetchClientReport,
   ]);
 
   const renderRevenueItem = useCallback(

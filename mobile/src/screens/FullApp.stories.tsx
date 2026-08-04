@@ -4,7 +4,6 @@ import Svg, { Circle, Line, Path, Polyline } from 'react-native-svg';
 import type { Meta, StoryObj } from '@storybook/react';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import FloatingParticles from '../components/FloatingParticles';
-import Button from '../components/Button';
 
 // ─── Inline feather icons (using react-native-svg) ────────────────────────
 const SearchSvg: React.FC<{ color: string; size?: number }> = ({ color, size = 22 }) => (
@@ -114,7 +113,7 @@ const FullAppShell: React.FC<{ activeTab?: string }> = ({ activeTab = 'search' }
               activeOpacity={0.6}
             >
               <IconComponent color={isActive ? '#8B7E74' : '#C0B8AE'} size={22} />
-              <Text style={[fullStyles.tabLabel, { color: isActive ? '#8B7E74' : '#C0B8AE', fontWeight: isActive ? ('600' as const) : ('400' as const) }]}>
+              <Text style={[fullStyles.tabLabel, isActive ? fullStyles.tabLabelActive : fullStyles.tabLabelInactive]}>
                 {tab.label}
               </Text>
             </TouchableOpacity>
@@ -170,12 +169,12 @@ const DownloadsContent: React.FC = () => (
       <View style={fullStyles.cardInfo}>
         <Text style={fullStyles.cardTitle} numberOfLines={2}>lofi hip hop radio - beats to study</Text>
         <View style={fullStyles.progressBar}>
-          <View style={[fullStyles.progressFill, { width: '45%' }]} />
+          <View style={[fullStyles.progressFill, fullStyles.progressFillPartial]} />
         </View>
         <Text style={fullStyles.cardMeta}>2.4 MB / 5.8 MB</Text>
       </View>
     </View>
-    <Text style={[fullStyles.sectionLabel, { marginTop: 12 }]}>Completed</Text>
+    <Text style={[fullStyles.sectionLabel, fullStyles.sectionLabelMarginLg]}>Completed</Text>
     <View style={fullStyles.card}>
       <Image source={{ uri: 'https://i.ytimg.com/vi/9bZkp7q19f0/hqdefault.jpg' }} style={fullStyles.thumb} />
       <View style={fullStyles.cardInfo}>
@@ -209,7 +208,7 @@ const HistoryContent: React.FC = () => (
         <Text style={fullStyles.cardMeta}>20.05.2026</Text>
       </View>
     </View>
-    <Text style={[fullStyles.sectionLabel, { marginTop: 12 }]}>Recent Downloads</Text>
+    <Text style={[fullStyles.sectionLabel, fullStyles.sectionLabelMarginLg]}>Recent Downloads</Text>
     <View style={fullStyles.card}>
       <Image source={{ uri: 'https://i.ytimg.com/vi/jfKfPfyJRdk/hqdefault.jpg' }} style={fullStyles.thumb} />
       <View style={fullStyles.cardInfo}>
@@ -247,7 +246,7 @@ const SettingsContent: React.FC = () => {
           </TouchableOpacity>
         </View>
       </View>
-      <Text style={[fullStyles.sectionLabel, { marginTop: 8 }]}>Account</Text>
+      <Text style={[fullStyles.sectionLabel, fullStyles.sectionLabelMarginSm]}>Account</Text>
       <View style={fullStyles.accountCard}>
         <View style={fullStyles.accountRow}>
           <Text style={fullStyles.accountLabel}>Name</Text>
@@ -354,4 +353,9 @@ const fullStyles = StyleSheet.create({
   },
   tab: { alignItems: 'center', gap: 3 },
   tabLabel: { fontSize: 9 },
+  tabLabelActive: { color: '#8B7E74', fontWeight: '600' },
+  tabLabelInactive: { color: '#C0B8AE', fontWeight: '400' },
+  progressFillPartial: { width: '45%' },
+  sectionLabelMarginLg: { marginTop: 12 },
+  sectionLabelMarginSm: { marginTop: 8 },
 });

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
   useSharedValue,
   withSpring,
@@ -8,7 +8,6 @@ import Animated, {
   withDelay,
   withRepeat,
   withSequence,
-  interpolate,
   useAnimatedStyle,
 } from 'react-native-reanimated';
 import { animation } from '../styles/theme';
@@ -24,7 +23,6 @@ interface Particle {
 
 interface ParticleViewProps {
   particle: Particle;
-  screenHeight: number;
 }
 
 interface Props {
@@ -49,7 +47,7 @@ const particleStyles = StyleSheet.create({
 });
 
 const ParticleView: React.FC<ParticleViewProps> = React.memo(
-  ({ particle, screenHeight }) => {
+  ({ particle }) => {
     const animY = useSharedValue(Math.random() * 300);
     const animOpacity = useSharedValue(Math.random() * 0.3 + 0.1);
 
@@ -258,7 +256,7 @@ const WelcomeOverlay: React.FC<Props> = ({ displayName, type, onComplete }) => {
 
       {/* Particles */}
       {particles.map(p => (
-        <ParticleView key={p.id} particle={p} screenHeight={0} />
+        <ParticleView key={p.id} particle={p} />
       ))}
 
       {/* Text content */}
