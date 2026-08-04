@@ -139,6 +139,12 @@
     "retry": "Retry",
     "closeApp": "Close app"
   },
+  "update": {
+    "title": "Update available",
+    "message": "A new version of JiApp is required. Please download and install the update to continue.",
+    "download": "Download update",
+    "exit": "Exit app"
+  },
   "connectionError": {
     "title": "Cannot connect to server",
     "message": "Please contact your administrator.",
