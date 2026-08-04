@@ -1,3 +1,4 @@
+using System.Globalization;
 using JiApp.Common.Abstractions;
 using JiApp.Common.Services;
 using JiApp.Scheduler.Features.Common;
@@ -107,6 +108,19 @@ public sealed class RevenueReportHandlerTests : HandlerTestBase
             _db.ChangeTracker.Clear();
             return this;
         }
+    }
+
+    private sealed class CultureScope : IDisposable
+    {
+        private readonly CultureInfo _original;
+
+        public CultureScope(string name)
+        {
+            _original = CultureInfo.CurrentCulture;
+            CultureInfo.CurrentCulture = new CultureInfo(name);
+        }
+
+        public void Dispose() => CultureInfo.CurrentCulture = _original;
     }
 
     [Fact]
@@ -254,5 +268,42 @@ public sealed class RevenueReportHandlerTests : HandlerTestBase
         var result = await sut.HandleAsync(request, CancellationToken.None);
 
         AssertAccessDenied(result);
+    }
+
+    [Fact]
+    public async Task RevenueReport_ByWeekend_OrdersWeekendsChronologically()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithSeededEntities();
+        var janSaturday = new DateOnly(2026, 1, 31);
+        var aprSaturday = new DateOnly(2026, 4, 11);
+        fixture.WithAppointment(aprSaturday, 200, "Room 1");
+        fixture.WithAppointment(janSaturday, 100, "Room 1");
+        var sut = fixture.Sut;
+        var request = new RevenueReportRequest(fixture.Board.Id, janSaturday, aprSaturday, "weekend");
+
+        var result = await sut.HandleAsync(request, CancellationToken.None);
+
+        AssertSuccess(result);
+        result.Value.Should().HaveCount(2);
+        result.Value[0].GroupKey.Should().Be("2026 31 Jan");
+        result.Value[1].GroupKey.Should().Be("2026 11 Apr");
+    }
+
+    [Fact]
+    public async Task RevenueReport_ByWeekend_UsesInvariantMonthNames()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithSeededEntities();
+        fixture.WithAppointment(new DateOnly(2026, 4, 11), 200, "Room 1");
+        using var culture = new CultureScope("pl-PL");
+        var sut = fixture.Sut;
+        var request = new RevenueReportRequest(fixture.Board.Id, new DateOnly(2026, 4, 11),
+            new DateOnly(2026, 4, 12), "weekend");
+
+        var result = await sut.HandleAsync(request, CancellationToken.None);
+
+        var weekends = AssertSuccess(result);
+        var weekend = weekends.Single();
+        weekend.GroupKey.Should().Contain("Apr");
+        weekend.GroupKey.Should().NotContain("kwi");
     }
 }

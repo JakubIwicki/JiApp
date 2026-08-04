@@ -17,8 +17,9 @@ public static class GetAppointmentEndpoint
                     ? Results.Ok(result.Value)
                     : result.ErrorCategory switch
                     {
-                        ResultCategories.AccessDenied => Results.Forbid(),
-                        _ => Results.NotFound(new ApiErrorResponse(result.Error!))
+                        ResultCategories.NotFound or ResultCategories.AccessDenied =>
+                            Results.NotFound(new ApiErrorResponse("Appointment not found")),
+                        _ => Results.Conflict(new ApiErrorResponse(result.Error!))
                     };
             })
             .RequireAuthorization()

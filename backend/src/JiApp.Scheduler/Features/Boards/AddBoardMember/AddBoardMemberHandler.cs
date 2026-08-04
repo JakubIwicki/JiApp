@@ -5,10 +5,13 @@ using JiApp.Scheduler.Persistence;
 
 namespace JiApp.Scheduler.Features.Boards.AddBoardMember;
 
-public sealed class AddBoardMemberHandler(ISchedulerDbContext db, ICurrentUserService currentUser)
+public sealed class AddBoardMemberHandler(
+    ISchedulerDbContext db, ICurrentUserService currentUser, BoardWriteLock boardLock)
 {
     public async Task<Result<long>> HandleAsync(long boardId, AddBoardMemberRequest request, CancellationToken ct)
     {
+        using var _ = await boardLock.AcquireAsync(boardId, ct);
+
         var boardResult = await BoardAccessGuard.VerifyBoardOwnerAsync(db, boardId, currentUser, ct);
         if (!boardResult.IsSuccess)
             return Result<long>.Failure(boardResult.Error!, boardResult.ErrorCategory);

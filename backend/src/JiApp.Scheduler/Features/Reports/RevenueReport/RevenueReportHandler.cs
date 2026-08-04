@@ -1,3 +1,4 @@
+using System.Globalization;
 using JiApp.Common.Abstractions;
 using JiApp.Common.Services;
 using JiApp.Scheduler.Domain;
@@ -58,11 +59,11 @@ public sealed class RevenueReportHandler(ISchedulerDbContext db, ICurrentUserSer
         List<Appointment> appointments, List<Expense> expenses)
     {
         // Group all appointments and expenses into Sat-Sun pairs
-        var weekendGroups = new Dictionary<string, (decimal Revenue, decimal Expenses, int Count)>();
+        var weekendGroups = new Dictionary<DateOnly, (decimal Revenue, decimal Expenses, int Count)>();
 
         foreach (var appt in appointments)
         {
-            var key = GetWeekendGroupKey(appt.Date);
+            var key = GetWeekendStart(appt.Date);
             var current = weekendGroups.GetValueOrDefault(key);
             current.Revenue += appt.Price.Amount;
             current.Count++;
@@ -71,25 +72,25 @@ public sealed class RevenueReportHandler(ISchedulerDbContext db, ICurrentUserSer
 
         foreach (var exp in expenses)
         {
-            var key = GetWeekendGroupKey(exp.Date);
+            var key = GetWeekendStart(exp.Date);
             var current = weekendGroups.GetValueOrDefault(key);
             current.Expenses += exp.Amount.Amount;
             weekendGroups[key] = current;
         }
 
         return weekendGroups
+            .OrderBy(kv => kv.Key)
             .Select(kv => new RevenueReportResponse(
-                kv.Key, kv.Value.Revenue, kv.Value.Expenses,
+                kv.Key.ToString("yyyy dd MMM", CultureInfo.InvariantCulture),
+                kv.Value.Revenue, kv.Value.Expenses,
                 kv.Value.Revenue - kv.Value.Expenses, kv.Value.Count))
-            .OrderBy(r => r.GroupKey)
             .ToList();
     }
 
-    private static string GetWeekendGroupKey(DateOnly date)
+    private static DateOnly GetWeekendStart(DateOnly date)
     {
         // Find the Saturday of the weekend containing this date
-        var saturday = date.DayOfWeek == DayOfWeek.Sunday ? date.AddDays(-1) : date;
-        return $"{saturday:yyyy dd MMM}";
+        return date.DayOfWeek == DayOfWeek.Sunday ? date.AddDays(-1) : date;
     }
 
     private static List<RevenueReportResponse> GroupByKey(

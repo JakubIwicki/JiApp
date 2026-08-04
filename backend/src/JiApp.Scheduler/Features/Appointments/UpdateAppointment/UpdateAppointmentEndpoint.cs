@@ -27,8 +27,8 @@ public static class UpdateAppointmentEndpoint
                     ? Results.Ok(new { id = result.Value })
                     : result.ErrorCategory switch
                     {
-                        ResultCategories.NotFound => Results.NotFound(new ApiErrorResponse(result.Error!)),
-                        ResultCategories.AccessDenied => Results.Forbid(),
+                        ResultCategories.NotFound or ResultCategories.AccessDenied =>
+                            Results.NotFound(new ApiErrorResponse("Appointment not found")),
                         ResultCategories.Validation => Results.BadRequest(new ApiErrorResponse(result.Error!)),
                         _ => Results.Conflict(new ApiErrorResponse(result.Error!))
                     };
@@ -38,7 +38,6 @@ public static class UpdateAppointmentEndpoint
             .WithSummary("Update an appointment")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)
-            .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status409Conflict)
             .Produces(StatusCodes.Status400BadRequest);
     }
