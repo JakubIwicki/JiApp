@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { useRoute, RouteProp } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import * as clientService from '../services/clientService';
 import type { ClientWithAppointments } from '../services/clientService';
 import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
@@ -17,6 +18,12 @@ const STATUS_BADGES = (colors: Theme['colors']) =>
     Cancelled: { bg: colors.errorLight, fg: colors.error },
   } as Record<string, { bg: string; fg: string }>);
 
+const STATUS_LABELS: Record<string, string> = {
+  Created: 'scheduler.status.created',
+  Done: 'scheduler.status.done',
+  Cancelled: 'scheduler.status.cancelled',
+};
+
 const AppointmentRow: React.FC<{
   item: {
     id: number;
@@ -27,6 +34,7 @@ const AppointmentRow: React.FC<{
     status: string;
   };
 }> = ({ item }) => {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const badge =
@@ -44,7 +52,7 @@ const AppointmentRow: React.FC<{
       </View>
       <View style={[styles.statusBadge, { backgroundColor: badge.bg }]}>
         <Text style={[styles.statusText, { color: badge.fg }]}>
-          {item.status}
+          {t(STATUS_LABELS[item.status] ?? item.status)}
         </Text>
       </View>
     </View>
@@ -54,6 +62,7 @@ const AppointmentRow: React.FC<{
 const ClientDetailScreen: React.FC = () => {
   const route = useRoute<DetailRoute>();
   const { clientId } = route.params;
+  const { t } = useTranslation();
 
   const styles = useThemedStyles(makeStyles);
   const [data, setData] = useState<ClientWithAppointments | null>(null);
@@ -76,7 +85,7 @@ const ClientDetailScreen: React.FC = () => {
   if (isLoading) {
     return (
       <View style={styles.center}>
-        <Text style={styles.loadingText}>Loading…</Text>
+        <Text style={styles.loadingText}>{t('common.loading')}</Text>
       </View>
     );
   }
@@ -84,7 +93,9 @@ const ClientDetailScreen: React.FC = () => {
   if (!data) {
     return (
       <View style={styles.center}>
-        <Text style={styles.errorText}>Client not found</Text>
+        <Text style={styles.errorText}>
+          {t('scheduler.clientDetail.notFound')}
+        </Text>
       </View>
     );
   }
@@ -99,7 +110,9 @@ const ClientDetailScreen: React.FC = () => {
       </View>
 
       <Text style={styles.sectionTitle}>
-        Appointment History ({data.appointments.length})
+        {t('scheduler.clientDetail.historyTitle', {
+          count: data.appointments.length,
+        })}
       </Text>
 
       <FlatList
@@ -109,7 +122,9 @@ const ClientDetailScreen: React.FC = () => {
         renderItem={renderAppointmentItem}
         ListEmptyComponent={
           <View style={styles.center}>
-            <Text style={styles.emptyText}>No appointments yet</Text>
+            <Text style={styles.emptyText}>
+              {t('scheduler.clientDetail.empty')}
+            </Text>
           </View>
         }
       />

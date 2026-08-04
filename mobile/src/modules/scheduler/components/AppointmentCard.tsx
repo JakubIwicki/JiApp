@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
 import type { Theme } from '../../../styles/theme';
 import { spacing, borderRadius } from '../../../styles/theme';
@@ -15,10 +16,17 @@ function formatTime(time: string): string {
   return time.substring(0, 5);
 }
 
+const STATUS_LABELS: Record<string, string> = {
+  Created: 'scheduler.appointmentCard.new',
+  Done: 'scheduler.appointmentCard.done',
+  Cancelled: 'scheduler.appointmentCard.cancelled',
+};
+
 const AppointmentCard: React.FC<AppointmentCardProps> = ({
   appointment,
   onPress,
 }) => {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
@@ -31,13 +39,10 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
     Other: colors.textSecondary,
   };
 
-  const STATUS_BADGES: Record<
-    string,
-    { label: string; bg: string; fg: string }
-  > = {
-    Created: { label: 'New', bg: colors.primaryLight, fg: colors.primary },
-    Done: { label: 'Done', bg: colors.successLight, fg: colors.success },
-    Cancelled: { label: 'Cancelled', bg: colors.errorLight, fg: colors.error },
+  const STATUS_BADGES: Record<string, { bg: string; fg: string }> = {
+    Created: { bg: colors.primaryLight, fg: colors.primary },
+    Done: { bg: colors.successLight, fg: colors.success },
+    Cancelled: { bg: colors.errorLight, fg: colors.error },
   };
 
   const categoryColor =
@@ -82,7 +87,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
           {statusBadge && (
             <View style={[styles.badge, { backgroundColor: statusBadge.bg }]}>
               <Text style={[styles.badgeText, { color: statusBadge.fg }]}>
-                {statusBadge.label}
+                {t(STATUS_LABELS[appointment.status] ?? appointment.status)}
               </Text>
             </View>
           )}

@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import WeekendNavigator from '../components/WeekendNavigator';
 import SummaryBar from '../components/SummaryBar';
 import DayColumn from '../components/DayColumn';
@@ -25,6 +26,7 @@ type NavigationProp = NativeStackNavigationProp<SchedulerStackParamList>;
 
 const WeekendGridScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
+  const { t } = useTranslation();
   const { selectedBoardId, isLoading: boardLoading } = useBoard();
   const boardId = selectedBoardId ?? 0;
   const {
@@ -73,9 +75,11 @@ const WeekendGridScreen: React.FC = () => {
   if (selectedBoardId === null) {
     return (
       <View style={styles.center}>
-        <Text style={styles.emptyTitle}>No board selected</Text>
+        <Text style={styles.emptyTitle}>
+          {t('scheduler.weekendGrid.noBoard')}
+        </Text>
         <Text style={styles.emptySubtitle}>
-          Select or create a board to get started
+          {t('scheduler.weekendGrid.noBoardSubtitle')}
         </Text>
         <BoardSelector />
       </View>
@@ -104,13 +108,17 @@ const WeekendGridScreen: React.FC = () => {
             navigation.navigate('ClientList', { boardId: selectedBoardId })
           }
         >
-          <Text style={styles.pillText}>Clients</Text>
+          <Text style={styles.pillText}>
+            {t('scheduler.weekendGrid.clients')}
+          </Text>
         </Pressable>
         <Pressable
           style={({ pressed }) => [styles.pill, pressed && { opacity: 0.7 }]}
           onPress={() => navigation.navigate('ServiceList')}
         >
-          <Text style={styles.pillText}>Services</Text>
+          <Text style={styles.pillText}>
+            {t('scheduler.weekendGrid.services')}
+          </Text>
         </Pressable>
         <Pressable
           style={({ pressed }) => [styles.pill, pressed && { opacity: 0.7 }]}
@@ -118,7 +126,9 @@ const WeekendGridScreen: React.FC = () => {
             navigation.navigate('Reports', { boardId: selectedBoardId })
           }
         >
-          <Text style={styles.pillText}>Reports</Text>
+          <Text style={styles.pillText}>
+            {t('scheduler.weekendGrid.reports')}
+          </Text>
         </Pressable>
       </View>
 
@@ -128,7 +138,7 @@ const WeekendGridScreen: React.FC = () => {
       >
         <View style={styles.columnsContainer}>
           <DayColumn
-            label="Saturday"
+            label={t('scheduler.weekendGrid.saturday')}
             date={saturday}
             appointments={appointments.appointments}
             expenses={expenses.expenses}
@@ -137,7 +147,7 @@ const WeekendGridScreen: React.FC = () => {
             isToday={isSaturdayToday}
           />
           <DayColumn
-            label="Sunday"
+            label={t('scheduler.weekendGrid.sunday')}
             date={sunday}
             appointments={appointments.appointments}
             expenses={expenses.expenses}
@@ -152,7 +162,7 @@ const WeekendGridScreen: React.FC = () => {
       <Pressable
         style={({ pressed }) => [styles.fab, pressed && { opacity: 0.7 }]}
         onPress={handleCreateAppointment}
-        accessibilityLabel="Create appointment"
+        accessibilityLabel={t('scheduler.weekendGrid.createAccessibility')}
         accessibilityRole="button"
       >
         <Text style={styles.fabText}>+</Text>

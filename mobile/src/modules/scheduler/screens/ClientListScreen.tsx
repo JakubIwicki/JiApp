@@ -9,6 +9,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import useClients from '../hooks/useClients';
 import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
 import type { Theme } from '../../../styles/theme';
@@ -45,6 +46,7 @@ const ClientListScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<ClientListRoute>();
   const { boardId } = route.params;
+  const { t } = useTranslation();
   const clients = useClients(boardId);
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -98,11 +100,13 @@ const ClientListScreen: React.FC = () => {
       setShowCreateInput(false);
     } catch (err) {
       Alert.alert(
-        'Error',
-        err instanceof Error ? err.message : 'Failed to create client',
+        t('scheduler.error'),
+        err instanceof Error
+          ? err.message
+          : t('scheduler.clientList.createFailed'),
       );
     }
-  }, [newName, clients]);
+  }, [newName, clients, t]);
 
   return (
     <View style={styles.container}>
@@ -110,7 +114,7 @@ const ClientListScreen: React.FC = () => {
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
-          placeholder="Search clients…"
+          placeholder={t('scheduler.clientList.searchPlaceholder')}
           placeholderTextColor={colors.textTertiary}
           value={query}
           onChangeText={setQuery}
@@ -119,7 +123,7 @@ const ClientListScreen: React.FC = () => {
 
       {clients.isLoading ? (
         <View style={styles.center}>
-          <Text style={styles.loadingText}>Loading…</Text>
+          <Text style={styles.loadingText}>{t('common.loading')}</Text>
         </View>
       ) : sections.length > 0 ? (
         <SectionList
@@ -133,7 +137,9 @@ const ClientListScreen: React.FC = () => {
         />
       ) : (
         <View style={styles.center}>
-          <Text style={styles.emptyText}>No clients found</Text>
+          <Text style={styles.emptyText}>
+            {t('scheduler.clientList.empty')}
+          </Text>
         </View>
       )}
 
@@ -142,7 +148,7 @@ const ClientListScreen: React.FC = () => {
         <View style={styles.createContainer}>
           <TextInput
             style={styles.createInput}
-            placeholder="Client name"
+            placeholder={t('scheduler.clientList.clientNamePlaceholder')}
             placeholderTextColor={colors.textTertiary}
             value={newName}
             onChangeText={setNewName}
@@ -157,7 +163,9 @@ const ClientListScreen: React.FC = () => {
               onPress={handleCreate}
               disabled={!newName.trim()}
             >
-              <Text style={styles.createSubmitText}>Add</Text>
+              <Text style={styles.createSubmitText}>
+                {t('scheduler.clientList.add')}
+              </Text>
             </Pressable>
             <Pressable
               style={({ pressed }) => pressed && { opacity: 0.7 }}
@@ -166,7 +174,7 @@ const ClientListScreen: React.FC = () => {
                 setNewName('');
               }}
             >
-              <Text style={styles.cancelText}>Cancel</Text>
+              <Text style={styles.cancelText}>{t('common.cancel')}</Text>
             </Pressable>
           </View>
         </View>
@@ -174,7 +182,7 @@ const ClientListScreen: React.FC = () => {
         <Pressable
           style={({ pressed }) => [styles.fab, pressed && { opacity: 0.7 }]}
           onPress={() => setShowCreateInput(true)}
-          accessibilityLabel="Create client"
+          accessibilityLabel={t('scheduler.clientList.createAccessibility')}
           accessibilityRole="button"
         >
           <Text style={styles.fabText}>+</Text>

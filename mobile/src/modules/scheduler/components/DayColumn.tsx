@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import AppointmentCard from './AppointmentCard';
 import ExpenseCard from './ExpenseCard';
 import DayTotalFooter from './DayTotalFooter';
@@ -27,6 +28,7 @@ const DayColumn: React.FC<DayColumnProps> = ({
   onAppointmentPress,
   isToday,
 }) => {
+  const { t } = useTranslation();
   const styles = useThemedStyles(makeStyles);
   const dayAppointments = appointments.filter(a => a.date === date);
   const dayExpenses = expenses.filter(e => e.date === date);
@@ -42,7 +44,9 @@ const DayColumn: React.FC<DayColumnProps> = ({
 
       {dayAppointments.length === 0 && dayExpenses.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No items</Text>
+          <Text style={styles.emptyText}>
+            {t('scheduler.dayColumn.noItems')}
+          </Text>
         </View>
       ) : (
         <View style={styles.list}>

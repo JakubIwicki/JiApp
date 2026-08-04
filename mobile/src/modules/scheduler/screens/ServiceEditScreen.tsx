@@ -9,6 +9,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import * as serviceCatalogService from '../services/serviceCatalogService';
 import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
 import type { Theme } from '../../../styles/theme';
@@ -25,6 +26,15 @@ const CATEGORIES = [
   'Treatment',
   'Other',
 ] as const;
+
+const CATEGORY_LABELS: Record<string, string> = {
+  MensHaircut: 'scheduler.category.mensHaircut',
+  WomensHaircut: 'scheduler.category.womensHaircut',
+  WomensStyling: 'scheduler.category.womensStyling',
+  Coloring: 'scheduler.category.coloring',
+  Treatment: 'scheduler.category.treatment',
+  Other: 'scheduler.category.other',
+};
 
 interface ServiceFormState {
   name: string;
@@ -83,6 +93,7 @@ const ServiceEditScreen: React.FC = () => {
   const route = useRoute<EditRoute>();
   const { serviceId, boardId } = route.params;
   const isEditing = serviceId !== undefined;
+  const { t } = useTranslation();
 
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -104,14 +115,22 @@ const ServiceEditScreen: React.FC = () => {
             price: String(svc.basePrice.amount),
           }),
         )
-        .catch(() => Alert.alert('Error', 'Failed to load service'))
+        .catch(() =>
+          Alert.alert(
+            t('scheduler.error'),
+            t('scheduler.serviceEdit.loadFailed'),
+          ),
+        )
         .finally(() => setIsLoading(false));
     }
-  }, [isEditing, serviceId]);
+  }, [isEditing, serviceId, t]);
 
   const handleSubmit = useCallback(async () => {
     if (!form.name.trim()) {
-      Alert.alert('Validation', 'Name is required');
+      Alert.alert(
+        t('scheduler.validation'),
+        t('scheduler.serviceEdit.nameRequired'),
+      );
       return;
     }
 
@@ -119,11 +138,17 @@ const ServiceEditScreen: React.FC = () => {
     const priceNum = parseFloat(form.price);
 
     if (isNaN(durationNum) || durationNum <= 0) {
-      Alert.alert('Validation', 'Valid duration is required');
+      Alert.alert(
+        t('scheduler.validation'),
+        t('scheduler.serviceEdit.durationRequired'),
+      );
       return;
     }
     if (isNaN(priceNum) || priceNum < 0) {
-      Alert.alert('Validation', 'Valid price is required');
+      Alert.alert(
+        t('scheduler.validation'),
+        t('scheduler.serviceEdit.priceRequired'),
+      );
       return;
     }
 
@@ -148,18 +173,20 @@ const ServiceEditScreen: React.FC = () => {
       navigation.goBack();
     } catch (err) {
       Alert.alert(
-        'Error',
-        err instanceof Error ? err.message : 'Failed to save service',
+        t('scheduler.error'),
+        err instanceof Error
+          ? err.message
+          : t('scheduler.serviceEdit.saveFailed'),
       );
     } finally {
       setIsSubmitting(false);
     }
-  }, [form, isEditing, serviceId, boardId, navigation]);
+  }, [form, isEditing, serviceId, boardId, navigation, t]);
 
   if (isLoading) {
     return (
       <View style={styles.center}>
-        <Text style={styles.loadingText}>Loading…</Text>
+        <Text style={styles.loadingText}>{t('common.loading')}</Text>
       </View>
     );
   }
@@ -167,19 +194,21 @@ const ServiceEditScreen: React.FC = () => {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>
-        {isEditing ? 'Edit Service' : 'New Service'}
+        {isEditing
+          ? t('scheduler.serviceEdit.editTitle')
+          : t('scheduler.serviceEdit.newTitle')}
       </Text>
 
-      <Text style={styles.label}>Name</Text>
+      <Text style={styles.label}>{t('scheduler.serviceEdit.name')}</Text>
       <TextInput
         style={styles.input}
         value={form.name}
         onChangeText={name => dispatch({ type: 'SET_NAME', name })}
-        placeholder="e.g. Premium Haircut"
+        placeholder={t('scheduler.serviceEdit.namePlaceholder')}
         placeholderTextColor={colors.textTertiary}
       />
 
-      <Text style={styles.label}>Category</Text>
+      <Text style={styles.label}>{t('scheduler.serviceEdit.category')}</Text>
       <View style={styles.categoryRow}>
         {CATEGORIES.map(cat => (
           <Pressable
@@ -197,13 +226,15 @@ const ServiceEditScreen: React.FC = () => {
                 form.category === cat && styles.categoryChipTextActive,
               ]}
             >
-              {cat}
+              {t(CATEGORY_LABELS[cat])}
             </Text>
           </Pressable>
         ))}
       </View>
 
-      <Text style={styles.label}>Base Duration (minutes)</Text>
+      <Text style={styles.label}>
+        {t('scheduler.serviceEdit.durationLabel')}
+      </Text>
       <TextInput
         style={styles.input}
         value={form.duration}
@@ -213,7 +244,7 @@ const ServiceEditScreen: React.FC = () => {
         placeholderTextColor={colors.textTertiary}
       />
 
-      <Text style={styles.label}>Base Price (PLN)</Text>
+      <Text style={styles.label}>{t('scheduler.serviceEdit.priceLabel')}</Text>
       <TextInput
         style={styles.input}
         value={form.price}
@@ -234,10 +265,10 @@ const ServiceEditScreen: React.FC = () => {
       >
         <Text style={styles.submitText}>
           {isSubmitting
-            ? 'Saving…'
+            ? t('scheduler.serviceEdit.saving')
             : isEditing
-            ? 'Update Service'
-            : 'Create Service'}
+            ? t('scheduler.serviceEdit.updateSubmit')
+            : t('scheduler.serviceEdit.createSubmit')}
         </Text>
       </Pressable>
     </ScrollView>

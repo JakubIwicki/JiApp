@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useThemedStyles } from '../../../context/ThemeContext';
 import type { Theme } from '../../../styles/theme';
 import { spacing, borderRadius } from '../../../styles/theme';
@@ -10,22 +11,29 @@ interface DayTotalFooterProps {
 }
 
 const DayTotalFooter: React.FC<DayTotalFooterProps> = ({ dayTotal }) => {
+  const { t } = useTranslation();
   const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        <Text style={styles.label}>Revenue</Text>
+        <Text style={styles.label}>
+          {t('scheduler.dayTotalFooter.revenue')}
+        </Text>
         <Text style={styles.value}>{dayTotal.revenue.toFixed(0)} PLN</Text>
       </View>
       <View style={styles.row}>
-        <Text style={styles.label}>Expenses</Text>
+        <Text style={styles.label}>
+          {t('scheduler.dayTotalFooter.expenses')}
+        </Text>
         <Text style={[styles.value, styles.expenseValue]}>
           -{dayTotal.expenses.toFixed(0)} PLN
         </Text>
       </View>
       <View style={styles.divider} />
       <View style={styles.row}>
-        <Text style={[styles.label, styles.netLabel]}>Net</Text>
+        <Text style={[styles.label, styles.netLabel]}>
+          {t('scheduler.dayTotalFooter.net')}
+        </Text>
         <Text
           style={[
             styles.value,

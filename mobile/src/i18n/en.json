@@ -53,7 +53,8 @@
     "error": "Search error",
     "recentSearches": "Recent searches",
     "empty": "Search for a song or video\nto start downloading",
-    "backToRecent": "Back to recent searches"
+    "backToRecent": "Back to recent searches",
+    "clear": "Clear search"
   },
   "history": {
     "title": "History",
@@ -227,6 +228,168 @@
     "createError": "Failed to create board",
     "deleteError": "Failed to delete board",
     "memberError": "Failed to update members"
+  },
+  "scheduler": {
+    "error": "Error",
+    "validation": "Validation",
+    "status": {
+      "created": "Created",
+      "done": "Done",
+      "cancelled": "Cancelled"
+    },
+    "category": {
+      "mensHaircut": "Men's Haircut",
+      "womensHaircut": "Women's Haircut",
+      "womensStyling": "Women's Styling",
+      "coloring": "Coloring",
+      "treatment": "Treatment",
+      "other": "Other"
+    },
+    "appointmentDetail": {
+      "loadError": "Failed to load appointment",
+      "updateError": "Failed to update status",
+      "cancelTitle": "Cancel Appointment",
+      "cancelConfirm": "Are you sure?",
+      "no": "No",
+      "yes": "Yes",
+      "cancelFailed": "Failed to cancel appointment",
+      "deleteTitle": "Delete Appointment",
+      "deleteConfirm": "This cannot be undone.",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "deleteFailed": "Failed to delete",
+      "notFound": "Appointment not found",
+      "client": "Client",
+      "service": "Service",
+      "serviceDetail": "{{category}} | {{duration}} min",
+      "when": "When",
+      "price": "Price",
+      "location": "Location",
+      "notes": "Notes",
+      "markDone": "Mark Done"
+    },
+    "createAppointment": {
+      "validationSelect": "Please select client and service",
+      "createFailed": "Failed to create appointment",
+      "title": "New Appointment",
+      "date": "Date",
+      "category": "Category",
+      "service": "Service",
+      "start": "Start",
+      "end": "End",
+      "descriptionOptional": "Description (optional)",
+      "locationOptional": "Location (optional)",
+      "notesPlaceholder": "Notes…",
+      "locationPlaceholder": "e.g. Salon",
+      "creating": "Creating…",
+      "submit": "Create Appointment"
+    },
+    "reports": {
+      "tabRevenue": "Revenue",
+      "tabClients": "Clients",
+      "groupBy": "Group:",
+      "sortBy": "Sort:",
+      "groupWeekend": "Weekend",
+      "groupService": "Service",
+      "groupLocation": "Location",
+      "groupClient": "Client",
+      "sortVisitCount": "Visits",
+      "sortTotalSpent": "Total Spent",
+      "sortLastVisit": "Last Visit",
+      "visits": "{{count}} visits",
+      "visitsLast": "{{count}} visits | Last: {{lastVisit}}",
+      "na": "N/A",
+      "averagePerVisit": "avg {{amount}} PLN",
+      "noData": "No data"
+    },
+    "clientList": {
+      "createFailed": "Failed to create client",
+      "searchPlaceholder": "Search clients…",
+      "empty": "No clients found",
+      "clientNamePlaceholder": "Client name",
+      "add": "Add",
+      "createAccessibility": "Create client"
+    },
+    "serviceList": {
+      "deleteTitle": "Delete Service",
+      "deleteConfirm": "Delete \"{{name}}\"?",
+      "delete": "Delete",
+      "deleteFailed": "Failed to delete service",
+      "empty": "No services yet",
+      "createAccessibility": "Create service",
+      "durationAndPrice": "{{duration}} min | {{amount}} {{currency}}"
+    },
+    "serviceEdit": {
+      "loadFailed": "Failed to load service",
+      "nameRequired": "Name is required",
+      "durationRequired": "Valid duration is required",
+      "priceRequired": "Valid price is required",
+      "saveFailed": "Failed to save service",
+      "editTitle": "Edit Service",
+      "newTitle": "New Service",
+      "name": "Name",
+      "category": "Category",
+      "durationLabel": "Base Duration (minutes)",
+      "priceLabel": "Base Price (PLN)",
+      "namePlaceholder": "e.g. Premium Haircut",
+      "saving": "Saving…",
+      "updateSubmit": "Update Service",
+      "createSubmit": "Create Service"
+    },
+    "weekendGrid": {
+      "noBoard": "No board selected",
+      "noBoardSubtitle": "Select or create a board to get started",
+      "clients": "Clients",
+      "services": "Services",
+      "reports": "Reports",
+      "saturday": "Saturday",
+      "sunday": "Sunday",
+      "createAccessibility": "Create appointment"
+    },
+    "clientDetail": {
+      "notFound": "Client not found",
+      "historyTitle": "Appointment History ({{count}})",
+      "empty": "No appointments yet"
+    },
+    "boardSelector": {
+      "deleteTitle": "Delete Board",
+      "createNew": "+ Create New Board",
+      "close": "Close",
+      "noBoard": "No board"
+    },
+    "summaryBar": {
+      "revenue": "Revenue",
+      "expenses": "Expenses",
+      "netProfit": "Net Profit",
+      "weekend": "Weekend"
+    },
+    "clientPicker": {
+      "client": "Client",
+      "selectAccessibility": "Select client",
+      "selectPlaceholder": "Select a client…",
+      "searchPlaceholder": "Search clients…",
+      "empty": "No clients found",
+      "creating": "Creating…",
+      "createWithName": "Create \"{{name}}\""
+    },
+    "weekendNavigator": {
+      "previousAccessibility": "Previous weekend",
+      "today": "Today",
+      "nextAccessibility": "Next weekend"
+    },
+    "dayColumn": {
+      "noItems": "No items"
+    },
+    "dayTotalFooter": {
+      "revenue": "Revenue",
+      "expenses": "Expenses",
+      "net": "Net"
+    },
+    "appointmentCard": {
+      "new": "New",
+      "done": "Done",
+      "cancelled": "Cancelled"
+    }
   },
   "lovingBoards": {
     "boardList": {
