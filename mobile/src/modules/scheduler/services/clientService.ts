@@ -1,9 +1,10 @@
+import { z } from 'zod';
 import apiClient from '../../../services/apiClient';
+import { ClientSchema } from '../types/api';
 import type { Client } from '../types/api';
 
-interface IdResponse {
-  id: number;
-}
+const IdResponseSchema = z.object({ id: z.number() });
+type IdResponse = z.infer<typeof IdResponseSchema>;
 
 interface CreateClientRequest {
   boardId: number;
@@ -18,37 +19,53 @@ interface UpdateClientRequest {
   notes?: string;
 }
 
-export interface ClientWithAppointments extends Client {
-  appointments: Array<{
-    id: number;
-    date: string;
-    startTime: string;
-    endTime: string;
-    serviceName: string;
-    status: string;
-  }>;
-}
+const ClientAppointmentSummarySchema = z.object({
+  id: z.number(),
+  date: z.string(),
+  startTime: z.string(),
+  endTime: z.string(),
+  serviceName: z.string(),
+  status: z.string(),
+});
+
+const ClientWithAppointmentsSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  phone: z.string().nullable(),
+  notes: z.string().nullable(),
+  appointments: z.array(ClientAppointmentSummarySchema),
+});
+
+export type ClientWithAppointments = z.infer<
+  typeof ClientWithAppointmentsSchema
+>;
 
 export const createClient = async (
   boardId: number,
   data: Omit<CreateClientRequest, 'boardId'>,
 ): Promise<IdResponse> => {
-  const response = await apiClient.post<IdResponse>('/scheduler/clients', { ...data, boardId });
-  return response.data;
+  const response = await apiClient.post('/scheduler/clients', {
+    ...data,
+    boardId,
+  });
+  return IdResponseSchema.parse(response.data);
 };
 
-export const listClients = async (boardId: number, q?: string): Promise<Client[]> => {
-  const response = await apiClient.get<Client[]>('/scheduler/clients', {
+export const listClients = async (
+  boardId: number,
+  q?: string,
+): Promise<Client[]> => {
+  const response = await apiClient.get('/scheduler/clients', {
     params: { boardId, ...(q ? { q } : {}) },
   });
-  return response.data;
+  return ClientSchema.array().parse(response.data);
 };
 
-export const getClient = async (id: number): Promise<ClientWithAppointments> => {
-  const response = await apiClient.get<ClientWithAppointments>(
-    `/scheduler/clients/${id}`,
-  );
-  return response.data;
+export const getClient = async (
+  id: number,
+): Promise<ClientWithAppointments> => {
+  const response = await apiClient.get(`/scheduler/clients/${id}`);
+  return ClientWithAppointmentsSchema.parse(response.data);
 };
 
 export const updateClient = async (

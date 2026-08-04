@@ -48,11 +48,11 @@ const ClientReportRow: React.FC<{ item: ClientReportItem }> = ({ item }) => {
   return (
     <View style={styles.reportRow}>
       <View style={styles.reportLeft}>
-        <Text style={styles.reportKey}>{item.client.name}</Text>
+        <Text style={styles.reportKey}>{item.clientName}</Text>
         <Text style={styles.reportCount}>
           {t('scheduler.reports.visitsLast', {
             count: item.visitCount,
-            lastVisit: item.lastVisit || t('scheduler.reports.na'),
+            lastVisit: item.lastVisitDate || t('scheduler.reports.na'),
           })}
         </Text>
       </View>
@@ -241,7 +241,7 @@ const ReportsScreen: React.FC = () => {
       ) : (
         <FlatList
           data={reports.clientReports}
-          keyExtractor={item => String(item.client.id)}
+          keyExtractor={item => String(item.clientId)}
           contentContainerStyle={styles.list}
           renderItem={renderClientReportItem}
           ListEmptyComponent={

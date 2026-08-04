@@ -54,11 +54,24 @@ describe('appointmentService', () => {
     it('calls GET with boardId and dates and returns appointments', async () => {
       const mockResponse: Appointment[] = [
         {
-          id: 1, boardId: 1,
-          client: { id: 2, boardId: 1, name: 'Jane' },
-          service: { id: 3, boardId: 1, name: 'Cut', category: 'WomensHaircut', baseDuration: 30, basePrice: { amount: 80, currency: 'PLN' } },
-          date: '2026-05-23', startTime: '10:00', endTime: '10:30',
-          price: { amount: 80, currency: 'PLN' }, location: 'Salon', status: 'Created',
+          id: 1,
+          boardId: 1,
+          client: { id: 2, boardId: 1, name: 'Jane', phone: null, notes: null },
+          service: {
+            id: 3,
+            boardId: 1,
+            name: 'Cut',
+            category: 'WomensHaircut',
+            baseDuration: 30,
+            basePrice: { amount: 80, currency: 'PLN' },
+          },
+          description: null,
+          date: '2026-05-23',
+          startTime: '10:00',
+          endTime: '10:30',
+          price: { amount: 80, currency: 'PLN' },
+          location: 'Salon',
+          status: 'Created',
         },
       ];
       mockGet.mockResolvedValue({ data: mockResponse });
@@ -74,11 +87,24 @@ describe('appointmentService', () => {
   describe('getAppointment', () => {
     it('calls GET with id and returns appointment', async () => {
       const mockAppointment: Appointment = {
-        id: 1, boardId: 1,
-        client: { id: 2, boardId: 1, name: 'Jane' },
-        service: { id: 3, boardId: 1, name: 'Cut', category: 'WomensHaircut', baseDuration: 30, basePrice: { amount: 80, currency: 'PLN' } },
-        date: '2026-05-23', startTime: '10:00', endTime: '10:30',
-        price: { amount: 80, currency: 'PLN' }, location: 'Salon', status: 'Created',
+        id: 1,
+        boardId: 1,
+        client: { id: 2, boardId: 1, name: 'Jane', phone: null, notes: null },
+        service: {
+          id: 3,
+          boardId: 1,
+          name: 'Cut',
+          category: 'WomensHaircut',
+          baseDuration: 30,
+          basePrice: { amount: 80, currency: 'PLN' },
+        },
+        description: null,
+        date: '2026-05-23',
+        startTime: '10:00',
+        endTime: '10:30',
+        price: { amount: 80, currency: 'PLN' },
+        location: 'Salon',
+        status: 'Created',
       };
       mockGet.mockResolvedValue({ data: mockAppointment });
 
@@ -93,9 +119,13 @@ describe('appointmentService', () => {
       mockPut.mockResolvedValue({ data: { id: 1 } });
 
       const data = {
-        clientId: 2, serviceId: 3, date: '2026-05-23',
-        startTime: '11:00', endTime: '12:00',
-        description: 'Updated', location: 'Salon',
+        clientId: 2,
+        serviceId: 3,
+        date: '2026-05-23',
+        startTime: '11:00',
+        endTime: '12:00',
+        description: 'Updated',
+        location: 'Salon',
         price: { amount: 100, currency: 'PLN' },
       };
 
@@ -109,7 +139,10 @@ describe('appointmentService', () => {
       mockPatch.mockResolvedValue({ data: { id: 1 } });
 
       await updateStatus(1, 'Done' as AppointmentStatus);
-      expect(mockPatch).toHaveBeenCalledWith('/scheduler/appointments/1/status', { status: 'Done' });
+      expect(mockPatch).toHaveBeenCalledWith(
+        '/scheduler/appointments/1/status',
+        { status: 'Done' },
+      );
     });
   });
 

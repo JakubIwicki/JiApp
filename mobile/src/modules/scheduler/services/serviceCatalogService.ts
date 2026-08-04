@@ -1,9 +1,10 @@
+import { z } from 'zod';
 import apiClient from '../../../services/apiClient';
+import { ServiceItemSchema } from '../types/api';
 import type { ServiceItem } from '../types/api';
 
-interface IdResponse {
-  id: number;
-}
+const IdResponseSchema = z.object({ id: z.number() });
+type IdResponse = z.infer<typeof IdResponseSchema>;
 
 interface CreateServiceRequest {
   boardId: number;
@@ -23,8 +24,8 @@ interface UpdateServiceRequest {
 export const createService = async (
   data: CreateServiceRequest,
 ): Promise<IdResponse> => {
-  const response = await apiClient.post<IdResponse>('/scheduler/services', data);
-  return response.data;
+  const response = await apiClient.post('/scheduler/services', data);
+  return IdResponseSchema.parse(response.data);
 };
 
 export const listServices = async (
@@ -35,15 +36,13 @@ export const listServices = async (
   if (boardId !== undefined) params.boardId = boardId;
   if (category !== undefined) params.category = category;
 
-  const response = await apiClient.get<ServiceItem[]>('/scheduler/services', {
-    params,
-  });
-  return response.data;
+  const response = await apiClient.get('/scheduler/services', { params });
+  return ServiceItemSchema.array().parse(response.data);
 };
 
 export const getService = async (id: number): Promise<ServiceItem> => {
-  const response = await apiClient.get<ServiceItem>(`/scheduler/services/${id}`);
-  return response.data;
+  const response = await apiClient.get(`/scheduler/services/${id}`);
+  return ServiceItemSchema.parse(response.data);
 };
 
 export const updateService = async (

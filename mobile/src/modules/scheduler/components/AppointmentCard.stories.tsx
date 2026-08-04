@@ -7,7 +7,13 @@ import type { Appointment } from '../types/api';
 const mensHaircutAppointment: Appointment = {
   id: 1,
   boardId: 1,
-  client: { id: 1, boardId: 1, name: 'Anna Kowalska', phone: '+48 601 111 222' },
+  client: {
+    id: 1,
+    boardId: 1,
+    name: 'Anna Kowalska',
+    phone: '+48 601 111 222',
+    notes: null,
+  },
   service: {
     id: 1,
     boardId: 1,
@@ -16,7 +22,7 @@ const mensHaircutAppointment: Appointment = {
     baseDuration: 30,
     basePrice: { amount: 60, currency: 'PLN' },
   },
-  description: undefined,
+  description: null,
   date: '2026-05-30',
   startTime: '09:00',
   endTime: '09:30',
@@ -28,7 +34,13 @@ const mensHaircutAppointment: Appointment = {
 const womensStylingAppointment: Appointment = {
   id: 2,
   boardId: 1,
-  client: { id: 2, boardId: 1, name: 'Marta Zielinska', phone: '+48 602 222 333' },
+  client: {
+    id: 2,
+    boardId: 1,
+    name: 'Marta Zielinska',
+    phone: '+48 602 222 333',
+    notes: null,
+  },
   service: {
     id: 5,
     boardId: 1,
@@ -37,7 +49,7 @@ const womensStylingAppointment: Appointment = {
     baseDuration: 90,
     basePrice: { amount: 200, currency: 'PLN' },
   },
-  description: undefined,
+  description: null,
   date: '2026-05-30',
   startTime: '10:00',
   endTime: '11:30',
@@ -49,7 +61,13 @@ const womensStylingAppointment: Appointment = {
 const appointmentWithDescription: Appointment = {
   id: 3,
   boardId: 1,
-  client: { id: 4, boardId: 1, name: 'Katarzyna Adamczyk', phone: '+48 603 333 444' },
+  client: {
+    id: 4,
+    boardId: 1,
+    name: 'Katarzyna Adamczyk',
+    phone: '+48 603 333 444',
+    notes: null,
+  },
   service: {
     id: 7,
     boardId: 1,
@@ -72,7 +90,7 @@ const meta: Meta<typeof AppointmentCard> = {
   title: 'Scheduler/AppointmentCard',
   component: AppointmentCard,
   decorators: [
-    (Story) => (
+    Story => (
       <View style={styles.decorator}>
         <Story />
       </View>

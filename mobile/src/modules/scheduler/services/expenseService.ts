@@ -1,9 +1,10 @@
+import { z } from 'zod';
 import apiClient from '../../../services/apiClient';
+import { ExpenseSchema } from '../types/api';
 import type { Expense } from '../types/api';
 
-interface IdResponse {
-  id: number;
-}
+const IdResponseSchema = z.object({ id: z.number() });
+type IdResponse = z.infer<typeof IdResponseSchema>;
 
 interface CreateExpenseRequest {
   boardId: number;
@@ -20,51 +21,26 @@ interface UpdateExpenseRequest {
   note?: string;
 }
 
-/** Backend returns flat amount+currency, not Price object. */
-interface ExpenseApiResponse {
-  id: number;
-  boardId: number;
-  date: string;
-  category: string;
-  amount: number;
-  currency: string;
-  note?: string;
-}
-
-function toExpense(raw: ExpenseApiResponse): Expense {
-  return {
-    id: raw.id,
-    boardId: raw.boardId,
-    date: raw.date,
-    category: raw.category as Expense['category'],
-    amount: { amount: raw.amount, currency: raw.currency },
-    note: raw.note,
-  };
-}
-
 export const createExpense = async (
   data: CreateExpenseRequest,
 ): Promise<IdResponse> => {
-  const response = await apiClient.post<IdResponse>('/scheduler/expenses', data);
-  return response.data;
+  const response = await apiClient.post('/scheduler/expenses', data);
+  return IdResponseSchema.parse(response.data);
 };
 
 export const listExpenses = async (
   boardId: number,
   date: string,
 ): Promise<Expense[]> => {
-  const response = await apiClient.get<ExpenseApiResponse[]>(
-    '/scheduler/expenses',
-    { params: { boardId, date } },
-  );
-  return response.data.map(toExpense);
+  const response = await apiClient.get('/scheduler/expenses', {
+    params: { boardId, date },
+  });
+  return ExpenseSchema.array().parse(response.data);
 };
 
 export const getExpense = async (id: number): Promise<Expense> => {
-  const response = await apiClient.get<ExpenseApiResponse>(
-    `/scheduler/expenses/${id}`,
-  );
-  return toExpense(response.data);
+  const response = await apiClient.get(`/scheduler/expenses/${id}`);
+  return ExpenseSchema.parse(response.data);
 };
 
 export const updateExpense = async (
