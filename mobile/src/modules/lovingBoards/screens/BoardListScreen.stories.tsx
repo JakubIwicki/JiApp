@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { Meta, StoryObj } from '@storybook/react';
 import BoardListScreen from './BoardListScreen';
-import { setBoardMode, setBoards } from '../services/__mocks__/boardService';
+import { withBoards } from '../services/__mocks__/boardService';
 import type { Board } from '../types/api';
 import type { LovingBoardsStackParamList } from '../../../navigation/types';
 
@@ -86,8 +86,7 @@ type Story = StoryObj<typeof BoardListScreen>;
 export const WithBoards: Story = {
   decorators: [
     Story => {
-      setBoardMode('success');
-      setBoards(sampleBoards);
+      withBoards(sampleBoards);
       return <Story />;
     },
   ],
@@ -104,8 +103,7 @@ export const WithBoards: Story = {
 export const Empty: Story = {
   decorators: [
     Story => {
-      setBoardMode('empty');
-      setBoards([]);
+      withBoards([]);
       return <Story />;
     },
   ],
@@ -122,8 +120,7 @@ export const Loading: Story = {
   decorators: [
     Story => {
       // Keep it in a state that triggers loading — empty boards with initial load
-      setBoardMode('empty');
-      setBoards([]);
+      withBoards([]);
       return <Story />;
     },
   ],
