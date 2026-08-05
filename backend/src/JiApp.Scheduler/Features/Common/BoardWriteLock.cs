@@ -5,7 +5,8 @@ namespace JiApp.Scheduler.Features.Common;
 /// <summary>
 /// Per-board in-memory write lock to serialise read-modify-write operations on a board's
 /// <c>MemberUserIds</c> JSON list. Single-instance — matches the single-instance
-/// deployment assumption of the Scheduler.
+/// deployment assumption of the Scheduler; enforced at startup by
+/// <see cref="JiApp.Common.Services.SingleInstanceGuard"/>.
 /// </summary>
 public sealed class BoardWriteLock
 {

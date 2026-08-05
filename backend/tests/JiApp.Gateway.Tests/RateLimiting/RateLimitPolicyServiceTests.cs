@@ -1,12 +1,17 @@
+using System.Collections.Concurrent;
+using System.Reflection;
+
 namespace JiApp.Gateway.Tests.RateLimiting;
 
 public sealed class RateLimitPolicyServiceTests
 {
     private sealed class Fixture
     {
-        public RateLimitPolicyService Sut { get; } = new();
+        public RateLimitPolicyService Sut { get; }
 
-        public static Fixture Init() => new();
+        private Fixture(int maxEntries) => Sut = new RateLimitPolicyService(maxEntries);
+
+        public static Fixture Init(int maxEntries = 4096) => new(maxEntries);
     }
 
     [Fact]
@@ -94,4 +99,54 @@ public sealed class RateLimitPolicyServiceTests
         result1.Metadata.GetMetadata<EnableRateLimitingAttribute>()!.PolicyName.Should().Be("PolicyA");
         result2.Metadata.GetMetadata<EnableRateLimitingAttribute>()!.PolicyName.Should().Be("PolicyB");
     }
+
+    [Fact]
+    public void EndpointCache_NeverExceedsCap()
+    {
+        var sut = new RateLimitPolicyService(maxEntries: 2);
+
+        sut.CreatePolicyEndpoint("/test/cap-1", "PolicyA");
+        sut.CreatePolicyEndpoint("/test/cap-2", "PolicyA");
+        sut.CreatePolicyEndpoint("/test/cap-3", "PolicyA");
+
+        CacheCount(sut).Should().BeLessThanOrEqualTo(2);
+
+        sut.AttachRateLimitPolicy(CreateEndpoint("/test/cap-4"), "PolicyA");
+        sut.AttachRateLimitPolicy(CreateEndpoint("/test/cap-5"), "PolicyA");
+        sut.AttachRateLimitPolicy(CreateEndpoint("/test/cap-6"), "PolicyA");
+
+        CacheCount(sut).Should().BeLessThanOrEqualTo(2);
+    }
+
+    [Fact]
+    public void PreviouslyCachedKey_ResolvesAgain_AfterEviction()
+    {
+        var sut = new RateLimitPolicyService(maxEntries: 2);
+
+        var original = sut.CreatePolicyEndpoint("/test/evict-1", "PolicyA");
+        sut.CreatePolicyEndpoint("/test/evict-2", "PolicyA");
+        sut.CreatePolicyEndpoint("/test/evict-3", "PolicyA");
+
+        var recreated = sut.CreatePolicyEndpoint("/test/evict-1", "PolicyA");
+
+        recreated.Should().NotBeSameAs(original);
+        recreated.Metadata.GetMetadata<EnableRateLimitingAttribute>()
+            .Should().NotBeNull();
+        recreated.Metadata.GetMetadata<EnableRateLimitingAttribute>()!.PolicyName
+            .Should().Be("PolicyA");
+    }
+
+    private static int CacheCount(RateLimitPolicyService sut)
+    {
+        var field = typeof(RateLimitPolicyService).GetField("_endpointCache",
+                BindingFlags.Instance | BindingFlags.NonPublic)
+            ?? throw new InvalidOperationException("RateLimitPolicyService._endpointCache field not found.");
+        var cache = (ConcurrentDictionary<(string DisplayName, string PolicyName), Endpoint>)field.GetValue(sut)!;
+        return cache.Count;
+    }
+
+    private static Endpoint CreateEndpoint(string path) => new(
+        _ => Task.CompletedTask,
+        new EndpointMetadataCollection(new EnableRateLimitingAttribute("PolicyA")),
+        path);
 }
