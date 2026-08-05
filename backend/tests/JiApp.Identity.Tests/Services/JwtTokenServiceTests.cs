@@ -1,4 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
+using JiApp.Common;
 using JiApp.Identity.Services;
 
 namespace JiApp.Identity.Tests.Services;
@@ -69,7 +70,7 @@ public sealed class JwtTokenServiceTests
             .ToArray();
 
         var permissionClaims = allClaims
-            .Where(c => c.Type == "permission")
+            .Where(c => c.Type == Permissions.PermissionClaimType)
             .Select(c => c.Value)
             .ToArray();
 
@@ -92,7 +93,7 @@ public sealed class JwtTokenServiceTests
         var permissionClaims = new JwtSecurityTokenHandler()
             .ReadJwtToken(token)
             .Claims
-            .Where(c => c.Type == "permission");
+            .Where(c => c.Type == Permissions.PermissionClaimType);
 
         roleClaims.Should().BeEmpty();
         permissionClaims.Should().BeEmpty();

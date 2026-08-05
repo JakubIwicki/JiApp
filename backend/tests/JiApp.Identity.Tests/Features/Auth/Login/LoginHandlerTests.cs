@@ -1,4 +1,5 @@
 using JiApp.Common.Abstractions;
+using JiApp.Common.Authentication;
 using JiApp.Common.Models;
 using JiApp.Identity.Configuration;
 using JiApp.Identity.Features.Auth.Login;
@@ -35,7 +36,7 @@ public sealed class LoginHandlerTests
         public Mock<IPasswordHasher<User>> PasswordHasherMock { get; } = new();
         public IdentitySettings Settings { get; } = new()
         {
-            Jwt = new IdentitySettings.JwtSettings { AccessTokenExpireMinutes = 15 }
+            Jwt = new JwtSettings { AccessTokenExpireMinutes = 15 }
         };
 
         public LoginHandler Sut { get; }

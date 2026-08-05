@@ -42,19 +42,19 @@ public sealed class RoleSeederTests
 
 			// Admin has altered claims (missing most, has an extra)
 			RoleManagerDouble.WithGetClaimsAsync(_adminRole, [
-				new Claim("permission", "some.other"),
-				new Claim("permission", Permissions.SchedulerAccess)
+				new Claim(Permissions.PermissionClaimType, "some.other"),
+				new Claim(Permissions.PermissionClaimType, Permissions.SchedulerAccess)
 			]);
 
 			// User has custom claims (different from defaults)
 			RoleManagerDouble.WithGetClaimsAsync(_userRole, [
-				new Claim("permission", "custom.read"),
-				new Claim("permission", "custom.write")
+				new Claim(Permissions.PermissionClaimType, "custom.read"),
+				new Claim(Permissions.PermissionClaimType, "custom.write")
 			]);
 
 			// Guest has claims (should be empty by default)
 			RoleManagerDouble.WithGetClaimsAsyncByName("Guest",
-				[new Claim("permission", "something.extra")]);
+				[new Claim(Permissions.PermissionClaimType, "something.extra")]);
 
 			RoleManagerDouble.WithRemoveClaimAsync(IdentityResult.Success);
 			RoleManagerDouble.WithAddClaimAsync(IdentityResult.Success);

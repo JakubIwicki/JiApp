@@ -39,7 +39,7 @@ public sealed class UserAccessService(
 			var claims = await roleManager.GetClaimsAsync(role);
 			foreach (var claim in claims)
 			{
-				if (claim.Type == "permission")
+				if (claim.Type == Permissions.PermissionClaimType)
 					permissions.Add(claim.Value);
 			}
 		}

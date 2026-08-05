@@ -204,7 +204,7 @@ public sealed class GetAppointmentEndpointTests : IDisposable
             claims:
             [
                 new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
-                new Claim("permission", Permissions.SchedulerAccess)
+                new Claim(Permissions.PermissionClaimType, Permissions.SchedulerAccess)
             ],
             expires: DateTime.UtcNow.AddMinutes(15),
             signingCredentials: credentials);

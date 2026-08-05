@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using JiApp.Common;
 using JiApp.Common.Abstractions;
 using JiApp.Identity.Features.Admin.Roles.ListRoles;
 using JiApp.Identity.Tests.Mocks;
@@ -29,9 +30,9 @@ public sealed class ListRolesHandlerTests
 
 			RoleManagerDouble.WithRolesQueryable(roles);
 			RoleManagerDouble.WithGetClaimsAsyncByName("Admin",
-				[new Claim("permission", "users.manage"), new Claim("permission", "roles.manage")]);
+				[new Claim(Permissions.PermissionClaimType, "users.manage"), new Claim(Permissions.PermissionClaimType, "roles.manage")]);
 			RoleManagerDouble.WithGetClaimsAsyncByName("User",
-				[new Claim("permission", "scheduler.access")]);
+				[new Claim(Permissions.PermissionClaimType, "scheduler.access")]);
 			return this;
 		}
 	}

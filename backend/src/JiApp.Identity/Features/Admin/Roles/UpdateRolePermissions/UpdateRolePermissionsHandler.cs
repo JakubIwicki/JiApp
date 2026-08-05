@@ -37,20 +37,20 @@ public sealed class UpdateRolePermissionsHandler(
 		var desiredSet = request.Permissions.ToHashSet();
 
 		var existingPermissionValues = existingClaims
-			.Where(c => c.Type == "permission")
+			.Where(c => c.Type == Permissions.PermissionClaimType)
 			.Select(c => c.Value)
 			.ToHashSet();
 
 		foreach (var claim in existingClaims)
 		{
-			if (claim.Type == "permission" && !desiredSet.Contains(claim.Value))
+			if (claim.Type == Permissions.PermissionClaimType && !desiredSet.Contains(claim.Value))
 				await roleManager.RemoveClaimAsync(role, claim);
 		}
 
 		foreach (var permission in request.Permissions)
 		{
 			if (!existingPermissionValues.Contains(permission))
-				await roleManager.AddClaimAsync(role, new Claim("permission", permission));
+				await roleManager.AddClaimAsync(role, new Claim(Permissions.PermissionClaimType, permission));
 		}
 
 		if (!existingPermissionValues.SetEquals(desiredSet))

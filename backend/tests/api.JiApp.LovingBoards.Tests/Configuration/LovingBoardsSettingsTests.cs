@@ -1,3 +1,4 @@
+using JiApp.Common.Authentication;
 using api.JiApp.LovingBoards.Configuration;
 
 namespace api.JiApp.LovingBoards.Tests.Configuration;

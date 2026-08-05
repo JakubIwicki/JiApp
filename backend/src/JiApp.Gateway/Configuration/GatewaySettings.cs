@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using JiApp.Common.Authentication;
 
 namespace JiApp.Gateway.Configuration;
 
@@ -29,14 +30,7 @@ public sealed class GatewaySettings
             return;
         }
 
-        if (string.IsNullOrEmpty(Jwt.Key))
-            errors.Add("Jwt:Key is not configured.");
-        else if (Jwt.Key.Length < 32)
-            errors.Add("Jwt:Key must be at least 32 characters long.");
-        if (string.IsNullOrEmpty(Jwt.Issuer))
-            errors.Add("Jwt:Issuer is not configured.");
-        if (string.IsNullOrEmpty(Jwt.Audience))
-            errors.Add("Jwt:Audience is not configured.");
+        errors.AddRange(Jwt.Validate());
     }
 
     private void ValidateRateLimiting(List<string> errors)
@@ -59,14 +53,6 @@ public sealed class GatewaySettings
             if (!RateLimiting.ContainsKey(policy))
                 errors.Add($"RateLimiting:{policy} is not configured.");
         }
-    }
-
-    [Serializable]
-    public sealed class JwtSettings
-    {
-        public string Key { get; set; } = string.Empty;
-        public string Issuer { get; set; } = string.Empty;
-        public string Audience { get; set; } = string.Empty;
     }
 
     [Serializable]

@@ -1,8 +1,8 @@
 using System.Globalization;
-using System.Text;
 using System.Text.Json;
 using System.Threading.RateLimiting;
 using JiApp.Common.Abstractions;
+using JiApp.Common.Authentication;
 using JiApp.Common.Middleware;
 using JiApp.Gateway.Configuration;
 using JiApp.Gateway.HealthDashboard;
@@ -12,7 +12,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
 using Serilog;
 
 namespace JiApp.Gateway;
@@ -27,18 +26,8 @@ public class Startup(GatewaySettings settings, IConfiguration configuration, IWe
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidateLifetime = true,
-                    ValidIssuer = jwt.Issuer,
-                    ValidAudience = jwt.Audience,
-                    IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(jwt.Key)),
-                    ValidAlgorithms = ["HS256"],
-                };
+                options.TokenValidationParameters = TokenValidationParametersFactory.Create(
+                    jwt.ValidatedKey, jwt.ValidatedIssuer, jwt.ValidatedAudience);
 
                 options.Events = new JwtBearerEvents
                 {

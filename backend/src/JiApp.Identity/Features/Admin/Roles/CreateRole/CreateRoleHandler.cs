@@ -31,7 +31,7 @@ public sealed class CreateRoleHandler(RoleManager<IdentityRole<long>> roleManage
 
 		foreach (var permission in request.Permissions)
 		{
-			await roleManager.AddClaimAsync(role, new Claim("permission", permission));
+			await roleManager.AddClaimAsync(role, new Claim(Permissions.PermissionClaimType, permission));
 		}
 
 		return Result<bool>.Success(true);

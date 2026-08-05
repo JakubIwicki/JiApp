@@ -56,7 +56,7 @@ public sealed class RoleSeeder(
 
 		var existingClaims = await roleManager.GetClaimsAsync(role);
 		var existingPermissionValues = existingClaims
-			.Where(c => c.Type == "permission")
+			.Where(c => c.Type == Permissions.PermissionClaimType)
 			.Select(c => c.Value)
 			.ToHashSet();
 
@@ -64,7 +64,7 @@ public sealed class RoleSeeder(
 
 		foreach (var claim in existingClaims)
 		{
-			if (claim.Type == "permission" && !desiredSet.Contains(claim.Value))
+			if (claim.Type == Permissions.PermissionClaimType && !desiredSet.Contains(claim.Value))
 			{
 				await roleManager.RemoveClaimAsync(role, claim);
 				logger.LogInformation("Removed permission {Permission} from role {RoleName}", claim.Value, name);
@@ -75,7 +75,7 @@ public sealed class RoleSeeder(
 		{
 			if (!existingPermissionValues.Contains(permission))
 			{
-				await roleManager.AddClaimAsync(role, new System.Security.Claims.Claim("permission", permission));
+				await roleManager.AddClaimAsync(role, new System.Security.Claims.Claim(Permissions.PermissionClaimType, permission));
 				logger.LogInformation("Added permission {Permission} to role {RoleName}", permission, name);
 			}
 		}
@@ -103,7 +103,7 @@ public sealed class RoleSeeder(
 
 		foreach (var permission in defaultPermissions)
 		{
-			await roleManager.AddClaimAsync(role, new System.Security.Claims.Claim("permission", permission));
+			await roleManager.AddClaimAsync(role, new System.Security.Claims.Claim(Permissions.PermissionClaimType, permission));
 		}
 
 		if (defaultPermissions.Length > 0)
