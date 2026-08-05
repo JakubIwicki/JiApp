@@ -69,7 +69,8 @@ public class Startup(Settings settings, IWebHostEnvironment env)
             if (settings.ConnectionString!.Contains("Host="))
                 options.UseNpgsql(settings.ConnectionString);
             else
-                options.UseSqlite(settings.ConnectionString);
+                options.UseSqlite(settings.ConnectionString)
+                    .AddInterceptors(new SqliteBusyTimeoutInterceptor());
         });
     }
 
@@ -136,8 +137,11 @@ public class Startup(Settings settings, IWebHostEnvironment env)
         services.AddScoped<IDownloadHistoryRepository, DownloadHistoryRepository>();
         services.AddScoped<IAssistantUsageRepository, AssistantUsageRepository>();
         // Services
-        services.AddSingleton<IDownloadJobStore>(_ =>
-            new DownloadJobStore(TimeSpan.FromMinutes(settings.App?.DownloadTtlMinutes ?? 15)));
+        services.AddSingleton(sp => new DownloadJobStore(
+            sp.GetRequiredService<IServiceScopeFactory>(),
+            TimeSpan.FromMinutes(settings.App?.DownloadTtlMinutes ?? 15),
+            sp.GetRequiredService<TimeProvider>()));
+        services.AddSingleton<IDownloadJobStore>(sp => sp.GetRequiredService<DownloadJobStore>());
         services.AddSingleton(_ => Channel.CreateUnbounded<string>());
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddSingleton<IYoutubeClient>(_ =>

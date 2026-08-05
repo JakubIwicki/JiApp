@@ -1,7 +1,11 @@
 using System.Threading.Channels;
 using JiApp.Common.Abstractions;
 using JiApp.YtDownloader.Features.GetDownloadLink;
+using JiApp.YtDownloader.Persistence;
 using JiApp.YtDownloader.Services;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 
 namespace JiApp.YtDownloader.Tests.Features.GetDownloadLink;
@@ -11,16 +15,42 @@ public sealed class GetDownloadLinkHandlerTests
     private const long UserId = 42L;
     private const int TempIdLength = 32;
 
-    private sealed class Fixture
+    private sealed class Fixture : IDisposable
     {
-        public DownloadJobStore JobStore { get; } = new(TimeSpan.FromMinutes(15));
+        private readonly SqliteConnection _connection;
+        private readonly ServiceProvider _provider;
+
+        public DownloadJobStore JobStore { get; }
         public Channel<string> Queue { get; } = Channel.CreateUnbounded<string>();
         public GetDownloadLinkHandler Sut { get; }
 
         public Fixture()
         {
+            _connection = new SqliteConnection("DataSource=:memory:");
+            _connection.Open();
+            var options = new DbContextOptionsBuilder<YtDbContext>()
+                .UseSqlite(_connection)
+                .Options;
+            using (var db = new YtDbContext(options))
+                db.Database.Migrate();
+
+            var services = new ServiceCollection();
+            services.AddScoped(_ => new YtDbContext(options));
+            _provider = services.BuildServiceProvider();
+
+            JobStore = new DownloadJobStore(
+                _provider.GetRequiredService<IServiceScopeFactory>(),
+                TimeSpan.FromMinutes(15),
+                TimeProvider.System);
+
             var user = Mock.Of<ICurrentUserService>(x => x.UserId == UserId && x.Username == "test-user");
             Sut = new GetDownloadLinkHandler(JobStore, Queue, user);
+        }
+
+        public void Dispose()
+        {
+            _provider.Dispose();
+            _connection.Dispose();
         }
     }
 

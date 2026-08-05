@@ -1,4 +1,9 @@
+using JiApp.YtDownloader.Domain;
+using JiApp.YtDownloader.Persistence;
 using JiApp.YtDownloader.Services;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace JiApp.YtDownloader.Tests.Services;
 
@@ -8,6 +13,7 @@ public sealed class DownloadJobStoreTests
     private const long OtherUserId = 2L;
     private const string VideoId = "dQw4w9WgXcQ";
     private static readonly TimeSpan Ttl = TimeSpan.FromMinutes(15);
+    private static readonly DateTimeOffset FixedNow = new(2030, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
     // ── CreateJob ──────────────────────────────────────────────────────────
 
@@ -16,14 +22,49 @@ public sealed class DownloadJobStoreTests
     {
         using var fixture = new Fixture(Ttl, DateTimeOffset.UtcNow);
 
-        var first = fixture.CreateJob();
-        var second = fixture.CreateJob();
+        var first = fixture.CreateJob(videoId: "video-one");
+        var second = fixture.CreateJob(videoId: "video-two");
 
         first.Should().NotBe(second);
         first.Should().HaveLength(32);
         var status = fixture.Store.GetStatus(first, UserId);
         status.Should().NotBeNull();
         status!.Status.Should().Be(DownloadJobStatus.Pending);
+    }
+
+    [Fact]
+    public void CreateJob_WhileActiveJobExists_ReturnsSameTempId_ForSameVideo()
+    {
+        using var fixture = new Fixture(Ttl, DateTimeOffset.UtcNow);
+
+        var first = fixture.CreateJob();
+        var second = fixture.CreateJob();
+
+        second.Should().Be(first);
+    }
+
+    [Fact]
+    public void CreateJob_AfterJobCompletes_ReturnsNewTempId_ForSameVideo()
+    {
+        using var fixture = new Fixture(Ttl, DateTimeOffset.UtcNow);
+        var first = fixture.CreateJob();
+        fixture.Store.Claim(first, UserId);
+        fixture.Store.MarkReady(first, UserId, fixture.CreateFile());
+
+        var second = fixture.CreateJob();
+
+        second.Should().NotBe(first);
+    }
+
+    [Fact]
+    public void CreateJob_ForDifferentUser_SameVideo_ReturnsDifferentTempId()
+    {
+        using var fixture = new Fixture(Ttl, DateTimeOffset.UtcNow);
+
+        var first = fixture.CreateJob(userId: UserId);
+        var second = fixture.CreateJob(userId: OtherUserId);
+
+        second.Should().NotBe(first);
     }
 
     // ── Claim ──────────────────────────────────────────────────────────────
@@ -91,7 +132,7 @@ public sealed class DownloadJobStoreTests
     [Fact]
     public void MarkReady_ResetsExpiry_ToFreshTtl()
     {
-        using var fixture = new Fixture(Ttl, new DateTimeOffset(2030, 1, 1, 0, 0, 0, TimeSpan.Zero));
+        using var fixture = new Fixture(Ttl, FixedNow);
         var tempId = fixture.CreateJob();
         fixture.Store.Claim(tempId, UserId);
         var filePath = fixture.CreateFile();
@@ -116,6 +157,69 @@ public sealed class DownloadJobStoreTests
         status!.Status.Should().Be(DownloadJobStatus.Failed);
         status.Error.Should().Be("Failed to download video.");
         status.ErrorCategory.Should().Be("YoutubeDl");
+    }
+
+    // ── Retry / DLQ ────────────────────────────────────────────────────────
+
+    [Fact]
+    public void MarkFailed_WithAttemptsRemaining_SchedulesRetry_AndBecomesEligibleAfterBackoff()
+    {
+        using var fixture = new Fixture(Ttl, FixedNow);
+        var tempId = fixture.CreateJob();
+        fixture.Store.Claim(tempId, UserId);
+
+        fixture.Store.MarkFailed(tempId, UserId, "transient error", "YoutubeDl");
+
+        var row = fixture.LoadCommand(tempId);
+        row!.Status.Should().Be(DownloadCommandStatus.Failed);
+        row.AttemptsRemaining.Should().Be(2);
+        row.LastError.Should().Be("transient error");
+        row.NextAttemptAt.Should().Be(new DateTime(2030, 1, 1, 0, 0, 30, DateTimeKind.Utc));
+        fixture.IsEligible(tempId).Should().BeFalse();
+
+        fixture.Clock.Advance(TimeSpan.FromSeconds(31));
+
+        fixture.IsEligible(tempId).Should().BeTrue();
+    }
+
+    [Fact]
+    public void MarkFailed_AfterThreeAttempts_ExhaustsRetries_AndNeverScheduledAgain()
+    {
+        using var fixture = new Fixture(Ttl, FixedNow);
+        var tempId = fixture.CreateJob();
+        fixture.Store.Claim(tempId, UserId);
+
+        fixture.Store.MarkFailed(tempId, UserId, "error one", "YoutubeDl");
+        fixture.Clock.Advance(TimeSpan.FromSeconds(31));
+        fixture.Store.MarkFailed(tempId, UserId, "error two", "YoutubeDl");
+        fixture.Clock.Advance(TimeSpan.FromMinutes(2) + TimeSpan.FromSeconds(1));
+        fixture.Store.MarkFailed(tempId, UserId, "error three", "YoutubeDl");
+
+        var row = fixture.LoadCommand(tempId);
+        row!.Status.Should().Be(DownloadCommandStatus.Failed);
+        row.AttemptsRemaining.Should().Be(0);
+        row.NextAttemptAt.Should().BeNull();
+        row.LastError.Should().Be("error three");
+
+        fixture.Clock.Advance(TimeSpan.FromHours(1));
+
+        fixture.IsEligible(tempId).Should().BeFalse();
+    }
+
+    // ── Crash recovery ─────────────────────────────────────────────────────
+
+    [Fact]
+    public void ResetOrphanedProcessing_ReturnsProcessingJob_ToQueued()
+    {
+        using var fixture = new Fixture(Ttl, DateTimeOffset.UtcNow);
+        var tempId = fixture.CreateJob();
+        fixture.Store.Claim(tempId, UserId);
+        fixture.Store.GetStatus(tempId, UserId)!.Status.Should().Be(DownloadJobStatus.Running);
+
+        fixture.Store.ResetOrphanedProcessing();
+
+        fixture.LoadCommand(tempId)!.Status.Should().Be(DownloadCommandStatus.Queued);
+        fixture.Store.GetStatus(tempId, UserId)!.Status.Should().Be(DownloadJobStatus.Pending);
     }
 
     // ── GetStatus ownership ────────────────────────────────────────────────
@@ -163,7 +267,7 @@ public sealed class DownloadJobStoreTests
     [Fact]
     public void GetFilePath_ReturnsNull_WhenExpired()
     {
-        using var fixture = new Fixture(Ttl, new DateTimeOffset(2030, 1, 1, 0, 0, 0, TimeSpan.Zero));
+        using var fixture = new Fixture(Ttl, FixedNow);
         var tempId = fixture.CreateJob();
         fixture.Store.Claim(tempId, UserId);
         fixture.Store.MarkReady(tempId, UserId, fixture.CreateFile());
@@ -189,7 +293,7 @@ public sealed class DownloadJobStoreTests
     [Fact]
     public void CleanupExpired_RemovesExpiredReadyJob_AndDeletesFile()
     {
-        using var fixture = new Fixture(Ttl, new DateTimeOffset(2030, 1, 1, 0, 0, 0, TimeSpan.Zero));
+        using var fixture = new Fixture(Ttl, FixedNow);
         var tempId = fixture.CreateJob();
         fixture.Store.Claim(tempId, UserId);
         var filePath = fixture.CreateFile();
@@ -205,7 +309,7 @@ public sealed class DownloadJobStoreTests
     [Fact]
     public void CleanupExpired_RemovesExpiredPendingJob()
     {
-        using var fixture = new Fixture(Ttl, new DateTimeOffset(2030, 1, 1, 0, 0, 0, TimeSpan.Zero));
+        using var fixture = new Fixture(Ttl, FixedNow);
         var tempId = fixture.CreateJob();
         fixture.Clock.Advance(Ttl.Add(TimeSpan.FromMinutes(1)));
 
@@ -217,7 +321,7 @@ public sealed class DownloadJobStoreTests
     [Fact]
     public void CleanupExpired_RemovesExpiredFailedJob()
     {
-        using var fixture = new Fixture(Ttl, new DateTimeOffset(2030, 1, 1, 0, 0, 0, TimeSpan.Zero));
+        using var fixture = new Fixture(Ttl, FixedNow);
         var tempId = fixture.CreateJob();
         fixture.Store.Claim(tempId, UserId);
         fixture.Store.MarkFailed(tempId, UserId, "boom");
@@ -231,7 +335,7 @@ public sealed class DownloadJobStoreTests
     [Fact]
     public void CleanupExpired_KeepsRunningJob_EvenWhenExpired()
     {
-        using var fixture = new Fixture(Ttl, new DateTimeOffset(2030, 1, 1, 0, 0, 0, TimeSpan.Zero));
+        using var fixture = new Fixture(Ttl, FixedNow);
         var tempId = fixture.CreateJob();
         fixture.Store.Claim(tempId, UserId);
         fixture.Clock.Advance(Ttl.Add(TimeSpan.FromMinutes(1)));
@@ -244,7 +348,7 @@ public sealed class DownloadJobStoreTests
     [Fact]
     public void CleanupExpired_KeepsLiveReadyJob()
     {
-        using var fixture = new Fixture(Ttl, new DateTimeOffset(2030, 1, 1, 0, 0, 0, TimeSpan.Zero));
+        using var fixture = new Fixture(Ttl, FixedNow);
         var tempId = fixture.CreateJob();
         fixture.Store.Claim(tempId, UserId);
         fixture.Store.MarkReady(tempId, UserId, fixture.CreateFile());
@@ -257,6 +361,10 @@ public sealed class DownloadJobStoreTests
 
     private sealed class Fixture : IDisposable
     {
+        private readonly SqliteConnection _connection;
+        private readonly ServiceProvider _provider;
+        private readonly DbContextOptions<YtDbContext> _options;
+
         public DownloadJobStore Store { get; }
         public FakeTimeProvider Clock { get; }
         public string TempDir { get; }
@@ -264,12 +372,24 @@ public sealed class DownloadJobStoreTests
         public Fixture(TimeSpan ttl, DateTimeOffset now)
         {
             Clock = new FakeTimeProvider(now);
-            Store = new DownloadJobStore(ttl, Clock);
+            _connection = new SqliteConnection("DataSource=:memory:");
+            _connection.Open();
+            _options = new DbContextOptionsBuilder<YtDbContext>()
+                .UseSqlite(_connection)
+                .Options;
+            using (var db = new YtDbContext(_options))
+                db.Database.Migrate();
+
+            var services = new ServiceCollection();
+            services.AddScoped(_ => new YtDbContext(_options));
+            _provider = services.BuildServiceProvider();
+
+            Store = new DownloadJobStore(_provider.GetRequiredService<IServiceScopeFactory>(), ttl, Clock);
             TempDir = Directory.CreateTempSubdirectory("ytdl-store-tests-").FullName;
         }
 
-        public string CreateJob(long userId = UserId) =>
-            Store.CreateJob(userId, VideoId, "Title", "Description",
+        public string CreateJob(long userId = UserId, string videoId = VideoId) =>
+            Store.CreateJob(userId, videoId, "Title", "Description",
                 "https://example.com/i.jpg", "https://youtube.com/watch?v=dQw4w9WgXcQ");
 
         public string CreateFile(string fileName = "song.mp3")
@@ -279,8 +399,18 @@ public sealed class DownloadJobStoreTests
             return path;
         }
 
+        public DownloadCommand? LoadCommand(string tempId)
+        {
+            using var db = new YtDbContext(_options);
+            return db.DownloadCommands.AsNoTracking().FirstOrDefault(c => c.Id == tempId);
+        }
+
+        public bool IsEligible(string tempId) => Store.GetEligibleTempIds(100).Contains(tempId);
+
         public void Dispose()
         {
+            _provider.Dispose();
+            _connection.Dispose();
             try
             {
                 Directory.Delete(TempDir, recursive: true);

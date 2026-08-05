@@ -1,6 +1,10 @@
 using JiApp.Common.Abstractions;
 using JiApp.YtDownloader.Features.DownloadStatus;
+using JiApp.YtDownloader.Persistence;
 using JiApp.YtDownloader.Services;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 
 namespace JiApp.YtDownloader.Tests.Features.DownloadStatus;
@@ -11,13 +15,33 @@ public sealed class DownloadStatusHandlerTests
     private const long OtherUserId = 43L;
     private const string VideoId = "dQw4w9WgXcQ";
 
-    private sealed class Fixture
+    private sealed class Fixture : IDisposable
     {
-        public DownloadJobStore JobStore { get; } = new(TimeSpan.FromMinutes(15));
+        private readonly SqliteConnection _connection;
+        private readonly ServiceProvider _provider;
+
+        public DownloadJobStore JobStore { get; }
         public DownloadStatusHandler Sut { get; }
 
         public Fixture()
         {
+            _connection = new SqliteConnection("DataSource=:memory:");
+            _connection.Open();
+            var options = new DbContextOptionsBuilder<YtDbContext>()
+                .UseSqlite(_connection)
+                .Options;
+            using (var db = new YtDbContext(options))
+                db.Database.Migrate();
+
+            var services = new ServiceCollection();
+            services.AddScoped(_ => new YtDbContext(options));
+            _provider = services.BuildServiceProvider();
+
+            JobStore = new DownloadJobStore(
+                _provider.GetRequiredService<IServiceScopeFactory>(),
+                TimeSpan.FromMinutes(15),
+                TimeProvider.System);
+
             var user = Mock.Of<ICurrentUserService>(x => x.UserId == UserId);
             Sut = new DownloadStatusHandler(JobStore, user);
         }
@@ -25,6 +49,12 @@ public sealed class DownloadStatusHandlerTests
         public string CreateJob(long userId = UserId) =>
             JobStore.CreateJob(userId, VideoId, "Title", null, null,
                 "https://youtube.com/watch?v=dQw4w9WgXcQ");
+
+        public void Dispose()
+        {
+            _provider.Dispose();
+            _connection.Dispose();
+        }
     }
 
     [Fact]

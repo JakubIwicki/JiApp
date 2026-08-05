@@ -3,8 +3,12 @@ using System.Threading.Channels;
 using JiApp.Common.Models;
 using JiApp.YtApi;
 using JiApp.YtDownloader.Configuration;
+using JiApp.YtDownloader.Domain;
+using JiApp.YtDownloader.Persistence;
 using JiApp.YtDownloader.Repositories;
 using JiApp.YtDownloader.Services;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -158,7 +162,7 @@ public sealed class DownloadWorkerTests
     [Fact]
     public async Task WritesHistory_UsingInjectedTimeProvider()
     {
-        using var fixture = new Fixture(timeProvider: new FixedTimeProvider(new DateTimeOffset(2030, 5, 1, 12, 0, 0, TimeSpan.Zero)));
+        using var fixture = new Fixture(timeProvider: new FakeTimeProvider(new DateTimeOffset(2030, 5, 1, 12, 0, 0, TimeSpan.Zero)));
         var filePath = fixture.CreateReadyFile();
         fixture.YoutubeClientMock
             .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -246,6 +250,104 @@ public sealed class DownloadWorkerTests
         }
     }
 
+    [Fact]
+    public async Task ResetsOrphanedProcessingJob_OnStartup_AndProcessesIt()
+    {
+        using var fixture = new Fixture();
+        var filePath = fixture.CreateReadyFile();
+        fixture.YoutubeClientMock
+            .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new YoutubeClientResponse(filePath, true, []));
+        var tempId = fixture.CreateJob();
+        fixture.JobStore.Claim(tempId, UserId);
+
+        var status = await RunToTerminalStatusAsync(fixture, tempId);
+
+        status.Status.Should().Be(DownloadJobStatus.Ready);
+        fixture.HistoryRepoMock.Verify(r => r.SaveChangesAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task RetriesFailedJob_AfterCooldown_AndSucceeds()
+    {
+        using var fixture = new Fixture(
+            timeProvider: new FakeTimeProvider(new DateTimeOffset(2030, 1, 1, 0, 0, 0, TimeSpan.Zero)),
+            pollInterval: TimeSpan.FromMilliseconds(50));
+        var filePath = fixture.CreateReadyFile();
+        var attempts = 0;
+        fixture.YoutubeClientMock
+            .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(async (string _, string _, CancellationToken _) =>
+            {
+                attempts++;
+                return attempts == 1
+                    ? new YoutubeClientResponse(null, false, ["transient yt-dlp error"])
+                    : new YoutubeClientResponse(filePath, true, []);
+            });
+        var tempId = fixture.CreateJob();
+
+        await fixture.Sut.StartAsync(CancellationToken.None);
+        fixture.Queue.Writer.TryWrite(tempId);
+        try
+        {
+            await WaitForStatusAsync(fixture, tempId, DownloadJobStatus.Failed);
+
+            fixture.Clock.Advance(TimeSpan.FromSeconds(31));
+
+            var status = await WaitForStatusAsync(fixture, tempId, DownloadJobStatus.Ready);
+
+            status.Status.Should().Be(DownloadJobStatus.Ready);
+            attempts.Should().Be(2);
+            fixture.HistoryRepoMock.Verify(r => r.SaveChangesAsync(), Times.Once);
+        }
+        finally
+        {
+            await fixture.Sut.StopAsync(CancellationToken.None);
+        }
+    }
+
+    [Fact]
+    public async Task ExhaustsRetries_AndNeverPicksTheJobUpAgain()
+    {
+        using var fixture = new Fixture(
+            timeProvider: new FakeTimeProvider(new DateTimeOffset(2030, 1, 1, 0, 0, 0, TimeSpan.Zero)),
+            pollInterval: TimeSpan.FromMilliseconds(50));
+        fixture.YoutubeClientMock
+            .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new YoutubeClientResponse(null, false, ["permanent yt-dlp error"]));
+        var tempId = fixture.CreateJob();
+
+        await fixture.Sut.StartAsync(CancellationToken.None);
+        fixture.Queue.Writer.TryWrite(tempId);
+        try
+        {
+            await WaitForStatusAsync(fixture, tempId, DownloadJobStatus.Failed);
+            fixture.Clock.Advance(TimeSpan.FromSeconds(31));
+            await WaitForAttemptsRemainingAsync(fixture, tempId, 1);
+
+            fixture.Clock.Advance(TimeSpan.FromMinutes(2) + TimeSpan.FromSeconds(1));
+            await WaitForAttemptsRemainingAsync(fixture, tempId, 0);
+
+            var row = fixture.LoadCommand(tempId);
+            row.Should().NotBeNull();
+            row!.Status.Should().Be(DownloadCommandStatus.Failed);
+            row.AttemptsRemaining.Should().Be(0);
+            row.NextAttemptAt.Should().BeNull();
+            row.LastError.Should().NotBeNullOrWhiteSpace();
+
+            fixture.Clock.Advance(TimeSpan.FromHours(1));
+            await Task.Delay(300);
+
+            var calls = fixture.YoutubeClientMock.Invocations.Count(i => i.Method.Name == nameof(IYoutubeClient.DownloadVideoAsync));
+            calls.Should().Be(3);
+            fixture.JobStore.GetStatus(tempId, UserId)!.Status.Should().Be(DownloadJobStatus.Failed);
+        }
+        finally
+        {
+            await fixture.Sut.StopAsync(CancellationToken.None);
+        }
+    }
+
     private static async Task<DownloadJobStatusResult> RunToTerminalStatusAsync(Fixture fixture, string tempId)
     {
         await fixture.Sut.StartAsync(CancellationToken.None);
@@ -275,34 +377,88 @@ public sealed class DownloadWorkerTests
         throw new TimeoutException($"Job {tempId} did not reach a terminal state within {PollTimeout}.");
     }
 
+    private static async Task<DownloadJobStatusResult> WaitForStatusAsync(Fixture fixture, string tempId, DownloadJobStatus expected)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        while (stopwatch.Elapsed < PollTimeout)
+        {
+            var status = fixture.JobStore.GetStatus(tempId, UserId);
+            if (status?.Status == expected)
+                return status;
+
+            await Task.Delay(20);
+        }
+
+        throw new TimeoutException($"Job {tempId} did not reach status {expected} within {PollTimeout}.");
+    }
+
+    private static async Task WaitForAttemptsRemainingAsync(Fixture fixture, string tempId, int expected)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        while (stopwatch.Elapsed < PollTimeout)
+        {
+            if (fixture.LoadCommand(tempId)?.AttemptsRemaining == expected)
+                return;
+
+            await Task.Delay(20);
+        }
+
+        throw new TimeoutException($"Job {tempId} did not reach {expected} attempts remaining within {PollTimeout}.");
+    }
+
     private sealed class Fixture : IDisposable
     {
+        private readonly ServiceProvider _provider;
+        private readonly DbContextOptions<YtDbContext> _options;
+
         public DownloadJobStore JobStore { get; }
         public Channel<string> Queue { get; } = Channel.CreateUnbounded<string>();
         public Mock<IYoutubeClient> YoutubeClientMock { get; } = new();
         public Mock<IDownloadHistoryRepository> HistoryRepoMock { get; } = new();
         public DownloadWorker Sut { get; }
         public string TempDir { get; }
+        public FakeTimeProvider Clock { get; }
 
-        public Fixture(TimeProvider? timeProvider = null, TimeSpan? downloadTimeout = null)
+        public Fixture(TimeProvider? timeProvider = null, TimeSpan? downloadTimeout = null, TimeSpan? pollInterval = null)
         {
-            JobStore = new DownloadJobStore(TimeSpan.FromMinutes(15));
+            Clock = (FakeTimeProvider?)timeProvider ?? new FakeTimeProvider(DateTimeOffset.UtcNow);
             TempDir = Directory.CreateTempSubdirectory("ytdl-worker-tests-").FullName;
-            var settings = new Settings { App = new Settings.AppSettings { BaseDirectory = TempDir } };
+
+            // The worker runs jobs concurrently, so each DbContext must own its own
+            // connection (like production). A shared single :memory: connection serializes
+            // badly across threads. A temp file with WAL + busy timeout mirrors production.
+            var connectionString = new SqliteConnectionStringBuilder
+            {
+                DataSource = Path.Combine(TempDir, "ytdl.db")
+            }.ToString();
+            _options = new DbContextOptionsBuilder<YtDbContext>()
+                .UseSqlite(connectionString)
+                .AddInterceptors(new SqliteBusyTimeoutInterceptor())
+                .Options;
+            using (var db = new YtDbContext(_options))
+            {
+                db.Database.Migrate();
+                db.Database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
+            }
 
             var services = new ServiceCollection();
+            services.AddScoped(_ => new YtDbContext(_options));
             services.AddScoped(_ => HistoryRepoMock.Object);
-            var provider = services.BuildServiceProvider();
+            _provider = services.BuildServiceProvider();
+
+            JobStore = new DownloadJobStore(_provider.GetRequiredService<IServiceScopeFactory>(), TimeSpan.FromMinutes(15), Clock);
+            var settings = new Settings { App = new Settings.AppSettings { BaseDirectory = TempDir } };
 
             Sut = new DownloadWorker(
                 JobStore,
                 Queue,
                 YoutubeClientMock.Object,
-                provider.GetRequiredService<IServiceScopeFactory>(),
+                _provider.GetRequiredService<IServiceScopeFactory>(),
                 settings,
                 NullLogger<DownloadWorker>.Instance,
-                timeProvider,
-                downloadTimeout);
+                Clock,
+                downloadTimeout,
+                pollInterval);
         }
 
         public string CreateJob(string videoId = VideoId) =>
@@ -316,8 +472,15 @@ public sealed class DownloadWorkerTests
             return path;
         }
 
+        public DownloadCommand? LoadCommand(string tempId)
+        {
+            using var db = new YtDbContext(_options);
+            return db.DownloadCommands.AsNoTracking().FirstOrDefault(c => c.Id == tempId);
+        }
+
         public void Dispose()
         {
+            _provider.Dispose();
             try
             {
                 Directory.Delete(TempDir, recursive: true);
@@ -328,12 +491,14 @@ public sealed class DownloadWorkerTests
         }
     }
 
-    private sealed class FixedTimeProvider : TimeProvider
+    private sealed class FakeTimeProvider : TimeProvider
     {
-        private readonly DateTimeOffset _now;
+        private DateTimeOffset _now;
 
-        public FixedTimeProvider(DateTimeOffset now) => _now = now;
+        public FakeTimeProvider(DateTimeOffset now) => _now = now;
 
         public override DateTimeOffset GetUtcNow() => _now;
+
+        public void Advance(TimeSpan delta) => _now += delta;
     }
 }
