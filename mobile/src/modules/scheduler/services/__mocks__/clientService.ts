@@ -1,13 +1,8 @@
+import { createMockFn } from '../../../../test/createMockFn';
 import type { Client } from '../../types/api';
 import type { ClientWithAppointments } from '../clientService';
 
-type Mode = 'success' | 'empty' | 'error';
-
-let _mode: Mode = 'success';
-
-export const setClientMode = (mode: Mode) => {
-  _mode = mode;
-};
+// ── Default stub data ──────────────────────────────────────────────────────
 
 const mockClients: Client[] = [
   {
@@ -83,35 +78,72 @@ const mockClientDetail: ClientWithAppointments = {
   ],
 };
 
-export const listClients = async (
-  _boardId?: number,
-  _q?: string,
-): Promise<Client[]> => {
-  if (_mode === 'error') throw new Error('Mock error');
-  if (_mode === 'empty') return [];
+// ── Internal state ─────────────────────────────────────────────────────────
 
-  if (_q) {
-    const q = _q.toLowerCase();
-    return mockClients.filter(c => c.name.toLowerCase().includes(q));
+let _clients: Client[] = mockClients;
+let _clientError: Error | null = null;
+
+// ── Mock functions ─────────────────────────────────────────────────────────
+
+export const listClients = createMockFn(
+  async (_boardId?: number, _q?: string): Promise<Client[]> => {
+    if (_clientError) throw _clientError;
+
+    if (_q) {
+      const q = _q.toLowerCase();
+      return _clients.filter(c => c.name.toLowerCase().includes(q));
+    }
+    return _clients;
+  },
+);
+
+export const getClient = createMockFn(
+  async (id: number): Promise<ClientWithAppointments> => {
+    if (_clientError) throw _clientError;
+    if (id === 1) return mockClientDetail;
+    return { ...mockClientDetail, id, name: 'Unknown Client' };
+  },
+);
+
+export const createClient = createMockFn(
+  async (
+    _boardId?: number,
+    _data?: { name: string; phone?: string; notes?: string },
+  ): Promise<{ id: number }> => {
+    return { id: 99 };
+  },
+);
+
+export const updateClient = createMockFn(async (): Promise<void> => {});
+
+export const deleteClient = createMockFn(
+  async (_id: number): Promise<void> => {},
+);
+
+// ── Fluent scenario builders (.withX()) ────────────────────────────────────
+
+export function withClients(clients: Client[] = mockClients): Client[] {
+  _clientError = null;
+  _clients = clients;
+  return _clients;
+}
+
+export function withClientError(error: Error = new Error('Mock error')): Error {
+  _clientError = error;
+  return error;
+}
+
+// ── Reset ──────────────────────────────────────────────────────────────────
+
+export function reset(): void {
+  _clients = mockClients;
+  _clientError = null;
+
+  if (typeof jest !== 'undefined') {
+    listClients.mockClear();
+    getClient.mockClear();
+    createClient.mockClear();
+    updateClient.mockClear();
+    deleteClient.mockClear();
   }
-  return mockClients;
-};
-
-export const getClient = async (
-  id: number,
-): Promise<ClientWithAppointments> => {
-  if (_mode === 'error') throw new Error('Mock error');
-  if (id === 1) return mockClientDetail;
-  return { ...mockClientDetail, id, name: 'Unknown Client' };
-};
-
-export const createClient = async (
-  _boardId?: number,
-  _data?: { name: string; phone?: string; notes?: string },
-): Promise<{ id: number }> => {
-  return { id: 99 };
-};
-
-export const updateClient = async (): Promise<void> => {};
-
-export const deleteClient = async (_id: number): Promise<void> => {};
+}

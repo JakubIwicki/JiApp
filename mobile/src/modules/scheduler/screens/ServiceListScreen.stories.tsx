@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { Meta, StoryObj } from '@storybook/react';
 import ServiceListScreen from './ServiceListScreen';
-import { setServiceMode } from '../services/__mocks__/serviceCatalogService';
+import { withServices } from '../services/__mocks__/serviceCatalogService';
 import type { SchedulerStackParamList } from '../types/navigation';
 
 const Stack = createNativeStackNavigator<SchedulerStackParamList>();
@@ -12,8 +12,8 @@ const meta: Meta<typeof ServiceListScreen> = {
   title: 'Screens/ServiceList',
   component: ServiceListScreen,
   decorators: [
-    (Story) => {
-      setServiceMode('success');
+    Story => {
+      withServices();
       return (
         <NavigationContainer>
           <Stack.Navigator screenOptions={{ headerShown: false }}>

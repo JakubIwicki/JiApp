@@ -1,32 +1,8 @@
+import { createMockFn } from '../../../../test/createMockFn';
+import { getThisWeekend } from '../../../../test/dateUtils';
 import type { Expense } from '../../types/api';
 
-type Mode = 'success' | 'empty' | 'error';
-
-let _mode: Mode = 'success';
-
-export const setExpenseMode = (mode: Mode) => {
-  _mode = mode;
-};
-
-function getThisWeekend(): { saturday: string; sunday: string } {
-  const now = new Date();
-  const dayOfWeek = now.getDay();
-  const daysUntilSaturday = dayOfWeek === 6 ? 0 : (6 - dayOfWeek + 7) % 7;
-  const saturday = new Date(now);
-  saturday.setDate(now.getDate() + daysUntilSaturday);
-
-  const sunday = new Date(saturday);
-  sunday.setDate(saturday.getDate() + 1);
-
-  const fmt = (d: Date) => {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  };
-
-  return { saturday: fmt(saturday), sunday: fmt(sunday) };
-}
+// ── Default stub data ──────────────────────────────────────────────────────
 
 const baseExpenses: Omit<Expense, 'date'>[] = [
   {
@@ -52,42 +28,70 @@ const baseExpenses: Omit<Expense, 'date'>[] = [
   },
 ];
 
-export const listExpenses = async (
-  _boardId: number,
-  date: string,
-): Promise<Expense[]> => {
-  if (_mode === 'error') throw new Error('Mock error');
-  if (_mode === 'empty') return [];
+const { saturday, sunday } = getThisWeekend();
+const defaultExpenses: Expense[] = baseExpenses.map(e => ({
+  ...e,
+  // First 2 expenses go on Saturday, the last on Sunday
+  date: e.id <= 2 ? saturday : sunday,
+}));
 
-  const { saturday, sunday } = getThisWeekend();
+// ── Internal state ─────────────────────────────────────────────────────────
 
-  return baseExpenses
-    .filter(e => {
-      // First 2 expenses on Saturday, last on Sunday
-      const expenseDate = e.id <= 2 ? saturday : sunday;
-      return expenseDate === date;
-    })
-    .map(e => {
-      const expenseDate = e.id <= 2 ? saturday : sunday;
-      return { ...e, date: expenseDate };
-    });
-};
+let _expenses: Expense[] = defaultExpenses;
+let _expenseError: Error | null = null;
 
-export const getExpense = async (id: number): Promise<Expense> => {
-  if (_mode === 'error') throw new Error('Mock error');
-  const { saturday, sunday } = getThisWeekend();
-  const base = baseExpenses.find(e => e.id === id);
-  if (!base) throw new Error('Expense not found');
-  return {
-    ...base,
-    date: base.id <= 2 ? saturday : sunday,
-  };
-};
+// ── Mock functions ─────────────────────────────────────────────────────────
 
-export const createExpense = async (): Promise<{ id: number }> => {
+export const listExpenses = createMockFn(
+  async (_boardId: number, date: string): Promise<Expense[]> => {
+    if (_expenseError) throw _expenseError;
+    return _expenses.filter(e => e.date === date);
+  },
+);
+
+export const getExpense = createMockFn(async (id: number): Promise<Expense> => {
+  if (_expenseError) throw _expenseError;
+  const expense = _expenses.find(e => e.id === id);
+  if (!expense) throw new Error('Expense not found');
+  return expense;
+});
+
+export const createExpense = createMockFn(async (): Promise<{ id: number }> => {
   return { id: 99 };
-};
+});
 
-export const updateExpense = async (): Promise<void> => {};
+export const updateExpense = createMockFn(async (): Promise<void> => {});
 
-export const deleteExpense = async (_id: number): Promise<void> => {};
+export const deleteExpense = createMockFn(
+  async (_id: number): Promise<void> => {},
+);
+
+// ── Fluent scenario builders (.withX()) ────────────────────────────────────
+
+export function withExpenses(expenses: Expense[] = defaultExpenses): Expense[] {
+  _expenseError = null;
+  _expenses = expenses;
+  return _expenses;
+}
+
+export function withExpenseError(
+  error: Error = new Error('Mock error'),
+): Error {
+  _expenseError = error;
+  return error;
+}
+
+// ── Reset ──────────────────────────────────────────────────────────────────
+
+export function reset(): void {
+  _expenses = defaultExpenses;
+  _expenseError = null;
+
+  if (typeof jest !== 'undefined') {
+    listExpenses.mockClear();
+    getExpense.mockClear();
+    createExpense.mockClear();
+    updateExpense.mockClear();
+    deleteExpense.mockClear();
+  }
+}
