@@ -4,7 +4,7 @@ using JiApp.Scheduler.Features.Common;
 
 namespace JiApp.Scheduler.Tests.Features.Common;
 
-public sealed class BoardAccessGuardTests : HandlerTestBase
+public sealed class BoardAccessGuardTests : HandlerTestBase<SchedulerDbContext>
 {
     private sealed class Fixture
     {

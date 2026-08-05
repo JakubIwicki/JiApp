@@ -9,12 +9,11 @@ using api.JiApp.LovingBoards.Features.Items.DeleteItem;
 using api.JiApp.LovingBoards.Features.Items.SetItemStatus;
 using api.JiApp.LovingBoards.Features.Items.UpdateItem;
 using api.JiApp.LovingBoards.Realtime;
-using api.JiApp.LovingBoards.Tests.Bases;
 using api.JiApp.LovingBoards.Tests.Realtime;
 
 namespace api.JiApp.LovingBoards.Tests.Features.Items;
 
-public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
+public sealed class ItemHandlerTests : HandlerTestBase<LovingBoardsDbContext>
 {
     private static readonly LovingBoardsSettings DefaultSettings = new()
     {

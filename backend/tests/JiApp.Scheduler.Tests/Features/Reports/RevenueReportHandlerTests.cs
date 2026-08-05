@@ -6,7 +6,7 @@ using JiApp.Scheduler.Features.Reports.RevenueReport;
 
 namespace JiApp.Scheduler.Tests.Features.Reports;
 
-public sealed class RevenueReportHandlerTests : HandlerTestBase
+public sealed class RevenueReportHandlerTests : HandlerTestBase<SchedulerDbContext>
 {
     private sealed class Fixture
     {

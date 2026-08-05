@@ -10,13 +10,12 @@ using api.JiApp.LovingBoards.Features.Boards.ListBoards;
 using api.JiApp.LovingBoards.Features.Boards.RemoveBoardMember;
 using api.JiApp.LovingBoards.Features.Boards.UpdateBoard;
 using api.JiApp.LovingBoards.Realtime;
-using api.JiApp.LovingBoards.Tests.Bases;
 using api.JiApp.LovingBoards.Tests.Realtime;
 using JiApp.Testing.Common.Fakes;
 
 namespace api.JiApp.LovingBoards.Tests.Features.Boards;
 
-public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
+public sealed class BoardHandlerTests : HandlerTestBase<LovingBoardsDbContext>
 {
     private static readonly LovingBoardsSettings DefaultSettings = new()
     {

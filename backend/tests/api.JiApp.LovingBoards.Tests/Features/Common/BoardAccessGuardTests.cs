@@ -1,10 +1,9 @@
 using JiApp.Common.Services;
 using api.JiApp.LovingBoards.Features.Common;
-using api.JiApp.LovingBoards.Tests.Bases;
 
 namespace api.JiApp.LovingBoards.Tests.Features.Common;
 
-public sealed class BoardAccessGuardTests : LovingBoardsHandlerTestBase
+public sealed class BoardAccessGuardTests : HandlerTestBase<LovingBoardsDbContext>
 {
     private sealed class Fixture
     {

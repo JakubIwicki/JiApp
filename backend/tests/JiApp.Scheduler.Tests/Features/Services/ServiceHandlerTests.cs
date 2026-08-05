@@ -9,7 +9,7 @@ using JiApp.Scheduler.Features.Services.UpdateService;
 
 namespace JiApp.Scheduler.Tests.Features.Services;
 
-public sealed class ServiceHandlerTests : HandlerTestBase
+public sealed class ServiceHandlerTests : HandlerTestBase<SchedulerDbContext>
 {
     private sealed class Fixture
     {

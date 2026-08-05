@@ -4,7 +4,7 @@ using JiApp.Scheduler.Features.Reports.ClientReport;
 
 namespace JiApp.Scheduler.Tests.Features.Reports;
 
-public sealed class ClientReportHandlerTests : HandlerTestBase
+public sealed class ClientReportHandlerTests : HandlerTestBase<SchedulerDbContext>
 {
     private sealed class Fixture
     {
