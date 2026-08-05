@@ -987,6 +987,15 @@ a `PRAGMA foreign_keys = ON` line). Two parallel base classes for one job.
 **Fix:** `HandlerTestBase<TDbContext> where TDbContext : DbContext`; drop the project reference;
 delete the LovingBoards duplicate (keeping its PRAGMA line in the generic base).
 
+**FIXED (Wave 4).** PR #110 genericized `HandlerTestBase<TDbContext>` (`where TDbContext : DbContext`,
+instantiated via `Activator` on the primary `DbContextOptions<TDbContext>` ctor — no `new()` constraint),
+dropped the `..\..\src\JiApp.Scheduler` ProjectReference from `JiApp.Testing.Common.csproj`, and deleted
+the LovingBoards duplicate (its `PRAGMA foreign_keys = ON` line folded into the generic base). 10
+Scheduler + 4 LovingBoards test classes renamed to the generic base. **Behavior change:** Scheduler
+tests now run with SQLite `foreign_keys = ON` (was off) — all 240 pass, no fixture store-order
+remediation needed. Grep proof: zero `JiApp.Scheduler` references in `JiApp.Testing.Common/`, zero
+`LovingBoardsHandlerTestBase` in `backend/`. PR #110 (main `b1ba6d3`).
+
 ### G8.8 (MEDIUM) — Vendor SDK exception types leak past the `IYoutubeClient` adapter · `N9`
 
 `JiApp.YtDownloader/Features/SearchVideos/SearchVideosHandler.cs:107` and
