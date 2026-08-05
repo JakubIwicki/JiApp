@@ -3,12 +3,11 @@ using JiApp.Common.Services;
 using api.JiApp.LovingBoards.Domain;
 using api.JiApp.LovingBoards.Features.Items.ResetWeeklyItems;
 using api.JiApp.LovingBoards.Realtime;
-using api.JiApp.LovingBoards.Tests.Bases;
 using api.JiApp.LovingBoards.Tests.Realtime;
 
 namespace api.JiApp.LovingBoards.Tests.Features.Items.ResetWeeklyItems;
 
-public sealed class ResetWeeklyItemsHandlerTests : LovingBoardsHandlerTestBase
+public sealed class ResetWeeklyItemsHandlerTests : HandlerTestBase<LovingBoardsDbContext>
 {
     private sealed class Fixture
     {

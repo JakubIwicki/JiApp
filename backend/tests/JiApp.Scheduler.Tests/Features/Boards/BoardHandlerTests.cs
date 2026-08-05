@@ -11,7 +11,7 @@ using JiApp.Scheduler.Features.Common;
 
 namespace JiApp.Scheduler.Tests.Features.Boards;
 
-public sealed class BoardHandlerTests : HandlerTestBase
+public sealed class BoardHandlerTests : HandlerTestBase<SchedulerDbContext>
 {
     private sealed class Fixture
     {

@@ -4,7 +4,7 @@ using JiApp.Scheduler.Features.DayTotals;
 
 namespace JiApp.Scheduler.Tests.Features.DayTotals;
 
-public sealed class DayTotalsHandlerTests : HandlerTestBase
+public sealed class DayTotalsHandlerTests : HandlerTestBase<SchedulerDbContext>
 {
     private sealed class Fixture
     {

@@ -8,7 +8,7 @@ using JiApp.Scheduler.Features.Clients.UpdateClient;
 
 namespace JiApp.Scheduler.Tests.Features.Clients;
 
-public sealed class ClientHandlerTests : HandlerTestBase
+public sealed class ClientHandlerTests : HandlerTestBase<SchedulerDbContext>
 {
     private sealed class Fixture
     {

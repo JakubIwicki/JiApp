@@ -9,7 +9,7 @@ using JiApp.Scheduler.Features.Expenses.UpdateExpense;
 
 namespace JiApp.Scheduler.Tests.Features.Expenses;
 
-public sealed class ExpenseHandlerTests : HandlerTestBase
+public sealed class ExpenseHandlerTests : HandlerTestBase<SchedulerDbContext>
 {
     private sealed class Fixture
     {
