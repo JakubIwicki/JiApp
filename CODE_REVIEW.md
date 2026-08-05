@@ -924,6 +924,14 @@ wall-clock-bound.
 **Fix:** register `TimeProvider.System`; inject into handlers, `TempFileStore`, `RefreshTokenService`,
 `RetryPolicyFactory`; set `CreatedAt` in the handler, not the field initialiser.
 
+**FIXED (Wave 4).** `TimeProvider.System` registered in all 5 service Startups; injected into handlers,
+`RefreshTokenService`, `JwtTokenService`, `RefreshTokenCleanupService`, `RetryPolicyFactory`, and the
+3 YtDownloader sites. Entity initializers removed; `CreatedAt`/`UpdatedAt` stamped by creating handlers
+(`CreateAppointmentHandler`, `CreateBoardHandler`, `CreateItemHandler`, `ListBoardsHandler` seeder).
+Note: `TempFileStore` does not exist repo-wide — dropped. `RetryPolicyFactory` sets `TimeProvider` on
+`ResiliencePipelineBuilder` (no such member on `RetryStrategyOptions` in Polly 8.5.2). Grep proof: only
+the 5 `DateTime.UtcNow` health-endpoint timestamps remain. PR #106 (main `ec09700`).
+
 ### G8.5 (MEDIUM) — Composition roots are one monolithic method each · `M20`
 
 | File | `ConfigureServices` length |
