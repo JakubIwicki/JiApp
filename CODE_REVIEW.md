@@ -1,6 +1,6 @@
 # JiApp — Code Review & Remediation Backlog
 
-**Branch:** `main` · **Date:** 2026-08-05 · **Status:** Wave 1 landed — G1.1, G1.2, G2.2, G2.4, G2.6, G5.1 fixed (see per-finding notes); Wave 2 landed — PR-A G4.1–G4.5, PR-B G3.1, G3.2, G3.3, G4.6, G10.3, PR-C G2.1, G2.3 fixed (see per-finding notes); Wave 3 COMPLETE — PR-D G6.1, G6.2, PR-E G7.1, G7.3, PR-F G12.1 fixed (see per-finding notes); Wave 4 COMPLETE — PR-A G8.2, G8.3 (also G1.3, G1.6, G11.14), PR-B G8.1, PR-C G8.4, PR-D G8.5, G8.6, PR-E G8.7, PR-F G8.8 fixed (see per-finding notes); 41 of 84 open
+**Branch:** `main` · **Date:** 2026-08-05 · **Status:** Wave 1 landed — G1.1, G1.2, G2.2, G2.4, G2.6, G5.1 fixed (see per-finding notes); Wave 2 landed — PR-A G4.1–G4.5, PR-B G3.1, G3.2, G3.3, G4.6, G10.3, PR-C G2.1, G2.3 fixed (see per-finding notes); Wave 3 COMPLETE — PR-D G6.1, G6.2, PR-E G7.1, G7.3, PR-F G12.1 fixed (see per-finding notes); Wave 4 COMPLETE — PR-A G8.2, G8.3 (also G1.3, G1.6, G11.14), PR-B G8.1, PR-C G8.4, PR-D G8.5, G8.6, PR-E G8.7, PR-F G8.8 fixed (see per-finding notes); Wave 5 COMPLETE — PR-A G9.3, PR-B G9.4, PR-C G9.5, PR-E G9.2, PR-D G9.1, G9.7, G9.8, PR-F G9.6 fixed (see per-finding notes); 33 of 84 open
 
 This file is the single working document for the review. It is organised into **12 work groups**,
 each sized to be picked up as one PR/session by someone with no prior context. Every finding keeps
@@ -1023,6 +1023,8 @@ every handler, not just the adapter.
 **Why grouped:** all eight are "the safety net has a hole". Do G9.3 before G9.1 — the mocks must be
 rebuilt before the missing specs can be written cleanly.
 
+**RESOLVED (Wave 5).** All eight findings fixed: G9.3 PR-A #117, G9.4 PR-B #115, G9.5 PR-C #114, G9.2 PR-E #116, G9.1/G9.7/G9.8 PR-D #118, G9.6 PR-F #119. New latent findings surfaced during Wave 5 are recorded at the end of this group.
+
 ### G9.1 (MEDIUM) — Coverage map, with the privileged surfaces called out · `M19` + expanded
 
 | Directory | prod | tests | stories | Verdict |
@@ -1046,6 +1048,8 @@ is impossible to verify manually; (2) `modules/admin/screens` — the privilege-
 7 methods, 5 state fields, only tested indirectly through `AuthContext`; (5) the 7 Scheduler screens,
 whose fixtures are already written as stories.
 
+**FIXED (Wave 5, PR-D #118).** Screen tests added for the called-out module surfaces: scheduler `WeekendGridScreen`/`ClientListScreen`/`CreateAppointmentScreen`, lovingBoards `BoardListScreen`/`BoardDetailScreen`/`ItemSheet`/`BoardMembersScreen`, admin `UserListScreen` — built on the PR-A builder mocks. The ⚠️ rows (`src/components`, `src/screens`, `src/hooks`, `src/services`, `src/context`, `src/utils`) remain on the backlog.
+
 ### G9.2 (MEDIUM) — Identity handler tests are 100% mock-only · `N6`
 
 Across `JiApp.Identity.Tests/`, exactly **one** file references `IdentityDbContext` —
@@ -1061,6 +1065,8 @@ concurrency token.
 **This is why G2.2 is invisible to a green suite:** the mocked `IRefreshTokenService` has no
 transaction semantics to roll back.
 
+**FIXED (Wave 5).** PR-E #116 added real-context handler tests; PR-F #119 added the full-pipeline integration suite (real HTTP through routing, auth middleware, handlers, and a real migrated in-memory SQLite store) exercising exactly the paths named above — duplicate register/email unique-constraint, security-stamp rotation, role claims, rate-limit policies.
+
 ### G9.3 (MEDIUM) — Mobile mock services use mode-flag state machines · `N8`
 
 `modules/scheduler/services/__mocks__/appointmentService.ts` (155 lines) · `clientService.ts` ·
@@ -1074,6 +1080,8 @@ no `reset()`. `services/__mocks__/previewService.ts` uses `createMockFn` but exp
 
 **The backend implements this standard exemplarily** (`MockUserManager.GetSuccessful()`,
 `WithFindByNameAsync(...)`). The two stacks sit at opposite ends of the same rule — copy the backend shape.
+
+**FIXED (Wave 5, PR-A #117).** Builder-style test doubles (`.withX(...)` + `reset()`) replace the mode-flag state machines for `appointmentService`/`clientService`/`expenseService`/`boardService`; `adminService` and `itemService` get builders + reset. Body above describes the pre-A state.
 
 ### G9.4 (MEDIUM) — The stories-as-fixtures foundation is built and unadopted · `N7`
 
@@ -1092,6 +1100,8 @@ defines — `ErrorMessage`, `FormInput`, `SearchBar`, `LanguagePicker`, `History
 `DownloadScreen`, `ModuleSelectionScreen` all have a story AND a test that ignores it.
 `modules/scheduler/components/` is the sharpest case: **7 stories, 0 tests.**
 
+**FIXED (Wave 5, PR-B #115).** composeStories adopted for the 7 Scheduler component stories. Body above describes the pre-B state.
+
 ### G9.5 (MEDIUM) — No test project for `JiApp.Common` · `M18`
 
 The kernel — `Result<T>`, `GlobalExceptionMiddleware`, `CurrentUserService`,
@@ -1107,6 +1117,8 @@ JiApp.Scheduler.Tests/Resilience/RetryPolicyFactoryTests.cs
 Direct result: `GlobalExceptionMiddleware` (G5.1) and `CurrentUserService` are **completely
 untested** — the two components every request passes through.
 
+**FIXED (Wave 5, PR-C #114).** `JiApp.Common.Tests` test project added covering the kernel — `Result<T>`, `GlobalExceptionMiddleware`, `CurrentUserService`, `PermissionAuthorizationHandler`, `RetryPolicyFactory`, `SecurityStampRecheckFilter`, `RemoteSecurityStampValidator`.
+
 ### G9.6 (MEDIUM) — Integration coverage by service
 
 | Service | Full-pipeline tests | Risk |
@@ -1120,6 +1132,8 @@ untested** — the two components every request passes through.
 `JiApp.Testing.Common/Bases/IntegrationTestBase.cs` is an **empty class** — it names a capability the
 repo does not have, which is why Gateway and YtDownloader each built their own factory.
 
+**FIXED (Wave 5, PR-F #119).** Identity full-pipeline suite shipped via a new ad-hoc `IdentityWebApplicationFactory` (real migrated in-memory SQLite on a shared connection object; closed-`IOptions` rate-limit budget override): register/login round trip, duplicate register + duplicate email, JWT role/security-stamp claims, invalid-password 401, rotated security-stamp 401 (the `OnTokenValidated` recheck), missing-header 401, non-admin 403, and isolated per-fact rate-limit 429s. `IntegrationTestBase.cs` remains empty — its fill is **deferred to Wave 6** (the factory is ad-hoc, not based on the shared base).
+
 ### G9.7 (MEDIUM) — Missing negative-space assertions
 
 Failure-path tests that assert the error but never assert the side effect did *not* happen:
@@ -1130,6 +1144,8 @@ mobile/src/screens/__tests__/LoginScreen.test.tsx:102-113       never asserts mo
 mobile/src/screens/__tests__/EditProfileScreen.test.tsx:326-341 never asserts mockShowSuccess NOT called
 backend/tests/JiApp.Scheduler.Tests/Features/Appointments/AppointmentHandlerTests.cs:127-140
    asserts result.Value > 0 but never re-reads the store
+
+**FIXED (Wave 5, PR-D #118).** Negative-space assertions added: `RegisterScreen`/`LoginScreen` assert `mockNavigate` NOT called on auth failure; `EditProfileScreen` asserts `mockShowSuccess` NOT called on email-taken.
 ```
 
 ### G9.8 (LOW) — Test-suite hygiene · `N16`
@@ -1142,10 +1158,16 @@ backend/tests/JiApp.Scheduler.Tests/Features/Appointments/AppointmentHandlerTest
 - No mobile test name follows `Behavior_Scenario_Expected`. **Decision needed, not a fix** — this may
   be a JS-convention clash rather than a defect.
 
-**G9.8 RESOLVED for mobile (naming exemption recorded):** sentence-case `it('...')` test naming is the
+**FIXED (Wave 5, PR-D #118) — naming exemption recorded:** sentence-case `it('...')` test naming is the
 mobile standard and stays; the backend keeps `Behavior_Scenario_Expected`. The hygiene items above are
 fixed in PR-D (zero-assertion `App.test.tsx` gains an assertion, duplicate docblock removed,
 `// Arrange/Act/Assert` markers stripped from `ModuleSelectionScreen.test.tsx`).
+
+### New findings surfaced during Wave 5 (backlog — not fixed)
+
+- **Identity register enumeration (G2.2-adjacent, M-level).** The default `UserValidator` pre-checks uniqueness via `FindByNameAsync`/`FindByEmailAsync` and leaks `"Username 'x' is already taken."` / `"Email 'x' is already taken."` before the `RegisterHandler` generic DB-constraint path (`RegisterHandler.cs:76`, `SqliteErrorCode 19 → "Registration failed"`) ever runs — `RegisterHandler.cs:23-27`'s no-enumeration comment is intent only. Pinned by the PR-F facts (assert current behavior with WHY; fix = neutralize the default `UserValidator` in `Startup.ConfigureIdentity`).
+- **BoardDetailScreen snackbar-timer cleanup leak (new, mobile).** `BoardDetailScreen.tsx:111-118` cleanup reads `undoTimerRef`/`clearTimerRef` at mount (null) and never clears the 5s undo / 4s cleared-message timers assigned later — they outlive the component. Surfaced by the PR-D tests (required `jest.useFakeTimers()` for isolation). Fix = read the refs inside the cleanup.
+- **useWeekendGrid Saturday-expense data-loss (new, mobile).** `useWeekendGrid.ts:51-58` loads Saturday then Sunday expenses; `useExpenses.loadExpenses` REPLACES state, so the Saturday load is always clobbered and the Saturday column renders empty (`DayColumn.tsx:34` filters by date). Pinned by the PR-D test (seeds Sat+Sun, asserts Sunday renders and the Saturday title is absent). Fix = merge instead of replace in `useExpenses.loadExpenses`.
 
 ---
 
