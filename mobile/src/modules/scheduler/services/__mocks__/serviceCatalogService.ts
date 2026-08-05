@@ -1,12 +1,7 @@
+import { createMockFn } from '../../../../test/createMockFn';
 import type { ServiceItem } from '../../types/api';
 
-type Mode = 'success' | 'empty' | 'error';
-
-let _mode: Mode = 'success';
-
-export const setServiceMode = (mode: Mode) => {
-  _mode = mode;
-};
+// ── Default stub data ──────────────────────────────────────────────────────
 
 const mockServices: ServiceItem[] = [
   {
@@ -91,29 +86,70 @@ const mockServices: ServiceItem[] = [
   },
 ];
 
-export const listServices = async (
-  _boardId?: number,
-  _category?: string,
-): Promise<ServiceItem[]> => {
-  if (_mode === 'error') throw new Error('Mock error');
-  if (_mode === 'empty') return [];
-  if (_category) {
-    return mockServices.filter((s) => s.category === _category);
-  }
-  return mockServices;
-};
+// ── Internal state ─────────────────────────────────────────────────────────
 
-export const getService = async (id: number): Promise<ServiceItem> => {
-  if (_mode === 'error') throw new Error('Mock error');
-  const svc = mockServices.find((s) => s.id === id);
-  if (!svc) throw new Error('Service not found');
-  return svc;
-};
+let _services: ServiceItem[] = mockServices;
+let _serviceError: Error | null = null;
 
-export const createService = async (): Promise<{ id: number }> => {
+// ── Mock functions ─────────────────────────────────────────────────────────
+
+export const listServices = createMockFn(
+  async (_boardId?: number, _category?: string): Promise<ServiceItem[]> => {
+    if (_serviceError) throw _serviceError;
+    if (_category) {
+      return _services.filter(s => s.category === _category);
+    }
+    return _services;
+  },
+);
+
+export const getService = createMockFn(
+  async (id: number): Promise<ServiceItem> => {
+    if (_serviceError) throw _serviceError;
+    const svc = _services.find(s => s.id === id);
+    if (!svc) throw new Error('Service not found');
+    return svc;
+  },
+);
+
+export const createService = createMockFn(async (): Promise<{ id: number }> => {
   return { id: 99 };
-};
+});
 
-export const updateService = async (): Promise<void> => {};
+export const updateService = createMockFn(async (): Promise<void> => {});
 
-export const deleteService = async (_id: number): Promise<void> => {};
+export const deleteService = createMockFn(
+  async (_id: number): Promise<void> => {},
+);
+
+// ── Fluent scenario builders (.withX()) ────────────────────────────────────
+
+export function withServices(
+  services: ServiceItem[] = mockServices,
+): ServiceItem[] {
+  _serviceError = null;
+  _services = services;
+  return _services;
+}
+
+export function withServiceError(
+  error: Error = new Error('Mock error'),
+): Error {
+  _serviceError = error;
+  return error;
+}
+
+// ── Reset ──────────────────────────────────────────────────────────────────
+
+export function reset(): void {
+  _services = mockServices;
+  _serviceError = null;
+
+  if (typeof jest !== 'undefined') {
+    listServices.mockClear();
+    getService.mockClear();
+    createService.mockClear();
+    updateService.mockClear();
+    deleteService.mockClear();
+  }
+}

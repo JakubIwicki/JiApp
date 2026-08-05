@@ -3,7 +3,10 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { Meta, StoryObj } from '@storybook/react';
 import ReportsScreen from './ReportsScreen';
-import { setReportMode } from '../services/__mocks__/reportService';
+import {
+  withRevenueReport,
+  withClientReport,
+} from '../services/__mocks__/reportService';
 import type { SchedulerStackParamList } from '../types/navigation';
 
 const Stack = createNativeStackNavigator<SchedulerStackParamList>();
@@ -12,8 +15,9 @@ const meta: Meta<typeof ReportsScreen> = {
   title: 'Screens/Reports',
   component: ReportsScreen,
   decorators: [
-    (Story) => {
-      setReportMode('success');
+    Story => {
+      withRevenueReport();
+      withClientReport();
       return (
         <NavigationContainer>
           <Stack.Navigator screenOptions={{ headerShown: false }}>

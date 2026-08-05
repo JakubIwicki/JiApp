@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { Meta, StoryObj } from '@storybook/react';
 import ItemSheet from './ItemSheet';
-import { setBoardMode, setBoards } from '../services/__mocks__/boardService';
+import { withBoards } from '../services/__mocks__/boardService';
 import type { Board } from '../types/api';
 import type { LovingBoardsStackParamList } from '../../../navigation/types';
 
@@ -45,8 +45,7 @@ type Story = StoryObj<typeof ItemSheet>;
 export const AddMode: Story = {
   decorators: [
     Story => {
-      setBoardMode('success');
-      setBoards([sampleBoard]);
+      withBoards([sampleBoard]);
       return <Story />;
     },
   ],

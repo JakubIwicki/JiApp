@@ -3,8 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { Meta, StoryObj } from '@storybook/react';
 import BoardDetailScreen from './BoardDetailScreen';
-import { setBoardMode, setBoards } from '../services/__mocks__/boardService';
-import { setItemMode } from '../services/__mocks__/itemService';
+import { withBoards } from '../services/__mocks__/boardService';
 import type { Board } from '../types/api';
 import type { LovingBoardsStackParamList } from '../../../navigation/types';
 
@@ -160,9 +159,7 @@ type Story = StoryObj<typeof BoardDetailScreen>;
 export const WithItems: Story = {
   decorators: [
     Story => {
-      setBoardMode('success');
-      setItemMode('success');
-      setBoards([sampleBoard]);
+      withBoards([sampleBoard]);
       return <Story />;
     },
   ],
@@ -179,9 +176,7 @@ export const WithItems: Story = {
 export const Empty: Story = {
   decorators: [
     Story => {
-      setBoardMode('success');
-      setItemMode('empty');
-      setBoards([emptyBoard]);
+      withBoards([emptyBoard]);
       return <Story />;
     },
   ],
