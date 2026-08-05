@@ -13,13 +13,7 @@ public static class GetServiceEndpoint
                 CancellationToken ct) =>
             {
                 var result = await handler.HandleAsync(id, ct);
-                return result.IsSuccess
-                    ? Results.Ok(result.Value)
-                    : result.ErrorCategory switch
-                    {
-                        ResultCategories.AccessDenied => Results.Forbid(),
-                        _ => Results.NotFound(new ApiErrorResponse(result.Error!))
-                    };
+                return result.ToHttp();
             })
             .RequireAuthorization()
             .WithTags(SwaggerConstants.Tags.Services)

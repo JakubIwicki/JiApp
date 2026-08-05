@@ -24,13 +24,7 @@ public static class CreateServiceEndpoint
                 var result = await handler.HandleAsync(request, ct);
                 return result.IsSuccess
                     ? Results.Created($"/services/{result.Value}", new { id = result.Value })
-                    : result.ErrorCategory switch
-                    {
-                        ResultCategories.NotFound => Results.NotFound(new ApiErrorResponse(result.Error!)),
-                        ResultCategories.AccessDenied => Results.Forbid(),
-                        ResultCategories.Validation => Results.BadRequest(new ApiErrorResponse(result.Error!)),
-                        _ => Results.Problem(result.Error)
-                    };
+                    : result.ToHttp();
             })
             .RequireAuthorization()
             .WithTags(SwaggerConstants.Tags.Services)

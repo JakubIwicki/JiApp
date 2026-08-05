@@ -24,19 +24,7 @@ public static class UpdateProfileEndpoint
                 }
 
                 var result = await handler.HandleAsync(request, ct);
-                if (result.IsSuccess)
-                    return Results.Ok(result.Value);
-
-                var statusCode = result.ErrorCategory switch
-                {
-                    ResultCategories.NotFound => StatusCodes.Status404NotFound,
-                    ResultCategories.Conflict => StatusCodes.Status409Conflict,
-                    _ => StatusCodes.Status400BadRequest,
-                };
-
-                return Results.Json(
-                    new ApiErrorResponse(Error: result.Error ?? ApiErrorResponse.UnknownErrorMessage),
-                    statusCode: statusCode);
+                return result.ToHttp();
             })
             .WithTags(SwaggerConstants.Tags.Auth)
             .WithSummary("Update current user profile")

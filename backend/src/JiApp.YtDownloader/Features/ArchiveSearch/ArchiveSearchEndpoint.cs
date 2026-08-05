@@ -26,11 +26,7 @@ public static class ArchiveSearchEndpoint
                 }
 
                 var result = await handler.HandleAsync(request);
-                if (result.IsSuccess)
-                    return Results.Ok(result.Value);
-
-                return Results.Json(new ApiErrorResponse(Error: result.Error ?? ApiErrorResponse.UnknownErrorMessage),
-                    statusCode: StatusCodes.Status404NotFound);
+                return result.ToHttp();
             })
             .WithTags(SwaggerConstants.Tags.Search)
             .WithSummary("Archive a search history entry")

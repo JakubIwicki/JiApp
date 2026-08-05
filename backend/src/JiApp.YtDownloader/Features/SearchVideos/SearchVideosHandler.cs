@@ -108,7 +108,7 @@ public sealed partial class SearchVideosHandler(
         {
             logger.LogError(ex, "YouTube API search failed for query: {Query}", request.Query);
             return Result<SearchVideosResponse>.Failure(
-                "Failed to search videos. Please try again later.");
+                "Failed to search videos. Please try again later.", ResultCategories.BadGateway);
         }
     }
 }

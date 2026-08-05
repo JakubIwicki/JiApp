@@ -16,12 +16,7 @@ public static class DeleteBoardEndpoint
                 var result = await handler.HandleAsync(id, ct);
                 return result.IsSuccess
                     ? Results.Ok()
-                    : result.ErrorCategory switch
-                    {
-                        ResultCategories.NotFound => Results.NotFound(new ApiErrorResponse(result.Error!)),
-                        ResultCategories.AccessDenied => Results.Forbid(),
-                        _ => Results.BadRequest(new ApiErrorResponse(result.Error!))
-                    };
+                    : result.ToHttp();
             })
             .RequireAuthorization()
             .AddEndpointFilter<SecurityStampRecheckFilter>()

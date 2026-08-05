@@ -24,14 +24,7 @@ public static class ClientReportEndpoint
                 }
 
                 var result = await handler.HandleAsync(request, ct);
-                return result.IsSuccess
-                    ? Results.Ok(result.Value)
-                    : result.ErrorCategory switch
-                    {
-                        ResultCategories.NotFound => Results.NotFound(new ApiErrorResponse(result.Error!)),
-                        ResultCategories.AccessDenied => Results.Forbid(),
-                        _ => Results.Problem(result.Error)
-                    };
+                return result.ToHttp();
             })
             .RequireAuthorization()
             .WithTags(SwaggerConstants.Tags.Reports)

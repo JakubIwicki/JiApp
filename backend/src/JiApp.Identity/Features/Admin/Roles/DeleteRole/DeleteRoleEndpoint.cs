@@ -16,20 +16,9 @@ public static class DeleteRoleEndpoint
 				CancellationToken ct) =>
 			{
 				var result = await handler.HandleAsync(roleName, ct);
-				if (result.IsSuccess)
-					return Results.Ok();
-
-				var statusCode = result.ErrorCategory switch
-				{
-					ResultCategories.NotFound => StatusCodes.Status404NotFound,
-					ResultCategories.AccessDenied => StatusCodes.Status403Forbidden,
-					ResultCategories.Conflict => StatusCodes.Status409Conflict,
-					_ => StatusCodes.Status400BadRequest,
-				};
-
-				return Results.Json(
-					new ApiErrorResponse(Error: result.Error ?? ApiErrorResponse.UnknownErrorMessage),
-					statusCode: statusCode);
+				return result.IsSuccess
+					? Results.Ok()
+					: result.ToHttp();
 			})
 			.WithTags(SwaggerConstants.Tags.Admin)
 			.WithSummary("Delete a role (reserved roles are protected)")

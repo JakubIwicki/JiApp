@@ -25,12 +25,7 @@ public static class CreateItemEndpoint
                 var result = await handler.HandleAsync(boardId, request, ct);
                 return result.IsSuccess
                     ? Results.Created($"/boards/{boardId}/items/{result.Value}", new { id = result.Value })
-                    : result.ErrorCategory switch
-                    {
-                        ResultCategories.AccessDenied => Results.Forbid(),
-                        ResultCategories.NotFound => Results.NotFound(new ApiErrorResponse(result.Error!)),
-                        _ => Results.BadRequest(new ApiErrorResponse(result.Error!))
-                    };
+                    : result.ToHttp();
             })
             .RequireAuthorization()
             .WithTags(SwaggerConstants.Tags.Items)

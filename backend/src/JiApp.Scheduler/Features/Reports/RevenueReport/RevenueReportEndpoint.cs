@@ -26,15 +26,7 @@ public static class RevenueReportEndpoint
                 }
 
                 var result = await handler.HandleAsync(request, ct);
-                return result.IsSuccess
-                    ? Results.Ok(result.Value)
-                    : result.ErrorCategory switch
-                    {
-                        ResultCategories.NotFound => Results.NotFound(new ApiErrorResponse(result.Error!)),
-                        ResultCategories.AccessDenied => Results.Forbid(),
-                        ResultCategories.Validation => Results.BadRequest(new ApiErrorResponse(result.Error!)),
-                        _ => Results.BadRequest(new ApiErrorResponse(result.Error!))
-                    };
+                return result.ToHttp();
             })
             .RequireAuthorization()
             .WithTags(SwaggerConstants.Tags.Reports)

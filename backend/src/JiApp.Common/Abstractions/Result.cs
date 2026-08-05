@@ -14,4 +14,5 @@ public static class ResultCategories
     public const string AccessDenied = "AccessDenied";
     public const string Validation = "Validation";
     public const string Conflict = "Conflict";
+    public const string BadGateway = "BadGateway";
 }

@@ -26,12 +26,7 @@ public static class SetItemStatusEndpoint
                 var result = await handler.HandleAsync(boardId, itemId, request, ct);
                 return result.IsSuccess
                     ? Results.Ok(new { id = result.Value })
-                    : result.ErrorCategory switch
-                    {
-                        ResultCategories.AccessDenied => Results.Forbid(),
-                        ResultCategories.NotFound => Results.NotFound(new ApiErrorResponse(result.Error!)),
-                        _ => Results.BadRequest(new ApiErrorResponse(result.Error!))
-                    };
+                    : result.ToHttp();
             })
             .RequireAuthorization()
             .WithTags(SwaggerConstants.Tags.Items)

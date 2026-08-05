@@ -25,12 +25,7 @@ public static class StreamBoardEndpoint
             {
                 var boardResult = await BoardAccessGuard.VerifyBoardAccessAsync(db, boardId, currentUser, httpContext.RequestAborted);
                 if (!boardResult.IsSuccess)
-                    return boardResult.ErrorCategory switch
-                    {
-                        ResultCategories.NotFound => Results.NotFound(new ApiErrorResponse(boardResult.Error!)),
-                        ResultCategories.AccessDenied => Results.Forbid(),
-                        _ => Results.BadRequest(new ApiErrorResponse(boardResult.Error!))
-                    };
+                    return boardResult.ToHttp();
 
                 await StreamSseAsync(httpContext, broadcaster, boardId, currentUser.UserId);
 

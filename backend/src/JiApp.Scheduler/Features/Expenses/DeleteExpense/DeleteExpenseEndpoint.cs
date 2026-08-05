@@ -16,7 +16,7 @@ public static class DeleteExpenseEndpoint
                 var result = await handler.HandleAsync(id, ct);
                 return result.IsSuccess
                     ? Results.Ok(new { id = result.Value })
-                    : Results.NotFound(new ApiErrorResponse(result.Error!));
+                    : result.ToHttp();
             })
             .RequireAuthorization()
             .AddEndpointFilter<SecurityStampRecheckFilter>()

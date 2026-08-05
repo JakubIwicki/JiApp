@@ -23,18 +23,9 @@ public static class ResetPasswordEndpoint
 					return Results.Extensions.ValidationError(validationResult.ErrorMessages());
 
 				var result = await handler.HandleAsync(userId, request, ct);
-				if (result.IsSuccess)
-					return Results.Ok();
-
-				var statusCode = result.ErrorCategory switch
-				{
-					ResultCategories.NotFound => StatusCodes.Status404NotFound,
-					_ => StatusCodes.Status400BadRequest,
-				};
-
-				return Results.Json(
-					new ApiErrorResponse(Error: result.Error ?? ApiErrorResponse.UnknownErrorMessage),
-					statusCode: statusCode);
+				return result.IsSuccess
+					? Results.Ok()
+					: result.ToHttp();
 			})
 			.WithTags(SwaggerConstants.Tags.Admin)
 			.WithSummary("Admin reset a user's password (revokes all refresh tokens)")

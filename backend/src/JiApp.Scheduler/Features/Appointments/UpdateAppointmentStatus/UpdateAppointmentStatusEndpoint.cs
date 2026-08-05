@@ -25,13 +25,7 @@ public static class UpdateAppointmentStatusEndpoint
                 var result = await handler.HandleAsync(id, request, ct);
                 return result.IsSuccess
                     ? Results.Ok(new { id = result.Value })
-                    : result.ErrorCategory switch
-                    {
-                        ResultCategories.NotFound or ResultCategories.AccessDenied =>
-                            Results.NotFound(new ApiErrorResponse("Appointment not found")),
-                        ResultCategories.Validation => Results.BadRequest(new ApiErrorResponse(result.Error!)),
-                        _ => Results.Conflict(new ApiErrorResponse(result.Error!))
-                    };
+                    : result.ToHttp();
             })
             .RequireAuthorization()
             .WithTags(SwaggerConstants.Tags.Appointments)

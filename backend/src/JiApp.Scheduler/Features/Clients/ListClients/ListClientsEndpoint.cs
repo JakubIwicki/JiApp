@@ -16,9 +16,7 @@ public static class ListClientsEndpoint
                 CancellationToken ct) =>
             {
                 var result = await handler.HandleAsync(q, skip ?? 0, settings.ClampTake(take), ct);
-                return result.IsSuccess
-                    ? Results.Ok(result.Value)
-                    : Results.BadRequest(new ApiErrorResponse(result.Error!));
+                return result.ToHttp();
             })
             .RequireAuthorization()
             .WithTags(SwaggerConstants.Tags.Clients)

@@ -16,12 +16,7 @@ public static class ResetWeeklyItemsEndpoint
                 var result = await handler.HandleAsync(boardId, ct);
                 return result.IsSuccess
                     ? Results.Ok(new { reset = result.Value })
-                    : result.ErrorCategory switch
-                    {
-                        ResultCategories.NotFound => Results.NotFound(new ApiErrorResponse(result.Error!)),
-                        ResultCategories.AccessDenied => Results.Forbid(),
-                        _ => Results.BadRequest(new ApiErrorResponse(result.Error!))
-                    };
+                    : result.ToHttp();
             })
             .RequireAuthorization()
             .AddEndpointFilter<SecurityStampRecheckFilter>()

@@ -16,19 +16,9 @@ public static class DeleteUserEndpoint
 				CancellationToken ct) =>
 			{
 				var result = await handler.HandleAsync(userId, ct);
-				if (result.IsSuccess)
-					return Results.Ok();
-
-				var statusCode = result.ErrorCategory switch
-				{
-					ResultCategories.NotFound => StatusCodes.Status404NotFound,
-					ResultCategories.AccessDenied => StatusCodes.Status403Forbidden,
-					_ => StatusCodes.Status400BadRequest,
-				};
-
-				return Results.Json(
-					new ApiErrorResponse(Error: result.Error ?? ApiErrorResponse.UnknownErrorMessage),
-					statusCode: statusCode);
+				return result.IsSuccess
+					? Results.Ok()
+					: result.ToHttp();
 			})
 			.WithTags(SwaggerConstants.Tags.Admin)
 			.WithSummary("Delete a user account")

@@ -13,11 +13,9 @@ public static class DownloadFileEndpoint
         endpoints.MapGet("/downloads/mp3/file/{id}", (string id, DownloadFileHandler handler) =>
             {
                 var result = handler.Handle(id);
-                if (result.IsSuccess)
-                    return Results.File(result.Value!, "audio/mpeg");
-
-                return Results.Json(new ApiErrorResponse(Error: result.Error ?? ApiErrorResponse.UnknownErrorMessage),
-                    statusCode: StatusCodes.Status404NotFound);
+                return result.IsSuccess
+                    ? Results.File(result.Value!, "audio/mpeg")
+                    : result.ToHttp();
             })
             .WithTags(SwaggerConstants.Tags.Downloads)
             .WithSummary("Download the MP3 file by temporary ID")

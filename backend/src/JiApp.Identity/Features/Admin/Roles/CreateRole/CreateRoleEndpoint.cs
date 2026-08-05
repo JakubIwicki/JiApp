@@ -22,18 +22,9 @@ public static class CreateRoleEndpoint
 					return Results.Extensions.ValidationError(validationResult.ErrorMessages());
 
 				var result = await handler.HandleAsync(request, ct);
-				if (result.IsSuccess)
-					return Results.Created((Uri?)null, null);
-
-				var statusCode = result.ErrorCategory switch
-				{
-					ResultCategories.Conflict => StatusCodes.Status409Conflict,
-					_ => StatusCodes.Status400BadRequest,
-				};
-
-				return Results.Json(
-					new ApiErrorResponse(Error: result.Error ?? ApiErrorResponse.UnknownErrorMessage),
-					statusCode: statusCode);
+				return result.IsSuccess
+					? Results.Created((Uri?)null, null)
+					: result.ToHttp();
 			})
 			.WithTags(SwaggerConstants.Tags.Admin)
 			.WithSummary("Create a new role with specified permissions")

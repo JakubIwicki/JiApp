@@ -13,9 +13,7 @@ public static class GetExpenseEndpoint
                 CancellationToken ct) =>
             {
                 var result = await handler.HandleAsync(id, ct);
-                return result.IsSuccess
-                    ? Results.Ok(result.Value)
-                    : Results.NotFound(new ApiErrorResponse(result.Error!));
+                return result.ToHttp();
             })
             .RequireAuthorization()
             .WithTags(SwaggerConstants.Tags.Expenses)

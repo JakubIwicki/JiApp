@@ -23,19 +23,9 @@ public static class UpdateRolePermissionsEndpoint
 					return Results.Extensions.ValidationError(validationResult.ErrorMessages());
 
 				var result = await handler.HandleAsync(roleName, request, ct);
-				if (result.IsSuccess)
-					return Results.Ok();
-
-				var statusCode = result.ErrorCategory switch
-				{
-					ResultCategories.NotFound => StatusCodes.Status404NotFound,
-					ResultCategories.AccessDenied => StatusCodes.Status403Forbidden,
-					_ => StatusCodes.Status400BadRequest,
-				};
-
-				return Results.Json(
-					new ApiErrorResponse(Error: result.Error ?? ApiErrorResponse.UnknownErrorMessage),
-					statusCode: statusCode);
+				return result.IsSuccess
+					? Results.Ok()
+					: result.ToHttp();
 			})
 			.WithTags(SwaggerConstants.Tags.Admin)
 			.WithSummary("Update a role's permissions (full replacement, not delta)")

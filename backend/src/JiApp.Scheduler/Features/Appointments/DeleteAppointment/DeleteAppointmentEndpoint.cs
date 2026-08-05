@@ -16,12 +16,7 @@ public static class DeleteAppointmentEndpoint
                 var result = await handler.HandleAsync(id, ct);
                 return result.IsSuccess
                     ? Results.Ok()
-                    : result.ErrorCategory switch
-                    {
-                        ResultCategories.NotFound or ResultCategories.AccessDenied =>
-                            Results.NotFound(new ApiErrorResponse("Appointment not found")),
-                        _ => Results.Conflict(new ApiErrorResponse(result.Error!))
-                    };
+                    : result.ToHttp();
             })
             .RequireAuthorization()
             .AddEndpointFilter<SecurityStampRecheckFilter>()

@@ -23,19 +23,9 @@ public static class AssignRoleEndpoint
 					return Results.Extensions.ValidationError(validationResult.ErrorMessages());
 
 				var result = await handler.HandleAsync(userId, request, ct);
-				if (result.IsSuccess)
-					return Results.Ok();
-
-				var statusCode = result.ErrorCategory switch
-				{
-					ResultCategories.NotFound => StatusCodes.Status404NotFound,
-					ResultCategories.Validation => StatusCodes.Status400BadRequest,
-					_ => StatusCodes.Status400BadRequest,
-				};
-
-				return Results.Json(
-					new ApiErrorResponse(Error: result.Error ?? ApiErrorResponse.UnknownErrorMessage),
-					statusCode: statusCode);
+				return result.IsSuccess
+					? Results.Ok()
+					: result.ToHttp();
 			})
 			.WithTags(SwaggerConstants.Tags.Admin)
 			.WithSummary("Assign a role to a user")

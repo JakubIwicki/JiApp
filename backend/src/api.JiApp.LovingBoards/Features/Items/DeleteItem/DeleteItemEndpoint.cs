@@ -17,12 +17,7 @@ public static class DeleteItemEndpoint
                 var result = await handler.HandleAsync(boardId, itemId, ct);
                 return result.IsSuccess
                     ? Results.Ok()
-                    : result.ErrorCategory switch
-                    {
-                        ResultCategories.NotFound => Results.NotFound(new ApiErrorResponse(result.Error!)),
-                        ResultCategories.AccessDenied => Results.Forbid(),
-                        _ => Results.BadRequest(new ApiErrorResponse(result.Error!))
-                    };
+                    : result.ToHttp();
             })
             .RequireAuthorization()
             .AddEndpointFilter<SecurityStampRecheckFilter>()
