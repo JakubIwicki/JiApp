@@ -3,9 +3,9 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { Meta, StoryObj } from '@storybook/react';
 import CreateAppointmentScreen from './CreateAppointmentScreen';
-import { setAppointmentMode } from '../services/__mocks__/appointmentService';
-import { setClientMode } from '../services/__mocks__/clientService';
-import { setServiceMode } from '../services/__mocks__/serviceCatalogService';
+import { withAppointments } from '../services/__mocks__/appointmentService';
+import { withClients } from '../services/__mocks__/clientService';
+import { withServices } from '../services/__mocks__/serviceCatalogService';
 import type { SchedulerStackParamList } from '../types/navigation';
 
 const Stack = createNativeStackNavigator<SchedulerStackParamList>();
@@ -14,10 +14,10 @@ const meta: Meta<typeof CreateAppointmentScreen> = {
   title: 'Screens/CreateAppointment',
   component: CreateAppointmentScreen,
   decorators: [
-    (Story) => {
-      setAppointmentMode('success');
-      setClientMode('success');
-      setServiceMode('success');
+    Story => {
+      withAppointments();
+      withClients();
+      withServices();
       return (
         <NavigationContainer>
           <Stack.Navigator screenOptions={{ headerShown: false }}>

@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { Meta, StoryObj } from '@storybook/react';
 import ClientListScreen from './ClientListScreen';
-import { setClientMode } from '../services/__mocks__/clientService';
+import { withClients } from '../services/__mocks__/clientService';
 import type { SchedulerStackParamList } from '../types/navigation';
 
 const Stack = createNativeStackNavigator<SchedulerStackParamList>();
@@ -12,7 +12,7 @@ const meta: Meta<typeof ClientListScreen> = {
   title: 'Screens/ClientList',
   component: ClientListScreen,
   decorators: [
-    (Story) => (
+    Story => (
       <NavigationContainer>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="ClientList" component={Story} />
@@ -28,8 +28,8 @@ type Story = StoryObj<typeof ClientListScreen>;
 
 export const WithClients: Story = {
   decorators: [
-    (Story) => {
-      setClientMode('success');
+    Story => {
+      withClients();
       return <Story />;
     },
   ],
@@ -45,15 +45,16 @@ export const WithClients: Story = {
 
 export const Empty: Story = {
   decorators: [
-    (Story) => {
-      setClientMode('empty');
+    Story => {
+      withClients([]);
       return <Story />;
     },
   ],
   parameters: {
     docs: {
       description: {
-        story: 'Empty client list with no clients yet. Shows empty state message and FAB.',
+        story:
+          'Empty client list with no clients yet. Shows empty state message and FAB.',
       },
     },
   },
