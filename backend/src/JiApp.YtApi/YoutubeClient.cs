@@ -45,7 +45,15 @@ public sealed class YoutubeClient(
         searchRequest.Q = query;
         searchRequest.MaxResults = maxResults;
 
-        var response = await searchRequest.ExecuteAsync(cancellationToken);
+        Google.Apis.YouTube.v3.Data.SearchListResponse response;
+        try
+        {
+            response = await searchRequest.ExecuteAsync(cancellationToken);
+        }
+        catch (Google.GoogleApiException ex)
+        {
+            throw new YoutubeApiException("YouTube API request failed.", ex);
+        }
 
         return (response.Items ?? [])
             .Where(item => item is { Id.Kind: "youtube#video", Snippet: not null })
@@ -61,7 +69,15 @@ public sealed class YoutubeClient(
         listRequest.Id = videoId;
         listRequest.MaxResults = 1;
 
-        var response = await listRequest.ExecuteAsync(cancellationToken);
+        Google.Apis.YouTube.v3.Data.VideoListResponse response;
+        try
+        {
+            response = await listRequest.ExecuteAsync(cancellationToken);
+        }
+        catch (Google.GoogleApiException ex)
+        {
+            throw new YoutubeApiException("YouTube API request failed.", ex);
+        }
 
         return (response.Items ?? [])
             .Where(item => item.Snippet is not null)

@@ -105,7 +105,7 @@ public sealed partial class SearchVideosHandler(
             return Result<SearchVideosResponse>.Success(
                 new SearchVideosResponse(pageItems.AsReadOnly(), hasMore));
         }
-        catch (Google.GoogleApiException ex)
+        catch (YoutubeApiException ex)
         {
             logger.LogError(ex, "YouTube API search failed for query: {Query}", request.Query);
             return Result<SearchVideosResponse>.Failure(

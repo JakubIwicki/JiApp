@@ -160,13 +160,13 @@ public sealed class YtAgentToolServiceTests
     }
 
     [Fact]
-    public async Task SearchAsync_WithGoogleApiException_ReturnsSanitizedFailure()
+    public async Task SearchAsync_WithYoutubeApiException_ReturnsSanitizedFailure()
     {
         var fixture = new Fixture();
         fixture.YoutubeClientMock
             .Setup(c => c.SearchVideosAsync(It.IsAny<string>(), It.IsAny<int>(),
                 It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new GoogleApiException("youtube", "sensitive API key details"));
+            .ThrowsAsync(new YoutubeApiException("YouTube API request failed.", new GoogleApiException("youtube", "sensitive API key details")));
 
         var result = await fixture.Sut.SearchAsync(UserId, "test", null);
 
