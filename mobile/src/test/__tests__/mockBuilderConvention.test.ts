@@ -95,7 +95,7 @@ describe('mock builder convention', () => {
         exportNames.some(exportName => /^set\w+Mode$/.test(exportName)),
       ).toBe(false);
 
-      const resetExport = module['reset'];
+      const resetExport = module.reset;
       expect(typeof resetExport).toBe('function');
 
       const builderNames = exportNames.filter(exportName =>
