@@ -1,7 +1,7 @@
 using JiApp.Common.Resilience;
 using Microsoft.EntityFrameworkCore;
 
-namespace JiApp.Scheduler.Tests.Resilience;
+namespace JiApp.Common.Tests.Resilience;
 
 public sealed class RetryPolicyFactoryTests
 {

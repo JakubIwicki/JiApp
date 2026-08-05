@@ -4,7 +4,7 @@ using JiApp.Common.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 
-namespace JiApp.Scheduler.Tests.Security;
+namespace JiApp.Common.Tests.Security;
 
 public sealed class SecurityStampRecheckFilterTests
 {
