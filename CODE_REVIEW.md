@@ -876,6 +876,10 @@ LovingBoards equivalents) — so `NotFound` and `AccessDenied` come back as 400.
 **Fix:** one `ToHttp<T>()` in `ResultExtensions.cs`; replace ~40 switch expressions. Also fixes the
 endpoint half of G3.2.
 
+**FIXED (Wave 4).** Shared `ToHttp<T>()` in `JiApp.Common/Abstractions/ResultExtensions.cs`; 61 mapping sites migrated (Identity 9, Scheduler 31, LovingBoards 14, YtDownloader 7). Uniform mapping incl. AccessDenied→404 (G3.2 endpoint half), uncategorized `_`→500, new `BadGateway`→502. PR #104 (main `af74705`).
+
+`backend/src/JiApp.Common/Abstractions/ResultExtensions.cs` · `backend/src/JiApp.Common.Tests/ResultExtensionsTests.cs`
+
 ### G8.2 (MEDIUM) — Shared JWT validation parameters · rolls up `G1.3` + `G1.6`
 
 `JwtTokenService.CreateValidationParameters()` is already the correct implementation. Promote it to
