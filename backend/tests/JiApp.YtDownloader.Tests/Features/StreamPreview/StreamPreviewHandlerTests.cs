@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using JiApp.Common.Abstractions;
 using JiApp.YtApi;
 using JiApp.YtDownloader.Configuration;
 using JiApp.YtDownloader.Features.StreamPreview;
@@ -25,6 +27,14 @@ public sealed class StreamPreviewHandlerTests
             YoutubeClientMock
                 .Setup(c => c.BuildPreviewAudioProcess(It.IsAny<string>()))
                 .Throws(exception);
+            return this;
+        }
+
+        public Fixture WithBuildPreviewProcess(Process process)
+        {
+            YoutubeClientMock
+                .Setup(c => c.BuildPreviewAudioProcess(It.IsAny<string>()))
+                .Returns(process);
             return this;
         }
     }
@@ -70,12 +80,27 @@ public sealed class StreamPreviewHandlerTests
     }
 
     [Fact]
-    public void HandleAsync_WhenYoutubeClientThrowsArgumentException_ReturnsResolveFailed()
+    public void Handle_WhenYoutubeClientThrowsArgumentException_ReturnsNotFoundResult()
     {
         var fixture = new Fixture().WithBuildPreviewThrows(new ArgumentException("Invalid videoId: 'bad'"));
 
         var result = fixture.Sut.Handle("bad");
 
-        result.Should().Be(StreamPreviewResult.ResolveFailed);
+        result.IsSuccess.Should().BeFalse();
+        result.ErrorCategory.Should().Be(ResultCategories.NotFound);
+        result.Value.Should().BeNull();
+    }
+
+    [Fact]
+    public void Handle_WhenProcessesBuilt_ReturnsSuccess_WithStreamReadyPayload()
+    {
+        var fixture = new Fixture().WithBuildPreviewProcess(new Process());
+
+        var result = fixture.Sut.Handle("dQw4w9WgXcQ");
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull();
+        result.Value!.YtDlpProcess.Should().NotBeNull();
+        result.Value!.FfmpegProcess.Should().NotBeNull();
     }
 }

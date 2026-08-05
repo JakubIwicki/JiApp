@@ -21,7 +21,7 @@ public interface IYoutubeClient
     Task<YoutubeVideo?> GetVideoByIdAsync(string videoId,
         CancellationToken cancellationToken = default);
 
-    Task<YoutubeClientResponse> DownloadVideoAsync(string videoId, string outputPath,
+    Task<YoutubeClientResponse> DownloadVideoAsync(string videoId, string outputPath, string tempId,
         CancellationToken cancellationToken = default);
 
     Process BuildPreviewAudioProcess(string videoId);
@@ -109,13 +109,25 @@ public sealed class YoutubeClient(
             ImageUrl: item.Snippet?.Thumbnails?.Default__?.Url ?? string.Empty,
             ChannelTitle: WebUtility.HtmlDecode(item.Snippet?.ChannelTitle ?? string.Empty));
 
-    public async Task<YoutubeClientResponse> DownloadVideoAsync(string videoId, string outputPath,
+    public async Task<YoutubeClientResponse> DownloadVideoAsync(string videoId, string outputPath, string tempId,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
+            ValidateVideoId(videoId);
+        }
+        catch (ArgumentException)
+        {
+            return new YoutubeClientResponse(null, false, ["Invalid video id."]);
+        }
+
         Directory.CreateDirectory(outputPath);
 
         var videoUrl = $"https://www.youtube.com/watch?v={videoId}";
-        var outputTemplate = Path.Combine(outputPath, $"{Guid.NewGuid():N}.%(ext)s");
+        // Keyed to the job's temp id so the resulting file path is deterministic
+        // per job — a fallback never globs the newest *.mp3 in a shared user folder,
+        // which two concurrent downloads could cross-resolve.
+        var outputTemplate = Path.Combine(outputPath, $"{tempId}.%(ext)s");
 
         var options = new OptionSet
         {
@@ -155,13 +167,7 @@ public sealed class YoutubeClient(
         if (!result.Success)
             return new YoutubeClientResponse(null, false, result.ErrorOutput ?? []);
 
-        var resolvedPath = result.Data;
-        if (string.IsNullOrEmpty(resolvedPath) || !File.Exists(resolvedPath))
-        {
-            resolvedPath = Directory.GetFiles(outputPath, "*.mp3")
-                .OrderByDescending(File.GetLastWriteTimeUtc)
-                .FirstOrDefault();
-        }
+        var resolvedPath = ResolveOutputFilePath(outputPath, tempId, result.Data);
 
         return new YoutubeClientResponse(resolvedPath, !string.IsNullOrEmpty(resolvedPath), []);
     }
@@ -170,6 +176,20 @@ public sealed class YoutubeClient(
     {
         if (string.IsNullOrWhiteSpace(videoId) || !Regex.IsMatch(videoId, @"^[a-zA-Z0-9_-]{11}$"))
             throw new ArgumentException($"Invalid videoId: '{videoId}'", nameof(videoId));
+    }
+
+    /// <summary>
+    /// yt-dlp sometimes reports an empty output path. The fallback is keyed to the
+    /// job's temp id (matching the output template) rather than globbing the newest
+    /// *.mp3 in the user's folder, which two concurrent downloads could cross-resolve.
+    /// </summary>
+    internal static string? ResolveOutputFilePath(string outputPath, string tempId, string? ytDlpReportedPath)
+    {
+        if (!string.IsNullOrEmpty(ytDlpReportedPath) && File.Exists(ytDlpReportedPath))
+            return ytDlpReportedPath;
+
+        var deterministicPath = Path.Combine(outputPath, $"{tempId}.mp3");
+        return File.Exists(deterministicPath) ? deterministicPath : null;
     }
 
     public Process BuildPreviewAudioProcess(string videoId)

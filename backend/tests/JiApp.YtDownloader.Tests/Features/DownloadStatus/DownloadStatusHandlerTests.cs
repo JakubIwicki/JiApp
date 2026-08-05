@@ -103,14 +103,14 @@ public sealed class DownloadStatusHandlerTests
         var fixture = new Fixture();
         var tempId = fixture.CreateJob();
         fixture.JobStore.Claim(tempId, UserId);
-        fixture.JobStore.MarkFailed(tempId, UserId, "Failed to download video.", "YoutubeDl");
+        fixture.JobStore.MarkFailed(tempId, UserId, "Failed to download video.", ResultCategories.YoutubeDl);
 
         var result = fixture.Sut.Handle(tempId);
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Status.Should().Be("failed");
         result.Value!.Error.Should().Be("Failed to download video.");
-        result.Value!.ErrorCategory.Should().Be("YoutubeDl");
+        result.Value!.ErrorCategory.Should().Be(ResultCategories.YoutubeDl);
     }
 
     [Fact]

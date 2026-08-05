@@ -1,3 +1,4 @@
+using JiApp.Common.Abstractions;
 using JiApp.YtDownloader.Domain;
 using JiApp.YtDownloader.Persistence;
 using JiApp.YtDownloader.Services;
@@ -151,12 +152,12 @@ public sealed class DownloadJobStoreTests
         var tempId = fixture.CreateJob();
         fixture.Store.Claim(tempId, UserId);
 
-        fixture.Store.MarkFailed(tempId, UserId, "Failed to download video.", "YoutubeDl");
+        fixture.Store.MarkFailed(tempId, UserId, "Failed to download video.", ResultCategories.YoutubeDl);
 
         var status = fixture.Store.GetStatus(tempId, UserId);
         status!.Status.Should().Be(DownloadJobStatus.Failed);
         status.Error.Should().Be("Failed to download video.");
-        status.ErrorCategory.Should().Be("YoutubeDl");
+        status.ErrorCategory.Should().Be(ResultCategories.YoutubeDl);
     }
 
     // ── Retry / DLQ ────────────────────────────────────────────────────────
@@ -168,7 +169,7 @@ public sealed class DownloadJobStoreTests
         var tempId = fixture.CreateJob();
         fixture.Store.Claim(tempId, UserId);
 
-        fixture.Store.MarkFailed(tempId, UserId, "transient error", "YoutubeDl");
+        fixture.Store.MarkFailed(tempId, UserId, "transient error", ResultCategories.YoutubeDl);
 
         var row = fixture.LoadCommand(tempId);
         row!.Status.Should().Be(DownloadCommandStatus.Failed);
@@ -189,11 +190,11 @@ public sealed class DownloadJobStoreTests
         var tempId = fixture.CreateJob();
         fixture.Store.Claim(tempId, UserId);
 
-        fixture.Store.MarkFailed(tempId, UserId, "error one", "YoutubeDl");
+        fixture.Store.MarkFailed(tempId, UserId, "error one", ResultCategories.YoutubeDl);
         fixture.Clock.Advance(TimeSpan.FromSeconds(31));
-        fixture.Store.MarkFailed(tempId, UserId, "error two", "YoutubeDl");
+        fixture.Store.MarkFailed(tempId, UserId, "error two", ResultCategories.YoutubeDl);
         fixture.Clock.Advance(TimeSpan.FromMinutes(2) + TimeSpan.FromSeconds(1));
-        fixture.Store.MarkFailed(tempId, UserId, "error three", "YoutubeDl");
+        fixture.Store.MarkFailed(tempId, UserId, "error three", ResultCategories.YoutubeDl);
 
         var row = fixture.LoadCommand(tempId);
         row!.Status.Should().Be(DownloadCommandStatus.Failed);

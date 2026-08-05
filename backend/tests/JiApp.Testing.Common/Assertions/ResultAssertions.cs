@@ -4,6 +4,11 @@ namespace JiApp.Testing.Common.Assertions;
 
 public static class ResultAssertions
 {
+    public static void AssertSuccess(Result result)
+    {
+        result.IsSuccess.Should().BeTrue();
+    }
+
     public static T AssertSuccess<T>(Result<T> result)
     {
         result.IsSuccess.Should().BeTrue();
@@ -15,6 +20,13 @@ public static class ResultAssertions
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().Be(expected);
         return result.Value!;
+    }
+
+    public static string AssertFailure(Result result, string category)
+    {
+        result.IsSuccess.Should().BeFalse();
+        result.ErrorCategory.Should().Be(category);
+        return result.Error!;
     }
 
     public static string AssertFailure<T>(Result<T> result, string category)
@@ -34,6 +46,9 @@ public static class ResultAssertions
 
     public static string AssertNotFound<T>(Result<T> result) =>
         AssertFailure(result, ResultCategories.NotFound);
+
+    public static string AssertAccessDenied(Result result) =>
+        AssertFailure(result, ResultCategories.AccessDenied);
 
     public static string AssertAccessDenied<T>(Result<T> result) =>
         AssertFailure(result, ResultCategories.AccessDenied);

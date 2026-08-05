@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+
 namespace JiApp.Gateway.Tests.RateLimiting;
 
 public sealed class RateLimitPolicySelectorTests
@@ -8,7 +10,10 @@ public sealed class RateLimitPolicySelectorTests
 
         public Fixture(RequestDelegate? next = null)
         {
-            Sut = new RateLimitPolicySelector(next ?? (_ => Task.CompletedTask), new RateLimitPolicyService(maxEntries: 4096));
+            Sut = new RateLimitPolicySelector(
+                next ?? (_ => Task.CompletedTask),
+                new RateLimitPolicyService(maxEntries: 4096),
+                Mock.Of<ILogger<RateLimitPolicySelector>>());
         }
 
         public static DefaultHttpContext CreateContext(string path)
@@ -312,11 +317,12 @@ public sealed class RateLimitPolicySelectorTests
     }
 
     [Fact]
-    public async Task Returns_403_for_unmatched_path_with_endpoint()
+    public async Task Returns_500_for_unmatched_path_with_endpoint()
     {
         var context = Fixture.CreateContext("/api/v1/unknown/endpoint");
         // Simulate that routing matched an endpoint — middleware should still
-        // reject with 403 (fail closed) since no rate limit policy exists.
+        // fail closed with a server error (not 403, which is a client auth fault)
+        // since no rate limit policy exists for a routed endpoint.
         context.SetEndpoint(new Endpoint(
             _ => Task.CompletedTask,
             EndpointMetadataCollection.Empty,
@@ -325,7 +331,7 @@ public sealed class RateLimitPolicySelectorTests
 
         await fixture.Sut.InvokeAsync(context);
 
-        context.Response.StatusCode.Should().Be(StatusCodes.Status403Forbidden);
+        context.Response.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
     }
 
     [Fact]
@@ -395,7 +401,7 @@ public sealed class RateLimitPolicySelectorTests
     }
 
     [Fact]
-    public async Task Returns_proper_ApiErrorResponse_for_403_body()
+    public async Task Returns_proper_ApiErrorResponse_for_500_body()
     {
         var context = Fixture.CreateContext("/api/v1/unknown/endpoint");
         context.SetEndpoint(new Endpoint(
@@ -406,7 +412,7 @@ public sealed class RateLimitPolicySelectorTests
 
         await fixture.Sut.InvokeAsync(context);
 
-        context.Response.StatusCode.Should().Be(StatusCodes.Status403Forbidden);
+        context.Response.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
         context.Response.Body.Position = 0;
         var body = await new StreamReader(context.Response.Body).ReadToEndAsync();
         body.Should().NotBeNullOrEmpty();
@@ -454,7 +460,7 @@ public sealed class RateLimitPolicySelectorTests
     public async Task Does_not_call_next_for_unmatched_path_with_endpoint()
     {
         // When routing DID match an endpoint but no rate limit policy exists,
-        // the middleware should short-circuit with 403 (fail closed).
+        // the middleware should short-circuit with a server error (fail closed).
         var nextCalled = false;
         var context = Fixture.CreateContext("/api/v1/unknown/endpoint");
         context.SetEndpoint(new Endpoint(

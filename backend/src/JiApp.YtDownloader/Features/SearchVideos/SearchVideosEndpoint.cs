@@ -15,9 +15,10 @@ public static class SearchVideosEndpoint
                 SearchVideosRequest request,
                 IValidator<SearchVideosRequest> validator,
                 SearchVideosHandler handler,
-                HttpContext httpContext) =>
+                HttpContext httpContext,
+                CancellationToken ct) =>
             {
-                var validationResult = await validator.ValidateAsync(request);
+                var validationResult = await validator.ValidateAsync(request, ct);
                 if (!validationResult.IsValid)
                 {
                     var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToArray();

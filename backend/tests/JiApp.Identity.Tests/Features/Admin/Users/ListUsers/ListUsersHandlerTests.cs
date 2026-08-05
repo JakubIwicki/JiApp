@@ -96,4 +96,27 @@ public sealed class ListUsersHandlerTests
 		result.Value.TotalCount.Should().Be(10);
 		result.Value.Users[0].Id.Should().Be(4);
 	}
+
+	[Fact]
+	public async Task HandleAsync_ClampsPageSize_ToMaximum()
+	{
+		var fixture = new Fixture().WithUsers(150);
+
+		var result = await fixture.Sut.HandleAsync(null, page: 1, pageSize: 500, CancellationToken.None);
+
+		AssertSuccess(result);
+		result.Value!.Users.Should().HaveCount(100);
+		result.Value.TotalCount.Should().Be(150);
+	}
+
+	[Fact]
+	public async Task HandleAsync_ClampsPage_ToMinimum()
+	{
+		var fixture = new Fixture().WithUsers(5);
+
+		var result = await fixture.Sut.HandleAsync(null, page: 0, pageSize: 20, CancellationToken.None);
+
+		AssertSuccess(result);
+		result.Value!.Users.Should().HaveCount(5);
+	}
 }

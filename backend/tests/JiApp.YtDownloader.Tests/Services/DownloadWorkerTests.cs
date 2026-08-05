@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Threading.Channels;
+using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.YtApi;
 using JiApp.YtDownloader.Configuration;
@@ -28,7 +29,7 @@ public sealed class DownloadWorkerTests
         using var fixture = new Fixture();
         var filePath = fixture.CreateReadyFile();
         fixture.YoutubeClientMock
-            .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new YoutubeClientResponse(filePath, true, []));
         var tempId = fixture.CreateJob();
 
@@ -39,9 +40,9 @@ public sealed class DownloadWorkerTests
         fixture.HistoryRepoMock.Verify(
             r => r.AddAsync(It.Is<YoutubeDownloadHistory>(h =>
                 h.UserId == UserId && h.VideoId == VideoId && h.VideoTitle == "Title" &&
-                h.VideoDescription == "Description" && h.VideoUrl == VideoUrl)),
+                h.VideoDescription == "Description" && h.VideoUrl == VideoUrl), It.IsAny<CancellationToken>()),
             Times.Once);
-        fixture.HistoryRepoMock.Verify(r => r.SaveChangesAsync(), Times.Once);
+        fixture.HistoryRepoMock.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -49,17 +50,17 @@ public sealed class DownloadWorkerTests
     {
         using var fixture = new Fixture();
         fixture.YoutubeClientMock
-            .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new YoutubeClientResponse(null, false, ["Sign in to confirm you're not a bot"]));
         var tempId = fixture.CreateJob();
 
         var status = await RunToTerminalStatusAsync(fixture, tempId);
 
         status.Status.Should().Be(DownloadJobStatus.Failed);
-        status.ErrorCategory.Should().Be(DownloadWorker.YoutubeDlErrorCategory);
+        status.ErrorCategory.Should().Be(ResultCategories.YoutubeDl);
         status.Error.Should().NotBeNullOrWhiteSpace();
-        fixture.HistoryRepoMock.Verify(r => r.AddAsync(It.IsAny<YoutubeDownloadHistory>()), Times.Never);
-        fixture.HistoryRepoMock.Verify(r => r.SaveChangesAsync(), Times.Never);
+        fixture.HistoryRepoMock.Verify(r => r.AddAsync(It.IsAny<YoutubeDownloadHistory>(), It.IsAny<CancellationToken>()), Times.Never);
+        fixture.HistoryRepoMock.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -67,7 +68,7 @@ public sealed class DownloadWorkerTests
     {
         using var fixture = new Fixture();
         fixture.YoutubeClientMock
-            .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("sensitive yt-dlp error details"));
         var tempId = fixture.CreateJob();
 
@@ -76,7 +77,7 @@ public sealed class DownloadWorkerTests
         status.Status.Should().Be(DownloadJobStatus.Failed);
         status.Error.Should().NotContain("sensitive yt-dlp error details");
         status.Error.Should().Contain("Failed to process download");
-        fixture.HistoryRepoMock.Verify(r => r.SaveChangesAsync(), Times.Never);
+        fixture.HistoryRepoMock.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -84,14 +85,14 @@ public sealed class DownloadWorkerTests
     {
         using var fixture = new Fixture();
         fixture.YoutubeClientMock
-            .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new YoutubeClientResponse(null, true, []));
         var tempId = fixture.CreateJob();
 
         var status = await RunToTerminalStatusAsync(fixture, tempId);
 
         status.Status.Should().Be(DownloadJobStatus.Failed);
-        status.ErrorCategory.Should().Be(DownloadWorker.YoutubeDlErrorCategory);
+        status.ErrorCategory.Should().Be(ResultCategories.YoutubeDl);
         status.Error.Should().Contain("file is missing");
     }
 
@@ -102,14 +103,14 @@ public sealed class DownloadWorkerTests
         var emptyFile = Path.Combine(fixture.TempDir, "empty.mp3");
         File.WriteAllBytes(emptyFile, []);
         fixture.YoutubeClientMock
-            .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new YoutubeClientResponse(emptyFile, true, []));
         var tempId = fixture.CreateJob();
 
         var status = await RunToTerminalStatusAsync(fixture, tempId);
 
         status.Status.Should().Be(DownloadJobStatus.Failed);
-        status.ErrorCategory.Should().Be(DownloadWorker.YoutubeDlErrorCategory);
+        status.ErrorCategory.Should().Be(ResultCategories.YoutubeDl);
         status.Error.Should().Contain("file is empty");
     }
 
@@ -118,8 +119,8 @@ public sealed class DownloadWorkerTests
     {
         using var fixture = new Fixture(downloadTimeout: TimeSpan.FromSeconds(1));
         fixture.YoutubeClientMock
-            .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .Returns(async (string _, string _, CancellationToken ct) =>
+            .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(async (string _, string _, string _, CancellationToken ct) =>
             {
                 await Task.Delay(System.Threading.Timeout.Infinite, ct);
                 return new YoutubeClientResponse(null, true, []);
@@ -138,13 +139,13 @@ public sealed class DownloadWorkerTests
         using var fixture = new Fixture();
         var filePath = fixture.CreateReadyFile();
         fixture.YoutubeClientMock
-            .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new YoutubeClientResponse(filePath, true, []));
 
         var attempts = 0;
         fixture.HistoryRepoMock
-            .Setup(r => r.SaveChangesAsync())
-            .Returns(async () =>
+            .Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .Returns(async (CancellationToken _) =>
             {
                 attempts++;
                 if (attempts <= 2)
@@ -155,8 +156,8 @@ public sealed class DownloadWorkerTests
         var status = await RunToTerminalStatusAsync(fixture, tempId);
 
         status.Status.Should().Be(DownloadJobStatus.Ready);
-        fixture.HistoryRepoMock.Verify(r => r.AddAsync(It.IsAny<YoutubeDownloadHistory>()), Times.Exactly(3));
-        fixture.HistoryRepoMock.Verify(r => r.SaveChangesAsync(), Times.Exactly(3));
+        fixture.HistoryRepoMock.Verify(r => r.AddAsync(It.IsAny<YoutubeDownloadHistory>(), It.IsAny<CancellationToken>()), Times.Exactly(3));
+        fixture.HistoryRepoMock.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Exactly(3));
     }
 
     [Fact]
@@ -165,7 +166,7 @@ public sealed class DownloadWorkerTests
         using var fixture = new Fixture(timeProvider: new FakeTimeProvider(new DateTimeOffset(2030, 5, 1, 12, 0, 0, TimeSpan.Zero)));
         var filePath = fixture.CreateReadyFile();
         fixture.YoutubeClientMock
-            .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new YoutubeClientResponse(filePath, true, []));
         var tempId = fixture.CreateJob();
 
@@ -173,8 +174,43 @@ public sealed class DownloadWorkerTests
 
         fixture.HistoryRepoMock.Verify(
             r => r.AddAsync(It.Is<YoutubeDownloadHistory>(h =>
-                h.DownloadedAt == new DateTime(2030, 5, 1, 12, 0, 0, DateTimeKind.Utc))),
+                h.DownloadedAt == new DateTime(2030, 5, 1, 12, 0, 0, DateTimeKind.Utc)), It.IsAny<CancellationToken>()),
             Times.Once);
+    }
+
+    [Fact]
+    public async Task PassesWorkerCancellationToken_ToHistoryRepository()
+    {
+        using var fixture = new Fixture();
+        var filePath = fixture.CreateReadyFile();
+        fixture.YoutubeClientMock
+            .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new YoutubeClientResponse(filePath, true, []));
+
+        CancellationToken captured = default;
+        fixture.HistoryRepoMock
+            .Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .Callback<CancellationToken>(ct => captured = ct)
+            .Returns(Task.CompletedTask);
+
+        using var cts = new CancellationTokenSource();
+        var tempId = fixture.CreateJob();
+
+        await fixture.Sut.StartAsync(cts.Token);
+        fixture.Queue.Writer.TryWrite(tempId);
+        try
+        {
+            await WaitForTerminalStatusAsync(fixture.JobStore, tempId);
+        }
+        finally
+        {
+            await fixture.Sut.StopAsync(cts.Token);
+        }
+
+        // The worker's host-lifetime token must reach the history write, not be
+        // dropped: before the fix SaveChangesAsync() passed CancellationToken.None
+        // (CanBeCanceled == false), so a cancelable token proves it flowed through.
+        captured.CanBeCanceled.Should().BeTrue();
     }
 
     [Fact]
@@ -188,15 +224,15 @@ public sealed class DownloadWorkerTests
         var secondFile = fixture.CreateReadyFile();
 
         fixture.YoutubeClientMock
-            .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .Returns(async (string _, string _, CancellationToken _) =>
+            .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(async (string _, string _, string _, CancellationToken _) =>
             {
                 firstStarted.TrySetResult();
                 await releaseFirst.Task;
                 return new YoutubeClientResponse(firstFile, true, []);
             });
         fixture.YoutubeClientMock
-            .Setup(c => c.DownloadVideoAsync("secondId", It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.DownloadVideoAsync("secondId", It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new YoutubeClientResponse(secondFile, true, []))
             .Callback(() => secondStarted.TrySetResult());
 
@@ -227,7 +263,7 @@ public sealed class DownloadWorkerTests
         using var fixture = new Fixture();
         var filePath = fixture.CreateReadyFile();
         fixture.YoutubeClientMock
-            .Setup(c => c.DownloadVideoAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.DownloadVideoAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new YoutubeClientResponse(filePath, true, []));
 
         var tempIds = Enumerable.Range(0, 4).Select(_ => fixture.CreateJob()).ToArray();
@@ -256,7 +292,7 @@ public sealed class DownloadWorkerTests
         using var fixture = new Fixture();
         var filePath = fixture.CreateReadyFile();
         fixture.YoutubeClientMock
-            .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new YoutubeClientResponse(filePath, true, []));
         var tempId = fixture.CreateJob();
         fixture.JobStore.Claim(tempId, UserId);
@@ -264,7 +300,7 @@ public sealed class DownloadWorkerTests
         var status = await RunToTerminalStatusAsync(fixture, tempId);
 
         status.Status.Should().Be(DownloadJobStatus.Ready);
-        fixture.HistoryRepoMock.Verify(r => r.SaveChangesAsync(), Times.Once);
+        fixture.HistoryRepoMock.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -276,8 +312,8 @@ public sealed class DownloadWorkerTests
         var filePath = fixture.CreateReadyFile();
         var attempts = 0;
         fixture.YoutubeClientMock
-            .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .Returns(async (string _, string _, CancellationToken _) =>
+            .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(async (string _, string _, string _, CancellationToken _) =>
             {
                 attempts++;
                 return attempts == 1
@@ -298,7 +334,7 @@ public sealed class DownloadWorkerTests
 
             status.Status.Should().Be(DownloadJobStatus.Ready);
             attempts.Should().Be(2);
-            fixture.HistoryRepoMock.Verify(r => r.SaveChangesAsync(), Times.Once);
+            fixture.HistoryRepoMock.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
         finally
         {
@@ -313,7 +349,7 @@ public sealed class DownloadWorkerTests
             timeProvider: new FakeTimeProvider(new DateTimeOffset(2030, 1, 1, 0, 0, 0, TimeSpan.Zero)),
             pollInterval: TimeSpan.FromMilliseconds(50));
         fixture.YoutubeClientMock
-            .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new YoutubeClientResponse(null, false, ["permanent yt-dlp error"]));
         var tempId = fixture.CreateJob();
 

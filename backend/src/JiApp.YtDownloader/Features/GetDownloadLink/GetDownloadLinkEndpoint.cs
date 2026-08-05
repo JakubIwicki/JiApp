@@ -17,11 +17,12 @@ public static class GetDownloadLinkEndpoint
                 IValidator<DownloadRequest> validator,
                 GetDownloadLinkHandler handler,
                 Settings settings,
-                HttpContext httpContext) =>
+                HttpContext httpContext,
+                CancellationToken ct) =>
             {
                 request = TruncateMetadata(request);
 
-                var validationResult = await validator.ValidateAsync(request);
+                var validationResult = await validator.ValidateAsync(request, ct);
                 if (!validationResult.IsValid)
                 {
                     var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToArray();
