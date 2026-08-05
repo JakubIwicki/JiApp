@@ -20,8 +20,24 @@ public class Startup(GatewaySettings settings, IConfiguration configuration, IWe
 {
     public void ConfigureServices(IServiceCollection services)
     {
+        ConfigureInfrastructure(services);
+        ConfigureAuth(services, settings);
+        ConfigureCors(services, settings, env);
+        ConfigureRateLimiting(services, settings);
+        ConfigureReverseProxy(services, configuration, env);
+        ConfigureHttpClients(services, env);
+    }
+
+    private static void ConfigureInfrastructure(IServiceCollection services)
+    {
         services.AddSingleton(TimeProvider.System);
 
+        // Global exception middleware — catches unhandled exceptions, returns JSON
+        services.AddScoped<GlobalExceptionMiddleware>();
+    }
+
+    private static void ConfigureAuth(IServiceCollection services, GatewaySettings settings)
+    {
         // JWT Bearer authentication — validates tokens issued by JiApp-Identity
         // Validate() guarantees Jwt is configured at this point.
         var jwt = settings.Jwt ?? throw new InvalidOperationException("Jwt must be configured");
@@ -46,7 +62,10 @@ public class Startup(GatewaySettings settings, IConfiguration configuration, IWe
             });
 
         services.AddAuthorization();
+    }
 
+    private static void ConfigureCors(IServiceCollection services, GatewaySettings settings, IWebHostEnvironment env)
+    {
         // CORS — AllowCredentials prevents using AllowAnyOrigin, so we use
         // SetIsOriginAllowed with explicit origin lists. In Development, accept
         // any origin when no origins are configured. In all other environments,
@@ -67,7 +86,10 @@ public class Startup(GatewaySettings settings, IConfiguration configuration, IWe
                     throw new InvalidOperationException("CorsAllowedOrigins must be configured in non-Development environments.");
             });
         });
+    }
 
+    private static void ConfigureRateLimiting(IServiceCollection services, GatewaySettings settings)
+    {
         // Rate limiting — reads policy config from GatewaySettings
         services.AddRateLimiter(options =>
         {
@@ -128,6 +150,12 @@ public class Startup(GatewaySettings settings, IConfiguration configuration, IWe
             };
         });
 
+        // Rate limit policy service — endpoint manipulation for rate limiting
+        services.AddSingleton<RateLimitPolicyService>();
+    }
+
+    private static void ConfigureReverseProxy(IServiceCollection services, IConfiguration configuration, IWebHostEnvironment env)
+    {
         // YARP reverse proxy — bypass SSL validation for self-signed certs in Development only.
         // Production must validate certificates on every Gateway→service hop.
         services.AddReverseProxy()
@@ -138,13 +166,10 @@ public class Startup(GatewaySettings settings, IConfiguration configuration, IWe
                     handler.SslOptions.RemoteCertificateValidationCallback =
                         (sender, cert, chain, errors) => true;
             });
+    }
 
-        // Rate limit policy service — endpoint manipulation for rate limiting
-        services.AddSingleton<RateLimitPolicyService>();
-
-        // Global exception middleware — catches unhandled exceptions, returns JSON
-        services.AddScoped<GlobalExceptionMiddleware>();
-
+    private static void ConfigureHttpClients(IServiceCollection services, IWebHostEnvironment env)
+    {
         // HttpClient for health dashboard — bypass SSL for dev self-signed certs in Development only.
         // Production health checks validate certificates like any other client.
         services.AddHttpClient("healthCheck")

@@ -9,6 +9,7 @@ public sealed class IdentitySettings
     public JwtSettings? Jwt { get; set; }
     public string[]? CorsAllowedOrigins { get; set; }
     public BootstrapSettings? Bootstrap { get; set; }
+    public Dictionary<string, RateLimitPolicyConfig>? RateLimiting { get; set; }
 
     public void Validate()
     {
@@ -18,6 +19,7 @@ public sealed class IdentitySettings
             errors.Add("ConnectionString is not configured.");
 
         ValidateJwt(errors);
+        ValidateRateLimiting(errors);
 
         if (errors.Count > 0)
             throw new InvalidOperationException(
@@ -44,6 +46,26 @@ public sealed class IdentitySettings
             errors.Add("Jwt:RefreshTokenExpireDays must be greater than 0.");
     }
 
+    private void ValidateRateLimiting(List<string> errors)
+    {
+        if (RateLimiting is null or { Count: 0 })
+        {
+            errors.Add("RateLimiting section is not configured.");
+            return;
+        }
+
+        var expectedPolicies = new[]
+        {
+            "Login", "Register", "Refresh", "Logout"
+        };
+
+        foreach (var policy in expectedPolicies)
+        {
+            if (!RateLimiting.ContainsKey(policy))
+                errors.Add($"RateLimiting:{policy} is not configured.");
+        }
+    }
+
     public JwtSettings GetRequiredJwt() =>
         Jwt ?? throw new InvalidOperationException("JWT settings not configured. Call Validate() first.");
 
@@ -54,5 +76,14 @@ public sealed class IdentitySettings
     public sealed class BootstrapSettings
     {
         public string? AdminUsername { get; set; }
+    }
+
+    [Serializable]
+    public sealed class RateLimitPolicyConfig
+    {
+        public int PermitLimit { get; set; }
+        public int WindowInSeconds { get; set; }
+        public int QueueLimit { get; set; }
+        public int SegmentsPerWindow { get; set; }
     }
 }

@@ -26,7 +26,23 @@ public sealed class DependencyInjectionTests
 					["Jwt:Issuer"] = "test-issuer",
 					["Jwt:Audience"] = "test-audience",
 					["Jwt:AccessTokenExpireMinutes"] = "60",
-					["Jwt:RefreshTokenExpireDays"] = "7"
+					["Jwt:RefreshTokenExpireDays"] = "7",
+					["RateLimiting:Login:PermitLimit"] = "10",
+					["RateLimiting:Login:WindowInSeconds"] = "60",
+					["RateLimiting:Login:QueueLimit"] = "0",
+					["RateLimiting:Login:SegmentsPerWindow"] = "0",
+					["RateLimiting:Register:PermitLimit"] = "5",
+					["RateLimiting:Register:WindowInSeconds"] = "60",
+					["RateLimiting:Register:QueueLimit"] = "0",
+					["RateLimiting:Register:SegmentsPerWindow"] = "0",
+					["RateLimiting:Refresh:PermitLimit"] = "10",
+					["RateLimiting:Refresh:WindowInSeconds"] = "60",
+					["RateLimiting:Refresh:QueueLimit"] = "0",
+					["RateLimiting:Refresh:SegmentsPerWindow"] = "0",
+					["RateLimiting:Logout:PermitLimit"] = "10",
+					["RateLimiting:Logout:WindowInSeconds"] = "60",
+					["RateLimiting:Logout:QueueLimit"] = "0",
+					["RateLimiting:Logout:SegmentsPerWindow"] = "0"
 				})
 				.Build();
 

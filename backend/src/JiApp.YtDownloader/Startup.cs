@@ -40,12 +40,30 @@ public class Startup(Settings settings, IWebHostEnvironment env)
 {
     public void ConfigureServices(IServiceCollection services)
     {
-        services.AddEndpointsApiExplorer();
+        ConfigureInfrastructure(services);
+        ConfigureOpenApi(services);
+        ConfigurePersistence(services, settings);
+        ConfigureAuth(services, settings);
+        ConfigureCors(services, settings, env);
+        ConfigureApplicationServices(services, settings);
+        ConfigureFeatureHandlers(services);
+        ConfigureBackgroundServices(services);
+    }
 
+    private static void ConfigureInfrastructure(IServiceCollection services)
+    {
         services.AddSingleton(TimeProvider.System);
-
         services.AddTransient<GlobalExceptionMiddleware>();
+        services.AddHttpContextAccessor();
+    }
 
+    private static void ConfigureOpenApi(IServiceCollection services)
+    {
+        services.AddEndpointsApiExplorer();
+    }
+
+    private static void ConfigurePersistence(IServiceCollection services, Settings settings)
+    {
         services.AddDbContext<YtDbContext>(options =>
         {
             if (settings.ConnectionString!.Contains("Host="))
@@ -53,7 +71,10 @@ public class Startup(Settings settings, IWebHostEnvironment env)
             else
                 options.UseSqlite(settings.ConnectionString);
         });
+    }
 
+    private static void ConfigureAuth(IServiceCollection services, Settings settings)
+    {
         services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -82,7 +103,10 @@ public class Startup(Settings settings, IWebHostEnvironment env)
         services.AddAuthorizationBuilder()
             .AddPolicy(Permissions.YtDownloaderAccess, policy =>
                 policy.RequirePermission(Permissions.YtDownloaderAccess));
+    }
 
+    private static void ConfigureCors(IServiceCollection services, Settings settings, IWebHostEnvironment env)
+    {
         // CORS — AllowCredentials prevents using AllowAnyOrigin, so we use
         // SetIsOriginAllowed with explicit origin lists. In Development, accept
         // any origin when no origins are configured. In all other environments,
@@ -103,7 +127,10 @@ public class Startup(Settings settings, IWebHostEnvironment env)
                     throw new InvalidOperationException("CorsAllowedOrigins must be configured in non-Development environments.");
             });
         });
+    }
 
+    private static void ConfigureApplicationServices(IServiceCollection services, Settings settings)
+    {
         // Repositories
         services.AddScoped<ISearchHistoryRepository, SearchHistoryRepository>();
         services.AddScoped<IDownloadHistoryRepository, DownloadHistoryRepository>();
@@ -128,8 +155,10 @@ public class Startup(Settings settings, IWebHostEnvironment env)
             options.SizeLimit = 1024;
             options.CompactionPercentage = 0.25;
         });
-        services.AddHttpContextAccessor();
+    }
 
+    private static void ConfigureFeatureHandlers(IServiceCollection services)
+    {
         // Validators
         services.AddScoped<IValidator<SearchVideosRequest>, SearchVideosValidator>();
         services.AddScoped<IValidator<SearchHistoryRequest>, SearchHistoryValidator>();
@@ -161,7 +190,10 @@ public class Startup(Settings settings, IWebHostEnvironment env)
 
         // MCP server (internal-only, JWT-gated) exposing the YtDownloader agent tools
         services.AddMcpServer().WithHttpTransport().WithTools<YtMcpTools>();
+    }
 
+    private static void ConfigureBackgroundServices(IServiceCollection services)
+    {
         // Background services
         services.AddHostedService<TempFileCleanupService>();
         services.AddHostedService<DownloadWorker>();

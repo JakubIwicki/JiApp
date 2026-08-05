@@ -35,12 +35,29 @@ public class Startup(LovingBoardsSettings settings, IWebHostEnvironment env)
 {
     public void ConfigureServices(IServiceCollection services)
     {
-        services.AddEndpointsApiExplorer();
+        ConfigureInfrastructure(services);
+        ConfigureOpenApi(services);
+        ConfigurePersistence(services, settings);
+        ConfigureAuth(services, settings);
+        ConfigureCors(services, settings, env);
+        ConfigureApplicationServices(services, settings, env);
+        ConfigureFeatureHandlers(services);
+    }
 
+    private static void ConfigureInfrastructure(IServiceCollection services)
+    {
         services.AddSingleton(TimeProvider.System);
-
         services.AddTransient<GlobalExceptionMiddleware>();
+        services.AddHttpContextAccessor();
+    }
 
+    private static void ConfigureOpenApi(IServiceCollection services)
+    {
+        services.AddEndpointsApiExplorer();
+    }
+
+    private static void ConfigurePersistence(IServiceCollection services, LovingBoardsSettings settings)
+    {
         services.AddDbContext<LovingBoardsDbContext>(options =>
         {
             if (settings.ConnectionString!.Contains("Host="))
@@ -50,7 +67,10 @@ public class Startup(LovingBoardsSettings settings, IWebHostEnvironment env)
         });
 
         services.AddScoped<ILovingBoardsDbContext>(sp => sp.GetRequiredService<LovingBoardsDbContext>());
+    }
 
+    private static void ConfigureAuth(IServiceCollection services, LovingBoardsSettings settings)
+    {
         services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -79,7 +99,10 @@ public class Startup(LovingBoardsSettings settings, IWebHostEnvironment env)
         services.AddAuthorizationBuilder()
             .AddPolicy(Permissions.LovingBoardsAccess, policy =>
                 policy.RequirePermission(Permissions.LovingBoardsAccess));
+    }
 
+    private static void ConfigureCors(IServiceCollection services, LovingBoardsSettings settings, IWebHostEnvironment env)
+    {
         // CORS — AllowCredentials prevents using AllowAnyOrigin, so we use
         // SetIsOriginAllowed with explicit origin lists. In Development, accept
         // any origin when no origins are configured. In all other environments,
@@ -100,17 +123,22 @@ public class Startup(LovingBoardsSettings settings, IWebHostEnvironment env)
                     throw new InvalidOperationException("CorsAllowedOrigins must be configured in non-Development environments.");
             });
         });
+    }
 
+    private static void ConfigureApplicationServices(IServiceCollection services, LovingBoardsSettings settings, IWebHostEnvironment env)
+    {
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddSingleton(settings);
-        services.AddHttpContextAccessor();
 
         services.AddSecurityStampRecheck(settings.IdentityBaseUrl, env);
 
         // Realtime
         services.AddSingleton<IBoardBroadcaster, BoardBroadcaster>();
         services.AddSingleton<Common.BoardWriteLock>();
+    }
 
+    private static void ConfigureFeatureHandlers(IServiceCollection services)
+    {
         // Board handlers
         services.AddScoped<CreateBoardHandler>();
         services.AddScoped<GetBoardHandler>();
