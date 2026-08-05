@@ -1,13 +1,17 @@
 import React, { useCallback, useEffect, useReducer, useRef } from 'react';
 import { ScrollView, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import axios from 'axios';
 import * as authService from '../services/authService';
 import ProfileSection from './ProfileSection';
 import ChangePasswordSection from './ChangePasswordSection';
 import useAuth from '../hooks/useAuth';
 import useScreenTitle from '../hooks/useScreenTitle';
 import useToast from '../hooks/useToast';
+import {
+  getFriendlyErrorMessage,
+  getServerErrorStatus,
+  getServerValidationErrors,
+} from '../utils/errorUtils';
 import { useTheme } from '../context/ThemeContext';
 
 const PASSWORD_MIN_LENGTH = 8;
@@ -261,37 +265,27 @@ const EditProfileScreen: React.FC = () => {
       await updateProfile(form.displayName.trim(), form.email.trim());
       showSuccess('settings.profileUpdated');
     } catch (err: unknown) {
-      if (axios.isAxiosError(err) && err.response?.status === 400) {
-        const serverError: string | undefined = err.response?.data?.error;
-        const validationErrors: string[] =
-          err.response?.data?.errors?.errors ?? [];
+      const status = getServerErrorStatus(err);
+      const validationErrors = getServerValidationErrors(err);
 
-        if (validationErrors.length > 0) {
-          const fieldErrors = extractFieldErrors(validationErrors);
-          for (const [field, error] of Object.entries(fieldErrors)) {
-            dispatch({
-              type: 'SET_FIELD_ERROR',
-              field: field as
-                | 'displayName'
-                | 'email'
-                | 'currentPassword'
-                | 'newPassword'
-                | 'confirmPassword',
-              error,
-            });
-          }
-          dispatch({ type: 'SET_PROFILE_LOADING', loading: false });
-          return;
+      if (status === 400 && validationErrors.length > 0) {
+        const fieldErrors = extractFieldErrors(validationErrors);
+        for (const [field, error] of Object.entries(fieldErrors)) {
+          dispatch({
+            type: 'SET_FIELD_ERROR',
+            field: field as
+              | 'displayName'
+              | 'email'
+              | 'currentPassword'
+              | 'newPassword'
+              | 'confirmPassword',
+            error,
+          });
         }
-
-        if (serverError) {
-          dispatch({ type: 'SET_API_ERROR', error: serverError });
-          dispatch({ type: 'SET_PROFILE_LOADING', loading: false });
-          return;
-        }
+        return;
       }
 
-      if (axios.isAxiosError(err) && err.response?.status === 409) {
+      if (status === 409) {
         dispatch({
           type: 'SET_FIELD_ERROR',
           field: 'email',
@@ -300,7 +294,10 @@ const EditProfileScreen: React.FC = () => {
         return;
       }
 
-      dispatch({ type: 'SET_API_ERROR', error: t('common.error') });
+      dispatch({
+        type: 'SET_API_ERROR',
+        error: getFriendlyErrorMessage(err, t('common.error')),
+      });
     } finally {
       if (mountedRef.current) {
         dispatch({ type: 'SET_PROFILE_LOADING', loading: false });
@@ -378,36 +375,30 @@ const EditProfileScreen: React.FC = () => {
       showSuccess('settings.passwordChanged');
       dispatch({ type: 'CLEAR_PASSWORD_FIELDS' });
     } catch (err: unknown) {
-      if (axios.isAxiosError(err) && err.response?.status === 400) {
-        const serverError: string | undefined = err.response?.data?.error;
-        const validationErrors: string[] =
-          err.response?.data?.errors?.errors ?? [];
+      const status = getServerErrorStatus(err);
+      const validationErrors = getServerValidationErrors(err);
 
-        if (validationErrors.length > 0) {
-          const fieldErrors = extractFieldErrors(validationErrors);
-          for (const [field, error] of Object.entries(fieldErrors)) {
-            dispatch({
-              type: 'SET_FIELD_ERROR',
-              field: field as
-                | 'displayName'
-                | 'email'
-                | 'currentPassword'
-                | 'newPassword'
-                | 'confirmPassword',
-              error,
-            });
-          }
-          dispatch({ type: 'SET_PASSWORD_LOADING', loading: false });
-          return;
+      if (status === 400 && validationErrors.length > 0) {
+        const fieldErrors = extractFieldErrors(validationErrors);
+        for (const [field, error] of Object.entries(fieldErrors)) {
+          dispatch({
+            type: 'SET_FIELD_ERROR',
+            field: field as
+              | 'displayName'
+              | 'email'
+              | 'currentPassword'
+              | 'newPassword'
+              | 'confirmPassword',
+            error,
+          });
         }
-
-        if (serverError) {
-          dispatch({ type: 'SET_API_ERROR', error: serverError });
-          dispatch({ type: 'SET_PASSWORD_LOADING', loading: false });
-          return;
-        }
+        return;
       }
-      dispatch({ type: 'SET_API_ERROR', error: t('common.error') });
+
+      dispatch({
+        type: 'SET_API_ERROR',
+        error: getFriendlyErrorMessage(err, t('common.error')),
+      });
     } finally {
       if (mountedRef.current) {
         dispatch({ type: 'SET_PASSWORD_LOADING', loading: false });

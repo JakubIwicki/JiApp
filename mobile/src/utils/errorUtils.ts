@@ -12,16 +12,46 @@ interface AxiosErrorWithServerError {
   code?: string;
 }
 
+interface AxiosResponseData {
+  error?: string;
+  errors?: { errors?: string[] };
+}
+
+/** HTTP status from an axios error, or undefined for non-axios errors. */
+export const getServerErrorStatus = (err: unknown): number | undefined => {
+  if (!isAxiosError(err)) return undefined;
+  return (err as AxiosErrorWithServerError).response?.status;
+};
+
+/** Field-validation messages from a 400 ValidationProblemDetails response. */
+export const getServerValidationErrors = (err: unknown): string[] => {
+  if (!isAxiosError(err)) return [];
+  const axiosErr = err as AxiosErrorWithServerError & {
+    response?: { data?: AxiosResponseData };
+  };
+  return axiosErr.response?.data?.errors?.errors ?? [];
+};
+
 /**
- * Map axios errors to user-friendly messages for admin/generic API screens.
- * Highest-signal first: network → authZ → authN → server → passthrough → fallback.
+ * Map axios errors to user-friendly messages for screens.
+ * Highest-signal first: server-provided message → network → authZ → authN → server → fallback.
  */
 export const getFriendlyErrorMessage = (
   err: unknown,
   fallback: string,
 ): string => {
   if (isAxiosError(err)) {
-    const axiosErr = err as AxiosErrorWithServerError;
+    const axiosErr = err as AxiosErrorWithServerError & {
+      response?: { data?: AxiosResponseData };
+    };
+
+    // Server-provided message outranks generic status text
+    if (axiosErr._serverError) {
+      return axiosErr._serverError;
+    }
+    if (axiosErr.response?.data?.error) {
+      return axiosErr.response.data.error;
+    }
 
     // Network error (no response received)
     if (!axiosErr.response) {
@@ -41,11 +71,6 @@ export const getFriendlyErrorMessage = (
     // 500+ generic server error
     if (axiosErr.response.status >= 500) {
       return 'Server error — please try again later';
-    }
-
-    // 4xx with a server-provided user-facing message
-    if (axiosErr._serverError) {
-      return axiosErr._serverError;
     }
   }
 

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -15,14 +15,10 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import useKeepAwake from '../hooks/useKeepAwake';
-import { API_BASE_URL, WAKE_API_URL } from '../config';
+import useServerWake from '../hooks/useServerWake';
 import { animation, borderRadius, spacing, zIndexScale } from '../styles/theme';
 import type { Theme } from '../styles/theme';
 import { useThemedStyles, useTheme } from '../context/ThemeContext';
-
-const WAKE_POLL_INTERVAL = 3000;
-const WAKE_POLL_TIMEOUT = 10000;
-const WAKE_TOTAL_TIMEOUT = 120000;
 
 interface Props {
   onComplete: () => void;
@@ -34,15 +30,9 @@ const ServerWakeScreen: React.FC<Props> = ({ onComplete }) => {
   const styles = useThemedStyles(makeStyles);
   const { colors } = useTheme();
 
-  const [phase, setPhase] = useState<'waking' | 'polling' | 'unavailable'>(
-    'waking',
-  );
-  const [retryCount, setRetryCount] = useState(0);
+  const { phase, retry } = useServerWake(onComplete);
   const isWakingOrPolling = phase === 'waking' || phase === 'polling';
   useKeepAwake(isWakingOrPolling);
-  const activeRef = useRef(true);
-  const onCompleteRef = useRef(onComplete);
-  onCompleteRef.current = onComplete;
 
   const bgOpacity = useSharedValue(0);
   const textOpacity = useSharedValue(0);
@@ -73,81 +63,6 @@ const ServerWakeScreen: React.FC<Props> = ({ onComplete }) => {
     };
   }, [bgOpacity, textOpacity, textSlide]);
 
-  // Wake-up + health polling — re-runs when retryCount changes
-  useEffect(() => {
-    activeRef.current = true;
-    const startedAt = Date.now();
-    let pollTimer: ReturnType<typeof setInterval> | undefined;
-    let pollAborted = false;
-
-    const clearPollTimer = () => {
-      if (pollTimer !== undefined) {
-        clearInterval(pollTimer as unknown as number);
-        pollTimer = undefined;
-      }
-    };
-
-    const pollHealth = async (): Promise<void> => {
-      const healthUrl = `${API_BASE_URL.replace(/\/api\/v1\/?$/, '')}/health`;
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(
-          () => controller.abort(),
-          WAKE_POLL_TIMEOUT,
-        );
-
-        const response = await fetch(healthUrl, {
-          method: 'GET',
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-
-        if (response.ok && activeRef.current) {
-          clearPollTimer();
-          if (activeRef.current) {
-            onCompleteRef.current();
-          }
-        }
-      } catch {
-        // Poll failed — will retry on next interval
-      }
-    };
-
-    const startWake = async () => {
-      try {
-        await fetch(WAKE_API_URL + '/start', { method: 'POST' });
-      } catch {
-        // Wake API call may fail (Lambda cold start) — continue polling anyway
-      }
-
-      if (!activeRef.current || pollAborted) return;
-
-      setPhase('polling');
-      pollHealth();
-      pollTimer = setInterval(() => {
-        if (pollAborted) return;
-
-        if (Date.now() - startedAt >= WAKE_TOTAL_TIMEOUT) {
-          clearPollTimer();
-          if (activeRef.current && !pollAborted) {
-            setPhase('unavailable');
-          }
-          return;
-        }
-
-        pollHealth();
-      }, WAKE_POLL_INTERVAL);
-    };
-
-    startWake();
-
-    return () => {
-      pollAborted = true;
-      activeRef.current = false;
-      if (pollTimer) clearInterval(pollTimer);
-    };
-  }, [retryCount]);
-
   // Animate buttons in when unavailable
   useEffect(() => {
     if (phase === 'unavailable') {
@@ -156,11 +71,6 @@ const ServerWakeScreen: React.FC<Props> = ({ onComplete }) => {
       });
     }
   }, [phase, buttonOpacity]);
-
-  const handleRetry = useCallback(() => {
-    setPhase('waking');
-    setRetryCount(c => c + 1);
-  }, []);
 
   const handleCloseApp = useCallback(() => {
     BackHandler.exitApp();
@@ -215,7 +125,7 @@ const ServerWakeScreen: React.FC<Props> = ({ onComplete }) => {
                   styles.retryButton,
                   pressed && { opacity: 0.7 },
                 ]}
-                onPress={handleRetry}
+                onPress={retry}
                 accessibilityRole="button"
                 accessibilityLabel={t('wake.retry')}
                 testID="wake-retry-button"
