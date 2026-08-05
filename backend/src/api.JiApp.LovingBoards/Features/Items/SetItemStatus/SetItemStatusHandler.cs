@@ -8,7 +8,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace api.JiApp.LovingBoards.Features.Items.SetItemStatus;
 
-public sealed class SetItemStatusHandler(ILovingBoardsDbContext db, ICurrentUserService currentUser, IBoardBroadcaster broadcaster)
+public sealed class SetItemStatusHandler(
+    ILovingBoardsDbContext db,
+    ICurrentUserService currentUser,
+    IBoardBroadcaster broadcaster,
+    TimeProvider timeProvider)
 {
     public async Task<Result<long>> HandleAsync(long boardId, long itemId, SetItemStatusRequest request, CancellationToken ct)
     {
@@ -29,7 +33,7 @@ public sealed class SetItemStatusHandler(ILovingBoardsDbContext db, ICurrentUser
             return Result<long>.Success(item.Id);
 
         item.Status = status;
-        item.UpdatedAt = DateTime.UtcNow;
+        item.UpdatedAt = timeProvider.GetUtcNow().UtcDateTime;
 
         switch (status)
         {
@@ -42,7 +46,7 @@ public sealed class SetItemStatusHandler(ILovingBoardsDbContext db, ICurrentUser
                 item.RemovedAt = null;
                 break;
             case BoardItemStatus.Removed:
-                item.RemovedAt = DateTime.UtcNow;
+                item.RemovedAt = timeProvider.GetUtcNow().UtcDateTime;
                 break;
         }
 

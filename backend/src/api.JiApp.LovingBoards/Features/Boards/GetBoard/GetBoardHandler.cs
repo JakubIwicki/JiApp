@@ -8,7 +8,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace api.JiApp.LovingBoards.Features.Boards.GetBoard;
 
-public sealed class GetBoardHandler(ILovingBoardsDbContext db, ICurrentUserService currentUser, IBoardBroadcaster broadcaster)
+public sealed class GetBoardHandler(
+    ILovingBoardsDbContext db,
+    ICurrentUserService currentUser,
+    IBoardBroadcaster broadcaster,
+    TimeProvider timeProvider)
 {
     public async Task<Result<GetBoardResponse>> HandleAsync(long id, CancellationToken ct)
     {
@@ -26,7 +30,7 @@ public sealed class GetBoardHandler(ILovingBoardsDbContext db, ICurrentUserServi
             .ThenBy(i => i.CreatedAt)
             .ToListAsync(ct);
 
-        var now = DateTime.UtcNow;
+        var now = timeProvider.GetUtcNow().UtcDateTime;
         if (WeeklyReset.IsResetDue(board.LastWeeklyResetAt, now))
         {
             var resetCount = WeeklyReset.ResetRecurring(items, now);

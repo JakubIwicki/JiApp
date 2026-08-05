@@ -7,7 +7,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace api.JiApp.LovingBoards.Features.Items.UpdateItem;
 
-public sealed class UpdateItemHandler(ILovingBoardsDbContext db, ICurrentUserService currentUser, IBoardBroadcaster broadcaster)
+public sealed class UpdateItemHandler(
+    ILovingBoardsDbContext db,
+    ICurrentUserService currentUser,
+    IBoardBroadcaster broadcaster,
+    TimeProvider timeProvider)
 {
     public async Task<Result<long>> HandleAsync(long boardId, long itemId, UpdateItemRequest request, CancellationToken ct)
     {
@@ -28,7 +32,7 @@ public sealed class UpdateItemHandler(ILovingBoardsDbContext db, ICurrentUserSer
         if (request.AssigneeUserId.IsSet) item.AssigneeUserId = request.AssigneeUserId.Value;
         if (request.ExpiryDate.IsSet) item.ExpiryDate = request.ExpiryDate.Value;
         if (request.IsRecurring.IsSet) item.IsRecurring = request.IsRecurring.Value;
-        item.UpdatedAt = DateTime.UtcNow;
+        item.UpdatedAt = timeProvider.GetUtcNow().UtcDateTime;
 
         await db.SaveChangesAsync(ct);
 

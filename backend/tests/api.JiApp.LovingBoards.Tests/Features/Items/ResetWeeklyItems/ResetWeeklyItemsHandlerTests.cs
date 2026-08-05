@@ -16,6 +16,7 @@ public sealed class ResetWeeklyItemsHandlerTests : LovingBoardsHandlerTestBase
         private readonly TestDb _testDb;
         private readonly ICurrentUserService _currentUser;
         private readonly IBoardBroadcaster _broadcaster;
+        private readonly TimeProvider _timeProvider = TimeProvider.System;
 
         private Fixture(ILovingBoardsDbContext dbContext, TestDb testDb)
         {
@@ -25,7 +26,7 @@ public sealed class ResetWeeklyItemsHandlerTests : LovingBoardsHandlerTestBase
             _broadcaster = new NoOpBoardBroadcaster();
         }
 
-        public ResetWeeklyItemsHandler Sut => new(_dbContext, _currentUser, _broadcaster);
+        public ResetWeeklyItemsHandler Sut => new(_dbContext, _currentUser, _broadcaster, _timeProvider);
 
         public static Fixture Init(ILovingBoardsDbContext dbContext, TestDb testDb) => new(dbContext, testDb);
 
@@ -145,7 +146,7 @@ public sealed class ResetWeeklyItemsHandlerTests : LovingBoardsHandlerTestBase
     public async Task ForceReset_PublishesRecurringReset()
     {
         var capturing = new CapturingBoardBroadcaster();
-        var handler = new ResetWeeklyItemsHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing);
+        var handler = new ResetWeeklyItemsHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing, TimeProvider.System);
         var board = new Board { Name = "Test", OwnerUserId = 1L, MemberUserIds = [1L] };
         StoreInDb(board);
         StoreInDb(new BoardItem { BoardId = board.Id, Title = "Item", IsRecurring = true, Status = BoardItemStatus.Completed, AddedByUserId = 1L });

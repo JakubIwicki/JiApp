@@ -37,6 +37,7 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
         private readonly ICurrentUserService _currentUser;
         private readonly LovingBoardsSettings _settings;
         private readonly IBoardBroadcaster _broadcaster;
+        private readonly TimeProvider _timeProvider = TimeProvider.System;
 
         private Fixture(ILovingBoardsDbContext dbContext, TestDb testDb)
         {
@@ -47,11 +48,11 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
             _broadcaster = new NoOpBoardBroadcaster();
         }
 
-        public CreateItemHandler CreateItem => new(_dbContext, _settings, _currentUser, _broadcaster);
-        public UpdateItemHandler UpdateItem => new(_dbContext, _currentUser, _broadcaster);
-        public SetItemStatusHandler SetItemStatus => new(_dbContext, _currentUser, _broadcaster);
+        public CreateItemHandler CreateItem => new(_dbContext, _settings, _currentUser, _broadcaster, _timeProvider);
+        public UpdateItemHandler UpdateItem => new(_dbContext, _currentUser, _broadcaster, _timeProvider);
+        public SetItemStatusHandler SetItemStatus => new(_dbContext, _currentUser, _broadcaster, _timeProvider);
         public DeleteItemHandler DeleteItem => new(_dbContext, _currentUser, _broadcaster);
-        public ClearCompletedHandler ClearCompleted => new(_dbContext, _currentUser, _broadcaster);
+        public ClearCompletedHandler ClearCompleted => new(_dbContext, _currentUser, _broadcaster, _timeProvider);
 
         public static Fixture Init(ILovingBoardsDbContext dbContext, TestDb testDb) => new(dbContext, testDb);
 
@@ -591,7 +592,7 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
     public async Task CreateItem_PublishesItemAdded()
     {
         var capturing = new CapturingBoardBroadcaster();
-        var handler = new CreateItemHandler(DbContext, DefaultSettings, MockCurrentUserService.GetSuccessful().Mock.Object, capturing);
+        var handler = new CreateItemHandler(DbContext, DefaultSettings, MockCurrentUserService.GetSuccessful().Mock.Object, capturing, TimeProvider.System);
         StoreInDb(new Board { Name = "Test", OwnerUserId = 1L, MemberUserIds = [1L] });
         var boardId = Db.Query<Board>().First().Id;
 
@@ -606,7 +607,7 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
     public async Task UpdateItem_PublishesItemUpdated()
     {
         var capturing = new CapturingBoardBroadcaster();
-        var handler = new UpdateItemHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing);
+        var handler = new UpdateItemHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing, TimeProvider.System);
         var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId).WithItem(out var itemId, boardId);
 
         await handler.HandleAsync(boardId, itemId, new UpdateItemRequest(Title: new Optional<string>("Updated")), CancellationToken.None);
@@ -619,7 +620,7 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
     public async Task SetItemStatus_ActualChange_PublishesItemStatus()
     {
         var capturing = new CapturingBoardBroadcaster();
-        var handler = new SetItemStatusHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing);
+        var handler = new SetItemStatusHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing, TimeProvider.System);
         var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId).WithItem(out var itemId, boardId, status: BoardItemStatus.Needed);
 
         await handler.HandleAsync(boardId, itemId, new SetItemStatusRequest("Completed"), CancellationToken.None);
@@ -632,7 +633,7 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
     public async Task SetItemStatus_IdempotentSameStatus_PublishesNothing()
     {
         var capturing = new CapturingBoardBroadcaster();
-        var handler = new SetItemStatusHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing);
+        var handler = new SetItemStatusHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing, TimeProvider.System);
         var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId).WithItem(out var itemId, boardId, status: BoardItemStatus.Completed);
 
         await handler.HandleAsync(boardId, itemId, new SetItemStatusRequest("Completed"), CancellationToken.None);
@@ -657,7 +658,7 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
     public async Task ClearCompleted_HasCompletedItems_PublishesItemsClearedWithIds()
     {
         var capturing = new CapturingBoardBroadcaster();
-        var handler = new ClearCompletedHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing);
+        var handler = new ClearCompletedHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing, TimeProvider.System);
         var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
         fixture.WithItem(boardId, "C1", BoardItemStatus.Completed);
         fixture.WithItem(boardId, "C2", BoardItemStatus.Completed);
@@ -672,7 +673,7 @@ public sealed class ItemHandlerTests : LovingBoardsHandlerTestBase
     public async Task ClearCompleted_ZeroCompleted_PublishesNothing()
     {
         var capturing = new CapturingBoardBroadcaster();
-        var handler = new ClearCompletedHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing);
+        var handler = new ClearCompletedHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing, TimeProvider.System);
         var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
         fixture.WithItem(boardId, "N1", BoardItemStatus.Needed);
 

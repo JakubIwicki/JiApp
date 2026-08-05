@@ -53,6 +53,9 @@ public class Startup(SchedulerSettings settings, IWebHostEnvironment env)
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddEndpointsApiExplorer();
+
+        services.AddSingleton(TimeProvider.System);
+
         services.AddTransient<GlobalExceptionMiddleware>();
 
         services.AddDbContext<SchedulerDbContext>(options =>

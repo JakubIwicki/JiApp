@@ -17,7 +17,8 @@ public sealed partial class YtAgentToolService(
     ISearchHistoryRepository searchHistoryRepository,
     IDownloadHistoryRepository downloadHistoryRepository,
     IMemoryCache cache,
-    ILogger<YtAgentToolService> logger)
+    ILogger<YtAgentToolService> logger,
+    TimeProvider timeProvider)
 {
     private const int CacheDurationHours = 1;
     private const int MaxYouTubeResults = 50;
@@ -70,7 +71,7 @@ public sealed partial class YtAgentToolService(
                 await searchHistoryRepository.AddAsync(new YoutubeSearchHistory
                 {
                     UserId = userId,
-                    SearchedAt = DateTime.UtcNow,
+                    SearchedAt = timeProvider.GetUtcNow().UtcDateTime,
                     SearchText = query
                 });
                 await searchHistoryRepository.SaveChangesAsync();

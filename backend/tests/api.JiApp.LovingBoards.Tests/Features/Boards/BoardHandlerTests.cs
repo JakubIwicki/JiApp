@@ -12,6 +12,7 @@ using api.JiApp.LovingBoards.Features.Boards.UpdateBoard;
 using api.JiApp.LovingBoards.Realtime;
 using api.JiApp.LovingBoards.Tests.Bases;
 using api.JiApp.LovingBoards.Tests.Realtime;
+using JiApp.Testing.Common.Fakes;
 
 namespace api.JiApp.LovingBoards.Tests.Features.Boards;
 
@@ -33,6 +34,7 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
         private readonly ICurrentUserService _currentUser;
         private readonly LovingBoardsSettings _settings;
         private readonly IBoardBroadcaster _broadcaster;
+        private readonly TimeProvider _timeProvider = TimeProvider.System;
 
         private Fixture(ILovingBoardsDbContext dbContext, TestDb testDb)
         {
@@ -43,11 +45,11 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
             _broadcaster = new NoOpBoardBroadcaster();
         }
 
-        public CreateBoardHandler Sut => new(_dbContext, _settings, _currentUser);
-        public GetBoardHandler GetBoard => new(_dbContext, _currentUser, _broadcaster);
+        public CreateBoardHandler Sut => new(_dbContext, _settings, _currentUser, _timeProvider);
+        public GetBoardHandler GetBoard => new(_dbContext, _currentUser, _broadcaster, _timeProvider);
         public UpdateBoardHandler UpdateBoard => new(_dbContext, _currentUser, _broadcaster);
         public DeleteBoardHandler DeleteBoard => new(_dbContext, _currentUser, _broadcaster);
-        public ListBoardsHandler ListBoards => new(_dbContext, _settings, _currentUser);
+        public ListBoardsHandler ListBoards => new(_dbContext, _settings, _currentUser, _timeProvider);
         public AddBoardMemberHandler AddBoardMember => new(_dbContext, _currentUser, _broadcaster, new BoardWriteLock());
         public RemoveBoardMemberHandler RemoveBoardMember => new(_dbContext, _currentUser, _broadcaster, new BoardWriteLock());
 
@@ -647,6 +649,32 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
         item.Status.Should().Be("Completed"); // unchanged
     }
 
+    [Fact]
+    public async Task GetBoard_LazyReset_UsesInjectedClock()
+    {
+        var clock = new FakeTimeProvider(new DateTimeOffset(2030, 1, 8, 0, 0, 0, TimeSpan.Zero));
+        var handler = new GetBoardHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object,
+            new CapturingBoardBroadcaster(), clock);
+        var board = new Board
+        {
+            Name = "Test",
+            OwnerUserId = 1L,
+            MemberUserIds = [1L],
+            LastWeeklyResetAt = clock.GetUtcNow().UtcDateTime.AddDays(-14)
+        };
+        StoreInDb(board);
+        StoreInDb(new BoardItem { BoardId = board.Id, Title = "Item", IsRecurring = true, Status = BoardItemStatus.Completed, AddedByUserId = 1L });
+        clock.Advance(TimeSpan.FromDays(2));
+
+        var result = await handler.HandleAsync(board.Id, CancellationToken.None);
+
+        AssertSuccess(result);
+        var item = result.Value!.Items.Single(i => i.Title == "Item");
+        item.Status.Should().Be("Needed");
+        var updated = Db.Find<Board>(board.Id);
+        updated!.LastWeeklyResetAt.Should().Be(clock.GetUtcNow().UtcDateTime);
+    }
+
     // Publish events
 
     [Fact]
@@ -705,7 +733,7 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
     public async Task GetBoard_LazyResetFires_PublishesRecurringReset()
     {
         var capturing = new CapturingBoardBroadcaster();
-        var handler = new GetBoardHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing);
+        var handler = new GetBoardHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing, TimeProvider.System);
         var board = new Board { Name = "Test", OwnerUserId = 1L, MemberUserIds = [1L], LastWeeklyResetAt = DateTime.UtcNow.AddDays(-14) };
         StoreInDb(board);
         StoreInDb(new BoardItem { BoardId = board.Id, Title = "Item", IsRecurring = true, Status = BoardItemStatus.Completed, AddedByUserId = 1L });
@@ -720,7 +748,7 @@ public sealed class BoardHandlerTests : LovingBoardsHandlerTestBase
     public async Task GetBoard_NoResetDue_PublishesNothing()
     {
         var capturing = new CapturingBoardBroadcaster();
-        var handler = new GetBoardHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing);
+        var handler = new GetBoardHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing, TimeProvider.System);
         var board = new Board { Name = "Test", OwnerUserId = 1L, MemberUserIds = [1L], LastWeeklyResetAt = DateTime.UtcNow };
         StoreInDb(board);
 

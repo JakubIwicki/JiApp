@@ -5,7 +5,7 @@ namespace JiApp.Scheduler.Tests.Resilience;
 
 public sealed class RetryPolicyFactoryTests
 {
-	private readonly IRetryPolicyFactory _factory = new RetryPolicyFactory();
+	private readonly IRetryPolicyFactory _factory = new RetryPolicyFactory(TimeProvider.System);
 
 	[Fact]
 	public async Task RetryOnDbConflict_RetriesOnDbUpdateException_ThenPropagates()

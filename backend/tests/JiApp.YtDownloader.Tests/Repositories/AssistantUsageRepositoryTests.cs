@@ -24,7 +24,7 @@ public sealed class AssistantUsageRepositoryTests
             _db.Database.EnsureCreated();
         }
 
-        public IAssistantUsageRepository Sut => new AssistantUsageRepository(_db);
+        public IAssistantUsageRepository Sut => new AssistantUsageRepository(_db, TimeProvider.System);
 
         public Fixture WithUsage(long userId, DateOnly usageDateUtc, int count)
         {

@@ -25,7 +25,7 @@ public sealed class RemoteSecurityStampValidatorTests
 
 	private static ILogger<T> NullLogger<T>() => NullLoggerFactory.Instance.CreateLogger<T>();
 
-	private static IRetryPolicyFactory RetryPolicy => new RetryPolicyFactory();
+	private static IRetryPolicyFactory RetryPolicy => new RetryPolicyFactory(TimeProvider.System);
 
 	private static IHttpContextAccessor CreateHttpContextAccessor(string? authHeader = "Bearer testtoken")
 	{

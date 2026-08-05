@@ -25,7 +25,7 @@ public class YtMcpToolsTests
         var memCache = cache ?? new MemoryCache(new MemoryCacheOptions());
         var logger = Mock.Of<ILogger<YtAgentToolService>>();
 
-        return new YtAgentToolService(yt.Object, searchRepo.Object, downloadRepo.Object, memCache, logger);
+        return new YtAgentToolService(yt.Object, searchRepo.Object, downloadRepo.Object, memCache, logger, TimeProvider.System);
     }
 
     private static ICurrentUserService CreateCurrentUser(long userId = UserId)

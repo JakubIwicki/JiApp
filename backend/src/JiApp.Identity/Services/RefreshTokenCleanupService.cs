@@ -4,7 +4,10 @@ using Microsoft.Extensions.Logging;
 
 namespace JiApp.Identity.Services;
 
-public sealed class RefreshTokenCleanupService(IServiceScopeFactory scopeFactory, ILogger<RefreshTokenCleanupService> logger)
+public sealed class RefreshTokenCleanupService(
+    IServiceScopeFactory scopeFactory,
+    TimeProvider timeProvider,
+    ILogger<RefreshTokenCleanupService> logger)
     : BackgroundService
 {
     private static readonly TimeSpan CleanupInterval = TimeSpan.FromHours(1);
@@ -24,12 +27,7 @@ public sealed class RefreshTokenCleanupService(IServiceScopeFactory scopeFactory
 
             try
             {
-                using var scope = scopeFactory.CreateScope();
-                var dbContext = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
-
-                await dbContext.RefreshTokens
-                    .Where(rt => rt.ExpiresAt < DateTime.UtcNow || rt.IsRevoked)
-                    .ExecuteDeleteAsync(stoppingToken);
+                await SweepExpiredAsync(stoppingToken);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
@@ -39,5 +37,15 @@ public sealed class RefreshTokenCleanupService(IServiceScopeFactory scopeFactory
                 logger.LogError(ex, "Refresh token cleanup sweep failed");
             }
         }
+    }
+
+    internal async Task SweepExpiredAsync(CancellationToken ct)
+    {
+        using var scope = scopeFactory.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
+
+        await dbContext.RefreshTokens
+            .Where(rt => rt.ExpiresAt < timeProvider.GetUtcNow().UtcDateTime || rt.IsRevoked)
+            .ExecuteDeleteAsync(ct);
     }
 }

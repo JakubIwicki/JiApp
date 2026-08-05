@@ -36,6 +36,9 @@ public class Startup(LovingBoardsSettings settings, IWebHostEnvironment env)
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddEndpointsApiExplorer();
+
+        services.AddSingleton(TimeProvider.System);
+
         services.AddTransient<GlobalExceptionMiddleware>();
 
         services.AddDbContext<LovingBoardsDbContext>(options =>

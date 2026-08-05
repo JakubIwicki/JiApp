@@ -1,6 +1,7 @@
 using JiApp.Common.Models;
 using JiApp.Identity.Persistence;
 using JiApp.Identity.Services;
+using JiApp.Testing.Common.Fakes;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,8 +15,13 @@ public sealed class RefreshTokenServiceTests : IDisposable
         private readonly IdentityDbContext _db;
 
         public RefreshTokenService Sut { get; }
+        public FakeTimeProvider? Clock { get; }
 
-        public Fixture()
+        public Fixture() : this(TimeProvider.System)
+        {
+        }
+
+        public Fixture(TimeProvider timeProvider)
         {
             _connection = new SqliteConnection("Data Source=:memory:");
             _connection.Open();
@@ -37,7 +43,8 @@ public sealed class RefreshTokenServiceTests : IDisposable
             });
             _db.SaveChanges();
 
-            Sut = new RefreshTokenService(_db, 7);
+            Sut = new RefreshTokenService(_db, 7, timeProvider);
+            Clock = timeProvider as FakeTimeProvider;
         }
 
         public void Dispose()
@@ -117,5 +124,18 @@ public sealed class RefreshTokenServiceTests : IDisposable
 
         (await _fixture.Sut.ValidateAsync(t1.Token, CancellationToken.None))!.IsRevoked.Should().BeTrue();
         (await _fixture.Sut.ValidateAsync(t2.Token, CancellationToken.None))!.IsRevoked.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ValidateAsync_WhenClockPassesExpiry_ReturnsNull()
+    {
+        using var fixture = new Fixture(
+            new FakeTimeProvider(new DateTimeOffset(2030, 1, 1, 0, 0, 0, TimeSpan.Zero)));
+        var created = await fixture.Sut.CreateAsync(1, CancellationToken.None);
+        fixture.Clock!.Advance(TimeSpan.FromDays(8));
+
+        var validated = await fixture.Sut.ValidateAsync(created.Token, CancellationToken.None);
+
+        validated.Should().BeNull();
     }
 }

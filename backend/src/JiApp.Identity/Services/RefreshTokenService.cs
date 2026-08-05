@@ -16,13 +16,18 @@ public interface IRefreshTokenService
     Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken ct = default);
 }
 
-public sealed class RefreshTokenService(IdentityDbContext dbContext, int refreshTokenExpireDays) : IRefreshTokenService
+public sealed class RefreshTokenService(
+    IdentityDbContext dbContext,
+    int refreshTokenExpireDays,
+    TimeProvider timeProvider) : IRefreshTokenService
 {
     private static string HashToken(string rawToken)
     {
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(rawToken));
         return Convert.ToHexStringLower(bytes);
     }
+
+    private DateTime NowUtc() => timeProvider.GetUtcNow().UtcDateTime;
 
     public async Task<RefreshToken> CreateAsync(long userId, CancellationToken ct)
     {
@@ -34,8 +39,8 @@ public sealed class RefreshTokenService(IdentityDbContext dbContext, int refresh
         {
             Token = HashToken(rawToken),
             UserId = userId,
-            ExpiresAt = DateTime.UtcNow.AddDays(refreshTokenExpireDays),
-            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = NowUtc().AddDays(refreshTokenExpireDays),
+            CreatedAt = NowUtc(),
             IsRevoked = false
         };
 
@@ -66,7 +71,7 @@ public sealed class RefreshTokenService(IdentityDbContext dbContext, int refresh
             .AsNoTracking()
             .FirstOrDefaultAsync(rt =>
                 rt.Token == hashed &&
-                rt.ExpiresAt > DateTime.UtcNow, ct);
+                rt.ExpiresAt > NowUtc(), ct);
     }
 
     public async Task<bool> RevokeAsync(long refreshTokenId, CancellationToken ct)

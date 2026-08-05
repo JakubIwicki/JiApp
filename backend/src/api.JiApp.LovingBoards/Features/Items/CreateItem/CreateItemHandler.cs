@@ -13,7 +13,8 @@ public sealed class CreateItemHandler(
     ILovingBoardsDbContext db,
     LovingBoardsSettings settings,
     ICurrentUserService currentUser,
-    IBoardBroadcaster broadcaster)
+    IBoardBroadcaster broadcaster,
+    TimeProvider timeProvider)
 {
     public async Task<Result<long>> HandleAsync(long boardId, CreateItemRequest request, CancellationToken ct)
     {
@@ -29,6 +30,7 @@ public sealed class CreateItemHandler(
                 $"Maximum number of items ({settings.MaxItemsPerBoard}) reached for this board",
                 ResultCategories.Validation);
 
+        var now = timeProvider.GetUtcNow().UtcDateTime;
         var item = new BoardItem
         {
             BoardId = boardId,
@@ -40,7 +42,9 @@ public sealed class CreateItemHandler(
             ExpiryDate = request.ExpiryDate,
             IsRecurring = request.IsRecurring,
             Status = BoardItemStatus.Needed,
-            AddedByUserId = currentUser.UserId
+            AddedByUserId = currentUser.UserId,
+            CreatedAt = now,
+            UpdatedAt = now
         };
         db.BoardItems.Add(item);
         await db.SaveChangesAsync(ct);

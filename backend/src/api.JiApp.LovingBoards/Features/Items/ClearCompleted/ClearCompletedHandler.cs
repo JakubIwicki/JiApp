@@ -8,7 +8,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace api.JiApp.LovingBoards.Features.Items.ClearCompleted;
 
-public sealed class ClearCompletedHandler(ILovingBoardsDbContext db, ICurrentUserService currentUser, IBoardBroadcaster broadcaster)
+public sealed class ClearCompletedHandler(
+    ILovingBoardsDbContext db,
+    ICurrentUserService currentUser,
+    IBoardBroadcaster broadcaster,
+    TimeProvider timeProvider)
 {
     public async Task<Result<int>> HandleAsync(long boardId, CancellationToken ct)
     {
@@ -16,7 +20,7 @@ public sealed class ClearCompletedHandler(ILovingBoardsDbContext db, ICurrentUse
         if (!boardResult.IsSuccess)
             return Result<int>.Failure(boardResult.Error!, boardResult.ErrorCategory);
 
-        var now = DateTime.UtcNow;
+        var now = timeProvider.GetUtcNow().UtcDateTime;
         var completedItems = await db.BoardItems
             .Where(i => i.BoardId == boardId && i.Status == BoardItemStatus.Completed)
             .ToListAsync(ct);

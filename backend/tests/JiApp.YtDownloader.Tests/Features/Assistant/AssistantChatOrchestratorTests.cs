@@ -102,7 +102,8 @@ public sealed class AssistantChatOrchestratorTests
                 new Mock<ISearchHistoryRepository>().Object,
                 new Mock<IDownloadHistoryRepository>().Object,
                 new MemoryCache(new MemoryCacheOptions()),
-                NullLogger<YtAgentToolService>.Instance);
+                NullLogger<YtAgentToolService>.Instance,
+                TimeProvider.System);
 
             var settings = new Settings
             {

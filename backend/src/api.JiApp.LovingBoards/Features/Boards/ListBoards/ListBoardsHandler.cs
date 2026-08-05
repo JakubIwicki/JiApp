@@ -11,7 +11,8 @@ namespace api.JiApp.LovingBoards.Features.Boards.ListBoards;
 public sealed class ListBoardsHandler(
     ILovingBoardsDbContext db,
     LovingBoardsSettings settings,
-    ICurrentUserService currentUser)
+    ICurrentUserService currentUser,
+    TimeProvider timeProvider)
 {
     public async Task<Result<ListBoardsResponse>> HandleAsync(CancellationToken ct)
     {
@@ -28,10 +29,11 @@ public sealed class ListBoardsHandler(
         // Seeding: if user has zero boards, create defaults
         if (userBoards.Count == 0)
         {
+            var now = timeProvider.GetUtcNow().UtcDateTime;
             var defaults = new[]
             {
-                new Board { Name = "Groceries", OwnerUserId = currentUser.UserId, MemberUserIds = [currentUser.UserId] },
-                new Board { Name = "Home", OwnerUserId = currentUser.UserId, MemberUserIds = [currentUser.UserId] }
+                new Board { Name = "Groceries", OwnerUserId = currentUser.UserId, MemberUserIds = [currentUser.UserId], CreatedAt = now },
+                new Board { Name = "Home", OwnerUserId = currentUser.UserId, MemberUserIds = [currentUser.UserId], CreatedAt = now }
             };
 
             foreach (var board in defaults)

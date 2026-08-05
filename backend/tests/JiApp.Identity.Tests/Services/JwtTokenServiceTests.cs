@@ -18,7 +18,7 @@ public sealed class JwtTokenServiceTests
         public Fixture(string key = Key, string issuer = Issuer, string audience = Audience,
             int expireMinutes = ExpireMinutes)
         {
-            Sut = new JwtTokenService(key, issuer, audience, expireMinutes);
+            Sut = new JwtTokenService(key, issuer, audience, expireMinutes, TimeProvider.System);
         }
     }
 

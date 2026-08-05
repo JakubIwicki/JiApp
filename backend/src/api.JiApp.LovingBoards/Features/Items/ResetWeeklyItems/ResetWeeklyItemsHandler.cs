@@ -7,7 +7,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace api.JiApp.LovingBoards.Features.Items.ResetWeeklyItems;
 
-public sealed class ResetWeeklyItemsHandler(ILovingBoardsDbContext db, ICurrentUserService currentUser, IBoardBroadcaster broadcaster)
+public sealed class ResetWeeklyItemsHandler(
+    ILovingBoardsDbContext db,
+    ICurrentUserService currentUser,
+    IBoardBroadcaster broadcaster,
+    TimeProvider timeProvider)
 {
     public async Task<Result<int>> HandleAsync(long boardId, CancellationToken ct)
     {
@@ -20,7 +24,7 @@ public sealed class ResetWeeklyItemsHandler(ILovingBoardsDbContext db, ICurrentU
             .Where(i => i.BoardId == boardId)
             .ToListAsync(ct);
 
-        var now = DateTime.UtcNow;
+        var now = timeProvider.GetUtcNow().UtcDateTime;
         var count = WeeklyReset.ResetRecurring(items, now);
         board.LastWeeklyResetAt = now;
         await db.SaveChangesAsync(ct);

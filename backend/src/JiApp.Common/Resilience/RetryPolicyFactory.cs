@@ -4,11 +4,16 @@ using Polly.Retry;
 
 namespace JiApp.Common.Resilience;
 
-public sealed class RetryPolicyFactory : IRetryPolicyFactory
+public sealed class RetryPolicyFactory(TimeProvider timeProvider) : IRetryPolicyFactory
 {
 	public ResiliencePipeline RetryOnDbConflict(int retries, TimeSpan delay)
 	{
-		return new ResiliencePipelineBuilder()
+		var builder = new ResiliencePipelineBuilder
+		{
+			TimeProvider = timeProvider
+		};
+
+		return builder
 			.AddRetry(new RetryStrategyOptions
 			{
 				MaxRetryAttempts = retries,
@@ -21,7 +26,12 @@ public sealed class RetryPolicyFactory : IRetryPolicyFactory
 
 	public ResiliencePipeline RetryOnTransientHttp_WithExponentialBackoff(int retries = 3)
 	{
-		return new ResiliencePipelineBuilder()
+		var builder = new ResiliencePipelineBuilder
+		{
+			TimeProvider = timeProvider
+		};
+
+		return builder
 			.AddRetry(new RetryStrategyOptions
 			{
 				MaxRetryAttempts = retries,
