@@ -112,66 +112,53 @@ describe('RootNavigator', () => {
   });
 
   it('skips the picker and lands directly in the only granted module', async () => {
-    // Arrange: a single granted module
     const { findByText, queryByTestId } = renderRoot(['Scheduler']);
 
-    // Assert: the Scheduler module renders, picker is absent
     expect(await findByText('SchedulerModule')).toBeTruthy();
     expect(queryByTestId('module-selection-screen')).toBeNull();
   });
 
   it('shows the picker on a fresh login with more than one module', async () => {
-    // Arrange: two granted modules, no persisted choice
     const { findByTestId } = renderRoot(['YtDownloader', 'Scheduler']);
 
-    // Assert
     expect(await findByTestId('module-selection-screen')).toBeTruthy();
   });
 
   it('opens the persisted module directly when it is still granted', async () => {
-    // Arrange: persisted choice that is still granted
     mockSelectedModule = 'Scheduler';
     const { findByText, queryByTestId } = renderRoot([
       'YtDownloader',
       'Scheduler',
     ]);
 
-    // Assert: jumps straight into the persisted module
     expect(await findByText('SchedulerModule')).toBeTruthy();
     expect(queryByTestId('module-selection-screen')).toBeNull();
   });
 
   it('ignores a persisted module that is no longer granted', async () => {
-    // Arrange: persisted YtDownloader but only Scheduler is now granted
     mockSelectedModule = 'YtDownloader';
     const { findByText, queryByText } = renderRoot(['Scheduler']);
 
-    // Assert: lands in the only granted module, not the stale persisted one
     expect(await findByText('SchedulerModule')).toBeTruthy();
     expect(queryByText('YtDownloaderModule')).toBeNull();
   });
 
   it('shows the picker when a persisted module is absent and >1 are granted', async () => {
-    // Arrange: no persisted choice, two granted modules
     mockSelectedModule = null;
     const { findByTestId } = renderRoot(['YtDownloader', 'Scheduler']);
 
-    // Assert
     expect(await findByTestId('module-selection-screen')).toBeTruthy();
   });
 
   it('persists and navigates to the chosen module from the picker', async () => {
-    // Arrange
     const { findByTestId, getByTestId, findByText } = renderRoot([
       'YtDownloader',
       'Scheduler',
     ]);
     await findByTestId('module-selection-screen');
 
-    // Act: choose YtDownloader
     fireEvent.press(getByTestId('module-card-YtDownloader'));
 
-    // Assert: persisted + navigated
     await waitFor(() => {
       expect(mockSaveSelectedModule).toHaveBeenCalledWith('YtDownloader');
     });
