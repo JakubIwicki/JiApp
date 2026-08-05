@@ -1142,6 +1142,11 @@ backend/tests/JiApp.Scheduler.Tests/Features/Appointments/AppointmentHandlerTest
 - No mobile test name follows `Behavior_Scenario_Expected`. **Decision needed, not a fix** — this may
   be a JS-convention clash rather than a defect.
 
+**G9.8 RESOLVED for mobile (naming exemption recorded):** sentence-case `it('...')` test naming is the
+mobile standard and stays; the backend keeps `Behavior_Scenario_Expected`. The hygiene items above are
+fixed in PR-D (zero-assertion `App.test.tsx` gains an assertion, duplicate docblock removed,
+`// Arrange/Act/Assert` markers stripped from `ModuleSelectionScreen.test.tsx`).
+
 ---
 
 <a name="g10"></a>

@@ -338,6 +338,7 @@ describe('EditProfileScreen', () => {
     fireEvent.press(getByTestId('save-profile-button'));
 
     expect(await findByText('Email is already taken.')).toBeTruthy();
+    expect(mockShowSuccess).not.toHaveBeenCalled();
   });
 
   it('shows email-taken message on 409 conflict from profile save', async () => {

@@ -2,10 +2,6 @@
  * @format
  */
 
-/**
- * @format
- */
-
 import React from 'react';
 import { render } from '@testing-library/react-native';
 
@@ -17,7 +13,9 @@ afterAll(() => {
   jest.useRealTimers();
 });
 
-test('renders without crashing', () => {
+it('renders without crashing', () => {
   const App = require('../App').default;
-  render(<App />);
+  const { toJSON } = render(<App />);
+
+  expect(toJSON()).not.toBeNull();
 });

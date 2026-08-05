@@ -75,71 +75,56 @@ const renderScreen = (
 
 describe('ModuleSelectionScreen', () => {
   it('renders a card for every granted module', () => {
-    // Arrange + Act
     const { getByTestId } = renderScreen(['YtDownloader', 'Scheduler']);
 
-    // Assert
     expect(getByTestId('module-card-YtDownloader')).toBeTruthy();
     expect(getByTestId('module-card-Scheduler')).toBeTruthy();
   });
 
   it('renders only granted modules and hides ungranted ones', () => {
-    // Arrange + Act: only Scheduler is granted
     const { getByTestId, queryByTestId } = renderScreen(['Scheduler']);
 
-    // Assert
     expect(getByTestId('module-card-Scheduler')).toBeTruthy();
     expect(queryByTestId('module-card-YtDownloader')).toBeNull();
   });
 
   it('calls onSelectModule with the tapped module id', () => {
-    // Arrange
     const onSelectModule = jest.fn();
     const { getByTestId } = renderScreen(
       ['YtDownloader', 'Scheduler'],
       onSelectModule,
     );
 
-    // Precondition: not called before any interaction
     expect(onSelectModule).not.toHaveBeenCalled();
 
-    // Act
     fireEvent.press(getByTestId('module-card-Scheduler'));
 
-    // Assert
     expect(onSelectModule).toHaveBeenCalledWith('Scheduler');
   });
 
   it('shows a personalised greeting with the display name', () => {
-    // Arrange + Act
     const { getByTestId } = renderScreen(['YtDownloader'], jest.fn(), 'Anna');
 
-    // Assert
     expect(getByTestId('module-greeting').props.children).toBe(
       'modules.greeting:Anna',
     );
   });
 
   it('falls back to a generic greeting when no display name is set', () => {
-    // Arrange + Act
     const { getByTestId } = renderScreen(['YtDownloader'], jest.fn(), null);
 
-    // Assert
     expect(getByTestId('module-greeting').props.children).toBe(
       'modules.greetingFallback',
     );
   });
 
   it('does not render the settings gear when onOpenSettings is not provided', () => {
-    // Arrange + Act
     const { queryByTestId } = renderScreen(['YtDownloader']);
 
-    // Assert
     expect(queryByTestId('module-selection-settings')).toBeNull();
   });
 
   it('renders the settings gear when onOpenSettings is provided', () => {
-    // Arrange
     const onOpenSettings = jest.fn();
     const { getByTestId } = render(
       <SafeAreaProvider initialMetrics={testMetrics}>
@@ -152,19 +137,15 @@ describe('ModuleSelectionScreen', () => {
       </SafeAreaProvider>,
     );
 
-    // Act + Assert: gear renders
     const gear = getByTestId('module-selection-settings');
     expect(gear).toBeTruthy();
     expect(gear.props.accessibilityRole).toBe('button');
     expect(gear.props.accessibilityLabel).toBe('settings.title');
 
-    // Precondition: not called yet
     expect(onOpenSettings).not.toHaveBeenCalled();
 
-    // Act: press the gear
     fireEvent.press(gear);
 
-    // Assert: callback called
     expect(onOpenSettings).toHaveBeenCalledTimes(1);
   });
 });
