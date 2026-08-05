@@ -946,6 +946,14 @@ the 5 `DateTime.UtcNow` health-endpoint timestamps remain. PR #106 (main `ec0970
 Scheduler alone has ~50 consecutive `AddScoped` calls. The `DependencyInjectionTests` conventions
 added in #78 cover *resolvability*, not organisation, so this drifts unchecked.
 
+**FIXED (Wave 4).** All five composition roots split into `private static ConfigureXxx` groups
+(`ConfigureInfrastructure`/`ConfigureOpenApi`/`ConfigurePersistence`/`ConfigureAuth`/`ConfigureCors`/
+`ConfigureApplicationServices`/`ConfigureFeatureHandlers`/`ConfigureRateLimiting`/`ConfigureBackgroundServices`;
+Gateway adds `ConfigureReverseProxy` + `ConfigureHttpClients`). `ConfigureServices` stays the instance entry
+point (DI fixtures call `startup.ConfigureServices(Services)`); `Program.cs` and `Configure(WebApplication)`
+untouched. smart-auditor verified registration type-sets byte-identical vs pre-change — pure reorder, zero
+semantic change. PR #108 (main `42182e8`).
+
 ### G8.6 (MEDIUM) — Identity's four rate-limit policies are copy-paste with magic-string names · `M21`
 
 `JiApp.Identity/Startup.cs:197-227` — four blocks differing only in name and `PermitLimit`. Names
@@ -953,6 +961,14 @@ added in #78 cover *resolvability*, not organisation, so this drifts unchecked.
 endpoint's `.RequireRateLimiting("…")`. The Gateway solved this with `RateLimitPolicyNames` constants
 **and** config-driven policies (`GatewaySettings.RateLimiting`); Identity uses neither. A typo in
 `.RequireRateLimiting("Logn")` throws only when that route is first hit.
+
+**FIXED (Wave 4).** Identity now mirrors the Gateway shape: new `JiApp.Identity.RateLimiting.RateLimitPolicyNames`
+consts (`LoginPolicy`/`RegisterPolicy`/`RefreshPolicy`/`LogoutPolicy`), `IdentitySettings.RateLimiting`
+dictionary + nested `[Serializable] RateLimitPolicyConfig`, `Validate()` fail-fasts on a missing section/key,
+and a config-driven `AddRateLimiter` loop naming policies `sectionName + "Policy"`. Partition key stays
+`RateLimitPartitioning.GetPartitionKey(httpContext)` (per-user, not `RemoteIpAddress`); no `OnRejected` writer
+(429 body unchanged). Same effective limits (Login 10, Register 5, Refresh 10, Logout 10/min). Grep proof: no
+`RequireRateLimiting("` literals remain, 6 `RateLimitPolicyNames.` hits. PR #108 (main `42182e8`).
 
 ### G8.7 (MEDIUM) — `JiApp.Testing.Common` depends on `JiApp.Scheduler` · `M17`
 
