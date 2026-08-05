@@ -25,11 +25,7 @@ public static class UpdateClientEndpoint
             var result = await handler.HandleAsync(id, request, ct);
             return result.IsSuccess
                 ? Results.Ok()
-                : result.ErrorCategory switch
-                {
-                    ResultCategories.AccessDenied => Results.Forbid(),
-                    _ => Results.NotFound(new ApiErrorResponse(result.Error!))
-                };
+                : result.ToHttp();
         })
         .RequireAuthorization()
         .WithTags(SwaggerConstants.Tags.Clients)

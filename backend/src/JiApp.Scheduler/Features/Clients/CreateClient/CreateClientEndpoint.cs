@@ -24,11 +24,7 @@ public static class CreateClientEndpoint
                 var result = await handler.HandleAsync(request, ct);
                 return result.IsSuccess
                     ? Results.Created($"/clients/{result.Value}", new { id = result.Value })
-                    : result.ErrorCategory switch
-                    {
-                        ResultCategories.AccessDenied => Results.Forbid(),
-                        _ => Results.BadRequest(new ApiErrorResponse(result.Error!))
-                    };
+                    : result.ToHttp();
             })
             .RequireAuthorization()
             .WithTags(SwaggerConstants.Tags.Clients)

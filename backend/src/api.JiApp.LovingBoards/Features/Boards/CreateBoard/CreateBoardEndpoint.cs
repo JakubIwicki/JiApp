@@ -24,7 +24,7 @@ public static class CreateBoardEndpoint
                 var result = await handler.HandleAsync(request, ct);
                 return result.IsSuccess
                     ? Results.Created($"/boards/{result.Value}", new { id = result.Value })
-                    : Results.BadRequest(new ApiErrorResponse(result.Error!));
+                    : result.ToHttp();
             })
             .RequireAuthorization()
             .WithTags(SwaggerConstants.Tags.Boards)

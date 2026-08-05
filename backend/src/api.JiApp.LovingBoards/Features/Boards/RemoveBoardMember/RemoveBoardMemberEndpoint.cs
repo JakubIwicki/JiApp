@@ -17,13 +17,7 @@ public static class RemoveBoardMemberEndpoint
                 var result = await handler.HandleAsync(id, userId, ct);
                 return result.IsSuccess
                     ? Results.Ok()
-                    : result.ErrorCategory switch
-                    {
-                        ResultCategories.NotFound => Results.NotFound(new ApiErrorResponse(result.Error!)),
-                        ResultCategories.AccessDenied => Results.Forbid(),
-                        ResultCategories.Conflict => Results.Conflict(new ApiErrorResponse(result.Error!)),
-                        _ => Results.BadRequest(new ApiErrorResponse(result.Error!))
-                    };
+                    : result.ToHttp();
             })
             .RequireAuthorization()
             .AddEndpointFilter<SecurityStampRecheckFilter>()

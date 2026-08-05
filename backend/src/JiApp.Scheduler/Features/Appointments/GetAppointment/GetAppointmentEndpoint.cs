@@ -13,14 +13,7 @@ public static class GetAppointmentEndpoint
                 CancellationToken ct) =>
             {
                 var result = await handler.HandleAsync(id, ct);
-                return result.IsSuccess
-                    ? Results.Ok(result.Value)
-                    : result.ErrorCategory switch
-                    {
-                        ResultCategories.NotFound or ResultCategories.AccessDenied =>
-                            Results.NotFound(new ApiErrorResponse("Appointment not found")),
-                        _ => Results.Conflict(new ApiErrorResponse(result.Error!))
-                    };
+                return result.ToHttp();
             })
             .RequireAuthorization()
             .WithTags(SwaggerConstants.Tags.Appointments)

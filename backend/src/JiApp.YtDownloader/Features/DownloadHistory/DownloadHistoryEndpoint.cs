@@ -26,11 +26,7 @@ public static class DownloadHistoryEndpoint
                 }
 
                 var result = await handler.HandleAsync(request);
-                if (result.IsSuccess)
-                    return Results.Ok(result.Value);
-
-                return Results.Json(new ApiErrorResponse(Error: result.Error ?? ApiErrorResponse.UnknownErrorMessage),
-                    statusCode: StatusCodes.Status400BadRequest);
+                return result.ToHttp();
             })
             .WithTags(SwaggerConstants.Tags.Downloads)
             .WithSummary("Get download history for authenticated user")

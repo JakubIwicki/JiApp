@@ -25,13 +25,7 @@ public static class UpdateServiceEndpoint
                 var result = await handler.HandleAsync(id, request, ct);
                 return result.IsSuccess
                     ? Results.Ok(new { id = result.Value })
-                    : result.ErrorCategory switch
-                    {
-                        ResultCategories.NotFound => Results.NotFound(new ApiErrorResponse(result.Error!)),
-                        ResultCategories.AccessDenied => Results.Forbid(),
-                        ResultCategories.Validation => Results.BadRequest(new ApiErrorResponse(result.Error!)),
-                        _ => Results.Problem(result.Error)
-                    };
+                    : result.ToHttp();
             })
             .RequireAuthorization()
             .WithTags(SwaggerConstants.Tags.Services)

@@ -19,7 +19,7 @@ public sealed class DownloadFileHandler(
         if (filePath is null)
         {
             logger.FileExpiredOrNotFound(id, currentUser.UserId);
-            return Result<string>.Failure("File expired or not found");
+            return Result<string>.Failure("File expired or not found", ResultCategories.NotFound);
         }
 
         return Result<string>.Success(filePath);

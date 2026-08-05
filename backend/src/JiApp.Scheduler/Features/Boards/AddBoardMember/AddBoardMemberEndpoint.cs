@@ -25,12 +25,7 @@ public static class AddBoardMemberEndpoint
                 var result = await handler.HandleAsync(id, request, ct);
                 return result.IsSuccess
                     ? Results.Created($"/boards/{id}/members", new { id })
-                    : result.ErrorCategory switch
-                    {
-                        ResultCategories.NotFound => Results.NotFound(new ApiErrorResponse(result.Error!)),
-                        ResultCategories.AccessDenied => Results.Forbid(),
-                        _ => Results.Conflict(new ApiErrorResponse(result.Error!))
-                    };
+                    : result.ToHttp();
             })
             .RequireAuthorization()
             .WithTags(SwaggerConstants.Tags.Boards)

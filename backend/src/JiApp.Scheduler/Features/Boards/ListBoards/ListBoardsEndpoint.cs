@@ -12,9 +12,7 @@ public static class ListBoardsEndpoint
                 CancellationToken ct) =>
             {
                 var result = await handler.HandleAsync(ct);
-                return result.IsSuccess
-                    ? Results.Ok(result.Value)
-                    : Results.BadRequest(new ApiErrorResponse(result.Error!));
+                return result.ToHttp();
             })
             .RequireAuthorization()
             .WithTags(SwaggerConstants.Tags.Boards)

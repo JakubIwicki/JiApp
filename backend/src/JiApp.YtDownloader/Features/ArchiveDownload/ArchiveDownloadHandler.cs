@@ -13,6 +13,6 @@ public sealed class ArchiveDownloadHandler(
 
         return archived
             ? Result<bool>.Success(true)
-            : Result<bool>.Failure("Download history entry not found or does not belong to the current user");
+            : Result<bool>.Failure("Download history entry not found or does not belong to the current user", ResultCategories.NotFound);
     }
 }

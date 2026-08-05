@@ -25,12 +25,7 @@ public static class SearchVideosEndpoint
                 }
 
                 var result = await handler.HandleAsync(request, httpContext.RequestAborted);
-                if (result.IsSuccess)
-                    return Results.Ok(result.Value);
-
-                return Results.Json(
-                    new ApiErrorResponse(Error: result.Error ?? ApiErrorResponse.UnknownErrorMessage),
-                    statusCode: StatusCodes.Status502BadGateway);
+                return result.ToHttp();
             })
             .WithTags(SwaggerConstants.Tags.Search)
             .WithSummary("Search YouTube videos by query")
