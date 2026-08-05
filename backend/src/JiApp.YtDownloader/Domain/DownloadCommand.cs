@@ -19,7 +19,7 @@ public enum DownloadCommandStatus
 public sealed class DownloadCommand : BaseEntity<string>
 {
     private const int MaxAttempts = 3;
-    private static readonly TimeSpan[] RetryBackoff = [TimeSpan.FromSeconds(30), TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(5)];
+    private static readonly TimeSpan[] RetryBackoff = [TimeSpan.FromSeconds(30), TimeSpan.FromMinutes(2)];
 
     public long UserId { get; private set; }
     public string VideoId { get; private set; } = default!;
@@ -53,7 +53,6 @@ public sealed class DownloadCommand : BaseEntity<string>
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(tempId);
         ArgumentException.ThrowIfNullOrWhiteSpace(videoId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(videoTitle);
         ArgumentException.ThrowIfNullOrWhiteSpace(videoUrl);
 
         return new DownloadCommand
@@ -83,9 +82,10 @@ public sealed class DownloadCommand : BaseEntity<string>
     }
 
     /// <summary>
-    /// Records a failed attempt. Every retryable attempt schedules the next run
-    /// with an escalating backoff; once attempts are exhausted the row becomes the
-    /// dead-letter record (NextAttemptAt = null) and is never picked up again.
+    /// Records a failed attempt. The first two failures each schedule the next run with
+    /// an escalating backoff (30s then 2m); the third failure exhausts the attempts, so
+    /// the row becomes the dead-letter record (NextAttemptAt = null) and is never picked
+    /// up again.
     /// </summary>
     public void Fail(string error, string? errorCategory, DateTime now)
     {

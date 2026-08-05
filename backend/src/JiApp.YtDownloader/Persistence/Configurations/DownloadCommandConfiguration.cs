@@ -21,6 +21,11 @@ public sealed class DownloadCommandConfiguration : IEntityTypeConfiguration<Down
         builder.Property(e => e.ErrorCategory).HasMaxLength(50);
         builder.Property(e => e.FilePath).HasMaxLength(1024);
 
-        builder.HasIndex(e => new { e.UserId, e.VideoId });
+        // At most one in-flight job per (UserId, VideoId): a double-tap on the same video
+        // cannot enqueue a duplicate. Only active rows (Queued/Processing) count — a
+        // completed or exhausted row is a distinct, later download of the same video.
+        builder.HasIndex(e => new { e.UserId, e.VideoId })
+            .IsUnique()
+            .HasFilter("\"Status\" IN ('Queued', 'Processing')");
     }
 }

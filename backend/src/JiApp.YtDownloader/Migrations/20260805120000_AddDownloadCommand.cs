@@ -39,7 +39,9 @@ namespace JiApp.YtDownloader.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_DownloadCommands_UserId_VideoId",
                 table: "DownloadCommands",
-                columns: new[] { "UserId", "VideoId" });
+                columns: new[] { "UserId", "VideoId" },
+                unique: true,
+                filter: "\"Status\" IN ('Queued', 'Processing')");
         }
 
         /// <inheritdoc />

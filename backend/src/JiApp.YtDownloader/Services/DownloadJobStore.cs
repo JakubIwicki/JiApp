@@ -42,7 +42,7 @@ public interface IDownloadJobStore
 /// the TTL reaps it. Each operation opens a short-lived scoped <see cref="YtDbContext"/> so
 /// the singleton store never captures a context.
 /// </summary>
-public sealed class DownloadJobStore : IDownloadJobStore
+public sealed class DownloadJobStore : IDownloadJobStore, IDownloadQueue
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly TimeSpan _ttl;
@@ -82,10 +82,36 @@ public sealed class DownloadJobStore : IDownloadJobStore
             _ttl);
 
         db.DownloadCommands.Add(command);
-        db.SaveChanges();
+        try
+        {
+            db.SaveChanges();
+        }
+        catch (DbUpdateException)
+        {
+            // A concurrent request for the same active (UserId, VideoId) won the unique
+            // filtered-index race — return its job instead of enqueueing a duplicate.
+            db.Entry(command).State = EntityState.Detached;
+            var existingId = db.DownloadCommands
+                .Where(c => c.UserId == userId && c.VideoId == videoId
+                    && (c.Status == DownloadCommandStatus.Queued || c.Status == DownloadCommandStatus.Processing))
+                .Select(c => c.Id)
+                .FirstOrDefault();
+            if (existingId is not null)
+                return existingId;
+
+            throw;
+        }
+
         return command.Id;
     }
 
+    /// <summary>
+    /// Atomically claims a single freshly-Queued row for its owner, moving it to Processing.
+    /// Returns true only for the caller that won the claim. This is the single-use primitive:
+    /// it does NOT claim Failed retry rows — the worker's retry path uses
+    /// <see cref="IDownloadQueue.ClaimEligible"/>, which also claims Failed rows whose
+    /// backoff (<see cref="DownloadCommand.NextAttemptAt"/>) has elapsed.
+    /// </summary>
     public bool Claim(string tempId, long userId)
     {
         using var scope = _scopeFactory.CreateScope();
@@ -212,16 +238,16 @@ public sealed class DownloadJobStore : IDownloadJobStore
         db.SaveChanges();
     }
 
-    /// <summary>
-    /// Crash recovery: any row stuck in Processing was mid-download when the worker
-    /// died. Reset it to Queued so a fresh worker picks it up on startup.
-    /// </summary>
-    internal void ResetOrphanedProcessing()
+    // Crash recovery: any row stuck in Processing was mid-download when the worker died.
+    // Reset it to Queued so a fresh worker picks it up on startup. Resetting ALL Processing
+    // rows assumes a single worker instance — with more than one, a live worker's in-flight
+    // rows would need distinguishing via a host/lease column.
+    public int ResetOrphanedProcessing()
     {
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<YtDbContext>();
 
-        db.Database.ExecuteSqlRaw(
+        return db.Database.ExecuteSqlRaw(
             "UPDATE \"DownloadCommands\" SET \"Status\" = {0} WHERE \"Status\" = {1}",
             DownloadCommandStatus.Queued.ToString(),
             DownloadCommandStatus.Processing.ToString());
@@ -232,7 +258,7 @@ public sealed class DownloadJobStore : IDownloadJobStore
     /// rows whose retry backoff (NextAttemptAt) has elapsed. Ordered oldest-first so a
     /// burst drains FIFO.
     /// </summary>
-    internal IReadOnlyList<string> GetEligibleTempIds(int maxCount)
+    public IReadOnlyList<string> GetEligibleTempIds(int maxCount)
     {
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<YtDbContext>();
@@ -253,7 +279,7 @@ public sealed class DownloadJobStore : IDownloadJobStore
     /// elapsed) to Processing. Returns true only for the worker that won the claim —
     /// a second worker touching the same row gets false.
     /// </summary>
-    internal bool ClaimEligible(string tempId, long userId)
+    public bool ClaimEligible(string tempId, long userId)
     {
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<YtDbContext>();

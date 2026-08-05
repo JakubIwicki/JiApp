@@ -216,10 +216,63 @@ public sealed class DownloadJobStoreTests
         fixture.Store.Claim(tempId, UserId);
         fixture.Store.GetStatus(tempId, UserId)!.Status.Should().Be(DownloadJobStatus.Running);
 
-        fixture.Store.ResetOrphanedProcessing();
+        fixture.Store.ResetOrphanedProcessing().Should().Be(1);
 
         fixture.LoadCommand(tempId)!.Status.Should().Be(DownloadCommandStatus.Queued);
         fixture.Store.GetStatus(tempId, UserId)!.Status.Should().Be(DownloadJobStatus.Pending);
+    }
+
+    // ── Idempotency race (DB-enforced) ─────────────────────────────────────
+
+    [Fact]
+    public void UniqueFilteredIndex_RejectsDuplicateActiveRow_ForSameUserAndVideo()
+    {
+        using var fixture = new Fixture(Ttl, DateTimeOffset.UtcNow);
+        fixture.SeedActiveRow(UserId, VideoId);
+
+        var act = () => fixture.SeedActiveRow(UserId, VideoId);
+
+        act.Should().Throw<DbUpdateException>();
+    }
+
+    [Fact]
+    public void UniqueFilteredIndex_AllowsSameVideo_WhenPreviousRowIsCompleted()
+    {
+        using var fixture = new Fixture(Ttl, DateTimeOffset.UtcNow);
+        fixture.SeedCompletedRow(UserId, VideoId);
+
+        var act = () => fixture.SeedActiveRow(UserId, VideoId);
+
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public async Task CreateJob_ConcurrentRequests_ForSameVideo_ReturnSameTempId_AndInsertOneRow()
+    {
+        using var fixture = new ConcurrencyFixture();
+
+        var tasks = Enumerable.Range(0, 8)
+            .Select(_ => Task.Run(() => fixture.Store.CreateJob(
+                UserId, VideoId, "Title", null, null, "https://youtube.com/watch?v=dQw4w9WgXcQ")))
+            .ToArray();
+        var tempIds = await Task.WhenAll(tasks);
+
+        tempIds.Should().OnlyContain(id => id == tempIds[0]);
+        tempIds[0].Should().HaveLength(32);
+        fixture.ActiveRowCount(UserId, VideoId).Should().Be(1);
+    }
+
+    // ── Empty title is valid (optional metadata) ───────────────────────────
+
+    [Fact]
+    public void CreateJob_WithEmptyTitle_DoesNotThrow()
+    {
+        using var fixture = new Fixture(Ttl, DateTimeOffset.UtcNow);
+
+        var act = () => fixture.Store.CreateJob(
+            UserId, VideoId, string.Empty, null, null, "https://youtube.com/watch?v=dQw4w9WgXcQ");
+
+        act.Should().NotThrow();
     }
 
     // ── GetStatus ownership ────────────────────────────────────────────────
@@ -407,6 +460,29 @@ public sealed class DownloadJobStoreTests
 
         public bool IsEligible(string tempId) => Store.GetEligibleTempIds(100).Contains(tempId);
 
+        // Bypasses the store's dedupe to exercise the unique filtered index directly.
+        public void SeedActiveRow(long userId, string videoId)
+        {
+            using var db = new YtDbContext(_options);
+            db.DownloadCommands.Add(NewCommand(userId, videoId));
+            db.SaveChanges();
+        }
+
+        public void SeedCompletedRow(long userId, string videoId)
+        {
+            using var db = new YtDbContext(_options);
+            var command = NewCommand(userId, videoId);
+            command.MarkReady(Path.Combine(TempDir, "completed.mp3"), FixedNow.UtcDateTime, Ttl);
+            db.DownloadCommands.Add(command);
+            db.SaveChanges();
+        }
+
+        private static DownloadCommand NewCommand(long userId, string videoId) =>
+            DownloadCommand.Create(
+                Guid.NewGuid().ToString("N"), userId, videoId, "Title", null, null,
+                "https://youtube.com/watch?v=dQw4w9WgXcQ",
+                FixedNow.UtcDateTime, Ttl);
+
         public void Dispose()
         {
             _provider.Dispose();
@@ -414,6 +490,64 @@ public sealed class DownloadJobStoreTests
             try
             {
                 Directory.Delete(TempDir, recursive: true);
+            }
+            catch (IOException)
+            {
+            }
+        }
+    }
+
+    // The concurrency test must run on a temp-file DB with WAL + busy timeout so that each
+    // concurrent CreateJob opens its OWN connection (a shared in-memory connection serializes
+    // and never exercises the insert race; without busy timeout, a second writer would see
+    // "database is locked" instead of the unique constraint).
+    private sealed class ConcurrencyFixture : IDisposable
+    {
+        private readonly ServiceProvider _provider;
+        private readonly DbContextOptions<YtDbContext> _options;
+        private readonly string _tempDir;
+
+        public DownloadJobStore Store { get; }
+
+        public ConcurrencyFixture()
+        {
+            _tempDir = Directory.CreateTempSubdirectory("ytdl-race-tests-").FullName;
+            var connectionString = new SqliteConnectionStringBuilder
+            {
+                DataSource = Path.Combine(_tempDir, "ytdl.db")
+            }.ToString();
+            _options = new DbContextOptionsBuilder<YtDbContext>()
+                .UseSqlite(connectionString)
+                .AddInterceptors(new SqliteBusyTimeoutInterceptor())
+                .Options;
+            using (var db = new YtDbContext(_options))
+            {
+                db.Database.Migrate();
+                db.Database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
+            }
+
+            var services = new ServiceCollection();
+            services.AddScoped(_ => new YtDbContext(_options));
+            _provider = services.BuildServiceProvider();
+
+            Store = new DownloadJobStore(
+                _provider.GetRequiredService<IServiceScopeFactory>(),
+                Ttl,
+                new FakeTimeProvider(DateTimeOffset.UtcNow));
+        }
+
+        public int ActiveRowCount(long userId, string videoId)
+        {
+            using var db = new YtDbContext(_options);
+            return db.DownloadCommands.Count(c => c.UserId == userId && c.VideoId == videoId);
+        }
+
+        public void Dispose()
+        {
+            _provider.Dispose();
+            try
+            {
+                Directory.Delete(_tempDir, recursive: true);
             }
             catch (IOException)
             {

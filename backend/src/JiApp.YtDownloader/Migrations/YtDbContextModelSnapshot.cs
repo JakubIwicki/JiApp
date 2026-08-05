@@ -178,7 +178,9 @@ namespace JiApp.YtDownloader.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId", "VideoId");
+                    b.HasIndex("UserId", "VideoId")
+                        .IsUnique()
+                        .HasFilter("\"Status\" IN ('Queued', 'Processing')");
 
                     b.ToTable("DownloadCommands", (string)null);
                 });

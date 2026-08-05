@@ -10,9 +10,10 @@ using Microsoft.Extensions.Logging;
 
 namespace JiApp.YtDownloader.Services;
 
-public sealed class DownloadWorker(
-    DownloadJobStore jobStore,
-    Channel<string> downloadQueue,
+internal sealed class DownloadWorker(
+    IDownloadJobStore jobStore,
+    IDownloadQueue downloadQueue,
+    Channel<string> wakeSignal,
     IYoutubeClient youtubeClient,
     IServiceScopeFactory scopeFactory,
     Settings settings,
@@ -37,13 +38,13 @@ public sealed class DownloadWorker(
     {
         // Any row still Processing at startup is an orphan from a crashed/killed worker
         // — put it back on the queue so this restart retries it.
-        jobStore.ResetOrphanedProcessing();
+        downloadQueue.ResetOrphanedProcessing();
 
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
-                var tempIds = jobStore.GetEligibleTempIds(MaxConcurrentDownloads);
+                var tempIds = downloadQueue.GetEligibleTempIds(MaxConcurrentDownloads);
 
                 if (tempIds.Count == 0)
                 {
@@ -86,7 +87,7 @@ public sealed class DownloadWorker(
         if (job is null)
             return;
 
-        if (!jobStore.ClaimEligible(tempId, job.UserId))
+        if (!downloadQueue.ClaimEligible(tempId, job.UserId))
             return;
 
         var outputFolder = Path.Combine(settings.App?.BaseDirectory ?? "/tmp", $"YtMp3_{job.UserId}");
@@ -193,7 +194,7 @@ public sealed class DownloadWorker(
 
         try
         {
-            await downloadQueue.Reader.ReadAsync(pollCts.Token);
+            await wakeSignal.Reader.ReadAsync(pollCts.Token);
         }
         catch (OperationCanceledException) when (!stoppingToken.IsCancellationRequested)
         {

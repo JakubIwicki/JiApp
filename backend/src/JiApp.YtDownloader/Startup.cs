@@ -142,6 +142,7 @@ public class Startup(Settings settings, IWebHostEnvironment env)
             TimeSpan.FromMinutes(settings.App?.DownloadTtlMinutes ?? 15),
             sp.GetRequiredService<TimeProvider>()));
         services.AddSingleton<IDownloadJobStore>(sp => sp.GetRequiredService<DownloadJobStore>());
+        services.AddSingleton<IDownloadQueue>(sp => sp.GetRequiredService<DownloadJobStore>());
         services.AddSingleton(_ => Channel.CreateUnbounded<string>());
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddSingleton<IYoutubeClient>(_ =>

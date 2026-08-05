@@ -451,6 +451,7 @@ public sealed class DownloadWorkerTests
 
             Sut = new DownloadWorker(
                 JobStore,
+                JobStore,
                 Queue,
                 YoutubeClientMock.Object,
                 _provider.GetRequiredService<IServiceScopeFactory>(),
