@@ -151,7 +151,7 @@ public class Startup(GatewaySettings settings, IConfiguration configuration, IWe
         });
 
         // Rate limit policy service — endpoint manipulation for rate limiting
-        services.AddSingleton<RateLimitPolicyService>();
+        services.AddSingleton(_ => new RateLimitPolicyService(settings.EndpointCacheMaxEntries));
     }
 
     private static void ConfigureReverseProxy(IServiceCollection services, IConfiguration configuration, IWebHostEnvironment env)

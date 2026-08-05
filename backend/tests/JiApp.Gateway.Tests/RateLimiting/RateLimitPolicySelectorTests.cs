@@ -8,7 +8,7 @@ public sealed class RateLimitPolicySelectorTests
 
         public Fixture(RequestDelegate? next = null)
         {
-            Sut = new RateLimitPolicySelector(next ?? (_ => Task.CompletedTask), new RateLimitPolicyService());
+            Sut = new RateLimitPolicySelector(next ?? (_ => Task.CompletedTask), new RateLimitPolicyService(maxEntries: 4096));
         }
 
         public static DefaultHttpContext CreateContext(string path)

@@ -5,7 +5,8 @@ namespace api.JiApp.LovingBoards.Common;
 /// <summary>
 /// Per-board in-memory write lock to serialise read-modify-write operations on a board's
 /// <c>MemberUserIds</c> JSON list. Single-instance — matches the in-memory
-/// <see cref="Realtime.IBoardBroadcaster"/> assumption.
+/// <see cref="Realtime.IBoardBroadcaster"/> assumption; enforced at startup by
+/// <see cref="JiApp.Common.Services.SingleInstanceGuard"/>.
 /// </summary>
 public sealed class BoardWriteLock
 {

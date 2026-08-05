@@ -22,6 +22,7 @@ public sealed class CommonCoverageConventionTests
         typeof(RetryPolicyFactory),
         typeof(SecurityStampRecheckFilter),
         typeof(RemoteSecurityStampValidator),
+        typeof(SingleInstanceGuard),
         typeof(JwtSettings),
         typeof(TokenValidationParametersFactory)
     ];

@@ -3,6 +3,12 @@ using System.Threading.Channels;
 
 namespace api.JiApp.LovingBoards.Realtime;
 
+/// <summary>
+/// In-memory per-board subscriber registry for realtime board events.
+/// Single-instance: subscriptions live only in this process, so a second replica
+/// would fragment boards across instances. Enforced at startup by
+/// <see cref="JiApp.Common.Services.SingleInstanceGuard"/>.
+/// </summary>
 public sealed class BoardBroadcaster : IBoardBroadcaster
 {
     private const int ChannelCapacity = 100;

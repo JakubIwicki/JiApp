@@ -1,3 +1,4 @@
+using JiApp.Common.Services;
 using JiApp.Scheduler;
 using JiApp.Scheduler.Configuration;
 using JiApp.Scheduler.Persistence;
@@ -25,6 +26,18 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<SchedulerDbContext>();
     db.Database.Migrate();
     db.Database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
+}
+
+// Single-instance lease on the shared volume — a duplicate replica exits before serving traffic.
+try
+{
+    SingleInstanceGuard.Acquire("scheduler");
+}
+catch (IOException ex)
+{
+    app.Logger.LogCritical(ex, "Another scheduler instance is already running on the shared volume. Exiting.");
+    Environment.Exit(1);
+    return;
 }
 
 app.Run();
