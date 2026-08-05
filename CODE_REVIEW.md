@@ -1,6 +1,6 @@
 # JiApp — Code Review & Remediation Backlog
 
-**Branch:** `main` · **Date:** 2026-08-04 · **Status:** Wave 1 landed — G1.1, G1.2, G2.2, G2.4, G2.6, G5.1 fixed (see per-finding notes); Wave 2 landed — PR-A G4.1–G4.5, PR-B G3.1, G3.2, G3.3, G4.6, G10.3, PR-C G2.1, G2.3 fixed (see per-finding notes); Wave 3 COMPLETE — PR-D G6.1, G6.2, PR-E G7.1, G7.3, PR-F G12.1 fixed (see per-finding notes); 52 of 84 open
+**Branch:** `main` · **Date:** 2026-08-05 · **Status:** Wave 1 landed — G1.1, G1.2, G2.2, G2.4, G2.6, G5.1 fixed (see per-finding notes); Wave 2 landed — PR-A G4.1–G4.5, PR-B G3.1, G3.2, G3.3, G4.6, G10.3, PR-C G2.1, G2.3 fixed (see per-finding notes); Wave 3 COMPLETE — PR-D G6.1, G6.2, PR-E G7.1, G7.3, PR-F G12.1 fixed (see per-finding notes); Wave 4 COMPLETE — PR-A G8.2, G8.3 (also G1.3, G1.6, G11.14), PR-B G8.1, PR-C G8.4, PR-D G8.5, G8.6, PR-E G8.7, PR-F G8.8 fixed (see per-finding notes); 41 of 84 open
 
 This file is the single working document for the review. It is organised into **12 work groups**,
 each sized to be picked up as one PR/session by someone with no prior context. Every finding keeps
@@ -172,6 +172,8 @@ everything else, and it is 5 minutes looser than intended on every service that 
 **Fix:** promote `CreateValidationParameters` to `JiApp.Common` and call it from all five services.
 Resolves G8.2 in the same edit.
 
+**FIXED (Wave 4).** `ClockSkew` is now zero everywhere: the shared `JiApp.Common/Authentication/TokenValidationParametersFactory` produces the single canonical `TokenValidationParameters` (`ClockSkew=0`, HS256) used by all five services — Gateway/Scheduler/YtDownloader/LovingBoards no longer inherit the 5-minute default. Resolved by G8.2 (PR #103, main `80c09c0`).
+
 ### G1.4 (MEDIUM) — Settings validation is incomplete, differently, in every service · `N13`
 
 No two `Validate()` methods check the same set of runtime-required fields:
@@ -205,6 +207,8 @@ properties. Consequence: the `Key.Length < 32` floor is enforced in three of fou
 drift is invisible.
 
 **Fix:** one `JiApp.Common.Configuration.JwtSettings` with one `Validate()`.
+
+**FIXED (Wave 4).** The four `JwtSettings` copies (Identity nested, Gateway nested, Scheduler top-level, LovingBoards top-level) are deleted; one `JiApp.Common/Authentication/JwtSettings.cs` (union of the variants, accumulating `Validate()`, whitespace-only key/issuer/audience rejected) serves all services. Resolved by G8.2 (PR #103, main `80c09c0`).
 
 ---
 
@@ -886,6 +890,8 @@ endpoint half of G3.2.
 `JiApp.Common`, call it from all five services, delete the four hand-rolled
 `TokenValidationParameters` literals and the four `JwtSettings` copies.
 
+**FIXED (Wave 4).** New shared `JiApp.Common/Authentication/TokenValidationParametersFactory.cs` — single canonical `TokenValidationParameters` (`ValidateIssuer`/`Audience`/`SigningKey`/`Lifetime`, `ClockSkew=0`, `ValidAlgorithms=["HS256"]`) — now used by all five services; Identity's `JwtTokenService.CreateValidationParameters` deleted. Four `JwtSettings` copies replaced by one shared `JiApp.Common/Authentication/JwtSettings.cs` (accumulating `Validate()`, whitespace-only key/issuer/audience rejected). **Behavior change (intended, = G1.3):** the four consumers now reject expired tokens exactly (were 5-min skew). Also closes G1.3, G1.6, G11.14. Covered by new `TokenValidationParametersFactoryTests` + `JwtSettingsTests`. PR #103 (main `80c09c0`).
+
 ### G8.3 (MEDIUM) — `"permission"` claim type is a magic string in 12 places across 7 files · `M11`
 
 ```
@@ -903,6 +909,8 @@ silently, with no compile error. `Permissions.cs` and `RoleNames.cs` already exi
 holders; the claim type never got one.
 
 **Fix:** `public const string PermissionClaimType = "permission";` in `JiApp.Common.Permissions`.
+
+**FIXED (Wave 4).** `Permissions.PermissionClaimType = "permission"` added; all 12 magic-string sites + test-side literals replaced. PR #103 (main `80c09c0`).
 
 ### G8.4 (MEDIUM) — Zero `TimeProvider`; 33 direct `DateTime.UtcNow` call sites · `M16`
 
@@ -1004,6 +1012,8 @@ remediation needed. Grep proof: zero `JiApp.Scheduler` references in `JiApp.Test
 `IYoutubeClient` is the owned adapter interface and declares no thrown-exception contract, yet two
 call sites in a different project branch on a Google SDK type. Swapping the provider means editing
 every handler, not just the adapter.
+
+**FIXED (Wave 4).** New owned `JiApp.YtApi.YoutubeApiException`; `YoutubeClient` wraps the two `ExecuteAsync` call sites (`SearchVideosAsync`, `GetVideoByIdAsync`) catching `Google.GoogleApiException` and rethrowing the owned type with the Google exception as inner. The two YtDownloader call sites (`SearchVideosHandler.cs`, `YtAgentToolService.cs`) now catch `YoutubeApiException` — behavior unchanged (log + generic failure; handler keeps `ResultCategories.BadGateway`). Grep proof: `Google.GoogleApiException` appears only in `YoutubeClient.cs` (the wrap). PR #112 (main `687d0ca`).
 
 ---
 
@@ -1256,7 +1266,7 @@ Small, unambiguous, individually cheap. Good first-PR material.
 | G11.11 | Catches bare `Exception` around the download, converting client disconnects into `"Failed to process download."` `L11` | `GetDownloadLinkHandler.cs:39` |
 | G11.12 | `IUserAccessService` takes no `CancellationToken`; `IRoleSeeder.SeedAsync(ct)` takes one and never uses it. `L12` | `UserAccessService.cs:9-10`, `RoleSeeder.cs:27` |
 | G11.13 | `Appointment.TryTransitionTo(status, out string? error)` uses the `out`-bool idiom where `dotnet-domain-modeling` prescribes returning `Result`. Blocked on there being **no non-generic `Result`** — `AdminAccessGuard` works around the same gap with `Result<bool>`. `L13` | `Scheduler/Domain/Appointment.cs:29` |
-| G11.14 | Two public top-level types per file (`LovingBoardsSettings` + `JwtSettings`, `SchedulerSettings` + `JwtSettings`). Resolved for free by G8.2. `L15` | `Configuration/*Settings.cs` |
+| G11.14 | **FIXED (Wave 4)** — G8.2 deleted the four `JwtSettings` copies (one shared `JiApp.Common` type remains per file). `L15` | `Configuration/*Settings.cs` |
 | G11.15 | Root-level orphan files: `Permissions.cs` and `RoleNames.cs` sit at the `JiApp.Common` root while a `Constants/` folder exists; `JiApp.YtApi` is entirely flat (3 files, no folders). `L17` | `JiApp.Common/`, `JiApp.YtApi/` |
 | G11.16 | `RateLimitPolicySelector` returns **403 Forbidden** for "no rate-limit policy configured" — a server misconfiguration reported as a client authorization failure. `L18` | `RateLimitPolicySelector.cs:122-128` |
 | G11.17 | `ListUsersEndpoint` calls `result.Value` **without checking `result.IsSuccess`**. Latent only because `ListUsersHandler` always succeeds today. Also does its pagination clamping in the endpoint lambda rather than the handler. | `Admin/Users/ListUsers/ListUsersEndpoint.cs:20-24` |
@@ -1303,19 +1313,19 @@ Already present and working: the CI-vs-`PathPolicyMap` rate-limit-policy drift c
 
 | Standard | Verdict | Notes |
 |---|---|---|
-| `dotnet-vsa-slice` | **Strong, one systemic gap** | Endpoint/Handler/Request/Validator/Response per slice, primary-constructor handlers, interface-segregated DbContexts, FluentValidation per slice. Gap: no centralised `ToHttp()` (G8.1). Fat endpoints: G5.3. |
+| `dotnet-vsa-slice` | **Strong** | Endpoint/Handler/Request/Validator/Response per slice, primary-constructor handlers, interface-segregated DbContexts, FluentValidation per slice. Fat endpoints: G5.3. |
 | `backend-service-anatomy` | **Good** | Thin transport, `Result<T>` + categories, fail-fast settings. Gaps: background-job anatomy (G2.6), streaming not covered by the error contract (G5.1). |
-| `dotnet-security-baseline` | **Gaps — floor breaches** | JWT validation is correct in shape everywhere (`ValidAlgorithms = ["HS256"]`, issuer+audience+lifetime). But: G1.1, G1.2, G1.3, G2.5, G3.1–G3.4, G4.1. *The baseline is a floor — these are not preferences.* |
-| `dotnet-composition-root` | **Partial** | Thin `Program.cs` → `Startup` ✓, settings bound + validated ✓, `MapXxx` slice extensions ✓. Missing `ConfigureXxx` grouping (G8.5). |
-| `dotnet-project-topology` | **Partial** | Feature folders and namespace-mirroring clean. Violations: G8.7, G9.5, G11.14, G11.15. |
-| `dotnet-domain-modeling` | **Good** | `BaseEntity<TKey>`, bounded string columns in every configuration, single-aggregate enums, `ValueComparer` correctly present on the `List<long>` JSON column (`BoardConfiguration.cs:11-14`). Deviations: G11.13, G8.4. |
-| `csharp-fixture-testing` | **Excellent** | `LoginHandlerTests` is a model implementation — private `Fixture`, `Sut`, `With_xxx` builders, semantic doubles. Shared `ResultAssertions` gives `AssertNotFound`/`AssertAccessDenied`/`AssertConflict`. Only gap: no `TimeProvider` (G8.4). |
+| `dotnet-security-baseline` | **Gaps — floor breaches** | JWT validation is correct in shape everywhere (`ValidAlgorithms = ["HS256"]`, issuer+audience+lifetime). But: G1.1, G1.2, G2.5, G3.1–G3.4, G4.1. *The baseline is a floor — these are not preferences.* |
+| `dotnet-composition-root` | **Good** | Thin `Program.cs` → `Startup` ✓, settings bound + validated ✓, `MapXxx` slice extensions ✓, `ConfigureXxx` grouping ✓ (G8.5). |
+| `dotnet-project-topology` | **Partial** | Feature folders and namespace-mirroring clean. Violations: G9.5, G11.15. |
+| `dotnet-domain-modeling` | **Good** | `BaseEntity<TKey>`, bounded string columns in every configuration, single-aggregate enums, `ValueComparer` correctly present on the `List<long>` JSON column (`BoardConfiguration.cs:11-14`). Deviations: G11.13. |
+| `csharp-fixture-testing` | **Excellent** | `LoginHandlerTests` is a model implementation — private `Fixture`, `Sut`, `With_xxx` builders, semantic doubles. Shared `ResultAssertions` gives `AssertNotFound`/`AssertAccessDenied`/`AssertConflict`. |
 | `semantic-test-doubles` | **Backend strong, mobile weak** | Backend: `MockUserManager.GetSuccessful()`, `CapturingBoardBroadcaster`, `MockObject<T>`, one mocking library, real SQLite. Mobile: G9.3. |
 | `unit-test-anatomy` | **Good** | AAA, one behaviour per test, `Behavior_Scenario_Expected` naming on the backend. Gaps: G9.7, G9.8. |
-| `persistence-testing` | **Mixed** | Real ephemeral SQLite per test with proper disposal where used — but Identity handlers never touch it (G9.2), and no deterministic time (G8.4). |
+| `persistence-testing` | **Mixed** | Real ephemeral SQLite per test with proper disposal where used — but Identity handlers never touch it (G9.2). |
 | `integration-testing` | **Uneven** | Gateway ✅, YtDownloader ✅, Identity/Scheduler/LovingBoards ❌ (G9.6). |
 | `architecture-fitness-tests` | **Good foundation** | `DependencyInjectionConvention` + `EndpointAuthorizationConvention`, collect-all-violations, wired into 5 services. Under-exploited — see G12. |
-| `integration-adapter-isolation` | **Partial** | Owned `IYoutubeClient` / `IAssistantChatClientProvider` interfaces exist and the DeepSeek provider is strategy-swappable with a fake. Breaches: G8.8, G5.3, G5.4. |
+| `integration-adapter-isolation` | **Good** | Owned `IYoutubeClient` / `IAssistantChatClientProvider` interfaces exist; YouTube provider exceptions wrapped in the owned `YoutubeApiException` (G8.8). Breaches: G5.3, G5.4. |
 | `cross-service-data-flow` | **Good** | Each service owns its schema; no service reads another's tables. The sync auth call is the one request-critical hop and it has a defined failure mode (`StampValidationResult.Unavailable` → 503). Gap: G10.2. |
 | `async-command-processing` | **One gap** | G10.6. Correctly *not* applicable to the assistant chat. |
 | `react-native-encapsulation` | **Strong** | Presentational/hook/context/service layering clean; **zero `any` in production code** (the only `any` is in `test/createMockFn.ts`). Gaps: G7.2, G7.4. |
@@ -1406,9 +1416,10 @@ limiters; `ForwardedHeaders`) · `G3.2` · `G3.3` · `G10.3` (report sort) · `G
 `G6.1` (~76 strings) · `G6.2` (three `onError`) · `G7.1` (Scheduler Zod) · `G12.1` (add eslint, so
 `G6.3` stops being unverifiable).
 
-**Wave 4 — the leverage group.** Do `G8` as a block; most remaining Mediums fall out with it.
-`G8.2` (shared JWT params — also closes G1.3 + G1.6 + G11.14) · `G8.1` (`ToHttp()` — also closes the
-fallback-arm mess and half of G3.2) · `G8.3` · `G8.7` · `G8.4` · `G8.5` · `G8.6` · `G8.8`.
+**Wave 4 — the leverage group — COMPLETE.** `G8.1`–`G8.8` all landed via PRs #103–#112, closing the
+roll-ups `G1.3` + `G1.6` + `G11.14` in the same pass. `G8.2` (shared JWT params — also closes G1.3 +
+G1.6 + G11.14) · `G8.1` (`ToHttp()` — also closes the fallback-arm mess and half of G3.2) · `G8.3` ·
+`G8.7` · `G8.4` · `G8.5` · `G8.6` · `G8.8`.
 
 **Wave 5 — the safety net.** `G9.3` before `G9.1` — the mocks must be rebuilt before the missing
 specs can be written cleanly. Then `G9.4` (adopt `composeStories`, starting with the 7 Scheduler
