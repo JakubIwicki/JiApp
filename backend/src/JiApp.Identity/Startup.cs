@@ -49,13 +49,34 @@ public class Startup(IdentitySettings settings, IWebHostEnvironment env)
 {
     public void ConfigureServices(IServiceCollection services)
     {
-        services.AddEndpointsApiExplorer();
-
-        services.AddSingleton(TimeProvider.System);
-
-        services.AddTransient<GlobalExceptionMiddleware>();
-
         var jwt = settings.GetRequiredJwt();
+
+        ConfigureInfrastructure(services);
+        ConfigureOpenApi(services);
+        ConfigurePersistence(services, settings);
+        ConfigureIdentity(services);
+        ConfigureAuth(services, jwt);
+        ConfigureCors(services, settings, env);
+        ConfigureApplicationServices(services, settings, jwt);
+        ConfigureFeatureHandlers(services);
+        ConfigureRateLimiting(services, settings);
+        ConfigureBackgroundServices(services);
+    }
+
+    private static void ConfigureInfrastructure(IServiceCollection services)
+    {
+        services.AddSingleton(TimeProvider.System);
+        services.AddTransient<GlobalExceptionMiddleware>();
+        services.AddHttpContextAccessor();
+    }
+
+    private static void ConfigureOpenApi(IServiceCollection services)
+    {
+        services.AddEndpointsApiExplorer();
+    }
+
+    private static void ConfigurePersistence(IServiceCollection services, IdentitySettings settings)
+    {
         var connectionString = settings.ConnectionString ??
                                throw new InvalidOperationException("ConnectionString not configured");
 
@@ -66,7 +87,10 @@ public class Startup(IdentitySettings settings, IWebHostEnvironment env)
             else
                 options.UseSqlite(connectionString);
         });
+    }
 
+    private static void ConfigureIdentity(IServiceCollection services)
+    {
         services.AddIdentity<User, IdentityRole<long>>(options =>
             {
                 options.Password.RequireDigit = true;
@@ -82,7 +106,10 @@ public class Startup(IdentitySettings settings, IWebHostEnvironment env)
             })
             .AddEntityFrameworkStores<IdentityDbContext>()
             .AddDefaultTokenProviders();
+    }
 
+    private static void ConfigureAuth(IServiceCollection services, JwtSettings jwt)
+    {
         services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -123,7 +150,10 @@ public class Startup(IdentitySettings settings, IWebHostEnvironment env)
             });
 
         services.AddAuthorization();
+    }
 
+    private static void ConfigureCors(IServiceCollection services, IdentitySettings settings, IWebHostEnvironment env)
+    {
         // CORS — AllowCredentials prevents using AllowAnyOrigin, so we use
         // SetIsOriginAllowed with explicit origin lists. In Development, accept
         // any origin when no origins are configured. In all other environments,
@@ -144,7 +174,10 @@ public class Startup(IdentitySettings settings, IWebHostEnvironment env)
                     throw new InvalidOperationException("CorsAllowedOrigins must be configured in non-Development environments.");
             });
         });
+    }
 
+    private static void ConfigureApplicationServices(IServiceCollection services, IdentitySettings settings, JwtSettings jwt)
+    {
         services.AddSingleton(settings);
 
         services.AddSingleton<IJwtTokenService>(sp =>
@@ -166,9 +199,10 @@ public class Startup(IdentitySettings settings, IWebHostEnvironment env)
 
         services.AddScoped<IUserAccessService, UserAccessService>();
         services.AddScoped<IRoleSeeder, RoleSeeder>();
+    }
 
-        services.AddHttpContextAccessor();
-
+    private static void ConfigureFeatureHandlers(IServiceCollection services)
+    {
         services.AddScoped<RegisterHandler>();
         services.AddScoped<LoginHandler>();
         services.AddScoped<RefreshHandler>();
@@ -194,7 +228,10 @@ public class Startup(IdentitySettings settings, IWebHostEnvironment env)
         services.AddScoped<DeleteRoleHandler>();
 
         services.AddValidatorsFromAssemblyContaining<RegisterValidator>();
+    }
 
+    private static void ConfigureRateLimiting(IServiceCollection services, IdentitySettings settings)
+    {
         services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -202,47 +239,41 @@ public class Startup(IdentitySettings settings, IWebHostEnvironment env)
             // One bucket per authenticated user (falling back to client IP) rather than
             // a single shared bucket for the whole service — a flood by one client can no
             // longer exhaust the login/refresh budget for everyone else.
-            options.AddPolicy("Register", httpContext =>
-                RateLimitPartition.GetFixedWindowLimiter(
-                    RateLimitPartitioning.GetPartitionKey(httpContext),
-                    _ => new FixedWindowRateLimiterOptions
-                    {
-                        PermitLimit = 5,
-                        Window = TimeSpan.FromMinutes(1),
-                        QueueLimit = 0
-                    }));
-
-            options.AddPolicy("Login", httpContext =>
-                RateLimitPartition.GetFixedWindowLimiter(
-                    RateLimitPartitioning.GetPartitionKey(httpContext),
-                    _ => new FixedWindowRateLimiterOptions
-                    {
-                        PermitLimit = 10,
-                        Window = TimeSpan.FromMinutes(1),
-                        QueueLimit = 0
-                    }));
-
-            options.AddPolicy("Refresh", httpContext =>
-                RateLimitPartition.GetFixedWindowLimiter(
-                    RateLimitPartitioning.GetPartitionKey(httpContext),
-                    _ => new FixedWindowRateLimiterOptions
-                    {
-                        PermitLimit = 10,
-                        Window = TimeSpan.FromMinutes(1),
-                        QueueLimit = 0
-                    }));
-
-            options.AddPolicy("Logout", httpContext =>
-                RateLimitPartition.GetFixedWindowLimiter(
-                    RateLimitPartitioning.GetPartitionKey(httpContext),
-                    _ => new FixedWindowRateLimiterOptions
-                    {
-                        PermitLimit = 10,
-                        Window = TimeSpan.FromMinutes(1),
-                        QueueLimit = 0
-                    }));
+            foreach (var (sectionName, policyConfig) in settings.RateLimiting!)
+            {
+                var policyName = sectionName + "Policy";
+                var config = policyConfig; // capture per-iteration to avoid loop-variable closure
+                if (config.SegmentsPerWindow > 0)
+                {
+                    options.AddPolicy(policyName, httpContext =>
+                        RateLimitPartition.GetSlidingWindowLimiter(
+                            RateLimitPartitioning.GetPartitionKey(httpContext),
+                            _ => new SlidingWindowRateLimiterOptions
+                            {
+                                PermitLimit = config.PermitLimit,
+                                Window = TimeSpan.FromSeconds(config.WindowInSeconds),
+                                QueueLimit = config.QueueLimit,
+                                SegmentsPerWindow = config.SegmentsPerWindow,
+                            }));
+                }
+                else
+                {
+                    options.AddPolicy(policyName, httpContext =>
+                        RateLimitPartition.GetFixedWindowLimiter(
+                            RateLimitPartitioning.GetPartitionKey(httpContext),
+                            _ => new FixedWindowRateLimiterOptions
+                            {
+                                PermitLimit = config.PermitLimit,
+                                Window = TimeSpan.FromSeconds(config.WindowInSeconds),
+                                QueueLimit = config.QueueLimit,
+                            }));
+                }
+            }
         });
+    }
 
+    private static void ConfigureBackgroundServices(IServiceCollection services)
+    {
         services.AddHostedService<RefreshTokenCleanupService>();
     }
 

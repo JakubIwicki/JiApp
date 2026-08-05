@@ -1,6 +1,7 @@
 using FluentValidation;
 using JiApp.Common.Abstractions;
 using JiApp.Identity.Configuration;
+using JiApp.Identity.RateLimiting;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -36,7 +37,7 @@ public static class RefreshEndpoint
             .Produces<RefreshResponse>()
             .Produces<ApiErrorResponse>(StatusCodes.Status401Unauthorized)
             .ProducesValidationProblem()
-            .RequireRateLimiting("Refresh")
+            .RequireRateLimiting(RateLimitPolicyNames.RefreshPolicy)
             .AllowAnonymous();
 
         return endpoints;

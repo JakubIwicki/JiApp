@@ -1,6 +1,7 @@
 using FluentValidation;
 using JiApp.Common.Abstractions;
 using JiApp.Identity.Configuration;
+using JiApp.Identity.RateLimiting;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -36,7 +37,7 @@ public static class LoginEndpoint
             .Produces<LoginResponse>()
             .ProducesValidationProblem()
             .Produces<ApiErrorResponse>(StatusCodes.Status401Unauthorized)
-            .RequireRateLimiting("Login")
+            .RequireRateLimiting(RateLimitPolicyNames.LoginPolicy)
             .AllowAnonymous();
 
         return endpoints;
