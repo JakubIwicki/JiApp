@@ -10,6 +10,14 @@ public sealed class GatewaySettings
     public string[]? CorsAllowedOrigins { get; set; }
     public Dictionary<string, RateLimitPolicyConfig>? RateLimiting { get; set; }
 
+    /// <summary>
+    /// Upper bound for the rate-limit endpoint cache
+    /// (<see cref="JiApp.Gateway.RateLimiting.RateLimitPolicyService"/>).
+    /// Scalar on this settings root; override via the <c>EndpointCacheMaxEntries</c> config key
+    /// (defaults to 4096 so no config is required).
+    /// </summary>
+    public int EndpointCacheMaxEntries { get; set; } = 4096;
+
     public void Validate()
     {
         var errors = new List<string>();

@@ -1,3 +1,4 @@
+using JiApp.Common.Services;
 using JiApp.Identity;
 using JiApp.Identity.Configuration;
 using JiApp.Identity.Persistence;
@@ -30,5 +31,17 @@ using (var scope = app.Services.CreateScope())
 }
 
 Startup.Configure(app);
+
+// Single-instance lease on the shared volume — a duplicate replica exits before serving traffic.
+try
+{
+    SingleInstanceGuard.Acquire("identity");
+}
+catch (IOException ex)
+{
+    app.Logger.LogCritical(ex, "Another identity instance is already running on the shared volume. Exiting.");
+    Environment.Exit(1);
+    return;
+}
 
 app.Run();

@@ -1,6 +1,7 @@
 using api.JiApp.LovingBoards;
 using api.JiApp.LovingBoards.Configuration;
 using api.JiApp.LovingBoards.Persistence;
+using JiApp.Common.Services;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
@@ -25,6 +26,18 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<LovingBoardsDbContext>();
     db.Database.Migrate();
     db.Database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
+}
+
+// Single-instance lease on the shared volume — a duplicate replica exits before serving traffic.
+try
+{
+    SingleInstanceGuard.Acquire("lovingboards");
+}
+catch (IOException ex)
+{
+    app.Logger.LogCritical(ex, "Another lovingboards instance is already running on the shared volume. Exiting.");
+    Environment.Exit(1);
+    return;
 }
 
 app.Run();

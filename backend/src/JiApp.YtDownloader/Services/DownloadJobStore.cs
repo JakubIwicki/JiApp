@@ -32,6 +32,12 @@ public interface IDownloadJobStore
     void CleanupExpired();
 }
 
+/// <summary>
+/// In-memory download job store. Single-instance: job state lives only in this
+/// process, so a second replica would lose visibility of in-flight jobs. The
+/// single-instance assumption is enforced at startup by
+/// <see cref="JiApp.Common.Services.SingleInstanceGuard"/>.
+/// </summary>
 public sealed class DownloadJobStore : IDownloadJobStore
 {
     private sealed record DownloadJobEntry(
