@@ -73,102 +73,78 @@ describe('BoardManagementScreen', () => {
   });
 
   it('lists every board returned by the board service', () => {
-    // Arrange + Act
     const { getByText } = render(<BoardManagementScreen />);
 
-    // Assert
     expect(getByText('Salon A')).toBeTruthy();
     expect(getByText('Salon B')).toBeTruthy();
   });
 
   it('shows the empty state when there are no boards', () => {
-    // Arrange
     mockBoardState.boards = [];
 
-    // Act
     const { getByText } = render(<BoardManagementScreen />);
 
-    // Assert
     expect(getByText('boardManagement.empty')).toBeTruthy();
   });
 
   it('shows a loading indicator while boards are loading', () => {
-    // Arrange
     mockBoardState.isLoading = true;
     mockBoardState.boards = [];
 
-    // Act
     const { getByTestId } = render(<BoardManagementScreen />);
 
-    // Assert
     expect(getByTestId('board-management-loading')).toBeTruthy();
   });
 
   it('creates a board from the create form', async () => {
-    // Arrange
     mockCreateBoard.mockResolvedValueOnce(board(3, 'Salon C'));
     const { getByTestId } = render(<BoardManagementScreen />);
 
-    // Precondition: not called yet
     expect(mockCreateBoard).not.toHaveBeenCalled();
 
-    // Act
     fireEvent.changeText(getByTestId('board-name-input'), 'Salon C');
     fireEvent.press(getByTestId('board-create-button'));
 
-    // Assert
     await waitFor(() => {
       expect(mockCreateBoard).toHaveBeenCalledWith('Salon C');
     });
   });
 
   it('does not create a board when the name is blank', () => {
-    // Arrange
     const { getByTestId } = render(<BoardManagementScreen />);
 
-    // Act: press create without typing
     fireEvent.press(getByTestId('board-create-button'));
 
-    // Assert
     expect(mockCreateBoard).not.toHaveBeenCalled();
   });
 
   it('deletes a board when its delete control is pressed', () => {
-    // Arrange
     const { getByTestId } = render(<BoardManagementScreen />);
 
-    // Act
     fireEvent.press(getByTestId('board-delete-1'));
 
-    // Assert
     expect(mockDeleteBoard).toHaveBeenCalledWith(1);
   });
 
   it('adds a member to the selected board', async () => {
-    // Arrange
     mockAddMember.mockResolvedValueOnce(undefined);
     const { getByTestId } = render(<BoardManagementScreen />);
 
-    // Act
     fireEvent.press(getByTestId('board-expand-1'));
     fireEvent.changeText(getByTestId('member-id-input-1'), '42');
     fireEvent.press(getByTestId('member-add-button-1'));
 
-    // Assert
     await waitFor(() => {
       expect(mockAddMember).toHaveBeenCalledWith(1, 42);
     });
   });
 
   it('removes a member from the board', () => {
-    // Arrange
     const { getByTestId } = render(<BoardManagementScreen />);
 
-    // Act
     fireEvent.press(getByTestId('board-expand-1'));
     fireEvent.press(getByTestId('member-remove-1-10'));
 
-    // Assert
     expect(mockRemoveMember).toHaveBeenCalledWith(1, 10);
   });
 });

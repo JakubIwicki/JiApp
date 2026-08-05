@@ -155,6 +155,7 @@ describe('RegisterScreen', () => {
     fireEvent.press(getByTestId('button'));
 
     expect(await findByText('auth.registerFailed')).toBeTruthy();
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   it('shows go to login link', () => {

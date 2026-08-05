@@ -110,6 +110,7 @@ describe('LoginScreen', () => {
     fireEvent.press(getByTestId('button'));
 
     expect(await findByText('auth.invalidCredentials')).toBeTruthy();
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   it('navigates to Register on link press', () => {
