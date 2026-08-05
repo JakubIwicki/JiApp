@@ -1,3 +1,4 @@
+using System.Text.Json;
 using JiApp.Common.Abstractions;
 using JiApp.Common.Services;
 using JiApp.Scheduler.Features.Boards.AddBoardMember;
@@ -223,6 +224,38 @@ public sealed class BoardHandlerTests : HandlerTestBase<SchedulerDbContext>
 
         AssertSuccess(result);
         result.Value!.Boards.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Serializes_MemberUserIds_AsCompactBracketJson()
+    {
+        Assert.Equal("[1,2,3]", JsonSerializer.Serialize(new List<long> { 1, 2, 3 }));
+    }
+
+    [Fact]
+    public async Task ListBoards_ReturnsExactBoardIds_WhenUserIsMemberInJson()
+    {
+        var fixture = Fixture.Init(DbContext, Db);
+        var single = new Board { Name = "Single", OwnerUserId = 2L, MemberUserIds = [1L] };
+        var first = new Board { Name = "First", OwnerUserId = 2L, MemberUserIds = [1L, 2L] };
+        var last = new Board { Name = "Last", OwnerUserId = 2L, MemberUserIds = [2L, 1L] };
+        var middle = new Board { Name = "Middle", OwnerUserId = 2L, MemberUserIds = [2L, 1L, 3L] };
+        var eleven = new Board { Name = "Eleven", OwnerUserId = 2L, MemberUserIds = [11L] };
+        var elevenPrefix = new Board { Name = "ElevenPrefix", OwnerUserId = 2L, MemberUserIds = [11L, 2L] };
+        StoreInDb(single);
+        StoreInDb(first);
+        StoreInDb(last);
+        StoreInDb(middle);
+        StoreInDb(eleven);
+        StoreInDb(elevenPrefix);
+        var sut = fixture.ListBoards;
+
+        var result = await sut.HandleAsync(CancellationToken.None);
+
+        AssertSuccess(result);
+        result.Value!.Boards.Select(b => b.Id)
+            .Should()
+            .BeEquivalentTo([single.Id, first.Id, last.Id, middle.Id]);
     }
 
     [Fact]
