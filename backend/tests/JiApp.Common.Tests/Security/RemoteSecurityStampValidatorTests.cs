@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace JiApp.Scheduler.Tests.Security;
+namespace JiApp.Common.Tests.Security;
 
 public sealed class RemoteSecurityStampValidatorTests
 {
