@@ -26,7 +26,8 @@ public sealed class YtAgentToolServiceTests
                 SearchHistoryRepoMock.Object,
                 DownloadHistoryRepoMock.Object,
                 Cache,
-                Mock.Of<ILogger<YtAgentToolService>>());
+                Mock.Of<ILogger<YtAgentToolService>>(),
+                TimeProvider.System);
     }
 
     private static YoutubeVideo CreateVideo(string videoId = "dQw4w9WgXcQ", string title = "A title") =>

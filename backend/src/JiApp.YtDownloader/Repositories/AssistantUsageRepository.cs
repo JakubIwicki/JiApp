@@ -6,11 +6,11 @@ using Npgsql;
 
 namespace JiApp.YtDownloader.Repositories;
 
-public sealed class AssistantUsageRepository(YtDbContext dbContext) : IAssistantUsageRepository
+public sealed class AssistantUsageRepository(YtDbContext dbContext, TimeProvider timeProvider) : IAssistantUsageRepository
 {
     public async Task<bool> TryConsumeAsync(long userId, int limit, CancellationToken ct = default)
     {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime);
 
         var existing = await dbContext.AssistantDailyUsage
             .SingleOrDefaultAsync(u => u.UserId == userId && u.UsageDateUtc == today, ct);

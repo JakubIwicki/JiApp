@@ -40,7 +40,7 @@ public sealed class SearchVideosHandlerTests
             var user = Mock.Of<ICurrentUserService>(x => x.UserId == 42L && x.Username == "test-user");
             Sut = new SearchVideosHandler(
                 YoutubeClientMock.Object, HistoryRepoMock.Object, user, Cache,
-                CreateSettings(), Mock.Of<ILogger<SearchVideosHandler>>());
+                CreateSettings(), Mock.Of<ILogger<SearchVideosHandler>>(), TimeProvider.System);
         }
 
         public Fixture WithSearchResults(params YoutubeVideo[] videos)

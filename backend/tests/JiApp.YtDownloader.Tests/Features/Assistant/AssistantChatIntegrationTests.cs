@@ -29,7 +29,8 @@ public sealed class AssistantChatIntegrationTests
             new Mock<ISearchHistoryRepository>().Object,
             new Mock<IDownloadHistoryRepository>().Object,
             new MemoryCache(new MemoryCacheOptions()),
-            NullLogger<YtAgentToolService>.Instance);
+            NullLogger<YtAgentToolService>.Instance,
+            TimeProvider.System);
 
         return new AssistantChatOrchestrator(
             provider,

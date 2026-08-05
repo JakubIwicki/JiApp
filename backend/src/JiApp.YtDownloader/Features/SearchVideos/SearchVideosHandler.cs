@@ -16,7 +16,8 @@ public sealed partial class SearchVideosHandler(
     ICurrentUserService currentUser,
     IMemoryCache cache,
     Settings settings,
-    ILogger<SearchVideosHandler> logger)
+    ILogger<SearchVideosHandler> logger,
+    TimeProvider timeProvider)
 {
     private const int CacheDurationHours = 1;
     private const string CacheKeyPrefix = "youtube:search";
@@ -74,7 +75,7 @@ public sealed partial class SearchVideosHandler(
                 var historyEntry = new YoutubeSearchHistory
                 {
                     UserId = currentUser.UserId,
-                    SearchedAt = DateTime.UtcNow,
+                    SearchedAt = timeProvider.GetUtcNow().UtcDateTime,
                     SearchText = request.Query
                 };
 

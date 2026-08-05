@@ -28,7 +28,7 @@ public class EventLog : BaseEntity<long>
             Type = type,
             UserId = userId,
             Message = message,
-            Timestamp = DateTime.UtcNow
+            Timestamp = TimeProvider.System.GetUtcNow().UtcDateTime
         };
     }
 }

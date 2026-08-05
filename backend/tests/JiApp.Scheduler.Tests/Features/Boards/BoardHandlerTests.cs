@@ -18,6 +18,7 @@ public sealed class BoardHandlerTests : HandlerTestBase
         private readonly ISchedulerDbContext _dbContext;
         private readonly TestDb _testDb;
         private readonly ICurrentUserService _currentUser;
+        private readonly TimeProvider _timeProvider = TimeProvider.System;
         private readonly BoardWriteLock _boardLock = new();
 
         private Fixture(ISchedulerDbContext dbContext, TestDb testDb)
@@ -27,7 +28,7 @@ public sealed class BoardHandlerTests : HandlerTestBase
             _currentUser = MockCurrentUserService.GetSuccessful().Mock.Object;
         }
 
-        public CreateBoardHandler Sut => new(_dbContext, _currentUser);
+        public CreateBoardHandler Sut => new(_dbContext, _currentUser, _timeProvider);
         public GetBoardHandler GetBoard => new(_dbContext, _currentUser);
         public UpdateBoardHandler UpdateBoard => new(_dbContext, _currentUser);
         public DeleteBoardHandler DeleteBoard => new(_dbContext, _currentUser);

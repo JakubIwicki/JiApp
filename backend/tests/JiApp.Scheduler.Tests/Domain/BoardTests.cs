@@ -13,6 +13,6 @@ public sealed class BoardTests
 
         board.Name.Should().Be("Test Board");
         board.MemberUserIds.Should().ContainSingle().Which.Should().Be(1L);
-        board.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+        board.CreatedAt.Should().Be(default(DateTime));
     }
 }

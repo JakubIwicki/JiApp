@@ -15,7 +15,7 @@ public sealed class BoardItem : BaseEntity<long>
     public BoardItemStatus Status { get; set; } = BoardItemStatus.Needed;
     public long AddedByUserId { get; set; }
     public long? CompletedByUserId { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
     public DateTime? RemovedAt { get; set; }
 }

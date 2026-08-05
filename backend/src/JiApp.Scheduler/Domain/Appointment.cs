@@ -19,7 +19,7 @@ public sealed class Appointment : BaseEntity<long>
         get => _status;
         private set => _status = value;
     }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; }
     public long CreatedBy { get; set; }
 
     public Board Board { get; set; } = null!;

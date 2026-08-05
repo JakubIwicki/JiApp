@@ -11,7 +11,8 @@ namespace JiApp.Scheduler.Features.Appointments.CreateAppointment;
 public sealed class CreateAppointmentHandler(
     ISchedulerDbContext db,
     ICurrentUserService currentUser,
-    IRetryPolicyFactory retryPolicy)
+    IRetryPolicyFactory retryPolicy,
+    TimeProvider timeProvider)
 {
     public async Task<Result<long>> HandleAsync(CreateAppointmentRequest request, CancellationToken ct)
     {
@@ -56,7 +57,7 @@ public sealed class CreateAppointmentHandler(
         }
     }
 
-    private static Appointment BuildAppointment(CreateAppointmentRequest request, Price price, long userId) =>
+    private Appointment BuildAppointment(CreateAppointmentRequest request, Price price, long userId) =>
         new()
         {
             BoardId = request.BoardId,
@@ -68,6 +69,7 @@ public sealed class CreateAppointmentHandler(
             EndTime = request.EndTime,
             Price = price,
             Location = request.Location,
+            CreatedAt = timeProvider.GetUtcNow().UtcDateTime,
             CreatedBy = userId
         };
 }

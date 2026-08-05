@@ -51,6 +51,8 @@ public class Startup(IdentitySettings settings, IWebHostEnvironment env)
     {
         services.AddEndpointsApiExplorer();
 
+        services.AddSingleton(TimeProvider.System);
+
         services.AddTransient<GlobalExceptionMiddleware>();
 
         var jwt = settings.GetRequiredJwt();
@@ -145,17 +147,19 @@ public class Startup(IdentitySettings settings, IWebHostEnvironment env)
 
         services.AddSingleton(settings);
 
-        services.AddSingleton<IJwtTokenService>(_ =>
+        services.AddSingleton<IJwtTokenService>(sp =>
             new JwtTokenService(
                 jwt.ValidatedKey,
                 jwt.ValidatedIssuer,
                 jwt.ValidatedAudience,
-                jwt.ValidatedAccessTokenExpireMinutes));
+                jwt.ValidatedAccessTokenExpireMinutes,
+                sp.GetRequiredService<TimeProvider>()));
 
         services.AddScoped<IRefreshTokenService>(sp =>
         {
             var dbContext = sp.GetRequiredService<IdentityDbContext>();
-            return new RefreshTokenService(dbContext, jwt.ValidatedRefreshTokenExpireDays);
+            var timeProvider = sp.GetRequiredService<TimeProvider>();
+            return new RefreshTokenService(dbContext, jwt.ValidatedRefreshTokenExpireDays, timeProvider);
         });
 
         services.AddScoped<ICurrentUserService, CurrentUserService>();

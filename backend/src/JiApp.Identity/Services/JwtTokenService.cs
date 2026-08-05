@@ -20,7 +20,8 @@ public sealed class JwtTokenService(
     string key,
     string issuer,
     string audience,
-    int expireMinutes) : IJwtTokenService
+    int expireMinutes,
+    TimeProvider timeProvider) : IJwtTokenService
 {
     public const string SecurityStampClaimType = "security_stamp";
 
@@ -32,7 +33,7 @@ public sealed class JwtTokenService(
         var signingKey = new SymmetricSecurityKey(keyBytes);
         var credentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
 
-        var now = DateTime.UtcNow;
+        var now = timeProvider.GetUtcNow().UtcDateTime;
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, userId.ToString(CultureInfo.InvariantCulture)),
@@ -51,7 +52,7 @@ public sealed class JwtTokenService(
             issuer: issuer,
             audience: audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(expireMinutes),
+            expires: now.AddMinutes(expireMinutes),
             signingCredentials: credentials
         );
 

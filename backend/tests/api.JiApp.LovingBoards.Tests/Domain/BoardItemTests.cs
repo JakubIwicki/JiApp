@@ -24,8 +24,8 @@ public sealed class BoardItemTests
         item.ExpiryDate.Should().BeNull();
         item.CompletedByUserId.Should().BeNull();
         item.RemovedAt.Should().BeNull();
-        item.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
-        item.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+        item.CreatedAt.Should().Be(default(DateTime));
+        item.UpdatedAt.Should().Be(default(DateTime));
     }
 
     [Fact]

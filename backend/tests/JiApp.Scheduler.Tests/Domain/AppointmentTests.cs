@@ -15,7 +15,7 @@ public sealed class AppointmentTests
         appointment.Location.Should().BeEmpty();
         appointment.Status.Should().Be(AppointmentStatus.Created);
         appointment.CreatedBy.Should().Be(0L);
-        appointment.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+        appointment.CreatedAt.Should().Be(default(DateTime));
         appointment.Price.Should().NotBeNull();
         appointment.Price.Amount.Should().Be(0m);
         appointment.Price.Currency.Should().Be("PLN");

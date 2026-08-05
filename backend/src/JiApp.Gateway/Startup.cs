@@ -20,6 +20,8 @@ public class Startup(GatewaySettings settings, IConfiguration configuration, IWe
 {
     public void ConfigureServices(IServiceCollection services)
     {
+        services.AddSingleton(TimeProvider.System);
+
         // JWT Bearer authentication — validates tokens issued by JiApp-Identity
         // Validate() guarantees Jwt is configured at this point.
         var jwt = settings.Jwt ?? throw new InvalidOperationException("Jwt must be configured");
