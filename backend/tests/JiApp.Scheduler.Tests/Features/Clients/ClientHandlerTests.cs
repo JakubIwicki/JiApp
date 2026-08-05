@@ -76,6 +76,24 @@ public sealed class ClientHandlerTests : HandlerTestBase<SchedulerDbContext>
     }
 
     [Fact]
+    public async Task ListClients_ReturnsOnlyClientsOnUserMemberBoards()
+    {
+        var fixture = Fixture.Init(DbContext, Db);
+        var memberBoard = new Board { Name = "Mine", OwnerUserId = 2L, MemberUserIds = [1L] };
+        var otherBoard = new Board { Name = "Theirs", OwnerUserId = 2L, MemberUserIds = [11L] };
+        StoreInDb(memberBoard);
+        StoreInDb(otherBoard);
+        StoreInDb(new Client { BoardId = memberBoard.Id, Name = "Alice" });
+        StoreInDb(new Client { BoardId = otherBoard.Id, Name = "Bob" });
+        var sut = fixture.ListClients;
+
+        var result = await sut.HandleAsync(null, 0, 50, CancellationToken.None);
+
+        AssertSuccess(result);
+        result.Value.Should().ContainSingle().Which.Name.Should().Be("Alice");
+    }
+
+    [Fact]
     public async Task ListClients_WithSearch_FiltersByName()
     {
         var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
