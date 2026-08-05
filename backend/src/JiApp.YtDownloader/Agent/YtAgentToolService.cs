@@ -94,7 +94,7 @@ public sealed partial class YtAgentToolService(
             return Result<SearchVideosResponse>.Success(
                 new SearchVideosResponse(items.AsReadOnly(), false));
         }
-        catch (Google.GoogleApiException ex)
+        catch (YoutubeApiException ex)
         {
             logger.LogError(ex, "YouTube API search failed for query: {Query}", query);
             return Result<SearchVideosResponse>.Failure(

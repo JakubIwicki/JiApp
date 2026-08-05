@@ -101,9 +101,9 @@ public sealed class SearchVideosHandlerTests
     }
 
     [Fact]
-    public async Task HandleAsync_ReturnsSanitizedError_OnGoogleApiException()
+    public async Task HandleAsync_ReturnsSanitizedError_OnYoutubeApiException()
     {
-        var fixture = new Fixture().WithSearchThrows(new GoogleApiException("youtube", "sensitive API key details"));
+        var fixture = new Fixture().WithSearchThrows(new YoutubeApiException("YouTube API request failed.", new GoogleApiException("youtube", "sensitive API key details")));
 
         var result = await fixture.Sut.HandleAsync(new SearchVideosRequest("test", null));
 
