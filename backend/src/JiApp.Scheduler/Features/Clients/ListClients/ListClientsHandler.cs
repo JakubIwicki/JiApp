@@ -9,12 +9,10 @@ public sealed class ListClientsHandler(ISchedulerDbContext db, ICurrentUserServi
 {
     public async Task<Result<List<ClientResponse>>> HandleAsync(string? q, int skip = 0, int take = 50, CancellationToken ct = default)
     {
-        var userBoardIds = (await db.Boards
-                .AsNoTracking()
-                .ToListAsync(ct))
-            .Where(b => b.MemberUserIds.Contains(currentUser.UserId))
-            .Select(b => b.Id)
-            .ToList();
+        var uid = currentUser.UserId;
+        var userBoardIds = await db.Database
+            .SqlQuery<long>(MemberBoardIdsSql(uid))
+            .ToListAsync(ct);
 
         var query = db.Clients
             .Where(c => userBoardIds.Contains(c.BoardId));
@@ -32,5 +30,21 @@ public sealed class ListClientsHandler(ISchedulerDbContext db, ICurrentUserServi
             .Select(c => new ClientResponse(c.Id, c.BoardId, c.Name, c.Phone, c.Notes))
             .ToListAsync(ct);
         return Result<List<ClientResponse>>.Success(clients);
+    }
+
+    private static FormattableString MemberBoardIdsSql(long userId)
+    {
+        var single = $"%[{userId}]%";
+        var leading = $"%[{userId},%";
+        var middle = $"%,{userId},%";
+        var trailing = $"%,{userId}]%";
+        return $"""
+            SELECT "Id" FROM "Boards"
+            WHERE "OwnerUserId" = {userId}
+               OR "MemberUserIds" LIKE {single}
+               OR "MemberUserIds" LIKE {leading}
+               OR "MemberUserIds" LIKE {middle}
+               OR "MemberUserIds" LIKE {trailing}
+            """;
     }
 }
