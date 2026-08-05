@@ -2,19 +2,18 @@ import React, { useCallback, useEffect, useReducer } from 'react';
 import { StyleSheet, Switch, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import axios from 'axios';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '../navigation/types';
 import AuthLayout from '../components/AuthLayout';
 import FormInput from '../components/FormInput';
 import useAuth from '../hooks/useAuth';
+import useRememberMe from '../hooks/useRememberMe';
 import useScreenTitle from '../hooks/useScreenTitle';
 import useToast from '../hooks/useToast';
-import * as storageService from '../services/storageService';
+import { getFriendlyErrorMessage } from '../utils/errorUtils';
 import { spacing } from '../styles/theme';
 import type { Theme } from '../styles/theme';
 import { useThemedStyles, useTheme } from '../context/ThemeContext';
-import type { ServerAugmentedError } from '../types/api';
 
 type LoginNavigationProp = NativeStackNavigationProp<
   AuthStackParamList,
@@ -97,18 +96,14 @@ const LoginScreen: React.FC = () => {
   const [form, dispatch] = useReducer(loginFormReducer, initialLoginFormState);
   const styles = useThemedStyles(makeStyles);
   const { colors } = useTheme();
+  const { rememberedUsername } = useRememberMe();
 
-  // Pre-fill remembered username on mount (non-sensitive only)
+  // Pre-fill remembered username once it loads (non-sensitive only)
   useEffect(() => {
-    storageService
-      .getUsername()
-      .then(username => {
-        if (username) {
-          dispatch({ type: 'LOAD_USERNAME', username });
-        }
-      })
-      .catch(() => {});
-  }, []); // mount only
+    if (rememberedUsername) {
+      dispatch({ type: 'LOAD_USERNAME', username: rememberedUsername });
+    }
+  }, [rememberedUsername]);
 
   const handleLogin = useCallback(async () => {
     dispatch({ type: 'CLEAR_ERRORS' });
@@ -140,31 +135,10 @@ const LoginScreen: React.FC = () => {
       await login(form.username.trim(), form.password.trim());
       showInfo('toast.loggedIn');
     } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        if (err.response?.status === 401) {
-          dispatch({
-            type: 'SET_API_ERROR',
-            error:
-              (err as ServerAugmentedError)._serverError ||
-              err.response?.data?.error ||
-              t('auth.invalidCredentials'),
-          });
-        } else if (err.response?.data?.error) {
-          dispatch({ type: 'SET_API_ERROR', error: err.response.data.error });
-        } else if (err.code === 'ERR_NETWORK' || !err.response) {
-          dispatch({ type: 'SET_API_ERROR', error: t('auth.networkError') });
-        } else {
-          dispatch({
-            type: 'SET_API_ERROR',
-            error: t('auth.invalidCredentials'),
-          });
-        }
-      } else {
-        dispatch({
-          type: 'SET_API_ERROR',
-          error: t('auth.invalidCredentials'),
-        });
-      }
+      dispatch({
+        type: 'SET_API_ERROR',
+        error: getFriendlyErrorMessage(err, t('auth.invalidCredentials')),
+      });
     } finally {
       dispatch({ type: 'SET_LOADING', loading: false });
     }

@@ -12,7 +12,6 @@ import { useTranslation } from 'react-i18next';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MainStackParamList } from '../navigation/types';
 import type { SearchHistoryItem, VideoItem } from '../types/api';
-import { getSearchHistory } from '../services/searchService';
 import SearchBar from '../components/SearchBar';
 import VideoCard from '../components/VideoCard';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -21,6 +20,7 @@ import FloatingParticles from '../components/FloatingParticles';
 import Logo from '../components/Logo';
 import useKeepAwake from '../hooks/useKeepAwake';
 import useSearch from '../hooks/useSearch';
+import useSearchHistory from '../hooks/useSearchHistory';
 import useScreenTitle from '../hooks/useScreenTitle';
 import { RECENT_SEARCHES_LIMIT } from '../constants/app';
 import { spacing, borderRadius } from '../styles/theme';
@@ -133,17 +133,10 @@ const SearchScreen: React.FC = () => {
   // Keep screen awake while this screen is visible
   useKeepAwake(true);
 
-  const [historyState, setHistoryState] = useState<{
-    items: SearchHistoryItem[];
-    loaded: boolean;
-  }>(() => {
-    getSearchHistory(RECENT_SEARCHES_LIMIT)
-      .then(items => setHistoryState({ items, loaded: true }))
-      .catch(() => setHistoryState({ items: [], loaded: true }));
-    return { items: [], loaded: false };
-  });
-  const recentSearches = historyState.items;
-  const historyLoading = !historyState.loaded;
+  const { recentSearches, loaded: historyLoaded } = useSearchHistory(
+    RECENT_SEARCHES_LIMIT,
+  );
+  const historyLoading = !historyLoaded;
   const [searchBarText, setSearchBarText] = useState('');
 
   const handleSearch = useCallback(

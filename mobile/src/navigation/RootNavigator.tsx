@@ -1,10 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import useAuth from '../hooks/useAuth';
-import * as storageService from '../services/storageService';
+import usePersistedModule from '../hooks/usePersistedModule';
 import ModuleSelectionScreen from '../screens/ModuleSelectionScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
@@ -47,15 +47,17 @@ function resolveInitialRoute(
   return 'ModuleSelection';
 }
 
-const ModuleSelectionRoute: React.FC = () => {
+const ModuleSelectionRoute: React.FC<{
+  onSelectModule: (moduleId: ModuleId) => Promise<void>;
+}> = ({ onSelectModule }) => {
   const navigation = useNavigation<RootNavigationProp>();
 
   const handleSelectModule = useCallback(
     async (moduleId: ModuleId) => {
-      await storageService.saveSelectedModule(moduleId);
+      await onSelectModule(moduleId);
       navigation.navigate(MODULE_ROUTE[moduleId]);
     },
-    [navigation],
+    [navigation, onSelectModule],
   );
 
   const handleSelectAdmin = useCallback(() => {
@@ -74,25 +76,9 @@ const ModuleSelectionRoute: React.FC = () => {
 const RootNavigator: React.FC = () => {
   const { t } = useTranslation();
   const { availableModules } = useAuth();
-  const [persisted, setPersisted] = useState<ModuleId | null>(null);
-  const [resolved, setResolved] = useState(false);
+  const { persisted, resolved, saveSelectedModule } = usePersistedModule();
   const styles = useThemedStyles(makeStyles);
   const { colors } = useTheme();
-
-  useEffect(() => {
-    let active = true;
-    storageService
-      .getSelectedModule()
-      .then(value => {
-        if (active) setPersisted(value);
-      })
-      .finally(() => {
-        if (active) setResolved(true);
-      });
-    return () => {
-      active = false;
-    };
-  }, []); // mount only
 
   const initialRouteName = useMemo(
     () => resolveInitialRoute(availableModules, persisted),
@@ -112,7 +98,9 @@ const RootNavigator: React.FC = () => {
       initialRouteName={initialRouteName}
       screenOptions={{ headerShown: false }}
     >
-      <Stack.Screen name="ModuleSelection" component={ModuleSelectionRoute} />
+      <Stack.Screen name="ModuleSelection">
+        {() => <ModuleSelectionRoute onSelectModule={saveSelectedModule} />}
+      </Stack.Screen>
       <Stack.Screen name="YtDownloader" component={MainNavigator} />
       <Stack.Screen name="Scheduler" component={SchedulerNavigator} />
       <Stack.Screen name="LovingBoards" component={LovingBoardsNavigator} />

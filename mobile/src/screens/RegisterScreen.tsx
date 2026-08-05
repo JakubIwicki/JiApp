@@ -1,7 +1,6 @@
 import React, { useCallback, useReducer } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import axios from 'axios';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '../navigation/types';
 import AuthLayout from '../components/AuthLayout';
@@ -9,6 +8,11 @@ import FormInput from '../components/FormInput';
 import useAuth from '../hooks/useAuth';
 import useScreenTitle from '../hooks/useScreenTitle';
 import useToast from '../hooks/useToast';
+import {
+  getFriendlyErrorMessage,
+  getServerErrorStatus,
+  getServerValidationErrors,
+} from '../utils/errorUtils';
 
 type RegisterNavigationProp = NativeStackNavigationProp<
   AuthStackParamList,
@@ -219,10 +223,8 @@ const RegisterScreen: React.FC = () => {
       showSuccess('toast.registerSuccess');
       navigation.navigate('Login');
     } catch (err: unknown) {
-      if (axios.isAxiosError(err) && err.response?.status === 400) {
-        const serverError: string | undefined = err.response?.data?.error;
-        const validationErrors: string[] =
-          err.response?.data?.errors?.errors ?? [];
+      if (getServerErrorStatus(err) === 400) {
+        const validationErrors = getServerValidationErrors(err);
 
         if (validationErrors.length > 0) {
           const fieldErrors = extractFieldErrors(validationErrors);
@@ -235,13 +237,11 @@ const RegisterScreen: React.FC = () => {
           }
           return;
         }
-
-        if (serverError) {
-          dispatch({ type: 'SET_API_ERROR', error: serverError });
-          return;
-        }
       }
-      dispatch({ type: 'SET_API_ERROR', error: t('auth.registerFailed') });
+      dispatch({
+        type: 'SET_API_ERROR',
+        error: getFriendlyErrorMessage(err, t('auth.registerFailed')),
+      });
     } finally {
       dispatch({ type: 'SET_LOADING', loading: false });
     }
