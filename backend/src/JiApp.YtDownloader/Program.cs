@@ -25,6 +25,11 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<YtDbContext>();
     db.Database.Migrate();
+
+    // WAL lets the download worker and request handlers read/write concurrently.
+    // PRAGMA is SQLite-only — the Npgsql path never sees it.
+    if (!settings.ConnectionString!.Contains("Host="))
+        db.Database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
 }
 
 Startup.Configure(app);

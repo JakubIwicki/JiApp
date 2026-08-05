@@ -10,45 +10,75 @@ using Microsoft.Extensions.Logging;
 
 namespace JiApp.YtDownloader.Services;
 
-public sealed class DownloadWorker(
+internal sealed class DownloadWorker(
     IDownloadJobStore jobStore,
-    Channel<string> downloadQueue,
+    IDownloadQueue downloadQueue,
+    Channel<string> wakeSignal,
     IYoutubeClient youtubeClient,
     IServiceScopeFactory scopeFactory,
     Settings settings,
     ILogger<DownloadWorker> logger,
     TimeProvider? timeProvider = null,
-    TimeSpan? downloadTimeout = null) : BackgroundService
+    TimeSpan? downloadTimeout = null,
+    TimeSpan? pollInterval = null) : BackgroundService
 {
     public const string YoutubeDlErrorCategory = "YoutubeDl";
 
     private const int MaxConcurrentDownloads = 3;
     private const int HistoryWriteMaxAttempts = 3;
     private static readonly TimeSpan HistoryWriteRetryDelay = TimeSpan.FromMilliseconds(250);
+    private static readonly TimeSpan DefaultPollInterval = TimeSpan.FromSeconds(2);
 
     private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
     private readonly TimeSpan _downloadTimeout = downloadTimeout
         ?? TimeSpan.FromMinutes(settings.App?.DownloadJobTimeoutMinutes ?? 30);
+    private readonly TimeSpan _pollInterval = pollInterval ?? DefaultPollInterval;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await Parallel.ForEachAsync(
-            downloadQueue.Reader.ReadAllAsync(stoppingToken),
-            new ParallelOptions { CancellationToken = stoppingToken, MaxDegreeOfParallelism = MaxConcurrentDownloads },
-            async (tempId, ct) =>
+        // Any row still Processing at startup is an orphan from a crashed/killed worker
+        // — put it back on the queue so this restart retries it.
+        downloadQueue.ResetOrphanedProcessing();
+
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            try
             {
-                try
+                var tempIds = downloadQueue.GetEligibleTempIds(MaxConcurrentDownloads);
+
+                if (tempIds.Count == 0)
                 {
-                    await ProcessJobAsync(tempId, stoppingToken);
+                    await WaitForSignalOrPollAsync(stoppingToken);
+                    continue;
                 }
-                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-                {
-                }
-                catch (Exception ex)
-                {
-                    logger.LogWarning(ex, "Unhandled error processing download job {TempId}", tempId);
-                }
-            });
+
+                await Parallel.ForEachAsync(
+                    tempIds,
+                    new ParallelOptions { CancellationToken = stoppingToken, MaxDegreeOfParallelism = MaxConcurrentDownloads },
+                    async (tempId, ct) =>
+                    {
+                        try
+                        {
+                            await ProcessJobAsync(tempId, stoppingToken);
+                        }
+                        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                        {
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogWarning(ex, "Unhandled error processing download job {TempId}", tempId);
+                        }
+                    });
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Download worker iteration failed");
+                await Task.Delay(_pollInterval, stoppingToken);
+            }
+        }
     }
 
     private async Task ProcessJobAsync(string tempId, CancellationToken stoppingToken)
@@ -57,7 +87,7 @@ public sealed class DownloadWorker(
         if (job is null)
             return;
 
-        if (!jobStore.Claim(tempId, job.UserId))
+        if (!downloadQueue.ClaimEligible(tempId, job.UserId))
             return;
 
         var outputFolder = Path.Combine(settings.App?.BaseDirectory ?? "/tmp", $"YtMp3_{job.UserId}");
@@ -151,6 +181,24 @@ public sealed class DownloadWorker(
                 logger.LogWarning(ex, "Failed to record download history for job {TempId} after {MaxAttempts} attempts",
                     tempId, HistoryWriteMaxAttempts);
             }
+        }
+    }
+
+    // The channel is a wake-up signal for newly created jobs; the poll interval is what
+    // eventually surfaces retry-after-backoff rows. Waiting on either keeps the loop from
+    // hammering the database when the queue is idle.
+    private async Task WaitForSignalOrPollAsync(CancellationToken stoppingToken)
+    {
+        using var pollCts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+        pollCts.CancelAfter(_pollInterval);
+
+        try
+        {
+            await wakeSignal.Reader.ReadAsync(pollCts.Token);
+        }
+        catch (OperationCanceledException) when (!stoppingToken.IsCancellationRequested)
+        {
+            // Poll interval elapsed with no signal — fall through and re-check the queue.
         }
     }
 

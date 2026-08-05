@@ -1,4 +1,5 @@
 using JiApp.Common.Models;
+using JiApp.YtDownloader.Domain;
 using Microsoft.EntityFrameworkCore;
 
 namespace JiApp.YtDownloader.Persistence;
@@ -8,6 +9,7 @@ public sealed class YtDbContext(DbContextOptions<YtDbContext> options) : DbConte
     public DbSet<YoutubeSearchHistory> YoutubeSearchHistory => Set<YoutubeSearchHistory>();
     public DbSet<YoutubeDownloadHistory> YoutubeDownloadHistory => Set<YoutubeDownloadHistory>();
     public DbSet<AssistantDailyUsage> AssistantDailyUsage => Set<AssistantDailyUsage>();
+    public DbSet<DownloadCommand> DownloadCommands => Set<DownloadCommand>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
