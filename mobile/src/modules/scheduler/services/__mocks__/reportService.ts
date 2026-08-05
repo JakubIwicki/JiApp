@@ -1,12 +1,7 @@
+import { createMockFn } from '../../../../test/createMockFn';
 import type { RevenueReport, ClientReportItem } from '../../types/api';
 
-type Mode = 'success' | 'empty' | 'error';
-
-let _mode: Mode = 'success';
-
-export const setReportMode = (mode: Mode) => {
-  _mode = mode;
-};
+// ── Default stub data ──────────────────────────────────────────────────────
 
 const mockRevenueReports: RevenueReport[] = [
   {
@@ -96,22 +91,65 @@ const mockClientReports: ClientReportItem[] = [
   },
 ];
 
-export const getRevenueReport = async (
-  _boardId: number,
-  _from: string,
-  _to: string,
-  _groupBy: string,
-): Promise<RevenueReport[]> => {
-  if (_mode === 'error') throw new Error('Mock error');
-  if (_mode === 'empty') return [];
-  return mockRevenueReports;
-};
+// ── Internal state ─────────────────────────────────────────────────────────
 
-export const getClientReport = async (
-  _boardId: number,
-  _sortBy: string,
-): Promise<ClientReportItem[]> => {
-  if (_mode === 'error') throw new Error('Mock error');
-  if (_mode === 'empty') return [];
-  return mockClientReports;
-};
+let _revenueReports: RevenueReport[] = mockRevenueReports;
+let _clientReports: ClientReportItem[] = mockClientReports;
+let _reportError: Error | null = null;
+
+// ── Mock functions ─────────────────────────────────────────────────────────
+
+export const getRevenueReport = createMockFn(
+  async (
+    _boardId: number,
+    _from: string,
+    _to: string,
+    _groupBy: string,
+  ): Promise<RevenueReport[]> => {
+    if (_reportError) throw _reportError;
+    return _revenueReports;
+  },
+);
+
+export const getClientReport = createMockFn(
+  async (_boardId: number, _sortBy: string): Promise<ClientReportItem[]> => {
+    if (_reportError) throw _reportError;
+    return _clientReports;
+  },
+);
+
+// ── Fluent scenario builders (.withX()) ────────────────────────────────────
+
+export function withRevenueReport(
+  reports: RevenueReport[] = mockRevenueReports,
+): RevenueReport[] {
+  _reportError = null;
+  _revenueReports = reports;
+  return _revenueReports;
+}
+
+export function withClientReport(
+  reports: ClientReportItem[] = mockClientReports,
+): ClientReportItem[] {
+  _reportError = null;
+  _clientReports = reports;
+  return _clientReports;
+}
+
+export function withReportError(error: Error = new Error('Mock error')): Error {
+  _reportError = error;
+  return error;
+}
+
+// ── Reset ──────────────────────────────────────────────────────────────────
+
+export function reset(): void {
+  _revenueReports = mockRevenueReports;
+  _clientReports = mockClientReports;
+  _reportError = null;
+
+  if (typeof jest !== 'undefined') {
+    getRevenueReport.mockClear();
+    getClientReport.mockClear();
+  }
+}

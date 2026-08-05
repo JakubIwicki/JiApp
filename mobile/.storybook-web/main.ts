@@ -1,3 +1,4 @@
+import { existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { StorybookConfig } from '@storybook/react-vite';
@@ -6,6 +7,7 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectDir = path.resolve(dirname, '..');
 const mocksDir = path.resolve(dirname, '../src/__mocks__');
 const servicesDir = path.resolve(dirname, '../src/services');
+const modulesDir = path.resolve(dirname, '../src/modules');
 
 const config: StorybookConfig = {
   stories: ['../src/**/*.stories.tsx'],
@@ -60,7 +62,12 @@ const config: StorybookConfig = {
       ),
     };
 
-    // Plugin: redirect real service imports to __mocks__/ (not apiClient or storageService)
+    // Plugin: redirect real service imports to their sibling __mocks__/ file
+    // (never apiClient or storageService). Covers both src/services/* and
+    // src/modules/*/services/*. Only redirects when the sibling mock exists so
+    // unmocked services (e.g. scheduler boardService, lovingBoards
+    // boardStreamService) resolve normally instead of pointing at a missing
+    // module.
     viteConfig.plugins = viteConfig.plugins ?? [];
     viteConfig.plugins.push({
       name: 'mock-services',
@@ -73,18 +80,23 @@ const config: StorybookConfig = {
         const resolved = path.resolve(path.dirname(importer), source);
         // Guard: reject paths that escape the project directory
         if (!resolved.startsWith(projectDir + path.sep)) return null;
+        const isCoreService = resolved.startsWith(servicesDir);
+        const isModuleService =
+          resolved.startsWith(modulesDir) &&
+          resolved.includes(`${path.sep}services${path.sep}`);
         if (
-          resolved.startsWith(servicesDir) &&
+          (isCoreService || isModuleService) &&
           !resolved.includes('__mocks__') &&
           !resolved.includes('apiClient') &&
           !resolved.includes('storageService')
         ) {
           const ext = path.extname(resolved) || '.ts';
-          return path.resolve(
-            servicesDir,
+          const mockPath = path.resolve(
+            path.dirname(resolved),
             '__mocks__',
             path.basename(resolved, ext) + ext,
           );
+          return existsSync(mockPath) ? mockPath : null;
         }
         return null;
       },

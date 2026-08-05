@@ -1,34 +1,9 @@
+import { createMockFn } from '../../../../test/createMockFn';
+import { getThisWeekend } from '../../../../test/dateUtils';
 import type { Appointment, AppointmentStatus } from '../../types/api';
 import type { CreateAppointmentData } from '../appointmentService';
 
-type Mode = 'success' | 'empty' | 'error';
-
-let _mode: Mode = 'success';
-
-export const setAppointmentMode = (mode: Mode) => {
-  _mode = mode;
-};
-
-function getThisWeekend(): { saturday: string; sunday: string } {
-  const now = new Date();
-  const dayOfWeek = now.getDay();
-  // 0=Sun, 1=Mon, ..., 6=Sat
-  const daysUntilSaturday = dayOfWeek === 6 ? 0 : (6 - dayOfWeek + 7) % 7;
-  const saturday = new Date(now);
-  saturday.setDate(now.getDate() + daysUntilSaturday);
-
-  const sunday = new Date(saturday);
-  sunday.setDate(saturday.getDate() + 1);
-
-  const fmt = (d: Date) => {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  };
-
-  return { saturday: fmt(saturday), sunday: fmt(sunday) };
-}
+// ── Default stub data ──────────────────────────────────────────────────────
 
 const baseAppointments: Omit<Appointment, 'date'>[] = [
   {
@@ -135,44 +110,91 @@ const baseAppointments: Omit<Appointment, 'date'>[] = [
   },
 ];
 
-export const listAppointments = async (
-  _boardId: number,
-  _dates: string[],
-): Promise<Appointment[]> => {
-  if (_mode === 'error') throw new Error('Mock error');
-  if (_mode === 'empty') return [];
+const { saturday, sunday } = getThisWeekend();
+const defaultAppointments: Appointment[] = baseAppointments.map(a => ({
+  ...a,
+  // First 3 appointments go on Saturday, the rest on Sunday
+  date: a.id <= 3 ? saturday : sunday,
+}));
 
-  const { saturday, sunday } = getThisWeekend();
+// ── Internal state ─────────────────────────────────────────────────────────
 
-  return baseAppointments.map(a => ({
-    ...a,
-    // First 3 appointments go on Saturday, the rest on Sunday
-    date: a.id <= 3 ? saturday : sunday,
-  }));
-};
+let _appointments: Appointment[] = defaultAppointments;
+let _appointmentError: Error | null = null;
+let _createAppointmentError: Error | null = null;
 
-export const getAppointment = async (id: number): Promise<Appointment> => {
-  if (_mode === 'error') throw new Error('Mock error');
-  const { saturday, sunday } = getThisWeekend();
-  const base = baseAppointments.find(a => a.id === id);
-  if (!base) throw new Error('Appointment not found');
-  return {
-    ...base,
-    date: base.id <= 3 ? saturday : sunday,
-  };
-};
+// ── Mock functions ─────────────────────────────────────────────────────────
 
-export const createAppointment = async (
-  _data: CreateAppointmentData,
-): Promise<{ id: number }> => {
-  return { id: 99 };
-};
+export const listAppointments = createMockFn(
+  async (_boardId: number, _dates: string[]): Promise<Appointment[]> => {
+    if (_appointmentError) throw _appointmentError;
+    return _appointments;
+  },
+);
 
-export const updateAppointment = async (): Promise<void> => {};
+export const getAppointment = createMockFn(
+  async (id: number): Promise<Appointment> => {
+    if (_appointmentError) throw _appointmentError;
+    const appointment = _appointments.find(a => a.id === id);
+    if (!appointment) throw new Error('Appointment not found');
+    return appointment;
+  },
+);
 
-export const updateStatus = async (
-  _id: number,
-  _status: AppointmentStatus,
-): Promise<void> => {};
+export const createAppointment = createMockFn(
+  async (_data: CreateAppointmentData): Promise<{ id: number }> => {
+    if (_createAppointmentError) throw _createAppointmentError;
+    return { id: 99 };
+  },
+);
 
-export const deleteAppointment = async (_id: number): Promise<void> => {};
+export const updateAppointment = createMockFn(async (): Promise<void> => {});
+
+export const updateStatus = createMockFn(
+  async (_id: number, _status: AppointmentStatus): Promise<void> => {},
+);
+
+export const deleteAppointment = createMockFn(
+  async (_id: number): Promise<void> => {},
+);
+
+// ── Fluent scenario builders (.withX()) ────────────────────────────────────
+
+export function withAppointments(
+  appointments: Appointment[] = defaultAppointments,
+): Appointment[] {
+  _appointmentError = null;
+  _appointments = appointments;
+  return _appointments;
+}
+
+export function withAppointmentError(
+  error: Error = new Error('Mock error'),
+): Error {
+  _appointmentError = error;
+  return error;
+}
+
+export function withCreateAppointmentError(
+  error: Error = new Error('Mock error'),
+): Error {
+  _createAppointmentError = error;
+  return error;
+}
+
+// ── Reset ──────────────────────────────────────────────────────────────────
+
+export function reset(): void {
+  _appointments = defaultAppointments;
+  _appointmentError = null;
+  _createAppointmentError = null;
+
+  if (typeof jest !== 'undefined') {
+    listAppointments.mockClear();
+    getAppointment.mockClear();
+    createAppointment.mockClear();
+    updateAppointment.mockClear();
+    updateStatus.mockClear();
+    deleteAppointment.mockClear();
+  }
+}
