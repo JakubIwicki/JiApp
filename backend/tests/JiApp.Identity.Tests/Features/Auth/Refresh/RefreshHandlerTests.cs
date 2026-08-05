@@ -1,3 +1,4 @@
+using JiApp.Common.Authentication;
 using JiApp.Common.Models;
 using JiApp.Identity.Configuration;
 using JiApp.Common.Abstractions;
@@ -32,7 +33,7 @@ public sealed class RefreshHandlerTests
         public Mock<IDbContextTransaction> TransactionMock { get; } = new();
         public IdentitySettings Settings { get; } = new()
         {
-            Jwt = new IdentitySettings.JwtSettings { AccessTokenExpireMinutes = 15 }
+            Jwt = new JwtSettings { AccessTokenExpireMinutes = 15 }
         };
 
         public RefreshHandler Sut { get; }

@@ -1,3 +1,5 @@
+using JiApp.Common.Authentication;
+
 namespace JiApp.Identity.Configuration;
 
 [Serializable]
@@ -30,14 +32,8 @@ public sealed class IdentitySettings
             return;
         }
 
-        if (string.IsNullOrEmpty(Jwt.Key))
-            errors.Add("Jwt:Key is not configured.");
-        else if (Jwt.Key.Length < 32)
-            errors.Add("Jwt:Key must be at least 32 characters long.");
-        if (string.IsNullOrEmpty(Jwt.Issuer))
-            errors.Add("Jwt:Issuer is not configured.");
-        if (string.IsNullOrEmpty(Jwt.Audience))
-            errors.Add("Jwt:Audience is not configured.");
+        errors.AddRange(Jwt.Validate());
+
         if (!Jwt.AccessTokenExpireMinutes.HasValue)
             errors.Add("Jwt:AccessTokenExpireMinutes is not configured.");
         else if (Jwt.AccessTokenExpireMinutes.Value <= 0)
@@ -53,22 +49,6 @@ public sealed class IdentitySettings
 
     public int GetAccessTokenExpireMinutes() =>
         Jwt?.AccessTokenExpireMinutes ?? throw new InvalidOperationException("Jwt:AccessTokenExpireMinutes not configured. Call Validate() first.");
-
-    [Serializable]
-    public sealed class JwtSettings
-    {
-        public string? Key { get; set; }
-        public string? Issuer { get; set; }
-        public string? Audience { get; set; }
-        public int? AccessTokenExpireMinutes { get; set; }
-        public int? RefreshTokenExpireDays { get; set; }
-
-        public string ValidatedKey => Key ?? throw new InvalidOperationException("Jwt:Key not configured after validation");
-        public string ValidatedIssuer => Issuer ?? throw new InvalidOperationException("Jwt:Issuer not configured after validation");
-        public string ValidatedAudience => Audience ?? throw new InvalidOperationException("Jwt:Audience not configured after validation");
-        public int ValidatedAccessTokenExpireMinutes => AccessTokenExpireMinutes ?? throw new InvalidOperationException("Jwt:AccessTokenExpireMinutes not configured after validation");
-        public int ValidatedRefreshTokenExpireDays => RefreshTokenExpireDays ?? throw new InvalidOperationException("Jwt:RefreshTokenExpireDays not configured after validation");
-    }
 
     [Serializable]
     public sealed class BootstrapSettings

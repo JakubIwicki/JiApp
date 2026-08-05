@@ -2,6 +2,8 @@ using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using JiApp.Common;
+using JiApp.Common.Authentication;
 using Microsoft.IdentityModel.Tokens;
 
 namespace JiApp.Identity.Services;
@@ -24,28 +26,6 @@ public sealed class JwtTokenService(
 
     private static readonly JwtSecurityTokenHandler Handler = new();
 
-    public static TokenValidationParameters CreateValidationParameters(string key, string issuer, string audience)
-    {
-        var keyBytes = Encoding.UTF8.GetBytes(key);
-        return new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidIssuer = issuer,
-            ValidateAudience = true,
-            ValidAudience = audience,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(keyBytes),
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero,
-            ValidAlgorithms = ["HS256"]
-        };
-    }
-
-    private TokenValidationParameters CreateValidationParameters()
-    {
-        return CreateValidationParameters(key, issuer, audience);
-    }
-
     public string GenerateToken(long userId, string username, IEnumerable<string> roles, IEnumerable<string> permissions, string securityStamp)
     {
         var keyBytes = Encoding.UTF8.GetBytes(key);
@@ -65,7 +45,7 @@ public sealed class JwtTokenService(
         };
 
         claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
-        claims.AddRange(permissions.Select(p => new Claim("permission", p)));
+        claims.AddRange(permissions.Select(p => new Claim(Permissions.PermissionClaimType, p)));
 
         var token = new JwtSecurityToken(
             issuer: issuer,
@@ -82,7 +62,7 @@ public sealed class JwtTokenService(
     {
         try
         {
-            Handler.ValidateToken(token, CreateValidationParameters(), out _);
+            Handler.ValidateToken(token, TokenValidationParametersFactory.Create(key, issuer, audience), out _);
             return true;
         }
         catch (SecurityTokenException)
@@ -97,14 +77,14 @@ public sealed class JwtTokenService(
 
     public string GetUsernameFromToken(string token)
     {
-        var principal = Handler.ValidateToken(token, CreateValidationParameters(), out _);
+        var principal = Handler.ValidateToken(token, TokenValidationParametersFactory.Create(key, issuer, audience), out _);
         var claim = principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
         return claim?.Value ?? throw new SecurityTokenException("Token does not contain a username claim");
     }
 
     public long GetUserIdFromToken(string token)
     {
-        var principal = Handler.ValidateToken(token, CreateValidationParameters(), out _);
+        var principal = Handler.ValidateToken(token, TokenValidationParametersFactory.Create(key, issuer, audience), out _);
         var claim = principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
         if (claim is null || !long.TryParse(claim.Value, out var userId))
             throw new SecurityTokenException("Token does not contain a valid user id claim");

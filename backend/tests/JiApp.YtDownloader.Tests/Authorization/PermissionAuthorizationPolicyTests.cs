@@ -64,7 +64,7 @@ public sealed class PermissionAuthorizationPolicyTests
         var fixture = Fixture.Init();
         var user = Fixture.UserWithClaims(
             new Claim(ClaimTypes.NameIdentifier, "42"),
-            new Claim("permission", Permissions.SchedulerAccess));
+            new Claim(Permissions.PermissionClaimType, Permissions.SchedulerAccess));
 
         var authorized = await fixture.IsAuthorizedAsync(user);
 
@@ -77,7 +77,7 @@ public sealed class PermissionAuthorizationPolicyTests
         var fixture = Fixture.Init();
         var user = Fixture.UserWithClaims(
             new Claim(ClaimTypes.NameIdentifier, "42"),
-            new Claim("permission", Permissions.YtDownloaderAccess));
+            new Claim(Permissions.PermissionClaimType, Permissions.YtDownloaderAccess));
 
         var authorized = await fixture.IsAuthorizedAsync(user);
 

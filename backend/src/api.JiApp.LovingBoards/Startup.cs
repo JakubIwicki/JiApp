@@ -1,8 +1,8 @@
-using System.Text;
 using System.Text.Json;
 using FluentValidation;
 using JiApp.Common;
 using JiApp.Common.Abstractions;
+using JiApp.Common.Authentication;
 using JiApp.Common.Authorization;
 using JiApp.Common.Middleware;
 using Microsoft.AspNetCore.Authorization;
@@ -26,7 +26,6 @@ using api.JiApp.LovingBoards.Persistence;
 using api.JiApp.LovingBoards.Realtime;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Serilog.Context;
 
@@ -56,18 +55,8 @@ public class Startup(LovingBoardsSettings settings, IWebHostEnvironment env)
             })
             .AddJwtBearer(options =>
             {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidateLifetime = true,
-                    ValidIssuer = settings.Jwt!.Issuer!,
-                    ValidAudience = settings.Jwt!.Audience!,
-                    IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(settings.Jwt!.Key!)),
-                    ValidAlgorithms = ["HS256"],
-                };
+                options.TokenValidationParameters = TokenValidationParametersFactory.Create(
+                    settings.Jwt!.ValidatedKey, settings.Jwt!.ValidatedIssuer, settings.Jwt!.ValidatedAudience);
 
                 options.Events = new JwtBearerEvents
                 {

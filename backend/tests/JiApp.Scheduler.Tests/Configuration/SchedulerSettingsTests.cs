@@ -1,3 +1,4 @@
+using JiApp.Common.Authentication;
 using JiApp.Scheduler.Configuration;
 
 namespace JiApp.Scheduler.Tests.Configuration;

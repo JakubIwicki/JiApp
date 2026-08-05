@@ -1,10 +1,11 @@
+using JiApp.Common.Authentication;
 using JiApp.Gateway.Configuration;
 
 namespace JiApp.Gateway.Tests.Configuration;
 
 public sealed class GatewaySettingsTests
 {
-    private static GatewaySettings.JwtSettings ValidJwt => new()
+    private static JwtSettings ValidJwt => new()
     {
         Key = "test-key-min-32-chars-!!!!!!!!!!!!!!!!",
         Issuer = "test-issuer",
@@ -50,7 +51,7 @@ public sealed class GatewaySettingsTests
     {
         var sut = new GatewaySettings
         {
-            Jwt = new GatewaySettings.JwtSettings
+            Jwt = new JwtSettings
             {
                 Key = string.Empty,
                 Issuer = "test-issuer",
@@ -70,7 +71,7 @@ public sealed class GatewaySettingsTests
     {
         var sut = new GatewaySettings
         {
-            Jwt = new GatewaySettings.JwtSettings
+            Jwt = new JwtSettings
             {
                 Key = "test-key-min-32-chars-!!!!!!!!!!!!!!!!",
                 Issuer = string.Empty,
@@ -90,7 +91,7 @@ public sealed class GatewaySettingsTests
     {
         var sut = new GatewaySettings
         {
-            Jwt = new GatewaySettings.JwtSettings
+            Jwt = new JwtSettings
             {
                 Key = "test-key-min-32-chars-!!!!!!!!!!!!!!!!",
                 Issuer = "test-issuer",
@@ -110,7 +111,7 @@ public sealed class GatewaySettingsTests
     {
         var sut = new GatewaySettings
         {
-            Jwt = new GatewaySettings.JwtSettings
+            Jwt = new JwtSettings
             {
                 Key = "test-key-min-32-chars-!!!!!!!!!!!!!!!!",
                 Issuer = "test-issuer",
@@ -129,7 +130,7 @@ public sealed class GatewaySettingsTests
     {
         var sut = new GatewaySettings
         {
-            Jwt = new GatewaySettings.JwtSettings
+            Jwt = new JwtSettings
             {
                 Key = "test-key-min-32-chars-!!!!!!!!!!!!!!!!",
                 Issuer = "test-issuer",
@@ -196,7 +197,7 @@ public sealed class GatewaySettingsTests
     {
         var sut = new GatewaySettings
         {
-            Jwt = new GatewaySettings.JwtSettings
+            Jwt = new JwtSettings
             {
                 Key = string.Empty,
                 Issuer = string.Empty,

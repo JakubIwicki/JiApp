@@ -2,6 +2,7 @@ namespace JiApp.Common;
 
 public static class Permissions
 {
+	public const string PermissionClaimType = "permission";
 	public const string SchedulerAccess = "scheduler.access";
 	public const string YtDownloaderAccess = "ytdownloader.access";
 	public const string LovingBoardsAccess = "lovingboards.access";

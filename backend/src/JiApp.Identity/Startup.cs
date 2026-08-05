@@ -4,6 +4,7 @@ using System.Threading.RateLimiting;
 using FluentValidation;
 using JiApp.Common;
 using JiApp.Common.Abstractions;
+using JiApp.Common.Authentication;
 using JiApp.Common.Models;
 using JiApp.Identity.Configuration;
 using JiApp.Common.Middleware;
@@ -39,7 +40,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Serilog.Context;
 
@@ -88,7 +88,7 @@ public class Startup(IdentitySettings settings, IWebHostEnvironment env)
             })
             .AddJwtBearer(options =>
             {
-                options.TokenValidationParameters = JwtTokenService.CreateValidationParameters(
+                options.TokenValidationParameters = TokenValidationParametersFactory.Create(
                     jwt.ValidatedKey, jwt.ValidatedIssuer, jwt.ValidatedAudience);
 
                 options.Events = new JwtBearerEvents

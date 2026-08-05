@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using JiApp.Common;
 using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.Identity.Features.Admin.Common;
@@ -36,7 +37,7 @@ public sealed class UpdateRolePermissionsHandlerTests
 		{
 			RoleManagerDouble.WithFindByNameAsync("User", _role);
 			RoleManagerDouble.WithGetClaimsAsync(_role,
-				[new Claim("permission", "scheduler.access")]);
+				[new Claim(Permissions.PermissionClaimType, "scheduler.access")]);
 			RoleManagerDouble.WithRemoveClaimAsync(IdentityResult.Success);
 			RoleManagerDouble.WithAddClaimAsync(IdentityResult.Success);
 			UserManagerDouble.WithGetUsersInRoleAsync("User",

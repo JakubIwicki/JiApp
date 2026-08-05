@@ -1,4 +1,5 @@
 using JiApp.Common.Abstractions;
+using JiApp.Common.Authentication;
 using JiApp.Common.Services;
 using api.JiApp.LovingBoards.Common;
 using api.JiApp.LovingBoards.Configuration;

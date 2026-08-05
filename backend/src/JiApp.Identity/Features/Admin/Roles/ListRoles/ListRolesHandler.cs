@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using JiApp.Common;
 using JiApp.Common.Abstractions;
 using Microsoft.AspNetCore.Identity;
 
@@ -16,7 +17,7 @@ public sealed class ListRolesHandler(RoleManager<IdentityRole<long>> roleManager
 			var roleName = role.Name ?? string.Empty;
 			var claims = await roleManager.GetClaimsAsync(role);
 			var permissions = claims
-				.Where(c => c.Type == "permission")
+				.Where(c => c.Type == Permissions.PermissionClaimType)
 				.Select(c => c.Value)
 				.ToList();
 			summaries.Add(new RoleSummary(roleName, permissions));
