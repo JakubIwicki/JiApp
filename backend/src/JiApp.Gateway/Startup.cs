@@ -223,7 +223,7 @@ public class Startup(GatewaySettings settings, IConfiguration configuration, IWe
         if (app.Environment.IsDevelopment())
         {
             HealthDashboardEndpoint.MapHealthDashboard(
-                app, "https://localhost:6701", "https://localhost:6702", "https://localhost:6703",
+                app, "https://localhost:6701", "https://localhost:6702",
                 "https://localhost:6704", "https://localhost:6705");
         }
     }

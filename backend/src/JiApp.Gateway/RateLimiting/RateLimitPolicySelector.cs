@@ -53,13 +53,9 @@ public sealed class RateLimitPolicySelector(
         // Downstream service health checks
         ["/api/v1/auth/health"] = RateLimitPolicyNames.HealthPolicy,
         ["/api/v1/yt/health"] = RateLimitPolicyNames.HealthPolicy,
-        ["/api/v1/imagetools/health"] = RateLimitPolicyNames.HealthPolicy,
         ["/api/v1/scheduler/health"] = RateLimitPolicyNames.HealthPolicy,
         ["/api/v1/lovingboards/health"] = RateLimitPolicyNames.HealthPolicy,
 
-        // Proxied routes without specific rate limits (YARP catch-all).
-        // Pass through with no rate limiting applied.
-        ["/api/v1/imagetools"] = null,
         // Admin routes: proxied to Identity, already Admin-role + auth gated. Pass through (no rate limit).
         ["/api/v1/auth/admin"] = null,
         ["/api/v1/scheduler"] = RateLimitPolicyNames.SchedulerPolicy,

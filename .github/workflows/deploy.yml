@@ -60,7 +60,7 @@ jobs:
 
           docker compose -f backend/docker-compose.yml build
 
-          for svc in gateway identity ytdownloader imagetools scheduler; do
+          for svc in gateway identity ytdownloader scheduler; do
             echo "Pushing jiapp/${svc}:${IMAGE_TAG}..."
             docker tag "jiapp-${svc}:latest" "${ECR_BASE}/${svc}:${IMAGE_TAG}"
             docker push "${ECR_BASE}/${svc}:${IMAGE_TAG}"

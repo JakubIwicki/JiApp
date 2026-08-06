@@ -111,17 +111,6 @@ Resources:
         LifecyclePolicyText: |
           { "rules": [{ "rulePriority": 1, "description": "Keep last 5 images", "selection": { "tagStatus": "any", "countType": "imageCountMoreThan", "countNumber": 5 }, "action": { "type": "expire" } }] }
 
-  EcrImageTools:
-    Type: AWS::ECR::Repository
-    DeletionPolicy: Retain
-    UpdateReplacePolicy: Retain
-    Properties:
-      RepositoryName: jiapp/imagetools
-      ImageTagMutability: IMMUTABLE
-      LifecyclePolicy:
-        LifecyclePolicyText: |
-          { "rules": [{ "rulePriority": 1, "description": "Keep last 5 images", "selection": { "tagStatus": "any", "countType": "imageCountMoreThan", "countNumber": 5 }, "action": { "type": "expire" } }] }
-
   EcrScheduler:
     Type: AWS::ECR::Repository
     DeletionPolicy: Retain
@@ -305,8 +294,6 @@ Outputs:
     Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/jiapp/identity
   EcrYtDownloaderUri:
     Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/jiapp/ytdownloader
-  EcrImageToolsUri:
-    Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/jiapp/imagetools
   EcrSchedulerUri:
     Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/jiapp/scheduler
   SecurityGroupId:

@@ -14,14 +14,12 @@ graph TD
 
     ID["🔐 Identity<br/>:6701"]
     YT["🎵 YtDownloader<br/>:6702"]
-    IMG["🖼️ ImageTools<br/>:6703"]
     SCH["📅 Scheduler<br/>:6704"]
 
     Mobile -->|"HTTPS :6700<br/>/api/v1/*"| GW
 
     GW -->|"/api/v1/auth/*"| ID
     GW -->|"/api/v1/yt/*"| YT
-    GW -->|"/api/v1/imagetools/*"| IMG
     GW -->|"/api/v1/scheduler/*"| SCH
 
     ID ---|"jiapp_identity"| PG
@@ -54,7 +52,6 @@ graph TD
 | **Gateway** | 6700 | JWT auth, rate limiting, YARP reverse proxy, health dashboard | — |
 | **Identity** | 6701 | Registration, login, JWT tokens, refresh token rotation | `jiapp_identity` |
 | **YtDownloader** | 6702 | YouTube search, MP3 download, audio preview streaming | `jiapp_ytdownloader` |
-| **ImageTools** | 6703 | Image processing (stub) | — |
 | **Scheduler** | 6704 | Boards, clients, appointments, expenses, revenue reports | `jiapp_scheduler` |
 
 ## Vertical Slice Architecture
@@ -89,18 +86,16 @@ JiApp/
 │   │   ├── JiApp.Identity/       # Auth: register, login, JWT, refresh tokens
 │   │   ├── JiApp.YtDownloader/   # YouTube search, MP3 download, audio streaming
 │   │   ├── JiApp.YtApi/          # YouTube Data API v3 client + yt-dlp wrapper
-│   │   ├── JiApp.ImageTools/     # Image processing (stub)
 │   │   └── JiApp.Scheduler/      # Boards, clients, appointments, expenses, reports
 │   └── tests/
 │       ├── JiApp.Gateway.Tests/        # 40 tests
 │       ├── JiApp.Identity.Tests/       # 46 tests
 │       ├── JiApp.YtDownloader.Tests/   # 31 tests
-│       ├── JiApp.ImageTools.Tests/     # 8 tests
 │       └── JiApp.Scheduler.Tests/      # 196 tests
 └── mobile/
     ├── package.json
     ├── src/
-    │   ├── modules/              # Feature modules (yt-downloader, image-tools, scheduler)
+    │   ├── modules/              # Feature modules (admin, lovingBoards, scheduler)
     │   │   └── scheduler/        #   screens, components, hooks, services, navigator
     │   ├── shell/                # Module registry + dynamic tab loader
     │   ├── context/              # AuthContext, BoardContext, ToastContext

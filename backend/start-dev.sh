@@ -42,7 +42,6 @@ export Youtube__ApiKey="${YOUTUBE_API_KEY:-placeholder}"
 SERVICES=(
   "Identity|6701|src/JiApp.Identity|Data Source=$DATA_DIR/identity_dev.db|https"
   "YtDownloader|6702|src/JiApp.YtDownloader|Data Source=$DATA_DIR/ytdownloader_dev.db|https"
-  "ImageTools|6703|src/JiApp.ImageTools||https"
   "Scheduler|6704|src/JiApp.Scheduler|Data Source=$DATA_DIR/scheduler_dev.db|https"
   "Gateway|6700|src/JiApp.Gateway||https"
 )

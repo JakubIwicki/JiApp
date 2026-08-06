@@ -17,15 +17,6 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
 
-  imagetools:
-    build:
-      context: .
-      dockerfile: ./src/JiApp.ImageTools/Dockerfile
-    ports:
-      - "6703:6703"
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-
   scheduler:
     build:
       context: .
@@ -55,6 +46,5 @@ services:
     depends_on:
       - identity
       - ytdownloader
-      - imagetools
       - scheduler
       - lovingboards
