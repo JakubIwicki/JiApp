@@ -119,4 +119,17 @@ public sealed class RoleSeederTests
 
 		fixture.UserManagerDouble.VerifyGetUsersInRoleAsync_NotCalled();
 	}
+
+	[Fact]
+	public async Task SeedAsync_Throws_WhenCancellationRequested()
+	{
+		var fixture = new Fixture();
+		using var cts = new CancellationTokenSource();
+		cts.Cancel();
+
+		var act = async () => await fixture.Sut.SeedAsync(cts.Token);
+
+		await act.Should().ThrowAsync<OperationCanceledException>();
+		fixture.RoleManagerDouble.VerifyFindByNameAsync_NotCalled();
+	}
 }

@@ -70,7 +70,7 @@ public sealed class RefreshHandler(
             await userManager.UpdateSecurityStampAsync(user);
 
         var roles = await userManager.GetRolesAsync(user);
-        var permissions = await accessService.GetEffectivePermissionsAsync(user.Id);
+        var permissions = await accessService.GetEffectivePermissionsAsync(user.Id, ct);
         var accessToken = jwtTokenService.GenerateToken(user.Id, user.UserName!, roles, permissions, user.SecurityStamp!);
         var newRefreshToken = await refreshTokenService.CreateAsync(user.Id, ct);
         var expiresIn = settings.GetAccessTokenExpireMinutes() * 60;

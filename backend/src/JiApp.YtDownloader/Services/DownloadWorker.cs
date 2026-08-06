@@ -1,4 +1,5 @@
 using System.Threading.Channels;
+using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 using JiApp.YtApi;
 using JiApp.YtDownloader.Configuration;
@@ -22,8 +23,6 @@ internal sealed class DownloadWorker(
     TimeSpan? downloadTimeout = null,
     TimeSpan? pollInterval = null) : BackgroundService
 {
-    public const string YoutubeDlErrorCategory = "YoutubeDl";
-
     private const int MaxConcurrentDownloads = 3;
     private const int HistoryWriteMaxAttempts = 3;
     private static readonly TimeSpan HistoryWriteRetryDelay = TimeSpan.FromMilliseconds(250);
@@ -101,7 +100,7 @@ internal sealed class DownloadWorker(
         YoutubeClientResponse downloadResult;
         try
         {
-            downloadResult = await youtubeClient.DownloadVideoAsync(job.VideoId, outputFolder, timeoutCts.Token);
+            downloadResult = await youtubeClient.DownloadVideoAsync(job.VideoId, outputFolder, tempId, timeoutCts.Token);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
@@ -123,30 +122,30 @@ internal sealed class DownloadWorker(
         {
             var errors = string.Join(", ", downloadResult.Errors);
             logger.YoutubeDlDownloadFailed(job.VideoId, errors);
-            jobStore.MarkFailed(tempId, job.UserId, "Failed to download video. Please try again later.", YoutubeDlErrorCategory);
+            jobStore.MarkFailed(tempId, job.UserId, "Failed to download video. Please try again later.", ResultCategories.YoutubeDl);
             return;
         }
 
         var filePath = downloadResult.FilePath;
         if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
         {
-            jobStore.MarkFailed(tempId, job.UserId, "Download completed but file is missing.", YoutubeDlErrorCategory);
+            jobStore.MarkFailed(tempId, job.UserId, "Download completed but file is missing.", ResultCategories.YoutubeDl);
             return;
         }
 
         if (new FileInfo(filePath).Length == 0)
         {
             TryDeleteFile(filePath);
-            jobStore.MarkFailed(tempId, job.UserId, "Download completed but file is empty.", YoutubeDlErrorCategory);
+            jobStore.MarkFailed(tempId, job.UserId, "Download completed but file is empty.", ResultCategories.YoutubeDl);
             return;
         }
 
         jobStore.MarkReady(tempId, job.UserId, filePath);
 
-        await RecordHistoryAsync(job, tempId);
+        await RecordHistoryAsync(job, tempId, stoppingToken);
     }
 
-    private async Task RecordHistoryAsync(DownloadJobInfo job, string tempId)
+    private async Task RecordHistoryAsync(DownloadJobInfo job, string tempId, CancellationToken ct)
     {
         for (var attempt = 1; attempt <= HistoryWriteMaxAttempts; attempt++)
         {
@@ -166,8 +165,8 @@ internal sealed class DownloadWorker(
                     ImageUrl = job.VideoImageUrl
                 };
 
-                await repository.AddAsync(historyEntry);
-                await repository.SaveChangesAsync();
+                await repository.AddAsync(historyEntry, ct);
+                await repository.SaveChangesAsync(ct);
                 return;
             }
             catch (Exception ex) when (attempt < HistoryWriteMaxAttempts)

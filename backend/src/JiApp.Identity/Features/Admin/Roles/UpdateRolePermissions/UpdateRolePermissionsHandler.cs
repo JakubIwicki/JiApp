@@ -18,7 +18,7 @@ public sealed class UpdateRolePermissionsHandler(
 	{
 		var editableCheck = guard.EnsureRoleIsEditable(roleName);
 		if (!editableCheck.IsSuccess)
-			return editableCheck;
+			return editableCheck.WithValue(true);
 
 		var role = await roleManager.FindByNameAsync(roleName);
 		if (role is null)

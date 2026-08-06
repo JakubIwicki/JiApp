@@ -171,6 +171,7 @@ public sealed class LoginHandlerTests
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Account is locked. Please try again later.");
+        result.ErrorCategory.Should().Be(ResultCategories.AccountLocked);
     }
 
     [Fact]

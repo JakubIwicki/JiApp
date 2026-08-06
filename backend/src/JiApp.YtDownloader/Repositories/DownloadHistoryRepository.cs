@@ -19,7 +19,7 @@ public sealed class DownloadHistoryRepository(YtDbContext dbContext) : IDownload
         return results.AsReadOnly();
     }
 
-    public Task AddAsync(YoutubeDownloadHistory entry)
+    public Task AddAsync(YoutubeDownloadHistory entry, CancellationToken ct)
     {
         dbContext.YoutubeDownloadHistory.Add(entry);
         return Task.CompletedTask;
@@ -39,8 +39,8 @@ public sealed class DownloadHistoryRepository(YtDbContext dbContext) : IDownload
         return true;
     }
 
-    public async Task SaveChangesAsync()
+    public async Task SaveChangesAsync(CancellationToken ct)
     {
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(ct);
     }
 }

@@ -1,3 +1,4 @@
+using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
 
 namespace JiApp.Scheduler.Domain;
@@ -26,19 +27,17 @@ public sealed class Appointment : BaseEntity<long>
     public Client Client { get; set; } = null!;
     public Service Service { get; set; } = null!;
 
-    public bool TryTransitionTo(AppointmentStatus newStatus, out string? error)
+    public Result TryTransitionTo(AppointmentStatus newStatus)
     {
         if (Status == AppointmentStatus.Created)
         {
             if (newStatus is AppointmentStatus.Done or AppointmentStatus.Cancelled)
             {
                 Status = newStatus;
-                error = null;
-                return true;
+                return Result.Success();
             }
         }
 
-        error = $"Cannot change status from {Status} to {newStatus}";
-        return false;
+        return Result.Failure($"Cannot change status from {Status} to {newStatus}");
     }
 }

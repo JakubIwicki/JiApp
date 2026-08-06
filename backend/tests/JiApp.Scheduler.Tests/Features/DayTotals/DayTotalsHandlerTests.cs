@@ -101,7 +101,7 @@ public sealed class DayTotalsHandlerTests : HandlerTestBase<SchedulerDbContext>
     public async Task DayTotals_WithCancelledAppointment_ExcludesFromRevenue()
     {
         var fixture = Fixture.Init(DbContext, Db)
-            .WithAppointment(a => { a.TryTransitionTo(AppointmentStatus.Cancelled, out _); });
+            .WithAppointment(a => { a.TryTransitionTo(AppointmentStatus.Cancelled); });
         var sut = fixture.Sut;
 
         var result = await sut.HandleAsync(new DayTotalsRequest(fixture.Board.Id, fixture.Date), CancellationToken.None);
