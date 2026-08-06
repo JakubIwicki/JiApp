@@ -63,4 +63,20 @@ public sealed class LovingBoardsSettingsTests
 
         act.Should().NotThrow();
     }
+
+    [Fact]
+    public void Validate_WithZeroMaxMembersPerBoard_ThrowsInvalidOperationException()
+    {
+        var settings = new LovingBoardsSettings
+        {
+            ConnectionString = "Data Source=test.db",
+            Jwt = new JwtSettings { Key = "test-jwt-key-with-at-least-32-chars", Issuer = "iss", Audience = "aud" },
+            MaxMembersPerBoard = 0
+        };
+
+        var act = () => settings.Validate();
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*MaxMembersPerBoard*");
+    }
 }

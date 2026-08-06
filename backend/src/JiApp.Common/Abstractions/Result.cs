@@ -23,6 +23,7 @@ public static class ResultCategories
     public const string Validation = "Validation";
     public const string Conflict = "Conflict";
     public const string BadGateway = "BadGateway";
+    public const string Unavailable = "Unavailable";
     public const string AccountLocked = "AccountLocked";
     public const string YoutubeDl = "YoutubeDl";
 }

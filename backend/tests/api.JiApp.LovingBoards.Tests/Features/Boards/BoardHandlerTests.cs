@@ -1,8 +1,10 @@
 using JiApp.Common.Abstractions;
 using JiApp.Common.Authentication;
 using JiApp.Common.Services;
+using api.JiApp.LovingBoards.Clients;
 using api.JiApp.LovingBoards.Configuration;
 using api.JiApp.LovingBoards.Features.Boards.AddBoardMember;
+using api.JiApp.LovingBoards.Tests.Features.Boards.AddBoardMember;
 using api.JiApp.LovingBoards.Features.Boards.CreateBoard;
 using api.JiApp.LovingBoards.Features.Boards.DeleteBoard;
 using api.JiApp.LovingBoards.Features.Boards.GetBoard;
@@ -33,6 +35,7 @@ public sealed class BoardHandlerTests : HandlerTestBase<LovingBoardsDbContext>
         private readonly ICurrentUserService _currentUser;
         private readonly LovingBoardsSettings _settings;
         private readonly IBoardBroadcaster _broadcaster;
+        private readonly IUserExistenceClient _userExistenceClient = UserExistenceClientDouble.Found().Object;
         private readonly TimeProvider _timeProvider = TimeProvider.System;
 
         private Fixture(ILovingBoardsDbContext dbContext, TestDb testDb)
@@ -44,12 +47,12 @@ public sealed class BoardHandlerTests : HandlerTestBase<LovingBoardsDbContext>
             _broadcaster = new NoOpBoardBroadcaster();
         }
 
-        public CreateBoardHandler Sut => new(_dbContext, _settings, _currentUser, _timeProvider);
+        public CreateBoardHandler Sut => new(_dbContext, _settings, _currentUser, _timeProvider, new UserWriteLock());
         public GetBoardHandler GetBoard => new(_dbContext, _currentUser, _broadcaster, _timeProvider);
         public UpdateBoardHandler UpdateBoard => new(_dbContext, _currentUser, _broadcaster);
         public DeleteBoardHandler DeleteBoard => new(_dbContext, _currentUser, _broadcaster);
         public ListBoardsHandler ListBoards => new(_dbContext, _settings, _currentUser, _timeProvider);
-        public AddBoardMemberHandler AddBoardMember => new(_dbContext, _currentUser, _broadcaster, new BoardWriteLock());
+        public AddBoardMemberHandler AddBoardMember => new(_dbContext, _currentUser, _broadcaster, new BoardWriteLock(), _settings, _userExistenceClient);
         public RemoveBoardMemberHandler RemoveBoardMember => new(_dbContext, _currentUser, _broadcaster, new BoardWriteLock());
 
         public static Fixture Init(ILovingBoardsDbContext dbContext, TestDb testDb) => new(dbContext, testDb);
@@ -693,7 +696,7 @@ public sealed class BoardHandlerTests : HandlerTestBase<LovingBoardsDbContext>
     public async Task AddBoardMember_PublishesMemberChanged()
     {
         var capturing = new CapturingBoardBroadcaster();
-        var handler = new AddBoardMemberHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing, new BoardWriteLock());
+        var handler = new AddBoardMemberHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing, new BoardWriteLock(), DefaultSettings, UserExistenceClientDouble.Found().Object);
         var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
 
         await handler.HandleAsync(boardId, new AddBoardMemberRequest(2L), CancellationToken.None);
@@ -706,7 +709,7 @@ public sealed class BoardHandlerTests : HandlerTestBase<LovingBoardsDbContext>
     public async Task AddBoardMember_AlreadyMember_DoesNotPublishMemberChanged()
     {
         var capturing = new CapturingBoardBroadcaster();
-        var handler = new AddBoardMemberHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing, new BoardWriteLock());
+        var handler = new AddBoardMemberHandler(DbContext, MockCurrentUserService.GetSuccessful().Mock.Object, capturing, new BoardWriteLock(), DefaultSettings, UserExistenceClientDouble.Found().Object);
         var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
 
         var result = await handler.HandleAsync(boardId, new AddBoardMemberRequest(1L), CancellationToken.None);

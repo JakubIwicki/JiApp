@@ -16,6 +16,7 @@ using JiApp.Identity.Features.Auth.Me;
 using JiApp.Identity.Features.Auth.Validate;
 using JiApp.Identity.Features.Auth.Refresh;
 using JiApp.Identity.Features.Auth.ChangePassword;
+using JiApp.Identity.Features.Auth.UserExists;
 using JiApp.Identity.Features.Auth.Register;
 using JiApp.Identity.Features.Auth.UpdateProfile;
 using JiApp.Identity.Features.Admin.Common;
@@ -319,6 +320,7 @@ public class Startup(IdentitySettings settings, IWebHostEnvironment env)
         auth.MapValidate();
         auth.MapUpdateProfile();
         auth.MapChangePassword();
+        auth.MapUserExists();
 
         var admin = auth.MapGroup("admin").RequireAuthorization(p => p.RequireRole(RoleNames.Admin));
         admin.MapListUsers();
