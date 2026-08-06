@@ -158,4 +158,40 @@ describe('openBoardStream', () => {
     emit('presence', { userIds: [9] });
     expect(onPresence).toHaveBeenCalledWith([9]);
   });
+
+  it('does not reconnect when consumer closes during the 401 refresh round-trip', async () => {
+    const ES = jest.requireMock('react-native-sse').default;
+    const onError = jest.fn();
+    let resolveRefresh: (token: string) => void = () => {};
+    mockRefreshAuth.mockImplementationOnce(
+      () =>
+        new Promise<string>(resolve => {
+          resolveRefresh = resolve;
+        }),
+    );
+
+    const handle = openBoardStream(createParams({ onError }));
+    await flush();
+
+    // Trigger a 401; refreshAuth is now pending
+    const errorListeners = capturedListeners?.get('error') ?? [];
+    for (const l of errorListeners) {
+      l({
+        type: 'error',
+        message: 'Unauthorized',
+        xhrStatus: 401,
+        xhrState: 4,
+      });
+    }
+
+    // Close while the refresh promise is still in flight
+    handle.close();
+
+    resolveRefresh('fresh-token');
+    await flush();
+
+    // Consumer asked to close, so no reconnect EventSource is created
+    expect(ES).toHaveBeenCalledTimes(1);
+    expect(onError).not.toHaveBeenCalled();
+  });
 });
