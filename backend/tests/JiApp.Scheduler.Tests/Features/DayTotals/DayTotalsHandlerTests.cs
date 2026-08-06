@@ -57,9 +57,14 @@ public sealed class DayTotalsHandlerTests : HandlerTestBase<SchedulerDbContext>
         {
             var appointment = new Appointment
             {
-                BoardId = _board.Id, ClientId = Client.Id, ServiceId = Service.Id,
-                Date = _date, StartTime = new TimeOnly(10, 0), EndTime = new TimeOnly(11, 0),
-                Price = new Price(200), Location = "Room 1",
+                BoardId = _board.Id,
+                ClientId = Client.Id,
+                ServiceId = Service.Id,
+                Date = _date,
+                StartTime = new TimeOnly(10, 0),
+                EndTime = new TimeOnly(11, 0),
+                Price = new Price(200),
+                Location = "Room 1",
                 CreatedBy = 1L
             };
             configure?.Invoke(appointment);
@@ -71,7 +76,8 @@ public sealed class DayTotalsHandlerTests : HandlerTestBase<SchedulerDbContext>
         {
             var expense = new Expense
             {
-                BoardId = _board.Id, Date = _date,
+                BoardId = _board.Id,
+                Date = _date,
                 Category = Enum.Parse<ExpenseCategory>(category),
                 Amount = new Price(amount)
             };

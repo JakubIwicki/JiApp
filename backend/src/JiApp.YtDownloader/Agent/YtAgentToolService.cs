@@ -1,7 +1,8 @@
 using System.Text.RegularExpressions;
 using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
-using JiApp.YtApi;
+using JiApp.YtApi.Clients;
+using JiApp.YtApi.Contracts;
 using JiApp.YtDownloader.Features.DownloadHistory;
 using JiApp.YtDownloader.Features.SearchHistory;
 using JiApp.YtDownloader.Features.SearchVideos;

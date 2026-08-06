@@ -68,9 +68,14 @@ public sealed class ClientReportHandlerTests : HandlerTestBase<SchedulerDbContex
         {
             var appointment = new Appointment
             {
-                BoardId = _board!.Id, ClientId = clientId, ServiceId = _service!.Id,
-                Date = date, StartTime = new TimeOnly(10, 0), EndTime = new TimeOnly(11, 0),
-                Price = new Price(price), Location = location,
+                BoardId = _board!.Id,
+                ClientId = clientId,
+                ServiceId = _service!.Id,
+                Date = date,
+                StartTime = new TimeOnly(10, 0),
+                EndTime = new TimeOnly(11, 0),
+                Price = new Price(price),
+                Location = location,
                 CreatedBy = 1L
             };
             if (createdAt.HasValue)

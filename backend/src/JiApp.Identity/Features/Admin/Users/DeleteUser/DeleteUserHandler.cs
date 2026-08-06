@@ -7,25 +7,25 @@ using Microsoft.AspNetCore.Identity;
 namespace JiApp.Identity.Features.Admin.Users.DeleteUser;
 
 public sealed class DeleteUserHandler(
-	UserManager<User> userManager,
-	AdminAccessGuard guard)
+    UserManager<User> userManager,
+    AdminAccessGuard guard)
 {
-	public async Task<Result<bool>> HandleAsync(long userId, CancellationToken ct)
-	{
-		var notSelf = guard.EnsureNotSelf(userId);
-		if (!notSelf.IsSuccess)
-			return notSelf.WithValue(true);
+    public async Task<Result<bool>> HandleAsync(long userId, CancellationToken ct)
+    {
+        var notSelf = guard.EnsureNotSelf(userId);
+        if (!notSelf.IsSuccess)
+            return notSelf.WithValue(true);
 
-		var notLastAdmin = await guard.EnsureNotLastAdminAsync(userId);
-		if (!notLastAdmin.IsSuccess)
-			return notLastAdmin.WithValue(true);
+        var notLastAdmin = await guard.EnsureNotLastAdminAsync(userId);
+        if (!notLastAdmin.IsSuccess)
+            return notLastAdmin.WithValue(true);
 
-		var user = await userManager.FindByIdAsync(userId.ToString(CultureInfo.InvariantCulture));
-		if (user is null)
-			return Result<bool>.Failure($"User with ID {userId} not found", ResultCategories.NotFound);
+        var user = await userManager.FindByIdAsync(userId.ToString(CultureInfo.InvariantCulture));
+        if (user is null)
+            return Result<bool>.Failure($"User with ID {userId} not found", ResultCategories.NotFound);
 
-		await userManager.DeleteAsync(user);
+        await userManager.DeleteAsync(user);
 
-		return Result<bool>.Success(true);
-	}
+        return Result<bool>.Success(true);
+    }
 }

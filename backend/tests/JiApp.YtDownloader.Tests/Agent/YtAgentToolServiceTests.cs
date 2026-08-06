@@ -1,6 +1,7 @@
 using Google;
 using JiApp.Common.Models;
-using JiApp.YtApi;
+using JiApp.YtApi.Clients;
+using JiApp.YtApi.Contracts;
 using JiApp.YtDownloader.Agent;
 using JiApp.YtDownloader.Repositories;
 using Microsoft.Extensions.Caching.Memory;

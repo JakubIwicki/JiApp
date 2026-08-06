@@ -1,4 +1,4 @@
-namespace JiApp.YtApi;
+namespace JiApp.YtApi.Contracts;
 
 public sealed record YoutubeVideo(
     string VideoId,

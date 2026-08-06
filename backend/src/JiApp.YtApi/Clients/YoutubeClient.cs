@@ -8,10 +8,11 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Google.Apis.YouTube.v3;
+using JiApp.YtApi.Contracts;
 using YoutubeDLSharp;
 using YoutubeDLSharp.Options;
 
-namespace JiApp.YtApi;
+namespace JiApp.YtApi.Clients;
 
 public interface IYoutubeClient
 {

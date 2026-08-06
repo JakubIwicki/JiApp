@@ -8,7 +8,7 @@ public sealed class DownloadCommandConfiguration : IEntityTypeConfiguration<Down
 {
     public void Configure(EntityTypeBuilder<DownloadCommand> builder)
     {
-        builder.ToTable("DownloadCommands");
+        builder.ToTable(TableNames.DownloadCommands);
 
         builder.Property(e => e.Id).HasMaxLength(32);
         builder.Property(e => e.VideoId).HasMaxLength(150).IsRequired();

@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using JiApp.Common;
+using JiApp.Common.Constants;
 using JiApp.Common.Models;
 using JiApp.Identity.Configuration;
 using JiApp.Identity.Services;
@@ -12,124 +13,124 @@ namespace JiApp.Identity.Tests.Services;
 
 public sealed class RoleSeederTests
 {
-	private sealed class Fixture
-	{
-		private readonly IdentityRole<long> _adminRole = new("Admin") { Id = 1 };
-		private readonly IdentityRole<long> _userRole = new("User") { Id = 2 };
+    private sealed class Fixture
+    {
+        private readonly IdentityRole<long> _adminRole = new("Admin") { Id = 1 };
+        private readonly IdentityRole<long> _userRole = new("User") { Id = 2 };
 
-		public MockRoleManager RoleManagerDouble { get; } = MockRoleManager.GetSuccessful();
-		public MockUserManager UserManagerDouble { get; } = MockUserManager.GetSuccessful();
+        public MockRoleManager RoleManagerDouble { get; } = MockRoleManager.GetSuccessful();
+        public MockUserManager UserManagerDouble { get; } = MockUserManager.GetSuccessful();
 
-		public IdentitySettings Settings { get; } = new()
-		{
-			Bootstrap = null
-		};
+        public IdentitySettings Settings { get; } = new()
+        {
+            Bootstrap = null
+        };
 
-		public Mock<ILogger<RoleSeeder>> LoggerMock { get; } = new();
+        public Mock<ILogger<RoleSeeder>> LoggerMock { get; } = new();
 
-		public RoleSeeder Sut { get; }
+        public RoleSeeder Sut { get; }
 
-		public Fixture()
-		{
-			Sut = new RoleSeeder(RoleManagerDouble.Object, UserManagerDouble.Object, Settings, LoggerMock.Object);
-		}
+        public Fixture()
+        {
+            Sut = new RoleSeeder(RoleManagerDouble.Object, UserManagerDouble.Object, Settings, LoggerMock.Object);
+        }
 
-		public Fixture WithAllRolesExist()
-		{
-			RoleManagerDouble.WithFindByNameAsync("Admin", _adminRole);
-			RoleManagerDouble.WithFindByNameAsync("User", _userRole);
-			RoleManagerDouble.WithFindByNameAsync("Guest", new IdentityRole<long>("Guest") { Id = 3 });
+        public Fixture WithAllRolesExist()
+        {
+            RoleManagerDouble.WithFindByNameAsync("Admin", _adminRole);
+            RoleManagerDouble.WithFindByNameAsync("User", _userRole);
+            RoleManagerDouble.WithFindByNameAsync("Guest", new IdentityRole<long>("Guest") { Id = 3 });
 
-			// Admin has altered claims (missing most, has an extra)
-			RoleManagerDouble.WithGetClaimsAsync(_adminRole, [
-				new Claim(Permissions.PermissionClaimType, "some.other"),
-				new Claim(Permissions.PermissionClaimType, Permissions.SchedulerAccess)
-			]);
+            // Admin has altered claims (missing most, has an extra)
+            RoleManagerDouble.WithGetClaimsAsync(_adminRole, [
+                new Claim(Permissions.PermissionClaimType, "some.other"),
+                new Claim(Permissions.PermissionClaimType, Permissions.SchedulerAccess)
+            ]);
 
-			// User has custom claims (different from defaults)
-			RoleManagerDouble.WithGetClaimsAsync(_userRole, [
-				new Claim(Permissions.PermissionClaimType, "custom.read"),
-				new Claim(Permissions.PermissionClaimType, "custom.write")
-			]);
+            // User has custom claims (different from defaults)
+            RoleManagerDouble.WithGetClaimsAsync(_userRole, [
+                new Claim(Permissions.PermissionClaimType, "custom.read"),
+                new Claim(Permissions.PermissionClaimType, "custom.write")
+            ]);
 
-			// Guest has claims (should be empty by default)
-			RoleManagerDouble.WithGetClaimsAsyncByName("Guest",
-				[new Claim(Permissions.PermissionClaimType, "something.extra")]);
+            // Guest has claims (should be empty by default)
+            RoleManagerDouble.WithGetClaimsAsyncByName("Guest",
+                [new Claim(Permissions.PermissionClaimType, "something.extra")]);
 
-			RoleManagerDouble.WithRemoveClaimAsync(IdentityResult.Success);
-			RoleManagerDouble.WithAddClaimAsync(IdentityResult.Success);
+            RoleManagerDouble.WithRemoveClaimAsync(IdentityResult.Success);
+            RoleManagerDouble.WithAddClaimAsync(IdentityResult.Success);
 
-			return this;
-		}
-	}
+            return this;
+        }
+    }
 
-	[Fact]
-	public async Task SeedAsync_ReconcilesAdminPermissions_WhenAdminRoleHasBeenAltered()
-	{
-		var fixture = new Fixture().WithAllRolesExist();
+    [Fact]
+    public async Task SeedAsync_ReconcilesAdminPermissions_WhenAdminRoleHasBeenAltered()
+    {
+        var fixture = new Fixture().WithAllRolesExist();
 
-		await fixture.Sut.SeedAsync();
+        await fixture.Sut.SeedAsync();
 
-		fixture.RoleManagerDouble.VerifyRemovedClaimFromRole("Admin");
-		fixture.RoleManagerDouble.VerifyAddedClaimToRole("Admin");
-	}
+        fixture.RoleManagerDouble.VerifyRemovedClaimFromRole("Admin");
+        fixture.RoleManagerDouble.VerifyAddedClaimToRole("Admin");
+    }
 
-	[Fact]
-	public async Task SeedAsync_PreservesUserPermissions_WhenUserRoleAlreadyExists()
-	{
-		var fixture = new Fixture().WithAllRolesExist();
+    [Fact]
+    public async Task SeedAsync_PreservesUserPermissions_WhenUserRoleAlreadyExists()
+    {
+        var fixture = new Fixture().WithAllRolesExist();
 
-		await fixture.Sut.SeedAsync();
+        await fixture.Sut.SeedAsync();
 
-		fixture.RoleManagerDouble.VerifyRemovedClaimFromRole_NotCalled("User");
-		fixture.RoleManagerDouble.VerifyAddedClaimToRole_NotCalled("User");
-	}
+        fixture.RoleManagerDouble.VerifyRemovedClaimFromRole_NotCalled("User");
+        fixture.RoleManagerDouble.VerifyAddedClaimToRole_NotCalled("User");
+    }
 
-	[Fact]
-	public async Task SeedAsync_PreservesGuestPermissions_WhenGuestRoleAlreadyExists()
-	{
-		var fixture = new Fixture().WithAllRolesExist();
+    [Fact]
+    public async Task SeedAsync_PreservesGuestPermissions_WhenGuestRoleAlreadyExists()
+    {
+        var fixture = new Fixture().WithAllRolesExist();
 
-		await fixture.Sut.SeedAsync();
+        await fixture.Sut.SeedAsync();
 
-		fixture.RoleManagerDouble.VerifyRemovedClaimFromRole_NotCalled("Guest");
-		fixture.RoleManagerDouble.VerifyAddedClaimToRole_NotCalled("Guest");
-	}
+        fixture.RoleManagerDouble.VerifyRemovedClaimFromRole_NotCalled("Guest");
+        fixture.RoleManagerDouble.VerifyAddedClaimToRole_NotCalled("Guest");
+    }
 
-	[Fact]
-	public async Task SeedAsync_CreatesMissingRoles_WhenRolesDoNotExist()
-	{
-		var fixture = new Fixture();
-		fixture.RoleManagerDouble.WithFindByNameAsyncForAny(null);
-		fixture.RoleManagerDouble.WithCreateAsync(IdentityResult.Success);
-		fixture.RoleManagerDouble.WithGetClaimsAsyncForAny([]);
-		fixture.RoleManagerDouble.WithAddClaimAsync(IdentityResult.Success);
+    [Fact]
+    public async Task SeedAsync_CreatesMissingRoles_WhenRolesDoNotExist()
+    {
+        var fixture = new Fixture();
+        fixture.RoleManagerDouble.WithFindByNameAsyncForAny(null);
+        fixture.RoleManagerDouble.WithCreateAsync(IdentityResult.Success);
+        fixture.RoleManagerDouble.WithGetClaimsAsyncForAny([]);
+        fixture.RoleManagerDouble.WithAddClaimAsync(IdentityResult.Success);
 
-		await fixture.Sut.SeedAsync();
+        await fixture.Sut.SeedAsync();
 
-		fixture.RoleManagerDouble.VerifyCreatedRole(3);
-	}
+        fixture.RoleManagerDouble.VerifyCreatedRole(3);
+    }
 
-	[Fact]
-	public async Task SeedAsync_DoesNotCallBootstrap_WhenNoAdminUsernameConfigured()
-	{
-		var fixture = new Fixture().WithAllRolesExist();
+    [Fact]
+    public async Task SeedAsync_DoesNotCallBootstrap_WhenNoAdminUsernameConfigured()
+    {
+        var fixture = new Fixture().WithAllRolesExist();
 
-		await fixture.Sut.SeedAsync();
+        await fixture.Sut.SeedAsync();
 
-		fixture.UserManagerDouble.VerifyGetUsersInRoleAsync_NotCalled();
-	}
+        fixture.UserManagerDouble.VerifyGetUsersInRoleAsync_NotCalled();
+    }
 
-	[Fact]
-	public async Task SeedAsync_Throws_WhenCancellationRequested()
-	{
-		var fixture = new Fixture();
-		using var cts = new CancellationTokenSource();
-		cts.Cancel();
+    [Fact]
+    public async Task SeedAsync_Throws_WhenCancellationRequested()
+    {
+        var fixture = new Fixture();
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
 
-		var act = async () => await fixture.Sut.SeedAsync(cts.Token);
+        var act = async () => await fixture.Sut.SeedAsync(cts.Token);
 
-		await act.Should().ThrowAsync<OperationCanceledException>();
-		fixture.RoleManagerDouble.VerifyFindByNameAsync_NotCalled();
-	}
+        await act.Should().ThrowAsync<OperationCanceledException>();
+        fixture.RoleManagerDouble.VerifyFindByNameAsync_NotCalled();
+    }
 }

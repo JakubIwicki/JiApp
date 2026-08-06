@@ -9,29 +9,29 @@ namespace JiApp.Identity.Features.Admin.Roles.CreateRole;
 
 public static class CreateRoleEndpoint
 {
-	public static IEndpointRouteBuilder MapCreateRole(this IEndpointRouteBuilder endpoints)
-	{
-		endpoints.MapPost("/roles", async (
-				CreateRoleRequest request,
-				IValidator<CreateRoleRequest> validator,
-				CreateRoleHandler handler,
-				CancellationToken ct) =>
-			{
-				var validationResult = await validator.ValidateAsync(request, ct);
-				if (!validationResult.IsValid)
-					return Results.Extensions.ValidationError(validationResult.ErrorMessages());
+    public static IEndpointRouteBuilder MapCreateRole(this IEndpointRouteBuilder endpoints)
+    {
+        endpoints.MapPost("/roles", async (
+                CreateRoleRequest request,
+                IValidator<CreateRoleRequest> validator,
+                CreateRoleHandler handler,
+                CancellationToken ct) =>
+            {
+                var validationResult = await validator.ValidateAsync(request, ct);
+                if (!validationResult.IsValid)
+                    return Results.Extensions.ValidationError(validationResult.ErrorMessages());
 
-				var result = await handler.HandleAsync(request, ct);
-				return result.IsSuccess
-					? Results.Created((Uri?)null, null)
-					: result.ToHttp();
-			})
-			.WithTags(SwaggerConstants.Tags.Admin)
-			.WithSummary("Create a new role with specified permissions")
-			.Produces(StatusCodes.Status201Created)
-			.Produces<ApiErrorResponse>(StatusCodes.Status409Conflict)
-			.ProducesValidationProblem();
+                var result = await handler.HandleAsync(request, ct);
+                return result.IsSuccess
+                    ? Results.Created((Uri?)null, null)
+                    : result.ToHttp();
+            })
+            .WithTags(SwaggerConstants.Tags.Admin)
+            .WithSummary("Create a new role with specified permissions")
+            .Produces(StatusCodes.Status201Created)
+            .Produces<ApiErrorResponse>(StatusCodes.Status409Conflict)
+            .ProducesValidationProblem();
 
-		return endpoints;
-	}
+        return endpoints;
+    }
 }

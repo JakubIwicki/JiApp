@@ -155,13 +155,13 @@ public sealed partial class AssistantChatOrchestrator(
             switch (content)
             {
                 case TextContent { Text.Length: > 0 } text:
-                {
-                    var cleaned = textSanitizer.ProcessDelta(text.Text);
-                    if (cleaned is { Length: > 0 })
-                        events.Add(new AssistantSseEvent(
-                            AssistantSseEventNames.TextDelta, new { text = cleaned }));
-                    break;
-                }
+                    {
+                        var cleaned = textSanitizer.ProcessDelta(text.Text);
+                        if (cleaned is { Length: > 0 })
+                            events.Add(new AssistantSseEvent(
+                                AssistantSseEventNames.TextDelta, new { text = cleaned }));
+                        break;
+                    }
 
                 case FunctionCallContent call:
                     anyToolInvoked = true;

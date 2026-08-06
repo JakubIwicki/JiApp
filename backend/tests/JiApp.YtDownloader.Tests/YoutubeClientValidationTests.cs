@@ -1,4 +1,4 @@
-using JiApp.YtApi;
+using JiApp.YtApi.Clients;
 using YoutubeDLSharp.Options;
 
 namespace JiApp.YtDownloader.Tests;

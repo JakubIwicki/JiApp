@@ -8,7 +8,7 @@ public sealed class AssistantDailyUsageConfiguration : IEntityTypeConfiguration<
 {
     public void Configure(EntityTypeBuilder<AssistantDailyUsage> builder)
     {
-        builder.ToTable("AssistantDailyUsage");
+        builder.ToTable(TableNames.AssistantDailyUsage);
 
         builder.Property(e => e.Id).ValueGeneratedOnAdd();
 

@@ -1,5 +1,6 @@
 using JiApp.Common.Abstractions;
-using JiApp.YtApi;
+using JiApp.YtApi.Clients;
+using JiApp.YtApi.Contracts;
 using JiApp.YtDownloader.Agent;
 using JiApp.YtDownloader.Mcp;
 using JiApp.YtDownloader.Repositories;

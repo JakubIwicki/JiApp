@@ -1,5 +1,3 @@
-using JiApp.YtApi;
-
 namespace JiApp.YtDownloader.Features.SearchVideos;
 
 [Serializable]

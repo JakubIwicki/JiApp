@@ -89,9 +89,14 @@ public sealed class RevenueReportHandlerTests : HandlerTestBase<SchedulerDbConte
         {
             var appointment = new Appointment
             {
-                BoardId = _board!.Id, ClientId = _client!.Id, ServiceId = serviceId ?? _service!.Id,
-                Date = date, StartTime = new TimeOnly(10, 0), EndTime = new TimeOnly(11, 0),
-                Price = new Price(price), Location = location,
+                BoardId = _board!.Id,
+                ClientId = _client!.Id,
+                ServiceId = serviceId ?? _service!.Id,
+                Date = date,
+                StartTime = new TimeOnly(10, 0),
+                EndTime = new TimeOnly(11, 0),
+                Price = new Price(price),
+                Location = location,
                 CreatedBy = 1L
             };
             _db.Appointments.Add(appointment);

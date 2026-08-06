@@ -201,7 +201,7 @@ public sealed class ClientHandlerTests : HandlerTestBase<SchedulerDbContext>
         var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
         var client = new Client { BoardId = boardId, Name = "Alice" };
         var service = new Service
-            { Name = "Cut", BoardId = boardId, Category = ServiceCategory.MensHaircut, BaseDuration = 30 };
+        { Name = "Cut", BoardId = boardId, Category = ServiceCategory.MensHaircut, BaseDuration = 30 };
         StoreInDb(client);
         StoreInDb(service);
         var appointment = new Appointment
@@ -330,7 +330,7 @@ public sealed class ClientHandlerTests : HandlerTestBase<SchedulerDbContext>
         var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
         var client = new Client { BoardId = boardId, Name = "Alice" };
         var service = new Service
-            { Name = "Cut", BoardId = boardId, Category = ServiceCategory.MensHaircut, BaseDuration = 30 };
+        { Name = "Cut", BoardId = boardId, Category = ServiceCategory.MensHaircut, BaseDuration = 30 };
         StoreInDb(client);
         StoreInDb(service);
         var appointment = new Appointment

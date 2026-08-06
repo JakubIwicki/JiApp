@@ -10,80 +10,80 @@ namespace JiApp.Identity.Tests.Conventions;
 
 public sealed class DependencyInjectionTests
 {
-	private sealed class Fixture
-	{
-		public ServiceCollection Services { get; }
-		public ServiceProvider Provider { get; }
-		public Assembly[] ProductionAssemblies { get; }
+    private sealed class Fixture
+    {
+        public ServiceCollection Services { get; }
+        public ServiceProvider Provider { get; }
+        public Assembly[] ProductionAssemblies { get; }
 
-		public Fixture()
-		{
-			var config = new ConfigurationBuilder()
-				.AddInMemoryCollection(new Dictionary<string, string?>
-				{
-					["ConnectionString"] = "DataSource=:memory:",
-					["Jwt:Key"] = "test-key-that-is-at-least-32-chars!",
-					["Jwt:Issuer"] = "test-issuer",
-					["Jwt:Audience"] = "test-audience",
-					["Jwt:AccessTokenExpireMinutes"] = "60",
-					["Jwt:RefreshTokenExpireDays"] = "7",
-					["RateLimiting:Login:PermitLimit"] = "10",
-					["RateLimiting:Login:WindowInSeconds"] = "60",
-					["RateLimiting:Login:QueueLimit"] = "0",
-					["RateLimiting:Login:SegmentsPerWindow"] = "0",
-					["RateLimiting:Register:PermitLimit"] = "5",
-					["RateLimiting:Register:WindowInSeconds"] = "60",
-					["RateLimiting:Register:QueueLimit"] = "0",
-					["RateLimiting:Register:SegmentsPerWindow"] = "0",
-					["RateLimiting:Refresh:PermitLimit"] = "10",
-					["RateLimiting:Refresh:WindowInSeconds"] = "60",
-					["RateLimiting:Refresh:QueueLimit"] = "0",
-					["RateLimiting:Refresh:SegmentsPerWindow"] = "0",
-					["RateLimiting:Logout:PermitLimit"] = "10",
-					["RateLimiting:Logout:WindowInSeconds"] = "60",
-					["RateLimiting:Logout:QueueLimit"] = "0",
-					["RateLimiting:Logout:SegmentsPerWindow"] = "0"
-				})
-				.Build();
+        public Fixture()
+        {
+            var config = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["ConnectionString"] = "DataSource=:memory:",
+                    ["Jwt:Key"] = "test-key-that-is-at-least-32-chars!",
+                    ["Jwt:Issuer"] = "test-issuer",
+                    ["Jwt:Audience"] = "test-audience",
+                    ["Jwt:AccessTokenExpireMinutes"] = "60",
+                    ["Jwt:RefreshTokenExpireDays"] = "7",
+                    ["RateLimiting:Login:PermitLimit"] = "10",
+                    ["RateLimiting:Login:WindowInSeconds"] = "60",
+                    ["RateLimiting:Login:QueueLimit"] = "0",
+                    ["RateLimiting:Login:SegmentsPerWindow"] = "0",
+                    ["RateLimiting:Register:PermitLimit"] = "5",
+                    ["RateLimiting:Register:WindowInSeconds"] = "60",
+                    ["RateLimiting:Register:QueueLimit"] = "0",
+                    ["RateLimiting:Register:SegmentsPerWindow"] = "0",
+                    ["RateLimiting:Refresh:PermitLimit"] = "10",
+                    ["RateLimiting:Refresh:WindowInSeconds"] = "60",
+                    ["RateLimiting:Refresh:QueueLimit"] = "0",
+                    ["RateLimiting:Refresh:SegmentsPerWindow"] = "0",
+                    ["RateLimiting:Logout:PermitLimit"] = "10",
+                    ["RateLimiting:Logout:WindowInSeconds"] = "60",
+                    ["RateLimiting:Logout:QueueLimit"] = "0",
+                    ["RateLimiting:Logout:SegmentsPerWindow"] = "0"
+                })
+                .Build();
 
-			var settings = new IdentitySettings();
-			config.Bind(settings);
-			settings.Validate();
+            var settings = new IdentitySettings();
+            config.Bind(settings);
+            settings.Validate();
 
-			var envMock = new Mock<IWebHostEnvironment>();
-			envMock.SetupGet(e => e.EnvironmentName).Returns("Test");
+            var envMock = new Mock<IWebHostEnvironment>();
+            envMock.SetupGet(e => e.EnvironmentName).Returns("Test");
 
-			Services = new ServiceCollection();
-			Services.AddLogging();
-			Services.AddSingleton<IConfiguration>(config);
-			Services.AddSingleton(envMock.Object);
+            Services = new ServiceCollection();
+            Services.AddLogging();
+            Services.AddSingleton<IConfiguration>(config);
+            Services.AddSingleton(envMock.Object);
 
-			var startup = new JiApp.Identity.Startup(settings, envMock.Object);
-			startup.ConfigureServices(Services);
+            var startup = new JiApp.Identity.Startup(settings, envMock.Object);
+            startup.ConfigureServices(Services);
 
-			Provider = Services.BuildServiceProvider();
+            Provider = Services.BuildServiceProvider();
 
-			ProductionAssemblies =
-			[
-				typeof(JiApp.Identity.Startup).Assembly,
-				typeof(JiApp.Common.Abstractions.ICurrentUserService).Assembly
-			];
-		}
+            ProductionAssemblies =
+            [
+                typeof(JiApp.Identity.Startup).Assembly,
+                typeof(JiApp.Common.Abstractions.ICurrentUserService).Assembly
+            ];
+        }
 
-		public static Fixture Init() => new();
-	}
+        public static Fixture Init() => new();
+    }
 
-	[Fact]
-	public void AllRegisteredServices_AreResolvable()
-	{
-		var fixture = Fixture.Init();
-		var result = DependencyInjectionConvention.CollectUnresolvableServices(
-			fixture.Services, fixture.Provider, fixture.ProductionAssemblies);
+    [Fact]
+    public void AllRegisteredServices_AreResolvable()
+    {
+        var fixture = Fixture.Init();
+        var result = DependencyInjectionConvention.CollectUnresolvableServices(
+            fixture.Services, fixture.Provider, fixture.ProductionAssemblies);
 
-		Assert.True(result.ScannedCount > 0,
-			"0 services matched — the fitness test ran vacuously");
-		Assert.True(result.Violations.Count == 0,
-			$"The following {result.Violations.Count} service(s) could not be resolved:\n" +
-			string.Join("\n", result.Violations));
-	}
+        Assert.True(result.ScannedCount > 0,
+            "0 services matched — the fitness test ran vacuously");
+        Assert.True(result.Violations.Count == 0,
+            $"The following {result.Violations.Count} service(s) could not be resolved:\n" +
+            string.Join("\n", result.Violations));
+    }
 }

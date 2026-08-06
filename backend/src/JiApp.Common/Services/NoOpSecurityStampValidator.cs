@@ -6,6 +6,6 @@ namespace JiApp.Common.Services;
 /// </summary>
 public sealed class NoOpSecurityStampValidator : ISecurityStampValidator
 {
-	public Task<StampValidationResult> ValidateCurrentAsync(CancellationToken ct = default)
-		=> Task.FromResult(StampValidationResult.Valid);
+    public Task<StampValidationResult> ValidateCurrentAsync(CancellationToken ct = default)
+        => Task.FromResult(StampValidationResult.Valid);
 }

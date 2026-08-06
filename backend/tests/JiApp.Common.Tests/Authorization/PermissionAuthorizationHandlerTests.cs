@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using JiApp.Common;
 using JiApp.Common.Authorization;
+using JiApp.Common.Constants;
 using Microsoft.AspNetCore.Authorization;
 
 namespace JiApp.Common.Tests.Authorization;

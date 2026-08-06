@@ -1,4 +1,6 @@
 [*.cs]
+indent_style = space
+indent_size = 4
 
 # CA1000: Do not declare static members on generic types
 # Result<T>.Success/Failure is a well-established static factory pattern (F# style)

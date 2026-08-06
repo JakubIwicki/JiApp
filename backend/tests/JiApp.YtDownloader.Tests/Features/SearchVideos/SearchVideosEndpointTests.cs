@@ -4,7 +4,7 @@ using FluentValidation;
 using FluentValidation.Results;
 using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
-using JiApp.YtApi;
+using JiApp.YtApi.Clients;
 using JiApp.YtDownloader.Configuration;
 using JiApp.YtDownloader.Features.SearchVideos;
 using JiApp.YtDownloader.Repositories;

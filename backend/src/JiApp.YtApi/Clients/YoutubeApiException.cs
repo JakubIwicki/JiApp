@@ -1,4 +1,4 @@
-namespace JiApp.YtApi;
+namespace JiApp.YtApi.Clients;
 
 public sealed class YoutubeApiException : Exception
 {

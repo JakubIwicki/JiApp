@@ -2,6 +2,16 @@ using JiApp.Common.Models;
 
 namespace JiApp.Scheduler.Domain;
 
+public enum ExpenseCategory
+{
+    Fuel,
+    Hotel,
+    Parking,
+    Supplies,
+    Food,
+    Other
+}
+
 public sealed class Expense : BaseEntity<long>
 {
     public long BoardId { get; set; }
