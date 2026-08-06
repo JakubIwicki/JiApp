@@ -1,18 +1,15 @@
-import React, { useCallback, useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   Pressable,
   ScrollView,
-  Alert,
   TextInput,
   StyleSheet,
 } from 'react-native';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useRoute, RouteProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import useUserDetail from '../hooks/useUserDetail';
-import useRoles from '../hooks/useRoles';
-import useToast from '../../../hooks/useToast';
+import useUserDetailScreen from '../hooks/useUserDetailScreen';
 import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
 import type { Theme } from '../../../styles/theme';
 import { spacing, borderRadius } from '../../../styles/theme';
@@ -23,128 +20,29 @@ type DetailRoute = RouteProp<AdminStackParamList, 'UserDetail'>;
 const MIN_TOUCH = 44;
 
 const UserDetailScreen: React.FC = () => {
-  const navigation = useNavigation();
   const route = useRoute<DetailRoute>();
   const { userId } = route.params;
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const { showSuccess, showError } = useToast();
-
   const {
     user,
     isLoading,
     error,
-    assignRole,
-    removeRole,
-    resetPassword,
-    disableUser,
-    enableUser,
-    deleteUser,
-  } = useUserDetail(userId);
-
-  const { roles: allRoles } = useRoles();
-
-  const [showAssignRole, setShowAssignRole] = useState(false);
-  const [showResetPassword, setShowResetPassword] = useState(false);
-  const [newPassword, setNewPassword] = useState('');
-
-  const handleRemoveRole = useCallback(
-    (roleName: string) => {
-      Alert.alert(
-        t('admin.userDetail.title'),
-        t('admin.userDetail.removeRoleConfirm', { role: roleName }),
-        [
-          { text: t('common.cancel'), style: 'cancel' },
-          {
-            text: t('admin.userDetail.removeRole'),
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                await removeRole(roleName);
-              } catch {
-                showError('admin.userDetail.removeRoleError');
-              }
-            },
-          },
-        ],
-      );
-    },
-    [t, removeRole, showError],
-  );
-
-  const handleAssignRole = useCallback(
-    async (roleName: string) => {
-      try {
-        await assignRole(roleName);
-        setShowAssignRole(false);
-        showSuccess('admin.userDetail.roleAssigned');
-      } catch {
-        showError('admin.userDetail.assignRoleError');
-      }
-    },
-    [assignRole, showSuccess, showError],
-  );
-
-  const handleToggleLock = useCallback(() => {
-    if (!user) return;
-    const action = user.isLockedOut ? enableUser : disableUser;
-    const label = user.isLockedOut
-      ? t('admin.userDetail.enable')
-      : t('admin.userDetail.disable');
-    const confirmMsg = user.isLockedOut
-      ? t('admin.userDetail.enableConfirm', { username: user.username })
-      : t('admin.userDetail.disableConfirm', { username: user.username });
-
-    Alert.alert(t('admin.userDetail.title'), confirmMsg, [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: label,
-        onPress: async () => {
-          try {
-            await action();
-          } catch {
-            showError('admin.userDetail.toggleLockError');
-          }
-        },
-      },
-    ]);
-  }, [user, enableUser, disableUser, t, showError]);
-
-  const handleDelete = useCallback(() => {
-    if (!user) return;
-    Alert.alert(
-      t('admin.userDetail.title'),
-      t('admin.userDetail.deleteConfirm', { username: user.username }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('admin.userDetail.deleteUser'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteUser();
-              navigation.goBack();
-            } catch {
-              showError('admin.userDetail.deleteError');
-            }
-          },
-        },
-      ],
-    );
-  }, [user, deleteUser, navigation, t, showError]);
-
-  const handleResetPassword = useCallback(async () => {
-    if (!newPassword.trim()) return;
-    try {
-      await resetPassword(newPassword.trim());
-      setShowResetPassword(false);
-      setNewPassword('');
-      showSuccess('admin.userDetail.passwordReset');
-    } catch {
-      showError('admin.userDetail.passwordResetError');
-    }
-  }, [newPassword, resetPassword, showSuccess, showError]);
+    showAssignRole,
+    showResetPassword,
+    newPassword,
+    availableRoles,
+    setShowAssignRole,
+    setShowResetPassword,
+    setNewPassword,
+    cancelResetPassword,
+    handleRemoveRole,
+    handleAssignRole,
+    handleToggleLock,
+    handleDelete,
+    handleResetPassword,
+  } = useUserDetailScreen(userId);
 
   if (isLoading) {
     return (
@@ -163,9 +61,6 @@ const UserDetailScreen: React.FC = () => {
       </View>
     );
   }
-
-  const assignedRoleSet = new Set(user.roles);
-  const availableRoles = allRoles.filter(r => !assignedRoleSet.has(r.name));
 
   return (
     <ScrollView
@@ -362,10 +257,7 @@ const UserDetailScreen: React.FC = () => {
                   styles.cancelBtn,
                   pressed && { opacity: 0.7 },
                 ]}
-                onPress={() => {
-                  setShowResetPassword(false);
-                  setNewPassword('');
-                }}
+                onPress={cancelResetPassword}
                 accessibilityRole="button"
                 testID="cancel-reset-password"
               >
