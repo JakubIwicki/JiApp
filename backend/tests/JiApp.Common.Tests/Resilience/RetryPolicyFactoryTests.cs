@@ -142,4 +142,68 @@ public sealed class RetryPolicyFactoryTests
         attempts.Should().Be(2);
         elapsed.Should().BeGreaterThanOrEqualTo((long)(delay.TotalMilliseconds * 0.8));
     }
+
+    [Fact]
+    public async Task RetryOnTransientHttp_AlreadyCancelledCallerToken_DoesNotRetry()
+    {
+        var policy = _factory.RetryOnTransientHttp_WithExponentialBackoff(retries: 2);
+        var attempts = 0;
+
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        async ValueTask<int> Action(CancellationToken ct)
+        {
+            attempts++;
+            throw new TaskCanceledException("cancelled", null, ct);
+        }
+
+        var ex = await Record.ExceptionAsync(() => policy.ExecuteAsync(Action, cts.Token).AsTask());
+
+        ex.Should().BeOfType<OperationCanceledException>();
+        attempts.Should().Be(0); // cancelled before any attempt — a cancelled caller is never retried
+    }
+
+    [Fact]
+    public async Task RetryOnTransientHttp_CallerCancelledDuringFlight_DoesNotRetry()
+    {
+        var policy = _factory.RetryOnTransientHttp_WithExponentialBackoff(retries: 2);
+        var attempts = 0;
+        using var cts = new CancellationTokenSource();
+        var thrown = new TaskCanceledException("cancelled", null, cts.Token);
+
+        async ValueTask<int> Action(CancellationToken ct)
+        {
+            attempts++;
+            cts.Cancel();
+            throw thrown;
+        }
+
+        var ex = await Record.ExceptionAsync(() => policy.ExecuteAsync(Action, cts.Token).AsTask());
+
+        ex.Should().BeSameAs(thrown); // the caller's cancellation propagates untouched — no retry scheduled
+        attempts.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task RetryOnTransientHttp_TimeoutWithCancelledInternalToken_StillRetries()
+    {
+        var policy = _factory.RetryOnTransientHttp_WithExponentialBackoff(retries: 1);
+        var attempts = 0;
+        using var internalTimeoutCts = new CancellationTokenSource();
+        internalTimeoutCts.Cancel();
+
+        async ValueTask<int> Action(CancellationToken ct)
+        {
+            attempts++;
+            // HttpClient's own timeout surfaces as a TaskCanceledException whose token
+            // is the internal timeout CTS — the caller's token (ct) is NOT cancelled.
+            throw new TaskCanceledException("timeout", null, internalTimeoutCts.Token);
+        }
+
+        var ex = await Record.ExceptionAsync(() => policy.ExecuteAsync(Action, CancellationToken.None).AsTask());
+
+        ex.Should().BeOfType<TaskCanceledException>();
+        attempts.Should().Be(2); // genuine timeout still retries — the decision keys on the caller's token, not the exception's
+    }
 }
