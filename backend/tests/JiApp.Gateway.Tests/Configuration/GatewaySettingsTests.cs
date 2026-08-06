@@ -1,5 +1,6 @@
 using JiApp.Common.Authentication;
 using JiApp.Gateway.Configuration;
+using Microsoft.AspNetCore.Hosting;
 
 namespace JiApp.Gateway.Tests.Configuration;
 
@@ -187,7 +188,7 @@ public sealed class GatewaySettingsTests
             RateLimiting = ValidPolicies
         };
 
-        var act = () => sut.Validate();
+        var act = () => sut.Validate(CreateEnvironment("Development"));
 
         act.Should().NotThrow();
     }
@@ -212,5 +213,140 @@ public sealed class GatewaySettingsTests
             .WithMessage("*Jwt:Key is not configured.*")
             .WithMessage("*Jwt:Issuer is not configured.*")
             .WithMessage("*Jwt:Audience is not configured.*");
+    }
+
+    [Fact]
+    public void Validate_Throws_WhenProductionAndCorsAllowedOriginsMissing()
+    {
+        var sut = new GatewaySettings
+        {
+            Jwt = ValidJwt,
+            RateLimiting = ValidPolicies
+        };
+
+        var act = () => sut.Validate(CreateEnvironment("Production"));
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*CorsAllowedOrigins is required in non-Development environments*");
+    }
+
+    [Fact]
+    public void Validate_Throws_WhenProductionAndCorsAllowedOriginsEmpty()
+    {
+        var sut = new GatewaySettings
+        {
+            Jwt = ValidJwt,
+            RateLimiting = ValidPolicies,
+            CorsAllowedOrigins = []
+        };
+
+        var act = () => sut.Validate(CreateEnvironment("Production"));
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*CorsAllowedOrigins is required in non-Development environments*");
+    }
+
+    [Fact]
+    public void Validate_Throws_WhenProductionAndCorsOriginInvalid()
+    {
+        var sut = new GatewaySettings
+        {
+            Jwt = ValidJwt,
+            RateLimiting = ValidPolicies,
+            CorsAllowedOrigins = ["not-a-url"]
+        };
+
+        var act = () => sut.Validate(CreateEnvironment("Production"));
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*not-a-url*");
+    }
+
+    [Fact]
+    public void Validate_Passes_WhenDevelopmentAndCorsAllowedOriginsMissing()
+    {
+        var sut = new GatewaySettings
+        {
+            Jwt = ValidJwt,
+            RateLimiting = ValidPolicies
+        };
+
+        var act = () => sut.Validate(CreateEnvironment("Development"));
+
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void Validate_Passes_WhenProductionAndCorsAllowedOriginsValid()
+    {
+        var sut = new GatewaySettings
+        {
+            Jwt = ValidJwt,
+            RateLimiting = ValidPolicies,
+            CorsAllowedOrigins = ["https://app.example.com", "http://localhost:3000"]
+        };
+
+        var act = () => sut.Validate(CreateEnvironment("Production"));
+
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void Validate_Passes_WhenProductionAndCorsAllowedOriginsWildcard()
+    {
+        var sut = new GatewaySettings
+        {
+            Jwt = ValidJwt,
+            RateLimiting = ValidPolicies,
+            CorsAllowedOrigins = ["*"]
+        };
+
+        var act = () => sut.Validate(CreateEnvironment("Production"));
+
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void Validate_Throws_WhenProductionAndCorsOriginHasPath()
+    {
+        var sut = new GatewaySettings
+        {
+            Jwt = ValidJwt,
+            RateLimiting = ValidPolicies,
+            CorsAllowedOrigins = ["https://app.example.com/api"]
+        };
+
+        var act = () => sut.Validate(CreateEnvironment("Production"));
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*not a valid http(s) origin*");
+    }
+
+    [Fact]
+    public void Validate_CollectsJwtRateLimitingAndCorsErrors_Simultaneously()
+    {
+        var sut = new GatewaySettings
+        {
+            Jwt = new JwtSettings
+            {
+                Key = string.Empty,
+                Issuer = "test-issuer",
+                Audience = "test-audience"
+            }
+        };
+
+        var act = () => sut.Validate(CreateEnvironment("Production"));
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*Jwt:Key is not configured.*")
+            .WithMessage("*RateLimiting section is not configured.*")
+            .WithMessage("*CorsAllowedOrigins is required in non-Development environments*");
+    }
+
+    private static IWebHostEnvironment CreateEnvironment(string name)
+    {
+        var mock = new Mock<IWebHostEnvironment>();
+        mock.SetupGet(e => e.EnvironmentName).Returns(name);
+        return mock.Object;
     }
 }

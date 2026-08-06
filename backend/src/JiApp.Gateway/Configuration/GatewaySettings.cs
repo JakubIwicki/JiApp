@@ -18,12 +18,18 @@ public sealed class GatewaySettings
     /// </summary>
     public int EndpointCacheMaxEntries { get; set; } = 4096;
 
-    public void Validate()
+    public void Validate(IWebHostEnvironment? env = null)
     {
         var errors = new List<string>();
 
         ValidateJwt(errors);
         ValidateRateLimiting(errors);
+
+        // Development uses the any-origin fallback; anything else (including an unspecified
+        // environment) must configure the allow-list explicitly — fail closed by default
+        // (matches the AddCors fail-closed semantics).
+        if (env is null || !env.IsDevelopment())
+            ValidateCorsAllowedOrigins(errors);
 
         if (errors.Count > 0)
             throw new InvalidOperationException(
@@ -62,6 +68,30 @@ public sealed class GatewaySettings
                 errors.Add($"RateLimiting:{policy} is not configured.");
         }
     }
+
+    private void ValidateCorsAllowedOrigins(List<string> errors)
+    {
+        if (CorsAllowedOrigins is not { Length: > 0 })
+        {
+            errors.Add("CorsAllowedOrigins is required in non-Development environments");
+            return;
+        }
+
+        foreach (var origin in CorsAllowedOrigins)
+        {
+            if (!IsValidOrigin(origin))
+                errors.Add($"CorsAllowedOrigins entry '{origin}' is not a valid http(s) origin");
+        }
+    }
+
+    private static bool IsValidOrigin(string origin) =>
+        origin == "*" ||
+        (Uri.TryCreate(origin, UriKind.Absolute, out var uri)
+         && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
+         && !string.IsNullOrEmpty(uri.Host)
+         && uri.AbsolutePath is "" or "/"
+         && string.IsNullOrEmpty(uri.Query)
+         && string.IsNullOrEmpty(uri.Fragment));
 
     [Serializable]
     public sealed class RateLimitPolicyConfig
