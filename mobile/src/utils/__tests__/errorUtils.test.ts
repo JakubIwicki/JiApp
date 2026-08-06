@@ -84,11 +84,19 @@ describe('getFriendlyErrorMessage', () => {
   it('returns server error for 500', () => {
     const err = {
       isAxiosError: true,
-      response: { status: 500, data: { error: 'Internal error' } },
+      response: { status: 500, data: {} },
     };
     expect(getFriendlyErrorMessage(err, 'Fallback')).toBe(
       'Server error — please try again later',
     );
+  });
+
+  it('returns the server-provided error message for 500 when present', () => {
+    const err = {
+      isAxiosError: true,
+      response: { status: 500, data: { error: 'Internal error' } },
+    };
+    expect(getFriendlyErrorMessage(err, 'Fallback')).toBe('Internal error');
   });
 
   it('returns server error for 503', () => {
