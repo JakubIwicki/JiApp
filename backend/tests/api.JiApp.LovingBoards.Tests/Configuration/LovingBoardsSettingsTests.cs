@@ -1,5 +1,6 @@
 using JiApp.Common.Authentication;
 using api.JiApp.LovingBoards.Configuration;
+using Microsoft.AspNetCore.Hosting;
 
 namespace api.JiApp.LovingBoards.Tests.Configuration;
 
@@ -59,7 +60,7 @@ public sealed class LovingBoardsSettingsTests
             Jwt = new JwtSettings { Key = "test-jwt-key-with-at-least-32-chars", Issuer = "iss", Audience = "aud" }
         };
 
-        var act = () => settings.Validate();
+        var act = () => settings.Validate(CreateEnvironment("Development"));
 
         act.Should().NotThrow();
     }
@@ -78,5 +79,247 @@ public sealed class LovingBoardsSettingsTests
 
         act.Should().Throw<InvalidOperationException>()
             .WithMessage("*MaxMembersPerBoard*");
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void Validate_WithNonPositiveMaxBoardsPerUser_ThrowsInvalidOperationException(int value)
+    {
+        var settings = ValidSettings();
+        settings.MaxBoardsPerUser = value;
+
+        var act = () => settings.Validate();
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*MaxBoardsPerUser*");
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void Validate_WithNonPositiveDefaultPageSize_ThrowsInvalidOperationException(int value)
+    {
+        var settings = ValidSettings();
+        settings.DefaultPageSize = value;
+
+        var act = () => settings.Validate();
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*DefaultPageSize*");
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void Validate_WithNonPositiveMaxBoardNameLength_ThrowsInvalidOperationException(int value)
+    {
+        var settings = ValidSettings();
+        settings.MaxBoardNameLength = value;
+
+        var act = () => settings.Validate();
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*MaxBoardNameLength*");
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void Validate_WithNonPositiveMaxItemsPerBoard_ThrowsInvalidOperationException(int value)
+    {
+        var settings = ValidSettings();
+        settings.MaxItemsPerBoard = value;
+
+        var act = () => settings.Validate();
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*MaxItemsPerBoard*");
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void Validate_WithNonPositiveMaxMembersPerBoard_ThrowsInvalidOperationException(int value)
+    {
+        var settings = ValidSettings();
+        settings.MaxMembersPerBoard = value;
+
+        var act = () => settings.Validate();
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*MaxMembersPerBoard*");
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void Validate_WithNonPositiveMaxItemTitleLength_ThrowsInvalidOperationException(int value)
+    {
+        var settings = ValidSettings();
+        settings.MaxItemTitleLength = value;
+
+        var act = () => settings.Validate();
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*MaxItemTitleLength*");
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void Validate_WithNonPositiveMaxQuantityLength_ThrowsInvalidOperationException(int value)
+    {
+        var settings = ValidSettings();
+        settings.MaxQuantityLength = value;
+
+        var act = () => settings.Validate();
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*MaxQuantityLength*");
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void Validate_WithNonPositiveMaxCategoryLength_ThrowsInvalidOperationException(int value)
+    {
+        var settings = ValidSettings();
+        settings.MaxCategoryLength = value;
+
+        var act = () => settings.Validate();
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*MaxCategoryLength*");
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void Validate_WithNonPositiveMaxNoteLength_ThrowsInvalidOperationException(int value)
+    {
+        var settings = ValidSettings();
+        settings.MaxNoteLength = value;
+
+        var act = () => settings.Validate();
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*MaxNoteLength*");
+    }
+
+    [Fact]
+    public void Validate_WithProductionEnvironment_MissingCorsAndIdentityBaseUrl_ThrowsListingBoth()
+    {
+        var settings = ValidSettings();
+
+        var act = () => settings.Validate(CreateEnvironment("Production"));
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*CorsAllowedOrigins*")
+            .WithMessage("*IdentityBaseUrl*");
+    }
+
+    [Fact]
+    public void Validate_WithDevelopmentEnvironment_MissingCorsAndIdentityBaseUrl_DoesNotThrow()
+    {
+        var settings = ValidSettings();
+
+        var act = () => settings.Validate(CreateEnvironment("Development"));
+
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void Validate_WithProductionEnvironment_ValidCorsAndIdentityBaseUrl_DoesNotThrow()
+    {
+        var settings = ValidSettings();
+        settings.CorsAllowedOrigins = ["https://app.example.com"];
+        settings.IdentityBaseUrl = "https://identity.example.com";
+
+        var act = () => settings.Validate(CreateEnvironment("Production"));
+
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void Validate_WithProductionEnvironment_WildcardCorsOrigin_DoesNotThrow()
+    {
+        var settings = ValidSettings();
+        settings.CorsAllowedOrigins = ["*"];
+        settings.IdentityBaseUrl = "https://identity.example.com";
+
+        var act = () => settings.Validate(CreateEnvironment("Production"));
+
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void Validate_WithProductionEnvironment_PathBearingCorsOrigin_Throws()
+    {
+        var settings = ValidSettings();
+        settings.CorsAllowedOrigins = ["https://app.example.com/api"];
+        settings.IdentityBaseUrl = "https://identity.example.com";
+
+        var act = () => settings.Validate(CreateEnvironment("Production"));
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*not a valid http(s) origin*");
+    }
+
+    [Fact]
+    public void Validate_WithProductionEnvironment_InvalidCorsOrigin_Throws()
+    {
+        var settings = ValidSettings();
+        settings.CorsAllowedOrigins = ["not-a-url"];
+        settings.IdentityBaseUrl = "https://identity.example.com";
+
+        var act = () => settings.Validate(CreateEnvironment("Production"));
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*not-a-url*");
+    }
+
+    [Fact]
+    public void Validate_WithProductionEnvironment_InvalidIdentityBaseUrl_Throws()
+    {
+        var settings = ValidSettings();
+        settings.CorsAllowedOrigins = ["https://app.example.com"];
+        settings.IdentityBaseUrl = "not-a-url";
+
+        var act = () => settings.Validate(CreateEnvironment("Production"));
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*IdentityBaseUrl must be a valid absolute URI*");
+    }
+
+    [Fact]
+    public void Validate_AccumulatesConnectionStringAndJwtErrors_InOneCall()
+    {
+        var settings = new LovingBoardsSettings
+        {
+            ConnectionString = null,
+            Jwt = new JwtSettings { Key = null, Issuer = null, Audience = null }
+        };
+
+        var act = () => settings.Validate();
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*ConnectionString*")
+            .WithMessage("*Jwt:Key is not configured.*")
+            .WithMessage("*Jwt:Issuer is not configured.*")
+            .WithMessage("*Jwt:Audience is not configured.*");
+    }
+
+    private static LovingBoardsSettings ValidSettings() => new()
+    {
+        ConnectionString = "Data Source=test.db",
+        Jwt = new JwtSettings { Key = "test-jwt-key-with-at-least-32-chars", Issuer = "iss", Audience = "aud" }
+    };
+
+    private static IWebHostEnvironment CreateEnvironment(string name)
+    {
+        var mock = new Mock<IWebHostEnvironment>();
+        mock.SetupGet(e => e.EnvironmentName).Returns(name);
+        return mock.Object;
     }
 }

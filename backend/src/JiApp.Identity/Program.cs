@@ -13,7 +13,7 @@ builder.Host.UseSerilog((context, config) =>
 
 var settings = new IdentitySettings();
 builder.Configuration.Bind(settings);
-settings.Validate();
+settings.Validate(builder.Environment);
 
 var startup = new Startup(settings, builder.Environment);
 

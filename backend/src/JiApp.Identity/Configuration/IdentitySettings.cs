@@ -11,7 +11,7 @@ public sealed class IdentitySettings
     public BootstrapSettings? Bootstrap { get; set; }
     public Dictionary<string, RateLimitPolicyConfig>? RateLimiting { get; set; }
 
-    public void Validate()
+    public void Validate(IWebHostEnvironment? env = null)
     {
         var errors = new List<string>();
 
@@ -20,6 +20,7 @@ public sealed class IdentitySettings
 
         ValidateJwt(errors);
         ValidateRateLimiting(errors);
+        ValidateBootstrap(errors);
 
         if (errors.Count > 0)
             throw new InvalidOperationException(
@@ -63,6 +64,19 @@ public sealed class IdentitySettings
         {
             if (!RateLimiting.ContainsKey(policy))
                 errors.Add($"RateLimiting:{policy} is not configured.");
+        }
+    }
+
+    private void ValidateBootstrap(List<string> errors)
+    {
+        // Bootstrap is optional: a null or empty AdminUsername disables admin bootstrap
+        // (prod compose defaults it to "" via :-). When set, only its format is validated.
+        if (Bootstrap is { AdminUsername: { Length: > 0 } })
+        {
+            if (string.IsNullOrWhiteSpace(Bootstrap.AdminUsername))
+                errors.Add("Bootstrap:AdminUsername must not be whitespace when set.");
+            else if (Bootstrap.AdminUsername.Length > 256)
+                errors.Add("Bootstrap:AdminUsername must be at most 256 characters.");
         }
     }
 

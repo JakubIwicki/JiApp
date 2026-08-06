@@ -177,6 +177,88 @@ public sealed class SettingsTests
     }
 
     [Fact]
+    public void Validate_throws_when_DeepSeek_BaseUrl_is_not_a_valid_absolute_uri()
+    {
+        var settings = ValidSettings();
+        settings.DeepSeek = new Settings.DeepSeekSettings { BaseUrl = "not-a-url" };
+
+        Action act = () => settings.Validate();
+
+        act.Should().Throw<InvalidOperationException>()
+            .Which.Message.Should().Contain("BaseUrl");
+    }
+
+    [Fact]
+    public void Validate_throws_when_DeepSeek_Model_is_whitespace()
+    {
+        var settings = ValidSettings();
+        settings.DeepSeek = new Settings.DeepSeekSettings { Model = "   " };
+
+        Action act = () => settings.Validate();
+
+        act.Should().Throw<InvalidOperationException>()
+            .Which.Message.Should().Contain("Model");
+    }
+
+    [Fact]
+    public void Validate_passes_when_DeepSeek_Model_is_empty()
+    {
+        // ConfigurationBinder binds DeepSeek__Model=${DEEPSEEK_MODEL:-} to "" when the
+        // env var is unset — an empty Model must behave as unset, not crash startup.
+        var settings = ValidSettings();
+        settings.DeepSeek = new Settings.DeepSeekSettings { Model = "" };
+
+        Action act = () => settings.Validate();
+
+        act.Should().NotThrow();
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void Validate_throws_when_DeepSeek_MaxIterations_is_not_positive(int invalidMaxIterations)
+    {
+        var settings = ValidSettings();
+        settings.DeepSeek = new Settings.DeepSeekSettings { MaxIterations = invalidMaxIterations };
+
+        Action act = () => settings.Validate();
+
+        act.Should().Throw<InvalidOperationException>()
+            .Which.Message.Should().Contain("MaxIterations");
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void Validate_throws_when_DeepSeek_RequestTimeoutSeconds_is_not_positive(int invalidTimeoutSeconds)
+    {
+        var settings = ValidSettings();
+        settings.DeepSeek = new Settings.DeepSeekSettings { RequestTimeoutSeconds = invalidTimeoutSeconds };
+
+        Action act = () => settings.Validate();
+
+        act.Should().Throw<InvalidOperationException>()
+            .Which.Message.Should().Contain("RequestTimeoutSeconds");
+    }
+
+    [Fact]
+    public void Validate_passes_when_DeepSeek_is_fully_configured()
+    {
+        var settings = ValidSettings();
+        settings.DeepSeek = new Settings.DeepSeekSettings
+        {
+            BaseUrl = "https://api.deepseek.com",
+            Model = "deepseek-chat",
+            MaxIterations = 5,
+            RequestTimeoutSeconds = 60,
+        };
+
+        Action act = () => settings.Validate();
+
+        act.Should().NotThrow();
+    }
+
+    [Fact]
     public void Validate_passes_when_Assistant_is_null()
     {
         var settings = ValidSettings();
@@ -211,6 +293,23 @@ public sealed class SettingsTests
         Action act = () => settings.Validate();
 
         act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void Validate_collects_unrelated_errors_in_one_call()
+    {
+        var settings = ValidSettings();
+        settings.ConnectionString = null;
+        settings.Youtube!.MaxResults = null;
+        settings.DeepSeek = new Settings.DeepSeekSettings { MaxIterations = 0 };
+
+        Action act = () => settings.Validate();
+
+        act.Should().Throw<InvalidOperationException>()
+            .Which.Message.Should()
+            .Contain("ConnectionString")
+            .And.Contain("MaxResults")
+            .And.Contain("MaxIterations");
     }
 
     private static Settings ValidSettings() => new()

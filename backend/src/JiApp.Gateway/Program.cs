@@ -10,7 +10,7 @@ builder.Host.UseSerilog((context, config) =>
 
 var settings = new GatewaySettings();
 builder.Configuration.Bind(settings);
-settings.Validate();
+settings.Validate(builder.Environment);
 
 var startup = new Startup(settings, builder.Configuration, builder.Environment);
 startup.ConfigureServices(builder.Services);
