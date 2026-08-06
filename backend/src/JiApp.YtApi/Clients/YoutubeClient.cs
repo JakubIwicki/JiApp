@@ -8,7 +8,9 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Google.Apis.YouTube.v3;
+using JiApp.Common.Resilience;
 using JiApp.YtApi.Contracts;
+using Polly;
 using YoutubeDLSharp;
 using YoutubeDLSharp.Options;
 
@@ -35,9 +37,14 @@ public sealed class YoutubeClient(
     string? cookiesFile = null,
     string? cookiesFromBrowser = null,
     string? proxy = null,
-    Google.Apis.Http.IHttpClientFactory? httpClientFactory = null) : IYoutubeClient, IDisposable
+    Google.Apis.Http.IHttpClientFactory? httpClientFactory = null,
+    IRetryPolicyFactory? retryPolicyFactory = null) : IYoutubeClient, IDisposable
 {
     private readonly YouTubeService _youTubeService = CreateYouTubeService(apiKey, httpClientFactory);
+
+    private readonly ResiliencePipeline _retryPipeline =
+        retryPolicyFactory?.RetryOnTransientHttp_WithExponentialBackoff(shouldRetry: ShouldRetry)
+        ?? new ResiliencePipelineBuilder().Build();
 
     public async Task<IReadOnlyList<YoutubeVideo>> SearchVideosAsync(string query, int maxResults = 10,
         CancellationToken cancellationToken = default)
@@ -46,21 +53,24 @@ public sealed class YoutubeClient(
         searchRequest.Q = query;
         searchRequest.MaxResults = maxResults;
 
-        Google.Apis.YouTube.v3.Data.SearchListResponse response;
-        try
+        return await _retryPipeline.ExecuteAsync(async ct =>
         {
-            response = await searchRequest.ExecuteAsync(cancellationToken);
-        }
-        catch (Google.GoogleApiException ex)
-        {
-            throw new YoutubeApiException("YouTube API request failed.", ex);
-        }
+            Google.Apis.YouTube.v3.Data.SearchListResponse response;
+            try
+            {
+                response = await searchRequest.ExecuteAsync(ct);
+            }
+            catch (Google.GoogleApiException ex)
+            {
+                throw new YoutubeApiException("YouTube API request failed.", ex);
+            }
 
-        return (response.Items ?? [])
-            .Where(item => item is { Id.Kind: "youtube#video", Snippet: not null })
-            .Select(MapToYoutubeVideo)
-            .ToList()
-            .AsReadOnly();
+            return (response.Items ?? [])
+                .Where(item => item is { Id.Kind: "youtube#video", Snippet: not null })
+                .Select(MapToYoutubeVideo)
+                .ToList()
+                .AsReadOnly();
+        }, cancellationToken);
     }
 
     public async Task<YoutubeVideo?> GetVideoByIdAsync(string videoId,
@@ -70,21 +80,33 @@ public sealed class YoutubeClient(
         listRequest.Id = videoId;
         listRequest.MaxResults = 1;
 
-        Google.Apis.YouTube.v3.Data.VideoListResponse response;
-        try
+        return await _retryPipeline.ExecuteAsync(async ct =>
         {
-            response = await listRequest.ExecuteAsync(cancellationToken);
-        }
-        catch (Google.GoogleApiException ex)
-        {
-            throw new YoutubeApiException("YouTube API request failed.", ex);
-        }
+            Google.Apis.YouTube.v3.Data.VideoListResponse response;
+            try
+            {
+                response = await listRequest.ExecuteAsync(ct);
+            }
+            catch (Google.GoogleApiException ex)
+            {
+                throw new YoutubeApiException("YouTube API request failed.", ex);
+            }
 
-        return (response.Items ?? [])
-            .Where(item => item.Snippet is not null)
-            .Select(MapToYoutubeVideo)
-            .FirstOrDefault();
+            return (response.Items ?? [])
+                .Where(item => item.Snippet is not null)
+                .Select(MapToYoutubeVideo)
+                .FirstOrDefault();
+        }, cancellationToken);
     }
+
+    /// <summary>
+    /// Retries quota/rate-limit and server errors: the owned <see cref="YoutubeApiException"/>
+    /// wraps the inner Google API exception carrying the HTTP status. A 403 quota error is a
+    /// deliberate non-transient signal and passes straight through.
+    /// </summary>
+    private static bool ShouldRetry(Exception exception) =>
+        exception is YoutubeApiException { InnerException: Google.GoogleApiException google }
+        && google.HttpStatusCode is HttpStatusCode.TooManyRequests or >= HttpStatusCode.InternalServerError;
 
     private static YouTubeService CreateYouTubeService(string apiKey, Google.Apis.Http.IHttpClientFactory? httpClientFactory)
     {

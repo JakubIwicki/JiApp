@@ -7,6 +7,7 @@ using JiApp.Common.Authentication;
 using JiApp.Common.Authorization;
 using JiApp.Common.Constants;
 using JiApp.Common.Middleware;
+using JiApp.Common.Resilience;
 using Microsoft.AspNetCore.Authorization;
 using JiApp.Common.Services;
 using JiApp.YtApi.Clients;
@@ -54,6 +55,7 @@ public class Startup(Settings settings, IWebHostEnvironment env)
     private static void ConfigureInfrastructure(IServiceCollection services)
     {
         services.AddSingleton(TimeProvider.System);
+        services.AddSingleton<IRetryPolicyFactory, RetryPolicyFactory>();
         services.AddTransient<GlobalExceptionMiddleware>();
         services.AddHttpContextAccessor();
     }
@@ -146,14 +148,18 @@ public class Startup(Settings settings, IWebHostEnvironment env)
         services.AddSingleton<IDownloadQueue>(sp => sp.GetRequiredService<DownloadJobStore>());
         services.AddSingleton(_ => Channel.CreateUnbounded<string>());
         services.AddScoped<ICurrentUserService, CurrentUserService>();
-        services.AddSingleton<IYoutubeClient>(_ =>
+        services.AddSingleton<IYoutubeClient>(sp =>
             new YoutubeClient(
                 settings.Youtube!.ApiKey!,
                 settings.Youtube!.YtDlpPath!,
                 settings.Youtube!.FfmpegPath!,
                 settings.Youtube!.CookiesFile,
                 settings.Youtube!.CookiesFromBrowser,
-                settings.Youtube!.Proxy));
+                settings.Youtube!.Proxy,
+                // NumTries = 1 disables Google.Apis' internal retry loop so the owned Polly
+                // policy below is the sole retry owner — retry budgets never stack upstream.
+                httpClientFactory: new SingleTryGoogleHttpClientFactory(),
+                retryPolicyFactory: sp.GetRequiredService<IRetryPolicyFactory>()));
 
         services.AddSingleton(settings);
         services.AddMemoryCache(options =>

@@ -1,4 +1,5 @@
 using System.ClientModel;
+using JiApp.Common.Resilience;
 using JiApp.YtDownloader.Configuration;
 using Microsoft.Extensions.AI;
 using OpenAI;
@@ -9,7 +10,7 @@ public sealed class DeepSeekChatClientProvider : IAssistantChatClientProvider
 {
     private readonly IChatClient? _client;
 
-    public DeepSeekChatClientProvider(Settings settings)
+    public DeepSeekChatClientProvider(Settings settings, IRetryPolicyFactory retryPolicyFactory)
     {
         ArgumentNullException.ThrowIfNull(settings);
 
@@ -31,12 +32,16 @@ public sealed class DeepSeekChatClientProvider : IAssistantChatClientProvider
             new ApiKeyCredential(deepSeek.ApiKey),
             new OpenAIClientOptions { Endpoint = new Uri(baseUrl) });
 
-        _client = openAiClient
+        var chatClient = openAiClient
             .GetChatClient(model)
             .AsIChatClient()
             .AsBuilder()
             .UseFunctionInvocation(configure: c => c.MaximumIterationsPerRequest = deepSeek.MaxIterations)
             .Build();
+
+        // The retry decorator wraps the provider's built client (construction site),
+        // keeping IsConfigured exactly tied to the underlying client being non-null.
+        _client = new RetryingChatClient(chatClient, retryPolicyFactory);
     }
 
     public bool IsConfigured => _client is not null;

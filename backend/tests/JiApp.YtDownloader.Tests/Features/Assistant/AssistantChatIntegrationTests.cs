@@ -1,3 +1,4 @@
+using JiApp.Common.Resilience;
 using JiApp.YtApi.Clients;
 using JiApp.YtDownloader.Agent;
 using JiApp.YtDownloader.Configuration;
@@ -22,7 +23,8 @@ public sealed class AssistantChatIntegrationTests
         {
             DeepSeek = new Settings.DeepSeekSettings { ApiKey = apiKey }
         };
-        var provider = new DeepSeekChatClientProvider(settings);
+        var provider = new DeepSeekChatClientProvider(
+            settings, new RetryPolicyFactory(TimeProvider.System));
 
         var toolService = new YtAgentToolService(
             new Mock<IYoutubeClient>().Object,

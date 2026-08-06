@@ -24,7 +24,8 @@ public sealed class RetryPolicyFactory(TimeProvider timeProvider) : IRetryPolicy
             .Build();
     }
 
-    public ResiliencePipeline RetryOnTransientHttp_WithExponentialBackoff(int retries = 3)
+    public ResiliencePipeline RetryOnTransientHttp_WithExponentialBackoff(
+        int retries = 3, Func<Exception, bool>? shouldRetry = null)
     {
         var builder = new ResiliencePipelineBuilder
         {
@@ -40,8 +41,12 @@ public sealed class RetryPolicyFactory(TimeProvider timeProvider) : IRetryPolicy
                 // exception family — the decision keys on the caller's token, never the
                 // exception's (a genuine HttpClient timeout still retries). Deliberate:
                 // plain OperationCanceledException is retried too when the caller is not cancelled.
+                // An additional shouldRetry predicate is OR'd onto the default transient set,
+                // so a caller can add domain-specific transient errors (e.g. a wrapped API
+                // 429/5xx) without re-implementing the caller-cancellation guard.
                 ShouldHandle = args => new ValueTask<bool>(
-                    (args.Outcome.Exception is HttpRequestException or OperationCanceledException)
+                    ((args.Outcome.Exception is HttpRequestException or OperationCanceledException)
+                     || (shouldRetry is not null && args.Outcome.Exception is { } ex && shouldRetry(ex)))
                     && !args.Context.CancellationToken.IsCancellationRequested),
                 BackoffType = DelayBackoffType.Exponential,
                 UseJitter = true,
