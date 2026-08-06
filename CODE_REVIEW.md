@@ -1,6 +1,6 @@
 # JiApp — Code Review & Remediation Backlog
 
-**Branch:** `main` · **Date:** 2026-08-05 · **Status:** Wave 1 landed — G1.1, G1.2, G2.2, G2.4, G2.6, G5.1 fixed (see per-finding notes); Wave 2 landed — PR-A G4.1–G4.5, PR-B G3.1, G3.2, G3.3, G4.6, G10.3, PR-C G2.1, G2.3 fixed (see per-finding notes); Wave 3 COMPLETE — PR-D G6.1, G6.2, PR-E G7.1, G7.3, PR-F G12.1 fixed (see per-finding notes); Wave 4 COMPLETE — PR-A G8.2, G8.3 (also G1.3, G1.6, G11.14), PR-B G8.1, PR-C G8.4, PR-D G8.5, G8.6, PR-E G8.7, PR-F G8.8 fixed (see per-finding notes); Wave 5 COMPLETE — PR-A G9.3, PR-B G9.4, PR-C G9.5, PR-E G9.2, PR-D G9.1, G9.7, G9.8, PR-F G9.6 fixed (see per-finding notes); 33 of 84 open
+**Branch:** `main` · **Date:** 2026-08-05 · **Status:** Wave 1 landed — G1.1, G1.2, G2.2, G2.4, G2.6, G5.1 fixed (see per-finding notes); Wave 2 landed — PR-A G4.1–G4.5, PR-B G3.1, G3.2, G3.3, G4.6, G10.3, PR-C G2.1, G2.3 fixed (see per-finding notes); Wave 3 COMPLETE — PR-D G6.1, G6.2, PR-E G7.1, G7.3, PR-F G12.1 fixed (see per-finding notes); Wave 4 COMPLETE — PR-A G8.2, G8.3 (also G1.3, G1.6, G11.14), PR-B G8.1, PR-C G8.4, PR-D G8.5, G8.6, PR-E G8.7, PR-F G8.8 fixed (see per-finding notes); Wave 5 COMPLETE — PR-A G9.3, PR-B G9.4, PR-C G9.5, PR-E G9.2, PR-D G9.1, G9.7, G9.8, PR-F G9.6 fixed (see per-finding notes); **Wave 6 COMPLETE — PR-A #121 G10.1, PR-B #123 G10.2, PR-C #124 G10.6, PR-D #122 G9.6 IntegrationTestBase fill, PR-F #125 G7.2, PR-E1 #126 G11.1, G11.4, G11.7–G11.13, G11.16–G11.18, PR-H #127 G11.5, G11.6, PR-G #128 G7.4 + G9.1 UserDetail tests, PR-E2 #129 G11.2, G11.3, G11.15, G11.19, G11.20 fixed (see per-finding notes); 9 of 84 open**
 
 This file is the single working document for the review. It is organised into **12 work groups**,
 each sized to be picked up as one PR/session by someone with no prior context. Every finding keeps
@@ -806,6 +806,8 @@ from the schemas.
 
 ### G7.2 (MEDIUM) — Screens perform I/O directly, bypassing the service layer · `N5`
 
+**FIXED (Wave 6, PR-F #125).** Screens no longer perform I/O or import axios: new `serverWakeService` (fetch + AbortController + Zod boundary) plus hooks `useServerWake`/`useRememberMe`/`useSearchHistory`/`useDownloads`/`useLanguage`/`usePersistedModule` own the logic and screens compose; `errorUtils.getFriendlyErrorMessage` is the single axios-aware place (server-provided messages now win). Verified tsc clean, jest 724/724, eslint `--max-warnings=0`; grep proof — no `import axios` / no `fetch(` in `screens/`.
+
 ```
 screens/ServerWakeScreen.tsx:99    const response = await fetch(healthUrl, {
 screens/ServerWakeScreen.tsx:118   await fetch(WAKE_API_URL + '/start', { method: 'POST' });
@@ -843,6 +845,8 @@ an invalid state. The fourth casts an **unvalidated API response field** — a d
 file that already has no schema (G7.1).
 
 ### G7.4 (MEDIUM) — Five screens over 450 lines with logic that belongs in hooks
+
+**FIXED (Wave 6, PR-G #128).** All five oversized screens decomposed into hooks — lovingBoards `useItemSheet`/`useBoardDetail`/`useUndoSnackbar`, admin `useUserDetailScreen`, `useEditProfile` and Scheduler `useCreateAppointment` — screens now compose. The same PR added the G9.1 admin `UserDetailScreen` tests (16) and fixed the BoardDetail snackbar-timer cleanup leak (see the G9 latent notes).
 
 `modules/lovingBoards/screens/ItemSheet.tsx` (653) · `BoardDetailScreen.tsx` (635) ·
 `modules/admin/screens/UserDetailScreen.tsx` (580) · `screens/EditProfileScreen.tsx` (510) ·
@@ -1048,7 +1052,7 @@ is impossible to verify manually; (2) `modules/admin/screens` — the privilege-
 7 methods, 5 state fields, only tested indirectly through `AuthContext`; (5) the 7 Scheduler screens,
 whose fixtures are already written as stories.
 
-**FIXED (Wave 5, PR-D #118).** Screen tests added for the called-out module surfaces: scheduler `WeekendGridScreen`/`ClientListScreen`/`CreateAppointmentScreen`, lovingBoards `BoardListScreen`/`BoardDetailScreen`/`ItemSheet`/`BoardMembersScreen`, admin `UserListScreen` — built on the PR-A builder mocks. The ⚠️ rows (`src/components`, `src/screens`, `src/hooks`, `src/services`, `src/context`, `src/utils`) remain on the backlog.
+**FIXED (Wave 5, PR-D #118).** Screen tests added for the called-out module surfaces: scheduler `WeekendGridScreen`/`ClientListScreen`/`CreateAppointmentScreen`, lovingBoards `BoardListScreen`/`BoardDetailScreen`/`ItemSheet`/`BoardMembersScreen`, admin `UserListScreen` — built on the PR-A builder mocks. The ⚠️ rows (`src/components`, `src/screens`, `src/hooks`, `src/services`, `src/context`, `src/utils`) remain on the backlog. **FIXED (Wave 6, PR-G #128) — addendum:** the admin ❌ `modules/admin/screens` row is now closed — `UserDetailScreen` covered by 16 tests via the new `useUserDetailScreen` hook (the last admin screen with zero coverage).
 
 ### G9.2 (MEDIUM) — Identity handler tests are 100% mock-only · `N6`
 
@@ -1132,7 +1136,7 @@ untested** — the two components every request passes through.
 `JiApp.Testing.Common/Bases/IntegrationTestBase.cs` is an **empty class** — it names a capability the
 repo does not have, which is why Gateway and YtDownloader each built their own factory.
 
-**FIXED (Wave 5, PR-F #119).** Identity full-pipeline suite shipped via a new ad-hoc `IdentityWebApplicationFactory` (real migrated in-memory SQLite on a shared connection object; closed-`IOptions` rate-limit budget override): register/login round trip, duplicate register + duplicate email, JWT role/security-stamp claims, invalid-password 401, rotated security-stamp 401 (the `OnTokenValidated` recheck), missing-header 401, non-admin 403, and isolated per-fact rate-limit 429s. `IntegrationTestBase.cs` remains empty — its fill is **deferred to Wave 6** (the factory is ad-hoc, not based on the shared base).
+**FIXED (Wave 5, PR-F #119).** Identity full-pipeline suite shipped via a new ad-hoc `IdentityWebApplicationFactory` (real migrated in-memory SQLite on a shared connection object; closed-`IOptions` rate-limit budget override): register/login round trip, duplicate register + duplicate email, JWT role/security-stamp claims, invalid-password 401, rotated security-stamp 401 (the `OnTokenValidated` recheck), missing-header 401, non-admin 403, and isolated per-fact rate-limit 429s. `IntegrationTestBase.cs` remains empty — its fill is **deferred to Wave 6** (the factory is ad-hoc, not based on the shared base). **FIXED (Wave 6, PR-D #122) — addendum:** the deferral is closed — `IntegrationTestBase.cs` is filled as a two-layer `WebApplicationFactory` base (`IntegrationTestBase<TEntryPoint>` + `SqliteIntegrationTestBase<TEntryPoint,TDbContext>`), consolidating the duplicated Gateway / Identity / IdentityRateLimit factories (WSL inotify workaround, Test-env wiring, SQLite store-swap, instance-scoped shared connection, `InFreshScope` all promoted to the base). Behavior-preserving: Gateway 54 + Identity 171 tests pass unchanged.
 
 ### G9.7 (MEDIUM) — Missing negative-space assertions
 
@@ -1166,7 +1170,7 @@ fixed in PR-D (zero-assertion `App.test.tsx` gains an assertion, duplicate docbl
 ### New findings surfaced during Wave 5 (backlog — not fixed)
 
 - **Identity register enumeration (G2.2-adjacent, M-level).** The default `UserValidator` pre-checks uniqueness via `FindByNameAsync`/`FindByEmailAsync` and leaks `"Username 'x' is already taken."` / `"Email 'x' is already taken."` before the `RegisterHandler` generic DB-constraint path (`RegisterHandler.cs:76`, `SqliteErrorCode 19 → "Registration failed"`) ever runs — `RegisterHandler.cs:23-27`'s no-enumeration comment is intent only. Pinned by the PR-F facts (assert current behavior with WHY; fix = neutralize the default `UserValidator` in `Startup.ConfigureIdentity`).
-- **BoardDetailScreen snackbar-timer cleanup leak (new, mobile).** `BoardDetailScreen.tsx:111-118` cleanup reads `undoTimerRef`/`clearTimerRef` at mount (null) and never clears the 5s undo / 4s cleared-message timers assigned later — they outlive the component. Surfaced by the PR-D tests (required `jest.useFakeTimers()` for isolation). Fix = read the refs inside the cleanup.
+- **BoardDetailScreen snackbar-timer cleanup leak (new, mobile).** `BoardDetailScreen.tsx:111-118` cleanup reads `undoTimerRef`/`clearTimerRef` at mount (null) and never clears the 5s undo / 4s cleared-message timers assigned later — they outlive the component. Surfaced by the PR-D tests (required `jest.useFakeTimers()` for isolation). Fix = read the refs inside the cleanup. **FIXED (Wave 6, PR-G #128).** The undo/cleared-message timers moved into the new `useUndoSnackbar` hook, whose cleanup reads the refs it later sets — they no longer outlive the component.
 - **useWeekendGrid Saturday-expense data-loss (new, mobile).** `useWeekendGrid.ts:51-58` loads Saturday then Sunday expenses; `useExpenses.loadExpenses` REPLACES state, so the Saturday load is always clobbered and the Saturday column renders empty (`DayColumn.tsx:34` filters by date). Pinned by the PR-D test (seeds Sat+Sun, asserts Sunday renders and the Saturday title is absent). Fix = merge instead of replace in `useExpenses.loadExpenses`.
 
 ---
@@ -1175,6 +1179,8 @@ fixed in PR-D (zero-assertion `App.test.tsx` gains an assertion, duplicate docbl
 # G10 — Performance, scale & dead weight
 
 ### G10.1 (MEDIUM) — Two handlers load every board in the system into memory · `M7` + `N12`
+
+**FIXED (Wave 6, PR-A #121).** `ListBoards`/`ListClients` no longer load the full board table — membership is now filtered in SQL (parameterized, boundary-anchored `LIKE` over the `MemberUserIds` JSON text, ORed with `OwnerUserId`) via `FromSqlInterpolated`/`SqlQuery<long>`, which is the G10.1 finding body's short-term fix (the long-term `BoardMembers` join table was not built). Covered by format-pinning, board-id boundary-set, and client-visible-boards tests (226 Scheduler tests pass).
 
 `JiApp.Scheduler/Features/Clients/ListClients/ListClientsHandler.cs:12-20` and
 `JiApp.Scheduler/Features/Boards/ListBoards/ListBoardsHandler.cs:13-18` — identical pattern:
@@ -1195,6 +1201,8 @@ the whole table. Cost grows with the total number of boards across **all** tenan
 table removes this, `BoardWriteLock` (G3.3), and the JSON `ValueComparer` requirement in one move.
 
 ### G10.2 (MEDIUM) — Four pieces of in-memory state break silently on a second replica · `M13` + `N11`
+
+**FIXED (Wave 6, PR-B #123).** `SingleInstanceGuard` (file-based exclusive lease on the shared `jiapp_data` volume) added to all 5 deployable `Program.cs` — a duplicate replica logs **Critical** + `exit(1)` before serving traffic; `RateLimitPolicyService.EndpointCache` is now capped at `EndpointCacheMaxEntries` (default 4096). Decision recorded in §F: **horizontal scaling NOT intended — replicas pinned to 1**. Covered by `SingleInstanceGuardTests` + a fitness convention test scanning the 5 `Program.cs`.
 
 | State | File | Symptom with 2 replicas |
 |---|---|---|
@@ -1259,6 +1267,8 @@ with a dated note, or delete it and its route entries.** (Adding auth to two hea
 
 ### G10.6 (MEDIUM) — The MP3 download should be a durable async command
 
+**FIXED (Wave 6, PR-C #124).** Durable async `DownloadCommand` rows (DB-as-queue): idempotent `CreateJob` (active-only dedupe on `UserId`+`VideoId` via a unique filtered index), atomic SQL claim, retry ladder (30s/2m) with exhausted-`Failed` dead-letter rows, crash recovery (`Processing`→`Queued` at worker start), poll + channel wake loop, TTL cleanup, and a SQLite WAL + busy-timeout interceptor. `DownloadSemaphore` becomes the worker's concurrency cap (3). Migration `AddDownloadCommand` (`20260805120000`) — **the only Wave-6 deploy gate (already merged)**.
+
 `GetDownloadLinkHandler.cs:25-92` runs yt-dlp inline in the request: slow (seconds to minutes),
 fragile (cookies, proxy, YouTube availability), stateful (writes to disk). No command document, no
 idempotency, no status lifecycle, no retry, no dead-letter. A restart mid-download loses the work
@@ -1280,26 +1290,26 @@ Small, unambiguous, individually cheap. Good first-PR material.
 
 | # | Finding | Location |
 |---|---|---|
-| **G11.1 (M)** | **`RegisterHandler` leaks Identity error text, defeating its own anti-enumeration design.** The handler carries a comment explaining duplicate pre-checks were omitted *"because they leak user enumeration info"*, then returns `createResult.Errors` verbatim — and `DuplicateUserName`'s description is literally `"Username 'alice' is already taken."` The `DbUpdateException` path at line 44 correctly returns a generic message, so the two paths for the same condition disagree. `M5` | `Register/RegisterHandler.cs:23-52` |
-| G11.2 | 51 `.cs` files indent with tabs, the rest spaces. `backend/.editorconfig` has only analyzer severities — **no `indent_style`** — so nothing enforces it. The tab files cluster in the RBAC/admin work. `L1` | `Permissions.cs`, `RoleNames.cs`, all `Features/Admin/**`, `Authorization/**`, `Resilience/**` |
-| G11.3 | Two members at column 0 inside the class body. `L2` | `JiApp.Common/Constants/ValidationConstants.cs:9-10` |
-| G11.4 | Handler returns distinct messages for lockout vs bad password; the endpoint overwrites every failure with `"Invalid credentials"`. The differentiation is dead code and the lockout hint never reaches the user. The handler also returns failures with **no `ResultCategories`**, so the endpoint cannot distinguish them except by string. `L4` | `Login/LoginHandler.cs:35,43,49` + `LoginEndpoint.cs:30-32` |
-| G11.5 | `authService.updateProfile` returns `roles: []`, `permissions: []` — hardcoded lies in a DTO. Harmless only because `AuthContext` discards the result. `L5` | `mobile/src/services/authService.ts:103-104` |
-| G11.6 | `checkToken(token)` passes an explicit `Authorization` header, but the request interceptor unconditionally overwrites it from storage — the parameter is silently ignored. `L6` | `apiClient.ts:28-31` vs `authService.ts:64-66` |
-| G11.7 | `ValidateVideoId` exists and is called by `BuildPreviewAudioProcess` but **not** by `DownloadVideoAsync`. Not exploitable (the FluentValidation regex covers it) but inconsistently applied. `L7` | `JiApp.YtApi/YoutubeClient.cs:98,154,162` |
-| G11.8 | `DownloadVideoAsync`'s fallback picks the newest `*.mp3` in the user's folder when yt-dlp reports no path — two concurrent downloads by the same user can cross-resolve. `L8` | `YoutubeClient.cs:141-143` |
-| G11.9 | `downloadHistoryRepository.AddAsync/SaveChangesAsync` called without `CancellationToken`, against the edge-to-edge threading from #81. `L9` | `GetDownloadLinkHandler.cs:88-89` |
-| G11.10 | `validator.ValidateAsync(request)` called with no `ct`, unlike every other endpoint. Same in `SearchVideosEndpoint.cs:20`. `L10` | `GetDownloadLinkEndpoint.cs:21` |
-| G11.11 | Catches bare `Exception` around the download, converting client disconnects into `"Failed to process download."` `L11` | `GetDownloadLinkHandler.cs:39` |
-| G11.12 | `IUserAccessService` takes no `CancellationToken`; `IRoleSeeder.SeedAsync(ct)` takes one and never uses it. `L12` | `UserAccessService.cs:9-10`, `RoleSeeder.cs:27` |
-| G11.13 | `Appointment.TryTransitionTo(status, out string? error)` uses the `out`-bool idiom where `dotnet-domain-modeling` prescribes returning `Result`. Blocked on there being **no non-generic `Result`** — `AdminAccessGuard` works around the same gap with `Result<bool>`. `L13` | `Scheduler/Domain/Appointment.cs:29` |
+| **G11.1 (M)** | **FIXED (Wave 6, PR-E1 #126)** — register anti-enumeration: the handler now returns a single generic `"Registration failed"` for every `IdentityResult` failure (duplicate username/email, weak password), with the real error text logged only — both duplicate-username paths (UserValidator + DB constraint) now agree. **`RegisterHandler` leaks Identity error text, defeating its own anti-enumeration design.** The handler carries a comment explaining duplicate pre-checks were omitted *"because they leak user enumeration info"*, then returns `createResult.Errors` verbatim — and `DuplicateUserName`'s description is literally `"Username 'alice' is already taken."` The `DbUpdateException` path at line 44 correctly returns a generic message, so the two paths for the same condition disagree. `M5` | `Register/RegisterHandler.cs:23-52` |
+| G11.2 | **FIXED (Wave 6, PR-E2 #129)** — `indent_style`/`indent_size` added to `backend/.editorconfig`; the tab-indented `.cs` files converted to spaces (`dotnet format whitespace`). 51 `.cs` files indent with tabs, the rest spaces. `backend/.editorconfig` has only analyzer severities — **no `indent_style`** — so nothing enforces it. The tab files cluster in the RBAC/admin work. `L1` | `Permissions.cs`, `RoleNames.cs`, all `Features/Admin/**`, `Authorization/**`, `Resilience/**` |
+| G11.3 | **FIXED (Wave 6, PR-E2 #129)** — the two flush-left members in `ValidationConstants.cs` re-indented. Two members at column 0 inside the class body. `L2` | `JiApp.Common/Constants/ValidationConstants.cs:9-10` |
+| G11.4 | **FIXED (Wave 6, PR-E1 #126) — accepted deviation (see §F).** The distinct *"Too many attempts. Try again later."* lockout message is kept deliberately (UX); the handler now returns `ResultCategories.AccountLocked` so the endpoint can distinguish it — the account-enumeration oracle it creates is a documented, user-accepted deviation. Handler returns distinct messages for lockout vs bad password; the endpoint overwrites every failure with `"Invalid credentials"`. The differentiation is dead code and the lockout hint never reaches the user. The handler also returns failures with **no `ResultCategories`**, so the endpoint cannot distinguish them except by string. `L4` | `Login/LoginHandler.cs:35,43,49` + `LoginEndpoint.cs:30-32` |
+| G11.5 | **FIXED (Wave 6, PR-H #127)** — `updateProfile` no longer fabricates `roles: []`/`permissions: []`; the return type is narrowed to `UpdateProfileResult` (id/displayName/email), so the caller can't silently wipe in-memory roles/permissions. `authService.updateProfile` returns `roles: []`, `permissions: []` — hardcoded lies in a DTO. Harmless only because `AuthContext` discards the result. `L5` | `mobile/src/services/authService.ts:103-104` |
+| G11.6 | **FIXED (Wave 6, PR-H #127)** — the request interceptor now respects an explicit `Authorization` header (e.g. `checkToken`'s) instead of overwriting it from storage. `checkToken(token)` passes an explicit `Authorization` header, but the request interceptor unconditionally overwrites it from storage — the parameter is silently ignored. `L6` | `apiClient.ts:28-31` vs `authService.ts:64-66` |
+| G11.7 | **FIXED (Wave 6, PR-E1 #126)** — `DownloadVideoAsync` now runs `ValidateVideoId` like `BuildPreviewAudioProcess`. `ValidateVideoId` exists and is called by `BuildPreviewAudioProcess` but **not** by `DownloadVideoAsync`. Not exploitable (the FluentValidation regex covers it) but inconsistently applied. `L7` | `JiApp.YtApi/YoutubeClient.cs:98,154,162` |
+| G11.8 | **FIXED (Wave 6, PR-E1 #126)** — `DownloadVideoAsync` now takes the job `tempId`; the worker resolves its own output instead of guessing — no cross-resolution between concurrent downloads by the same user. `DownloadVideoAsync`'s fallback picks the newest `*.mp3` in the user's folder when yt-dlp reports no path — two concurrent downloads by the same user can cross-resolve. `L8` | `YoutubeClient.cs:141-143` |
+| G11.9 | **FIXED (Wave 6, PR-E1 #126)** — `AddAsync`/`SaveChangesAsync` now thread the `CancellationToken` (worker `RecordHistoryAsync`). `downloadHistoryRepository.AddAsync/SaveChangesAsync` called without `CancellationToken`, against the edge-to-edge threading from #81. `L9` | `GetDownloadLinkHandler.cs:88-89` |
+| G11.10 | **FIXED (Wave 6, PR-E1 #126)** — `validator.ValidateAsync(request, ct)` in `GetDownloadLinkEndpoint` and `SearchVideosEndpoint`. `validator.ValidateAsync(request)` called with no `ct`, unlike every other endpoint. Same in `SearchVideosEndpoint.cs:20`. `L10` | `GetDownloadLinkEndpoint.cs:21` |
+| G11.11 | **FIXED (Wave 6, PR-C #124)** — the inline yt-dlp flow (and its bare-`Exception` catch) was removed by the G10.6 durable-`DownloadCommand` rewrite: the request handler now only enqueues, and the worker handles timeouts/cancellation explicitly. Catches bare `Exception` around the download, converting client disconnects into `"Failed to process download."` `L11` | `GetDownloadLinkHandler.cs:39` |
+| G11.12 | **FIXED (Wave 6, PR-E1 #126)** — `IUserAccessService` now takes a `CancellationToken` and `RoleSeeder.SeedAsync(ct)` actually uses it. `IUserAccessService` takes no `CancellationToken`; `IRoleSeeder.SeedAsync(ct)` takes one and never uses it. `L12` | `UserAccessService.cs:9-10`, `RoleSeeder.cs:27` |
+| G11.13 | **FIXED (Wave 6, PR-E1 #126)** — new non-generic `Result` + `WithValue<T>`; `Appointment.TryTransitionTo` now returns `Result`, and `AdminAccessGuard` migrated off `Result<bool>` onto it. `Appointment.TryTransitionTo(status, out string? error)` uses the `out`-bool idiom where `dotnet-domain-modeling` prescribes returning `Result`. Blocked on there being **no non-generic `Result`** — `AdminAccessGuard` works around the same gap with `Result<bool>`. `L13` | `Scheduler/Domain/Appointment.cs:29` |
 | G11.14 | **FIXED (Wave 4)** — G8.2 deleted the four `JwtSettings` copies (one shared `JiApp.Common` type remains per file). `L15` | `Configuration/*Settings.cs` |
-| G11.15 | Root-level orphan files: `Permissions.cs` and `RoleNames.cs` sit at the `JiApp.Common` root while a `Constants/` folder exists; `JiApp.YtApi` is entirely flat (3 files, no folders). `L17` | `JiApp.Common/`, `JiApp.YtApi/` |
-| G11.16 | `RateLimitPolicySelector` returns **403 Forbidden** for "no rate-limit policy configured" — a server misconfiguration reported as a client authorization failure. `L18` | `RateLimitPolicySelector.cs:122-128` |
-| G11.17 | `ListUsersEndpoint` calls `result.Value` **without checking `result.IsSuccess`**. Latent only because `ListUsersHandler` always succeeds today. Also does its pagination clamping in the endpoint lambda rather than the handler. | `Admin/Users/ListUsers/ListUsersEndpoint.cs:20-24` |
-| G11.18 | `StreamPreviewHandler` returns a custom `StreamPreviewResult` discriminated union instead of `Result<T>`, bypassing the shared error contract. And `GetDownloadLinkHandler` invents a `"YoutubeDl"` error category outside `ResultCategories`. | `StreamPreview/StreamPreviewHandler.cs:49-56`, `GetDownloadLinkHandler.cs:20` |
-| G11.19 | `ToTable()` uses string literals with no central `TableNames` constants; Scheduler and LovingBoards rely on convention instead — inconsistent either way. | `YtDownloader/Persistence/Configurations/*.cs:11`, `Identity/…/RefreshTokenConfiguration.cs:12` |
-| G11.20 | Owned enums live in their own files rather than beside their aggregate (`AppointmentStatus`, `ExpenseCategory`, `ServiceCategory`, `BoardItemStatus`). Style only — see §D for why the "explicit values" version of this claim was rejected. | `Scheduler/Domain/`, `LovingBoards/Domain/` |
+| G11.15 | **FIXED (Wave 6, PR-E2 #129)** — root orphans moved: `Permissions.cs`/`RoleNames.cs` → `JiApp.Common/Constants/` (namespace `JiApp.Common.Constants`, 28 usings updated); flat `JiApp.YtApi` restructured into `Clients/` + `Contracts/` concern folders. Root-level orphan files: `Permissions.cs` and `RoleNames.cs` sit at the `JiApp.Common` root while a `Constants/` folder exists; `JiApp.YtApi` is entirely flat (3 files, no folders). `L17` | `JiApp.Common/`, `JiApp.YtApi/` |
+| G11.16 | **FIXED (Wave 6, PR-E1 #126)** — `RateLimitPolicySelector` now returns 500 (server fault, logged) instead of 403 for "no rate-limit policy configured" — a server misconfiguration no longer masquerades as a client authorization failure. `RateLimitPolicySelector` returns **403 Forbidden** for "no rate-limit policy configured" — a server misconfiguration reported as a client authorization failure. `L18` | `RateLimitPolicySelector.cs:122-128` |
+| G11.17 | **FIXED (Wave 6, PR-E1 #126)** — `ListUsersEndpoint` guards `result.IsSuccess` before touching `.Value`; pagination clamping moved into the handler. `ListUsersEndpoint` calls `result.Value` **without checking `result.IsSuccess`**. Latent only because `ListUsersHandler` always succeeds today. Also does its pagination clamping in the endpoint lambda rather than the handler. | `Admin/Users/ListUsers/ListUsersEndpoint.cs:20-24` |
+| G11.18 | **FIXED (Wave 6, PR-E1 #126)** — `StreamPreviewHandler` returns `Result<T>`; the invented `"YoutubeDl"` category became `ResultCategories.YoutubeDl`. `StreamPreviewHandler` returns a custom `StreamPreviewResult` discriminated union instead of `Result<T>`, bypassing the shared error contract. And `GetDownloadLinkHandler` invents a `"YoutubeDl"` error category outside `ResultCategories`. | `StreamPreview/StreamPreviewHandler.cs:49-56`, `GetDownloadLinkHandler.cs:20` |
+| G11.19 | **FIXED (Wave 6, PR-E2 #129)** — central `TableNames` constants replace string-literal `ToTable()` calls (YtDownloader + Identity Persistence); values byte-identical — no migration change. `ToTable()` uses string literals with no central `TableNames` constants; Scheduler and LovingBoards rely on convention instead — inconsistent either way. | `YtDownloader/Persistence/Configurations/*.cs:11`, `Identity/…/RefreshTokenConfiguration.cs:12` |
+| G11.20 | **FIXED (Wave 6, PR-E2 #129)** — owned enums moved beside their aggregate (`AppointmentStatus`/`ExpenseCategory`/`ServiceCategory` in Scheduler, `BoardItemStatus` in LovingBoards); style only, no explicit int values (§D). Owned enums live in their own files rather than beside their aggregate (`AppointmentStatus`, `ExpenseCategory`, `ServiceCategory`, `BoardItemStatus`). Style only — see §D for why the "explicit values" version of this claim was rejected. | `Scheduler/Domain/`, `LovingBoards/Domain/` |
 
 ---
 
@@ -1451,14 +1461,21 @@ G1.6 + G11.14) · `G8.1` (`ToHttp()` — also closes the fallback-arm mess and h
 **Wave 5 — the safety net.** `G9.3` before `G9.1` — the mocks must be rebuilt before the missing
 specs can be written cleanly. Then `G9.4` (adopt `composeStories`, starting with the 7 Scheduler
 component stories that already exist), `G9.2`, `G9.5`, `G9.6`. Add the G12 fitness tests as each
-corresponding fix lands, so it cannot regress.
+corresponding fix lands, so it cannot regress. — **COMPLETE**
 
-**Wave 6 — structural.** `G10.1` (or the `BoardMembers` join table, which also kills G3.3 and the
-JSON `ValueComparer` need) · `G10.2` · `G10.6` · `G7.2` · `G7.4` · `G11` sweep.
+**Wave 6 — structural — COMPLETE.** `G10.1` (or the `BoardMembers` join table, which also kills G3.3 and the
+JSON `ValueComparer` need) · `G10.2` · `G10.6` · `G7.2` · `G7.4` · `G11` sweep. 9 PRs #121–#129;
+header **33 → 9 of 84 open**.
+
+**Wave 6 decisions:**
+- `G11.4` — **accepted deviation (user decision).** The distinct *"Too many attempts. Try again later."* lockout message is kept deliberately for UX; the handler returns `ResultCategories.AccountLocked` so the endpoint can distinguish it, and the account-enumeration oracle it creates is a documented, user-accepted trade-off.
+- `G10.2` — **horizontal scaling is NOT intended.** `SingleInstanceGuard` pins replicas to 1 (file-based exclusive lease on the shared `jiapp_data` volume; a second replica logs **Critical** + `exit(1)` before serving traffic) and the endpoint cache is capped — the four in-memory states need no redesign.
 
 **Decide, don't default:**
 - `G2.5` — write down the revocation policy, then make the wiring match it.
 - `G10.5` — keep `ImageTools` with a stated purpose, or delete it.
 - `G9.8` — mobile test-naming grammar: adopt `Behavior_Scenario_Expected` or record the exemption.
 - `G10.2` — is horizontal scaling ever intended? If yes, four things need redesign. If no, pin
-  replicas to 1 and fail fast on a second instance.
+  replicas to 1 and fail fast on a second instance. **Resolved (Wave 6): horizontal scaling is NOT
+  intended — `SingleInstanceGuard` pins replicas to 1 and fails fast on a second instance; the
+  endpoint cache is capped.**
