@@ -19,17 +19,13 @@ public static class StreamPreviewEndpoint
             {
                 var result = handler.Handle(videoId);
 
-                if (result == StreamPreviewResult.ResolveFailed)
+                if (!result.IsSuccess)
                 {
                     return Results.NotFound(new ApiErrorResponse(
-                        Error: "Could not resolve audio for this video. It may be unavailable or age-restricted."));
+                        Error: result.Error ?? "Could not resolve audio for this video. It may be unavailable or age-restricted."));
                 }
 
-                if (result is not StreamPreviewResult.StreamReady stream)
-                {
-                    return Results.Problem("Unexpected preview state.", statusCode: 500);
-                }
-
+                var stream = result.Value!;
                 var ytDlp = stream.YtDlpProcess;
                 var ffmpeg = stream.FfmpegProcess;
 

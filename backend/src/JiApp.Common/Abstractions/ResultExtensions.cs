@@ -7,6 +7,11 @@ public static class ResultExtensions
     public static IResult ValidationError(this IResultExtensions extensions, string[] errors)
         => Results.ValidationProblem(new Dictionary<string, string[]> { ["errors"] = errors });
 
+    public static Result<T> WithValue<T>(this Result result, T value) =>
+        result.IsSuccess
+            ? Result<T>.Success(value)
+            : Result<T>.Failure(result.Error!, result.ErrorCategory);
+
     public static IResult ToHttp<T>(this Result<T> result)
     {
         if (result.IsSuccess) return Results.Ok(result.Value);

@@ -1,3 +1,4 @@
+using JiApp.Common.Abstractions;
 using JiApp.YtApi;
 using JiApp.YtDownloader.Configuration;
 using JiApp.YtDownloader.Logging;
@@ -11,7 +12,7 @@ public sealed class StreamPreviewHandler(
     ILogger<StreamPreviewHandler> logger,
     Settings settings)
 {
-    public StreamPreviewResult Handle(string videoId)
+    public Result<StreamReady> Handle(string videoId)
     {
         Process ytDlp;
         try
@@ -21,7 +22,9 @@ public sealed class StreamPreviewHandler(
         catch (ArgumentException ex)
         {
             logger.PreviewResolveFailed(ex, videoId);
-            return StreamPreviewResult.ResolveFailed;
+            return Result<StreamReady>.Failure(
+                "Could not resolve audio for this video. It may be unavailable or age-restricted.",
+                ResultCategories.NotFound);
         }
 
         var ffmpeg = new Process
@@ -39,18 +42,11 @@ public sealed class StreamPreviewHandler(
             EnableRaisingEvents = true,
         };
 
-        return new StreamPreviewResult.StreamReady(ytDlp, ffmpeg);
+        return Result<StreamReady>.Success(new StreamReady(ytDlp, ffmpeg));
     }
 
     internal static string BuildFfmpegArguments(int previewDurationSeconds) =>
         $"-i pipe:0 -t {previewDurationSeconds} -loglevel quiet -f mp3 -";
 }
 
-public abstract record StreamPreviewResult
-{
-    public sealed record StreamReady(Process YtDlpProcess, Process FfmpegProcess) : StreamPreviewResult;
-
-    public static readonly StreamPreviewResult ResolveFailed = new ResolveFailedRecord();
-
-    private sealed record ResolveFailedRecord : StreamPreviewResult;
-}
+public sealed record StreamReady(Process YtDlpProcess, Process FfmpegProcess);

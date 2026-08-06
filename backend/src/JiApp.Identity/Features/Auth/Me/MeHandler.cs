@@ -29,7 +29,7 @@ public sealed class MeHandler(
         }
 
         var roles = await userManager.GetRolesAsync(user);
-        var permissions = await accessService.GetEffectivePermissionsAsync(userId);
+        var permissions = await accessService.GetEffectivePermissionsAsync(userId, ct);
 
         return Result<MeResponse>.Success(new MeResponse(user.Id, user.DisplayName, username, user.Email, [.. roles], permissions));
     }

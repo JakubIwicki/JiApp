@@ -19,7 +19,7 @@ public sealed class RemoveRoleHandler(
 		{
 			var notLastAdmin = await guard.EnsureNotLastAdminAsync(userId);
 			if (!notLastAdmin.IsSuccess)
-				return notLastAdmin;
+				return notLastAdmin.WithValue(true);
 		}
 
 		var user = await userManager.FindByIdAsync(userId.ToString(CultureInfo.InvariantCulture));

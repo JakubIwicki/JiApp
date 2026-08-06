@@ -7,8 +7,11 @@ namespace JiApp.Identity.Features.Admin.Users.ListUsers;
 
 public sealed class ListUsersHandler(UserManager<User> userManager)
 {
-	public async Task<Result<ListUsersResponse>> HandleAsync(string? search, int page, int pageSize, CancellationToken ct)
+	public async Task<Result<ListUsersResponse>> HandleAsync(string? search, int? page, int? pageSize, CancellationToken ct)
 	{
+		var p = Math.Max(1, page ?? 1);
+		var ps = Math.Clamp(pageSize ?? 20, 1, 100);
+
 		var query = userManager.Users.AsQueryable();
 
 		if (!string.IsNullOrWhiteSpace(search))
@@ -21,8 +24,8 @@ public sealed class ListUsersHandler(UserManager<User> userManager)
 
 		var totalCount = await query.CountAsync(ct);
 		var pagedUsers = await query.OrderBy(u => u.Id)
-			.Skip((page - 1) * pageSize)
-			.Take(pageSize)
+			.Skip((p - 1) * ps)
+			.Take(ps)
 			.ToListAsync(ct);
 
 		var summaries = new List<UserSummary>(pagedUsers.Count);

@@ -1,14 +1,19 @@
 using System.Text.Json;
 using JiApp.Common.Abstractions;
+using Microsoft.Extensions.Logging;
 
 namespace JiApp.Gateway.RateLimiting;
 
-public sealed class RateLimitPolicySelector(RequestDelegate next, RateLimitPolicyService policyService)
+public sealed class RateLimitPolicySelector(
+    RequestDelegate next,
+    RateLimitPolicyService policyService,
+    ILogger<RateLimitPolicySelector> logger)
 {
     // Maps request paths to rate limit policy names.
     // Must match the policy names expected by GatewaySettings.Validate().
     // null = no rate limiting applied (passthrough for proxied routes without specific limits).
-    // Paths not in this map → 403 Forbidden (fail closed — no silent degradation).
+    // Paths not in this map → 500 Internal Server Error (fail closed — no silent degradation).
+    // A missing policy for a routed endpoint is a server misconfiguration, not a client fault.
     private static readonly Dictionary<string, string?> PathPolicyMap = new()
     {
         // Auth
@@ -105,8 +110,10 @@ public sealed class RateLimitPolicySelector(RequestDelegate next, RateLimitPolic
             return;
         }
 
-        // 4) Fail closed — route endpoint exists but no rate limit policy configured
-        await WriteForbiddenResponse(context);
+        // 4) Fail closed — route endpoint exists but no rate limit policy configured.
+        // This is a server misconfiguration, so surface it as a 5xx server fault (not a
+        // client authorization failure) and log it for the operator to fix the map.
+        await WriteServerErrorResponse(context, path);
     }
 
     private void AttachRateLimitPolicyToContext(HttpContext context, string policyName)
@@ -120,9 +127,11 @@ public sealed class RateLimitPolicySelector(RequestDelegate next, RateLimitPolic
         context.SetEndpoint(newEndpoint);
     }
 
-    private static async Task WriteForbiddenResponse(HttpContext context)
+    private async Task WriteServerErrorResponse(HttpContext context, string path)
     {
-        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        logger.LogWarning("No rate limit policy configured for endpoint {Path} — server misconfiguration", path);
+
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
         context.Response.ContentType = "application/json";
         var error = new ApiErrorResponse("No rate limit policy configured for this endpoint");
         await JsonSerializer.SerializeAsync(context.Response.Body, error, ApiErrorResponse.JsonOptions);

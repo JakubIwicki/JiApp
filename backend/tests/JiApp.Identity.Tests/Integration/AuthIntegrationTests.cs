@@ -67,12 +67,11 @@ public sealed class AuthIntegrationTests : IClassFixture<IdentityWebApplicationF
         var error = await duplicate.Content.ReadFromJsonAsync<ApiErrorResponse>();
         error.Should().NotBeNull();
         error!.Error.Should().NotBeNullOrWhiteSpace();
-        // Known latent finding (G9.6): the default UserValidator pre-checks
-        // username uniqueness via FindByNameAsync and leaks "Username 'x' is
-        // already taken." — an enumeration vector the RegisterHandler's generic
-        // DB-constraint path never reaches. Assert the current behavior so the
-        // eventual fix surfaces as a test change.
-        error.Error.Should().Contain("already taken");
+        // The default UserValidator pre-checks username uniqueness and returns
+        // "Username 'x' is already taken." — an enumeration leak that the handler
+        // must collapse to the generic message (G11.1). Assert no username text leaks.
+        error.Error.Should().Be("Registration failed");
+        error.Error.Should().NotContain(username);
         _factory.InFreshScope(db => db.Users.Count(u => u.UserName == username)).Should().Be(1);
     }
 
@@ -91,12 +90,11 @@ public sealed class AuthIntegrationTests : IClassFixture<IdentityWebApplicationF
         var error = await duplicate.Content.ReadFromJsonAsync<ApiErrorResponse>();
         error.Should().NotBeNull();
         error!.Error.Should().NotBeNullOrWhiteSpace();
-        // Known latent finding (G9.6): the default UserValidator's
-        // RequireUniqueEmail pre-check via FindByEmailAsync leaks "Email 'x' is
-        // already taken." — the same prod duplicate-email enumeration vector
-        // already recorded in the Wave 5 closeout backlog. Assert the current
-        // behavior so the eventual fix surfaces as a change to this assertion.
-        error.Error.Should().Contain("already taken");
+        // The default UserValidator's RequireUniqueEmail pre-check leaks "Email 'x'
+        // is already taken." — the same enumeration vector the handler must collapse
+        // to the generic message (G11.1). Assert no email text leaks.
+        error.Error.Should().Be("Registration failed");
+        error.Error.Should().NotContain(email);
         _factory.InFreshScope(db => db.Users.Count(u => u.Email == email)).Should().Be(1);
     }
 
@@ -127,6 +125,28 @@ public sealed class AuthIntegrationTests : IClassFixture<IdentityWebApplicationF
         var error = await login.Content.ReadFromJsonAsync<ApiErrorResponse>();
         error.Should().NotBeNull();
         error!.Error.Should().Be("Invalid credentials");
+    }
+
+    [Fact]
+    public async Task Facts_ReturnsLockoutHint_WhenAccountIsLocked()
+    {
+        const string username = "lockedoutuser";
+        await RegisterAsync(_client, username, "lockedout@test.com");
+
+        // MaxFailedAccessAttempts is 5; each wrong password increments the counter
+        // and lockoutOnFailure: true locks the account on the 5th.
+        for (var i = 0; i < 5; i++)
+        {
+            var attempt = await _client.PostAsJsonAsync(LoginUrl, new LoginRequest(username, "WrongPassword1!"));
+            attempt.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        }
+
+        var login = await _client.PostAsJsonAsync(LoginUrl, new LoginRequest(username, ValidPassword));
+
+        login.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        var error = await login.Content.ReadFromJsonAsync<ApiErrorResponse>();
+        error.Should().NotBeNull();
+        error!.Error.Should().Be("Too many attempts. Try again later.");
     }
 
     [Fact]

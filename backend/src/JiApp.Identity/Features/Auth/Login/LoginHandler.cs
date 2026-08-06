@@ -40,7 +40,9 @@ public sealed class LoginHandler(
         if (result.IsLockedOut)
         {
             logger.LoginFailedAccountLocked(request.Username);
-            return Result<LoginResponse>.Failure("Account is locked. Please try again later.");
+            return Result<LoginResponse>.Failure(
+                "Account is locked. Please try again later.",
+                ResultCategories.AccountLocked);
         }
 
         if (!result.Succeeded)
@@ -53,7 +55,7 @@ public sealed class LoginHandler(
             await userManager.UpdateSecurityStampAsync(user);
 
         var roles = await userManager.GetRolesAsync(user);
-        var permissions = await accessService.GetEffectivePermissionsAsync(user.Id);
+        var permissions = await accessService.GetEffectivePermissionsAsync(user.Id, ct);
         var accessToken = jwtTokenService.GenerateToken(user.Id, user.UserName!, roles, permissions, user.SecurityStamp!);
         var refreshToken = await refreshTokenService.CreateAsync(user.Id, ct);
         var expiresIn = settings.GetAccessTokenExpireMinutes() * 60;

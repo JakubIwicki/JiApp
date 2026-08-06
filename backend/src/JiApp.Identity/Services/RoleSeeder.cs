@@ -28,12 +28,15 @@ public sealed class RoleSeeder(
 	{
 		foreach (var (name, desiredPermissions) in RoleDefinitions)
 		{
+			ct.ThrowIfCancellationRequested();
+
 			if (name == RoleNames.Admin)
 				await SeedAndReconcileRoleAsync(name, desiredPermissions, ct);
 			else
 				await SeedRoleCreateOnlyAsync(name, desiredPermissions, ct);
 		}
 
+		ct.ThrowIfCancellationRequested();
 		await BootstrapAdminAsync(ct);
 	}
 
