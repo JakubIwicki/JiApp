@@ -21,9 +21,11 @@ jobs:
           chmod +x ~/.local/bin/yt-dlp
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Build
-        run: dotnet build backend/JiApp.sln
+        run: dotnet build backend/JiApp.sln --configuration Release -warnaserror
       - name: Test
-        run: dotnet test backend/JiApp.sln --no-build
+        run: dotnet test backend/JiApp.sln --configuration Release --no-build
+      - name: Format
+        run: dotnet format backend/JiApp.sln --verify-no-changes --no-restore
 
   mobile:
     runs-on: ubuntu-latest
