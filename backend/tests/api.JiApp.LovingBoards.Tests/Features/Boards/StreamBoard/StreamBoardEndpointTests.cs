@@ -16,15 +16,38 @@ public sealed class StreamBoardEndpointTests
         var fixture = Fixture.Init(subscription);
         var heartbeat = new TaskCompletionSource<bool>();
         var buffered = ItemAddedEvent();
+        var syncContext = new ManualSyncContext();
+        var previous = SynchronizationContext.Current;
 
+        SynchronizationContext.SetSynchronizationContext(syncContext);
         var loop = Act(fixture, _ => heartbeat.Task);
-        await ReleaseOnDedicatedThread(
-            () => subscription.Deliver(buffered),
-            () => heartbeat.SetResult(false));
+
+        try
+        {
+            // queue the read continuation before the heartbeat wins WhenAny, so the pump can run it
+            // first: the delivered event then sits completed-but-undrained on readTask when the loop's
+            // heartbeat branch runs, forcing the flush-at-exit branch to write it
+            subscription.Deliver(buffered);
+            WaitUntilQueued(syncContext);
+
+            // clear the current context so the loop continuation is posted to the manual pump instead
+            // of running inline on this thread and breaking before the read had been pumped
+            SynchronizationContext.SetSynchronizationContext(null);
+            heartbeat.SetResult(false);
+            SynchronizationContext.SetSynchronizationContext(syncContext);
+
+            PumpUntilLoopCompletes(syncContext, loop);
+        }
+        finally
+        {
+            SynchronizationContext.SetSynchronizationContext(previous);
+        }
+
         await loop;
 
         fixture.BodyText.Should().Contain("event: item.added");
         fixture.BodyText.Should().Contain("data: {\"id\":1}");
+        subscription.Reads.Should().Be(1);
     }
 
     [Fact]
@@ -56,14 +79,30 @@ public sealed class StreamBoardEndpointTests
     private static Task Act(Fixture fixture, Func<CancellationToken, Task<bool>> heartbeat)
         => StreamBoardEndpoint.StreamLoopAsync(fixture.Response, fixture.Subscription, heartbeat, CancellationToken.None);
 
-    private static Task ReleaseOnDedicatedThread(params Action[] releases)
-        => Task.Factory.StartNew(
-            () => { foreach (var release in releases) release(); },
-            CancellationToken.None,
-            TaskCreationOptions.LongRunning,
-            TaskScheduler.Default);
-
     private static Task<bool> NeverCompletingHeartbeat() => new TaskCompletionSource<bool>().Task;
+
+    private static void WaitUntilQueued(ManualSyncContext syncContext)
+    {
+        if (!SpinWait.SpinUntil(() => syncContext.HasPending, TimeSpan.FromSeconds(10)))
+            throw new TimeoutException("The delivered event was never queued for the stream loop.");
+    }
+
+    private static void PumpUntilLoopCompletes(ManualSyncContext syncContext, Task loop)
+    {
+        var completed = SpinWait.SpinUntil(
+            () =>
+            {
+                if (loop.IsCompleted)
+                    return true;
+
+                syncContext.RunPending();
+                return false;
+            },
+            TimeSpan.FromSeconds(10));
+
+        if (!completed)
+            throw new TimeoutException("The stream loop did not flush the buffered event before the heartbeat-exit.");
+    }
 
     private static BoardEvent ItemAddedEvent(long id = 1) => new(BoardEventNames.ItemAdded, new { id });
 
@@ -105,8 +144,13 @@ public sealed class StreamBoardEndpointTests
 
     private sealed class GatedBoardSubscription : IBoardSubscription
     {
+        // After the single delivered event is read, further reads must block forever
+        // instead of re-yielding the same event — otherwise the loop re-writes it endlessly.
+        private static readonly Task<bool> Silence = new TaskCompletionSource<bool>().Task;
+
         private readonly TaskCompletionSource<bool> _release = new(TaskCreationOptions.RunContinuationsAsynchronously);
         private volatile BoardEvent? _current;
+        private int _reads;
 
         public void Deliver(BoardEvent ev)
         {
@@ -118,15 +162,56 @@ public sealed class StreamBoardEndpointTests
 
         public void Dispose() { }
 
+        public int Reads => _reads;
+
         private sealed class Enumerable(GatedBoardSubscription owner) : IAsyncEnumerable<BoardEvent>, IAsyncEnumerator<BoardEvent>
         {
             public BoardEvent Current => owner._current!;
 
             public IAsyncEnumerator<BoardEvent> GetAsyncEnumerator(CancellationToken cancellationToken) => this;
 
-            public ValueTask<bool> MoveNextAsync() => new(owner._release.Task);
+            public ValueTask<bool> MoveNextAsync()
+            {
+                if (Interlocked.Increment(ref owner._reads) > 1)
+                    return new(Silence);
+
+                return new(owner._release.Task);
+            }
 
             public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+        }
+    }
+
+    // A SynchronizationContext that parks every posted continuation on a queue the test pumps by
+    // hand, so the order in which read and heartbeat continuations resume is fully deterministic.
+    private sealed class ManualSyncContext : SynchronizationContext
+    {
+        private readonly Queue<(SendOrPostCallback Callback, object? State)> _pending = new();
+        private readonly object _gate = new();
+
+        public bool HasPending
+        {
+            get { lock (_gate) return _pending.Count > 0; }
+        }
+
+        public override void Post(SendOrPostCallback d, object? state)
+        {
+            lock (_gate)
+                _pending.Enqueue((d, state));
+        }
+
+        public bool RunPending()
+        {
+            (SendOrPostCallback Callback, object? State) item;
+            lock (_gate)
+            {
+                if (_pending.Count == 0)
+                    return false;
+                item = _pending.Dequeue();
+            }
+
+            item.Callback(item.State);
+            return true;
         }
     }
 }
