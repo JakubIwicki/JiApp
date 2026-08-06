@@ -1,6 +1,6 @@
 # JiApp — Code Review & Remediation Backlog
 
-**Branch:** `main` · **Date:** 2026-08-05 · **Status:** Wave 1 landed — G1.1, G1.2, G2.2, G2.4, G2.6, G5.1 fixed (see per-finding notes); Wave 2 landed — PR-A G4.1–G4.5, PR-B G3.1, G3.2, G3.3, G4.6, G10.3, PR-C G2.1, G2.3 fixed (see per-finding notes); Wave 3 COMPLETE — PR-D G6.1, G6.2, PR-E G7.1, G7.3, PR-F G12.1 fixed (see per-finding notes); Wave 4 COMPLETE — PR-A G8.2, G8.3 (also G1.3, G1.6, G11.14), PR-B G8.1, PR-C G8.4, PR-D G8.5, G8.6, PR-E G8.7, PR-F G8.8 fixed (see per-finding notes); Wave 5 COMPLETE — PR-A G9.3, PR-B G9.4, PR-C G9.5, PR-E G9.2, PR-D G9.1, G9.7, G9.8, PR-F G9.6 fixed (see per-finding notes); **Wave 6 COMPLETE — PR-A #121 G10.1, PR-B #123 G10.2, PR-C #124 G10.6, PR-D #122 G9.6 IntegrationTestBase fill, PR-F #125 G7.2, PR-E1 #126 G11.1, G11.4, G11.7–G11.13, G11.16–G11.18, PR-H #127 G11.5, G11.6, PR-G #128 G7.4 + G9.1 UserDetail tests, PR-E2 #129 G11.2, G11.3, G11.15, G11.19, G11.20 fixed (see per-finding notes); 9 of 84 open**
+**Branch:** `main` · **Date:** 2026-08-05 · **Status:** Wave 1 landed — G1.1, G1.2, G2.2, G2.4, G2.6, G5.1 fixed (see per-finding notes); Wave 2 landed — PR-A G4.1–G4.5, PR-B G3.1, G3.2, G3.3, G4.6, G10.3, PR-C G2.1, G2.3 fixed (see per-finding notes); Wave 3 COMPLETE — PR-D G6.1, G6.2, PR-E G7.1, G7.3, PR-F G12.1 fixed (see per-finding notes); Wave 4 COMPLETE — PR-A G8.2, G8.3 (also G1.3, G1.6, G11.14), PR-B G8.1, PR-C G8.4, PR-D G8.5, G8.6, PR-E G8.7, PR-F G8.8 fixed (see per-finding notes); Wave 5 COMPLETE — PR-A G9.3, PR-B G9.4, PR-C G9.5, PR-E G9.2, PR-D G9.1, G9.7, G9.8, PR-F G9.6 fixed (see per-finding notes); **Wave 6 COMPLETE — PR-A #121 G10.1, PR-B #123 G10.2, PR-C #124 G10.6, PR-D #122 G9.6 IntegrationTestBase fill, PR-F #125 G7.2, PR-E1 #126 G11.1, G11.4, G11.7–G11.13, G11.16–G11.18, PR-H #127 G11.5, G11.6, PR-G #128 G7.4 + G9.1 UserDetail tests, PR-E2 #129 G11.2, G11.3, G11.15, G11.19, G11.20 fixed (see per-finding notes); Wave 7 COMPLETE — W7-B G2.5, G2.7, W7-C G3.4, G3.5, W7-A G1.4, G1.5, W7-D G5.2, W7-E G5.3, G5.4, W7-F G10.5 fixed (see per-finding notes); 8 of 84 open (G2.8, G5.5, G7.3 partial, G10.4, G12.2-G12.5)**
 
 This file is the single working document for the review. It is organised into **12 work groups**,
 each sized to be picked up as one PR/session by someone with no prior context. Every finding keeps
@@ -176,6 +176,8 @@ Resolves G8.2 in the same edit.
 
 ### G1.4 (MEDIUM) — Settings validation is incomplete, differently, in every service · `N13`
 
+**FIXED (Wave 7).** Settings validation now covers all 5 services; env-aware `Validate(IWebHostEnvironment?)`, accumulating errors; `DeepSeek.ApiKey` and `Bootstrap.AdminUsername` stay optional. W7-A PR #134.
+
 No two `Validate()` methods check the same set of runtime-required fields:
 
 | Service | Consumed at runtime, never validated |
@@ -191,6 +193,8 @@ missing in production (inside `AddCors`), not at `Validate()` time with the othe
 failure is late and the message is disconnected from the settings report.
 
 ### G1.5 (MEDIUM) — `LovingBoardsSettings.Validate()` / `SchedulerSettings.Validate()` short-circuit · `L14`
+
+**FIXED (Wave 7).** Accumulation regression tests added. Note: the short-circuit claim was already resolved by Wave 4's shared `JwtSettings` returning `List<string>`; Wave 7 adds per-service regression tests proving multiple unrelated errors surface in one `Validate()` call. W7-A PR #134.
 
 Both accumulate into an `errors` list but call `Jwt.Validate()`, which **throws immediately**. The
 first JWT error hides every other config error, so operators fix them one deploy at a time.
@@ -322,6 +326,8 @@ self-service path missed it.
 
 ### G2.5 (MEDIUM) — Security-stamp recheck is wired to 8 endpoints, all deletes · `M1`
 
+**FIXED (Wave 7).** Security-stamp recheck extended to `AddBoardMember` in BOTH services; count text corrected from "8 endpoints" to 11, now 13 endpoints with the recheck filter. W7-B PR #131.
+
 `grep -rn "AddEndpointFilter<SecurityStampRecheckFilter>"` returns exactly 8 hits:
 
 | Service | Endpoints with recheck |
@@ -366,6 +372,8 @@ No `ILogger` is injected at all, so a failure is invisible. Contrast
 background services in this solution disagree on the most basic point.
 
 ### G2.7 (MEDIUM) — `HttpResponseMessage` leak on retried security-stamp checks · `M22`
+
+**FIXED (Wave 7).** `RemoteSecurityStampValidator` now disposes per attempt and maps caller-cancellation → Unavailable (503); `RetryPolicyFactory`'s `ShouldHandle` checks the resilience-context token. W7-B PR #131.
 
 `JiApp.Common/Services/RemoteSecurityStampValidator.cs:34-39` — `using var response = await policy.ExecuteAsync(...)`
 disposes only the *final* response. Each retried attempt leaves an undisposed `HttpResponseMessage`
@@ -471,6 +479,8 @@ retains board access they were supposed to lose.
 
 ### G3.4 (MEDIUM) — TOCTOU on every resource limit · `M23`
 
+**FIXED (Wave 7).** TOCTOU: `CreateBoard` per-user cap and `CreateItem` per-board cap both under per-user/per-board in-process locks (single-instance assumption documented). W7-C PR #132.
+
 `CreateBoardHandler.cs:17-23` (`MaxBoardsPerUser`) and `CreateItemHandler.cs:24-30`
 (`MaxItemsPerBoard`) both count-then-insert with no lock and no DB constraint. Concurrent requests
 exceed the cap. `CreateItemHandler` notably does **not** take the `BoardWriteLock` the
@@ -480,6 +490,8 @@ Low exploitability, but the limits are the only thing between a user and unbound
 `dotnet-security-baseline` calls out TOCTOU-safe writes explicitly.
 
 ### G3.5 (MEDIUM) — `AddBoardMember` has no member cap and does not verify the user exists
+
+**FIXED (Wave 7).** `AddBoardMember`: `MaxMembersPerBoard` cap (default 100) + cross-service user-existence check via new Identity endpoint `GET /api/v1/auth/users/{userId}/exists` (fail-closed 503 when Identity unavailable). W7-C PR #132.
 
 `api.JiApp.LovingBoards/Features/Boards/AddBoardMember/AddBoardMemberHandler.cs:25-29` appends
 `request.UserId` to the JSON list with no maximum and no check that the ID belongs to a real user.
@@ -644,6 +656,8 @@ catch (UnauthorizedAccessException) { /* 401 */ }
 
 ### G5.2 (MEDIUM) — `boardStreamService` can resurrect a stream after the consumer closed it · `M10`
 
+**FIXED (Wave 7).** Mobile SSE closed-guard: `userClosed` (set only by `close()`, never reset) split from `reconnecting` mid-refresh guard; no zombie stream after `close()` during a 401 refresh. W7-D PR #133.
+
 `mobile/src/modules/lovingBoards/services/boardStreamService.ts:138-179`
 
 ```ts
@@ -665,6 +679,8 @@ unmounted tree**.
 
 ### G5.3 (MEDIUM) — `StreamPreviewEndpoint` is 130 lines of process lifecycle in a route lambda · `N10`
 
+**FIXED (Wave 7).** Preview-stream lifecycle extracted into owned `AudioPreviewStream : IAsyncDisposable` (yt-dlp+ffmpeg processes, kill-on-timeout/dispose); endpoint slimmed. W7-E PR #135.
+
 `JiApp.YtApi/YoutubeClient.cs:27` declares `Process BuildPreviewAudioProcess(string videoId)` on the
 adapter interface. The consequence is `Features/StreamPreview/StreamPreviewEndpoint.cs:24-151` —
 process start ordering, stdout/stderr piping, timeout callbacks, and kill-on-error/kill-on-completion
@@ -678,6 +694,8 @@ localized response factories inline in the endpoint class.
 `Results.Stream(preview.GetAudioStream(), "audio/mpeg")`.
 
 ### G5.4 (MEDIUM) — No retry on the two most failure-prone remote calls · `N14`
+
+**FIXED (Wave 7).** Retry added: `RetryingChatClient : IChatClient` decorator for DeepSeek (stream-start retry), both `YoutubeClient` `ExecuteAsync` sites wrapped, `SingleTryGoogleHttpClientFactory` (`NumTries=1`) so Polly owns retry. W7-E PR #135.
 
 `DeepSeekChatClientProvider.cs:30-39` builds the `IChatClient` with `UseFunctionInvocation` and no
 resilience pipeline — a single 503/429 from DeepSeek ends the whole chat turn and the user retypes.
@@ -1251,6 +1269,8 @@ acceptable but noted). `UserAccessService.GetEffectivePermissionsAsync` does `Fi
 
 ### G10.5 (MEDIUM) — `JiApp.ImageTools` is a deployed service with no functionality · `M24`
 
+**FIXED (Wave 7).** `JiApp.ImageTools` service DELETED + every reference swept (src, tests, sln, compose base+prod, Gateway YARP/rate-limit/health-dashboard, start/stop-dev scripts, firewall script, aws/ scripts + cloudformation, CI deploy workflow, README/URLS/todo-deploy). Deploy-atomic, single PR. W7-F PR #136.
+
 `backend/src/JiApp.ImageTools/Startup.cs` — the whole service:
 
 ```csharp
@@ -1465,15 +1485,17 @@ corresponding fix lands, so it cannot regress. — **COMPLETE**
 
 **Wave 6 — structural — COMPLETE.** `G10.1` (or the `BoardMembers` join table, which also kills G3.3 and the
 JSON `ValueComparer` need) · `G10.2` · `G10.6` · `G7.2` · `G7.4` · `G11` sweep. 9 PRs #121–#129;
-header **33 → 9 of 84 open**.
+header **33 → 9 of 84 open (Wave 6) → 8 of 84 open (Wave 7)**.
 
 **Wave 6 decisions:**
 - `G11.4` — **accepted deviation (user decision).** The distinct *"Too many attempts. Try again later."* lockout message is kept deliberately for UX; the handler returns `ResultCategories.AccountLocked` so the endpoint can distinguish it, and the account-enumeration oracle it creates is a documented, user-accepted trade-off.
 - `G10.2` — **horizontal scaling is NOT intended.** `SingleInstanceGuard` pins replicas to 1 (file-based exclusive lease on the shared `jiapp_data` volume; a second replica logs **Critical** + `exit(1)` before serving traffic) and the endpoint cache is capped — the four in-memory states need no redesign.
 
+**Wave 7 — closeout — COMPLETE.** Execution order: 1. `W7-B` (G2.5, G2.7) → 2. `W7-C` (G3.4, G3.5 — before A, settings coupling) → 3. `W7-A` (G1.4, G1.5) → 4. `W7-D` (G5.2 — independent) → 5. `W7-E` (G5.3, G5.4) → 6. `W7-F` (G10.5 — deploy-atomic, last) → 7. closeout. PRs #131–#136; header **9 → 8 of 84 open**.
+
 **Decide, don't default:**
-- `G2.5` — write down the revocation policy, then make the wiring match it.
-- `G10.5` — keep `ImageTools` with a stated purpose, or delete it.
+- `G2.5` — write down the revocation policy, then make the wiring match it. **Resolved (Wave 7): the recheck filter is extended to `AddBoardMember` in both services — revocation is now enforced on every mutating endpoint (W7-B #131).**
+- `G10.5` — keep `ImageTools` with a stated purpose, or delete it. **Resolved (Wave 7): deleted — the dead service and all its references were removed in a single deploy-atomic PR (W7-F #136).**
 - `G9.8` — mobile test-naming grammar: adopt `Behavior_Scenario_Expected` or record the exemption.
 - `G10.2` — is horizontal scaling ever intended? If yes, four things need redesign. If no, pin
   replicas to 1 and fail fast on a second instance. **Resolved (Wave 6): horizontal scaling is NOT
