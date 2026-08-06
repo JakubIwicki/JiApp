@@ -22,7 +22,6 @@ graph TD
     %% Services
     ID["🔐 Identity<br/>:6701"]
     YT["🎵 YtDownloader<br/>:6702"]
-    IMG["🖼️ ImageTools<br/>:6703"]
     SCH["📅 Scheduler<br/>:6704"]
     LB["💝 LovingBoards<br/>:6705"]
 
@@ -32,14 +31,12 @@ graph TD
     %% Gateway → Downstream (YARP routes)
     GW -->|"/api/v1/auth/* → :6701"| ID
     GW -->|"/api/v1/yt/* → :6702"| YT
-    GW -->|"/api/v1/imagetools/* → :6703"| IMG
     GW -->|"/api/v1/scheduler/* → :6704"| SCH
     GW -->|"/api/v1/lovingboards/* → :6705"| LB
 
     %% Gateway health probes
     GW -.->|"health check"| ID
     GW -.->|"health check"| YT
-    GW -.->|"health check"| IMG
     GW -.->|"health check"| SCH
     GW -.->|"health check"| LB
 
@@ -62,7 +59,7 @@ graph TD
     classDef live fill:#4a9,stroke:#333,color:#fff
     classDef infra fill:#48b,stroke:#333,color:#fff
     classDef external fill:#e83,stroke:#333,color:#fff
-    class GW,ID,YT,IMG,SCH,LB live
+    class GW,ID,YT,SCH,LB live
     class DB,GW,Lambda,APIGW infra
     class YouTube,YtDlp,Mobile external
 ```
@@ -78,7 +75,6 @@ graph TD
 | **Gateway** | `https://*:6700` | `https://*:6700` (Kestrel HTTPS, PFX cert) | 6700 |
 | **Identity** | `https://*:6701` | `http://*:6701` (internal) | 6701 |
 | **YtDownloader** | `https://*:6702` | `http://*:6702` (internal) | 6702 |
-| **ImageTools** | `https://*:6703` | `http://*:6703` (internal) | 6703 |
 | **Scheduler** | `https://*:6704` | `http://*:6704` (internal) | 6704 |
 | **LovingBoards** | `https://*:6705` | `http://*:6705` (internal) | 6705 |
 
@@ -107,7 +103,6 @@ See `deployment_plan/DEPLOYMENT_PLAN.md` for full architecture.
 |--------|--------|---------|
 | Gateway → Identity | YARP destination | `http://identity:6701` |
 | Gateway → YtDownloader | YARP destination | `http://ytdownloader:6702` |
-| Gateway → ImageTools | YARP destination | `http://imagetools:6703` |
 | Gateway → Scheduler | YARP destination | `http://scheduler:6704` |
 | Gateway → LovingBoards | YARP destination | `http://lovingboards:6705` |
 | All services → DB | PostgreSQL | `Host=postgres;Port=5432;Database=jiapp_{service}` |
@@ -122,7 +117,6 @@ See `deployment_plan/DEPLOYMENT_PLAN.md` for full architecture.
 |---------------|-----------|-----------------|------------------|
 | `/api/v1/auth/{**catch-all}` | identity-cluster | `https://localhost:6701` | `http://identity:6701` |
 | `/api/v1/yt/{**catch-all}` | yt-cluster | `https://localhost:6702` | `http://ytdownloader:6702` |
-| `/api/v1/imagetools/{**catch-all}` | imagetools-cluster | `https://localhost:6703` | `http://imagetools:6703` |
 | `/api/v1/scheduler/{**catch-all}` | scheduler-cluster | `https://localhost:6704` | `http://scheduler:6704` |
 | `/api/v1/lovingboards/{**catch-all}` | lovingboards-cluster | `https://localhost:6705` | `http://lovingboards:6705` |
 
@@ -207,15 +201,6 @@ All origins accepted. Same policy on all services.
 | DeepSeek API | `https://api.deepseek.com/v1/chat/completions` | `Microsoft.Extensions.AI` |
 
 **Valid YouTube URL domains:** `youtube.com`, `www.youtube.com`, `m.youtube.com`, `youtu.be`, `youtube-nocookie.com`, `www.youtube-nocookie.com`
-
----
-
-## 5. ImageTools Service (port 6703) — prefix `/api/v1/imagetools`
-
-| Method | Path | Handler | Status |
-|--------|------|---------|--------|
-| GET | `/api/v1/imagetools/health` | `Program.cs` | 🟢 Live |
-| GET | `/api/v1/imagetools/ping` | `Program.cs` (auth required) | 🟢 Live |
 
 ---
 
@@ -522,7 +507,6 @@ Custom CA cert `jiapp_dev_ca` trusted for HTTPS with self-signed dev certificate
 :6700  →  Gateway (YARP reverse proxy)
 :6701  →  Identity (auth)
 :6702  →  YtDownloader (YouTube search/download/preview)
-:6703  →  ImageTools
 :6704  →  Scheduler (boards, clients, expenses, reports)
 :6705  →  LovingBoards (shared collaborative boards)
 :5432  →  PostgreSQL
@@ -534,7 +518,6 @@ Custom CA cert `jiapp_dev_ca` trusted for HTTPS with self-signed dev certificate
 Gateway:     GET /health
 Identity:    GET /api/v1/auth/health
 YtDownloader: GET /api/v1/yt/health
-ImageTools:  GET /api/v1/imagetools/health
 Scheduler:   GET /api/v1/scheduler/health
 LovingBoards: GET /api/v1/lovingboards/health
 ```
@@ -552,7 +535,6 @@ LovingBoards: GET /api/v1/lovingboards/health
 ```
 /api/v1/auth/*       →  Identity Service
 /api/v1/yt/*         →  YtDownloader Service
-/api/v1/imagetools/* →  ImageTools Service
 /api/v1/scheduler/*  →  Scheduler Service
 /api/v1/lovingboards/* → LovingBoards Service
 ```

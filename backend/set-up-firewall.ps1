@@ -8,7 +8,7 @@
 
 Get-NetFirewallRule -DisplayName "JiApp*" | Remove-NetFirewallRule
 
-6700, 6701, 6702, 6703, 6704 | ForEach-Object {
+6700, 6701, 6702, 6704 | ForEach-Object {
     New-NetFirewallRule -DisplayName "JiApp Port $_" -Direction Inbound -LocalPort $_ -Protocol TCP -Action Allow -Profile Any
     Write-Host "Port $_ : open" -ForegroundColor Green
 }

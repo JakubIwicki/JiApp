@@ -57,8 +57,6 @@ new externally-routed path, a migration, a new secret). Public repo — put env-
 | YouTube | `YOUTUBE_API_KEY`, `YOUTUBE_COOKIES_FILE`, `YOUTUBE_PROXY` (WARP) | `aws/.env.prod` → compose | 502 on song download |
 | Assistant | `DEEPSEEK_API_KEY` | `aws/.env.prod` → compose | Assistant returns 503 |
 
-Note: `imagetools` has no CORS/JWT-Validate gate — do not add `CorsAllowedOrigins` there.
-
 ---
 
 ## Outstanding for the NEXT deploy

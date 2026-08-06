@@ -4,8 +4,7 @@ namespace JiApp.Common.Tests.Conventions;
 
 public sealed class SingleInstanceGuardConventionTests
 {
-    // Every service deployable (NOT JiApp.ImageTools — it is not a service deployable)
-    // must acquire the single-instance lease in its Program.cs before serving traffic.
+    // Every service deployable must acquire the single-instance lease in its Program.cs before serving traffic.
     private static readonly string[] DeployableProgramFiles =
     [
         "src/JiApp.Gateway/Program.cs",

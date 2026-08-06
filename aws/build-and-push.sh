@@ -49,12 +49,11 @@ cd "${WORK_DIR}/backend"
 declare -A SVC_DOCKERFILE=(
     [identity]=./src/JiApp.Identity/Dockerfile
     [ytdownloader]=./src/JiApp.YtDownloader/Dockerfile
-    [imagetools]=./src/JiApp.ImageTools/Dockerfile
     [scheduler]=./src/JiApp.Scheduler/Dockerfile
     [gateway]=./src/JiApp.Gateway/Dockerfile
     [lovingboards]=./src/api.JiApp.LovingBoards/Dockerfile
 )
-SERVICES=(identity ytdownloader imagetools scheduler gateway lovingboards)
+SERVICES=(identity ytdownloader scheduler gateway lovingboards)
 
 for svc in "${SERVICES[@]}"; do
     echo "  → Building jiapp/${svc}..."
