@@ -1,4 +1,4 @@
-using JiApp.YtApi;
+using JiApp.YtApi.Clients;
 using JiApp.YtDownloader.Agent;
 using JiApp.YtDownloader.Configuration;
 using JiApp.YtDownloader.Features.Assistant;

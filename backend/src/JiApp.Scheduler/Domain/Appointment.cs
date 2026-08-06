@@ -3,6 +3,13 @@ using JiApp.Common.Models;
 
 namespace JiApp.Scheduler.Domain;
 
+public enum AppointmentStatus
+{
+    Created,
+    Done,
+    Cancelled
+}
+
 public sealed class Appointment : BaseEntity<long>
 {
     public long BoardId { get; set; }

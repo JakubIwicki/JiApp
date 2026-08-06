@@ -1,5 +1,5 @@
 using JiApp.Common.Abstractions;
-using JiApp.YtApi;
+using JiApp.YtApi.Clients;
 using JiApp.YtDownloader.Configuration;
 using JiApp.YtDownloader.Logging;
 using System.Diagnostics;

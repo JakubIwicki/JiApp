@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using JiApp.Common.Abstractions;
-using JiApp.YtApi;
+using JiApp.YtApi.Clients;
 using JiApp.YtDownloader.Configuration;
 using JiApp.YtDownloader.Features.StreamPreview;
 using Microsoft.Extensions.Logging;

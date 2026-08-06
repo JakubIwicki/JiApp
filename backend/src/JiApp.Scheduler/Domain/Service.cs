@@ -2,6 +2,16 @@ using JiApp.Common.Models;
 
 namespace JiApp.Scheduler.Domain;
 
+public enum ServiceCategory
+{
+    MensHaircut,
+    WomensHaircut,
+    WomensStyling,
+    Coloring,
+    Treatment,
+    Other
+}
+
 public sealed class Service : BaseEntity<long>
 {
     public long BoardId { get; set; }

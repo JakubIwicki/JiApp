@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using JiApp.Common;
+using JiApp.Common.Constants;
 using JiApp.Common.Services;
 using JiApp.Scheduler.Features.Appointments;
 using JiApp.Scheduler.Features.Appointments.UpdateAppointment;

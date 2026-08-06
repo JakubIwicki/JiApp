@@ -11,75 +11,75 @@ namespace JiApp.Identity.Tests.Features.Admin.Users.RemoveRole;
 
 public sealed class RemoveRoleHandlerTests
 {
-	private sealed class Fixture
-	{
-		private readonly User _testUser = new()
-		{
-			Id = 2,
-			UserName = "targetuser"
-		};
+    private sealed class Fixture
+    {
+        private readonly User _testUser = new()
+        {
+            Id = 2,
+            UserName = "targetuser"
+        };
 
-		public MockUserManager UserManagerDouble { get; } = MockUserManager.GetSuccessful();
-		public MockCurrentUserService CurrentUserMock { get; } = new();
+        public MockUserManager UserManagerDouble { get; } = MockUserManager.GetSuccessful();
+        public MockCurrentUserService CurrentUserMock { get; } = new();
 
-		public AdminAccessGuard Guard { get; }
-		public RemoveRoleHandler Sut { get; }
+        public AdminAccessGuard Guard { get; }
+        public RemoveRoleHandler Sut { get; }
 
-		public Fixture()
-		{
-			CurrentUserMock.WithReturning(1);
-			Guard = new AdminAccessGuard(UserManagerDouble.Object, CurrentUserMock.Object);
-			Sut = new RemoveRoleHandler(UserManagerDouble.Object, Guard, Mock.Of<ILogger<RemoveRoleHandler>>());
-		}
+        public Fixture()
+        {
+            CurrentUserMock.WithReturning(1);
+            Guard = new AdminAccessGuard(UserManagerDouble.Object, CurrentUserMock.Object);
+            Sut = new RemoveRoleHandler(UserManagerDouble.Object, Guard, Mock.Of<ILogger<RemoveRoleHandler>>());
+        }
 
-		public Fixture WithTargetUserAndRole(string roleName)
-		{
-			UserManagerDouble.WithFindByIdAsync("2", _testUser);
-			UserManagerDouble.WithRemoveFromRoleAsync(_testUser, roleName, IdentityResult.Success);
-			UserManagerDouble.WithUpdateSecurityStampAsync(_testUser, IdentityResult.Success);
-			return this;
-		}
+        public Fixture WithTargetUserAndRole(string roleName)
+        {
+            UserManagerDouble.WithFindByIdAsync("2", _testUser);
+            UserManagerDouble.WithRemoveFromRoleAsync(_testUser, roleName, IdentityResult.Success);
+            UserManagerDouble.WithUpdateSecurityStampAsync(_testUser, IdentityResult.Success);
+            return this;
+        }
 
-		public Fixture WithTargetAsLastAdmin()
-		{
-			UserManagerDouble.WithFindByIdAsync("2", _testUser);
-			UserManagerDouble.WithIsInRoleAsync(_testUser, "Admin", true);
-			UserManagerDouble.WithGetUsersInRoleAsync("Admin", [_testUser]);
-			return this;
-		}
-	}
+        public Fixture WithTargetAsLastAdmin()
+        {
+            UserManagerDouble.WithFindByIdAsync("2", _testUser);
+            UserManagerDouble.WithIsInRoleAsync(_testUser, "Admin", true);
+            UserManagerDouble.WithGetUsersInRoleAsync("Admin", [_testUser]);
+            return this;
+        }
+    }
 
-	[Fact]
-	public async Task HandleAsync_ReturnsSuccess_WhenRemovingNonAdminRole()
-	{
-		var fixture = new Fixture().WithTargetUserAndRole("User");
+    [Fact]
+    public async Task HandleAsync_ReturnsSuccess_WhenRemovingNonAdminRole()
+    {
+        var fixture = new Fixture().WithTargetUserAndRole("User");
 
-		var result = await fixture.Sut.HandleAsync(2, "User", CancellationToken.None);
+        var result = await fixture.Sut.HandleAsync(2, "User", CancellationToken.None);
 
-		AssertSuccess(result);
-		fixture.UserManagerDouble.VerifyUpdatedSecurityStamp_Once();
-	}
+        AssertSuccess(result);
+        fixture.UserManagerDouble.VerifyUpdatedSecurityStamp_Once();
+    }
 
-	[Fact]
-	public async Task HandleAsync_ReturnsAccessDenied_WhenRemovingAdminFromLastAdmin()
-	{
-		var fixture = new Fixture().WithTargetAsLastAdmin();
+    [Fact]
+    public async Task HandleAsync_ReturnsAccessDenied_WhenRemovingAdminFromLastAdmin()
+    {
+        var fixture = new Fixture().WithTargetAsLastAdmin();
 
-		var result = await fixture.Sut.HandleAsync(2, "Admin", CancellationToken.None);
+        var result = await fixture.Sut.HandleAsync(2, "Admin", CancellationToken.None);
 
-		AssertAccessDenied(result);
-		fixture.UserManagerDouble.VerifyUpdatedSecurityStamp_NotCalled();
-	}
+        AssertAccessDenied(result);
+        fixture.UserManagerDouble.VerifyUpdatedSecurityStamp_NotCalled();
+    }
 
-	[Fact]
-	public async Task HandleAsync_ReturnsNotFound_WhenUserDoesNotExist()
-	{
-		var fixture = new Fixture();
-		fixture.UserManagerDouble.WithFindByIdAsync("999", null);
+    [Fact]
+    public async Task HandleAsync_ReturnsNotFound_WhenUserDoesNotExist()
+    {
+        var fixture = new Fixture();
+        fixture.UserManagerDouble.WithFindByIdAsync("999", null);
 
-		var result = await fixture.Sut.HandleAsync(999, "User", CancellationToken.None);
+        var result = await fixture.Sut.HandleAsync(999, "User", CancellationToken.None);
 
-		AssertNotFound(result);
-		fixture.UserManagerDouble.VerifyUpdatedSecurityStamp_NotCalled();
-	}
+        AssertNotFound(result);
+        fixture.UserManagerDouble.VerifyUpdatedSecurityStamp_NotCalled();
+    }
 }

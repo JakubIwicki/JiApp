@@ -349,15 +349,27 @@ public sealed class AppointmentHandlerTests : HandlerTestBase<SchedulerDbContext
         var serviceId = fixture.Service.Id;
         StoreInDb(new Appointment
         {
-            BoardId = boardId, ClientId = clientId, ServiceId = serviceId,
-            Date = fixture.Saturday, StartTime = new TimeOnly(10, 0), EndTime = new TimeOnly(11, 0),
-            Price = new Price(100), Location = "Room 1", CreatedBy = 1L
+            BoardId = boardId,
+            ClientId = clientId,
+            ServiceId = serviceId,
+            Date = fixture.Saturday,
+            StartTime = new TimeOnly(10, 0),
+            EndTime = new TimeOnly(11, 0),
+            Price = new Price(100),
+            Location = "Room 1",
+            CreatedBy = 1L
         });
         StoreInDb(new Appointment
         {
-            BoardId = boardId, ClientId = clientId, ServiceId = serviceId,
-            Date = sunday, StartTime = new TimeOnly(14, 0), EndTime = new TimeOnly(15, 0),
-            Price = new Price(150), Location = "Room 2", CreatedBy = 1L
+            BoardId = boardId,
+            ClientId = clientId,
+            ServiceId = serviceId,
+            Date = sunday,
+            StartTime = new TimeOnly(14, 0),
+            EndTime = new TimeOnly(15, 0),
+            Price = new Price(150),
+            Location = "Room 2",
+            CreatedBy = 1L
         });
 
         var sut = fixture.ListAppointments;

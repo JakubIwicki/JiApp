@@ -1,4 +1,5 @@
 using JiApp.Common;
+using JiApp.Common.Constants;
 using JiApp.Common.Models;
 using Microsoft.AspNetCore.Identity;
 
@@ -6,44 +7,44 @@ namespace JiApp.Identity.Services;
 
 public interface IUserAccessService
 {
-	Task AssignDefaultRoleAsync(long userId, CancellationToken ct = default);
-	Task<string[]> GetEffectivePermissionsAsync(long userId, CancellationToken ct = default);
+    Task AssignDefaultRoleAsync(long userId, CancellationToken ct = default);
+    Task<string[]> GetEffectivePermissionsAsync(long userId, CancellationToken ct = default);
 }
 
 public sealed class UserAccessService(
-	UserManager<User> userManager,
-	RoleManager<IdentityRole<long>> roleManager) : IUserAccessService
+    UserManager<User> userManager,
+    RoleManager<IdentityRole<long>> roleManager) : IUserAccessService
 {
-	public async Task AssignDefaultRoleAsync(long userId, CancellationToken ct = default)
-	{
-		var user = await userManager.FindByIdAsync(userId.ToString());
-		if (user is not null)
-			await userManager.AddToRoleAsync(user, RoleNames.Guest);
-	}
+    public async Task AssignDefaultRoleAsync(long userId, CancellationToken ct = default)
+    {
+        var user = await userManager.FindByIdAsync(userId.ToString());
+        if (user is not null)
+            await userManager.AddToRoleAsync(user, RoleNames.Guest);
+    }
 
-	public async Task<string[]> GetEffectivePermissionsAsync(long userId, CancellationToken ct = default)
-	{
-		var user = await userManager.FindByIdAsync(userId.ToString());
-		if (user is null)
-			return [];
+    public async Task<string[]> GetEffectivePermissionsAsync(long userId, CancellationToken ct = default)
+    {
+        var user = await userManager.FindByIdAsync(userId.ToString());
+        if (user is null)
+            return [];
 
-		var roleNames = await userManager.GetRolesAsync(user);
-		var permissions = new HashSet<string>();
+        var roleNames = await userManager.GetRolesAsync(user);
+        var permissions = new HashSet<string>();
 
-		foreach (var roleName in roleNames)
-		{
-			var role = await roleManager.FindByNameAsync(roleName);
-			if (role is null)
-				continue;
+        foreach (var roleName in roleNames)
+        {
+            var role = await roleManager.FindByNameAsync(roleName);
+            if (role is null)
+                continue;
 
-			var claims = await roleManager.GetClaimsAsync(role);
-			foreach (var claim in claims)
-			{
-				if (claim.Type == Permissions.PermissionClaimType)
-					permissions.Add(claim.Value);
-			}
-		}
+            var claims = await roleManager.GetClaimsAsync(role);
+            foreach (var claim in claims)
+            {
+                if (claim.Type == Permissions.PermissionClaimType)
+                    permissions.Add(claim.Value);
+            }
+        }
 
-		return [.. permissions];
-	}
+        return [.. permissions];
+    }
 }

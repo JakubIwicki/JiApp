@@ -1,7 +1,8 @@
 using Google;
 using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
-using JiApp.YtApi;
+using JiApp.YtApi.Clients;
+using JiApp.YtApi.Contracts;
 using JiApp.YtDownloader.Configuration;
 using JiApp.YtDownloader.Features.SearchVideos;
 using JiApp.YtDownloader.Repositories;
@@ -23,8 +24,11 @@ public sealed class SearchVideosHandlerTests
         Jwt = new Settings.JwtSettings { Key = "test-key", Issuer = "test-issuer", Audience = "test-audience" },
         Youtube = new Settings.YoutubeSettings
         {
-            ApiKey = "test-key", YtDlpPath = "yt-dlp", FfmpegPath = "ffmpeg",
-            MaxResults = MaxResults, PageSize = PageSize,
+            ApiKey = "test-key",
+            YtDlpPath = "yt-dlp",
+            FfmpegPath = "ffmpeg",
+            MaxResults = MaxResults,
+            PageSize = PageSize,
         },
     };
 

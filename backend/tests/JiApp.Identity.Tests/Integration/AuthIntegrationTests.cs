@@ -5,6 +5,7 @@ using System.Net.Http.Json;
 using System.Security.Claims;
 using JiApp.Common;
 using JiApp.Common.Abstractions;
+using JiApp.Common.Constants;
 using JiApp.Identity.Features.Auth.Login;
 using JiApp.Identity.Features.Auth.Register;
 using JiApp.Identity.Services;

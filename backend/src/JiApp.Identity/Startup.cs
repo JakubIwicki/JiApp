@@ -5,6 +5,7 @@ using FluentValidation;
 using JiApp.Common;
 using JiApp.Common.Abstractions;
 using JiApp.Common.Authentication;
+using JiApp.Common.Constants;
 using JiApp.Common.Models;
 using JiApp.Identity.Configuration;
 using JiApp.Common.Middleware;

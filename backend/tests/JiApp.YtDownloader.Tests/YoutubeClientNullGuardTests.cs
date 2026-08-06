@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text;
 using Google.Apis.Http;
-using JiApp.YtApi;
+using JiApp.YtApi.Clients;
 
 namespace JiApp.YtDownloader.Tests;
 

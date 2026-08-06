@@ -2,6 +2,13 @@ using JiApp.Common.Models;
 
 namespace api.JiApp.LovingBoards.Domain;
 
+public enum BoardItemStatus
+{
+    Needed,
+    Completed,
+    Removed
+}
+
 public sealed class BoardItem : BaseEntity<long>
 {
     public long BoardId { get; set; }

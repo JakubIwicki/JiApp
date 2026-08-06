@@ -8,7 +8,7 @@ public sealed class YoutubeSearchHistoryConfiguration : IEntityTypeConfiguration
 {
     public void Configure(EntityTypeBuilder<YoutubeSearchHistory> builder)
     {
-        builder.ToTable("YoutubeSearchHistory");
+        builder.ToTable(TableNames.YoutubeSearchHistory);
 
         builder.Property(e => e.Id).ValueGeneratedOnAdd();
         builder.HasIndex(e => e.UserId);
