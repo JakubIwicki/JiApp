@@ -48,20 +48,21 @@ const CHANGE_EVENT_NAMES: ReadonlySet<BoardEventName> = new Set([
 
 export function openBoardStream(params: BoardStreamParams): BoardStreamHandle {
   let es: EventSource<BoardEventName> | null = null;
-  let closed = false;
+  let userClosed = false; // set only by close(), never reset
+  let reconnecting = false; // local, mid-refresh guard
 
   const close = (): void => {
-    closed = true;
+    userClosed = true;
     es?.close();
     es = null;
   };
 
   const startConnection = async (isRetry: boolean = false): Promise<void> => {
-    if (closed) return;
+    if (userClosed) return;
 
     // Read the freshest token immediately before connecting
     const token = await getToken();
-    if (closed) return;
+    if (userClosed) return;
     if (!token) {
       params.onError?.(new Error('Not authenticated'));
       return;
@@ -78,7 +79,7 @@ export function openBoardStream(params: BoardStreamParams): BoardStreamHandle {
     );
 
     // If close() was called while we were awaiting getToken, tear down
-    if (closed) {
+    if (userClosed) {
       es.close();
       es = null;
       return;
@@ -88,7 +89,7 @@ export function openBoardStream(params: BoardStreamParams): BoardStreamHandle {
 
     // presence → Zod-validated
     es.addEventListener('presence', event => {
-      if (closed) return;
+      if (userClosed) return;
       if (event.data === null) return;
 
       let raw: unknown;
@@ -116,21 +117,21 @@ export function openBoardStream(params: BoardStreamParams): BoardStreamHandle {
     // All board/item change events → single onChange callback
     for (const name of CHANGE_EVENT_NAMES) {
       es.addEventListener(name, _event => {
-        if (closed) return;
+        if (userClosed) return;
         params.onChange();
       });
     }
 
     // open event → resync
     es.addEventListener('open', () => {
-      if (closed) return;
+      if (userClosed) return;
       params.onOpen?.();
     });
 
     // ── Error handling with 401 re-auth (shared single-flight refresh) ──
 
     es.addEventListener('error', async event => {
-      if (closed) return;
+      if (userClosed || reconnecting) return;
 
       if (
         event.type === 'error' &&
@@ -139,20 +140,23 @@ export function openBoardStream(params: BoardStreamParams): BoardStreamHandle {
         !isRetry
       ) {
         // Close current connection but allow one reconnect attempt
+        reconnecting = true;
         es?.close();
         es = null;
-        closed = true;
 
         try {
           const newToken = await refreshAuth();
+          // Consumer closed while we were refreshing — do not reconnect
+          if (userClosed) return;
           if (newToken) {
             // Reconnect with the fresh token
-            closed = false;
             await startConnection(true);
             return;
           }
         } catch {
           // Refresh failed — fall through to error
+        } finally {
+          reconnecting = false;
         }
       }
 
@@ -162,7 +166,7 @@ export function openBoardStream(params: BoardStreamParams): BoardStreamHandle {
   };
 
   startConnection().catch(() => {
-    if (!closed) {
+    if (!userClosed) {
       close();
       params.onError?.(new Error('Board stream connection failed'));
     }
