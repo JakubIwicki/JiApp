@@ -148,13 +148,6 @@ public sealed class RegisterHandlerDbTests : HandlerTestBase<IdentityDbContext>
             NullLogger<UserManager<User>>.Instance);
     }
 
-    private static RoleManager<IdentityRole<long>> CreateRealRoleManager(IdentityDbContext context) =>
-        new(new RoleStore<IdentityRole<long>, IdentityDbContext, long>(context),
-            [new RoleValidator<IdentityRole<long>>()],
-            new UpperInvariantLookupNormalizer(),
-            new IdentityErrorDescriber(),
-            NullLogger<RoleManager<IdentityRole<long>>>.Instance);
-
     private static IUserAccessService CreateFailingAccessService()
     {
         var mock = new Mock<IUserAccessService>();
@@ -178,24 +171,24 @@ public sealed class RegisterHandlerDbTests : HandlerTestBase<IdentityDbContext>
     private sealed class Fixture
     {
         private readonly TestDb _testDb;
+        private readonly IdentityDbContext _dbContext;
         private readonly UserManager<User> _userManager;
         private readonly UserManager<User> _emailUniqueUserManager;
-        private readonly RoleManager<IdentityRole<long>> _roleManager;
 
         private Fixture(IdentityDbContext dbContext, TestDb testDb)
         {
             _testDb = testDb;
+            _dbContext = dbContext;
             _userManager = CreateRealUserManager(dbContext);
             _emailUniqueUserManager = CreateEmailUniqueUserManager(dbContext);
-            _roleManager = CreateRealRoleManager(dbContext);
             SeedGuestRole();
         }
 
         public RegisterHandler Sut =>
-            new(_userManager, new UserAccessService(_userManager, _roleManager), NullLogger<RegisterHandler>.Instance);
+            new(_userManager, new UserAccessService(_userManager, _dbContext), NullLogger<RegisterHandler>.Instance);
 
         public RegisterHandler SutWithEmailUniqueness =>
-            new(_emailUniqueUserManager, new UserAccessService(_emailUniqueUserManager, _roleManager),
+            new(_emailUniqueUserManager, new UserAccessService(_emailUniqueUserManager, _dbContext),
                 NullLogger<RegisterHandler>.Instance);
 
         public RegisterHandler SutWithFailingAccessService =>
