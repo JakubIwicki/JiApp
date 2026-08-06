@@ -29,12 +29,12 @@ public sealed class DependencyInjectionTests
                 })
                 .Build();
 
+            var envMock = new Mock<IWebHostEnvironment>();
+            envMock.SetupGet(e => e.EnvironmentName).Returns("Development");
+
             var settings = new SchedulerSettings();
             config.Bind(settings);
-            settings.Validate();
-
-            var envMock = new Mock<IWebHostEnvironment>();
-            envMock.SetupGet(e => e.EnvironmentName).Returns("Test");
+            settings.Validate(envMock.Object);
 
             Services = new ServiceCollection();
             Services.AddLogging();

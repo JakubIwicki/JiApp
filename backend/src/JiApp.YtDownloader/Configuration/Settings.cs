@@ -10,7 +10,7 @@ public sealed class Settings
     public DeepSeekSettings? DeepSeek { get; set; }
     public AssistantSettings? Assistant { get; set; }
 
-    public void Validate()
+    public void Validate(IWebHostEnvironment? env = null)
     {
         var errors = new List<string>();
 
@@ -71,6 +71,20 @@ public sealed class Settings
             errors.Add("Assistant:DailyMessageLimitPerUser must be greater than 0.");
         if (Assistant is { MaxMessagesPerTurn: <= 0 })
             errors.Add("Assistant:MaxMessagesPerTurn must be greater than 0.");
+
+        // DeepSeek is optional: an unset section (or empty ApiKey) passes. When the section
+        // is present, validate the structural fields only — never require ApiKey.
+        if (DeepSeek is not null)
+        {
+            if (DeepSeek.BaseUrl is not null && !Uri.TryCreate(DeepSeek.BaseUrl, UriKind.Absolute, out _))
+                errors.Add("DeepSeek:BaseUrl must be a valid absolute URI.");
+            if (DeepSeek.Model is { Length: > 0 } && string.IsNullOrWhiteSpace(DeepSeek.Model))
+                errors.Add("DeepSeek:Model must not be empty or whitespace.");
+            if (DeepSeek.MaxIterations <= 0)
+                errors.Add("DeepSeek:MaxIterations must be greater than 0.");
+            if (DeepSeek.RequestTimeoutSeconds <= 0)
+                errors.Add("DeepSeek:RequestTimeoutSeconds must be greater than 0.");
+        }
 
         if (errors.Count > 0)
             throw new InvalidOperationException(
