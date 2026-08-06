@@ -1,3 +1,4 @@
+using JiApp.Common.Resilience;
 using JiApp.YtDownloader.Configuration;
 using JiApp.YtDownloader.Features.Assistant;
 
@@ -5,10 +6,12 @@ namespace JiApp.YtDownloader.Tests.Features.Assistant;
 
 public sealed class DeepSeekChatClientProviderTests
 {
+    private static readonly IRetryPolicyFactory RetryPolicy = new RetryPolicyFactory(TimeProvider.System);
+
     [Fact]
     public void Provider_WithAbsentDeepSeekSection_IsNotConfigured()
     {
-        var provider = new DeepSeekChatClientProvider(new Settings());
+        var provider = new DeepSeekChatClientProvider(new Settings(), RetryPolicy);
 
         provider.IsConfigured.Should().BeFalse();
     }
@@ -24,7 +27,7 @@ public sealed class DeepSeekChatClientProviderTests
             DeepSeek = new Settings.DeepSeekSettings { ApiKey = apiKey }
         };
 
-        var provider = new DeepSeekChatClientProvider(settings);
+        var provider = new DeepSeekChatClientProvider(settings, RetryPolicy);
 
         provider.IsConfigured.Should().BeFalse();
     }
@@ -32,7 +35,7 @@ public sealed class DeepSeekChatClientProviderTests
     [Fact]
     public void Provider_WhenNotConfigured_ThrowsOnClientAccess()
     {
-        var provider = new DeepSeekChatClientProvider(new Settings());
+        var provider = new DeepSeekChatClientProvider(new Settings(), RetryPolicy);
 
         var act = () => provider.Client;
 
@@ -47,7 +50,7 @@ public sealed class DeepSeekChatClientProviderTests
             DeepSeek = new Settings.DeepSeekSettings { ApiKey = "sk-test-key-not-real" }
         };
 
-        var provider = new DeepSeekChatClientProvider(settings);
+        var provider = new DeepSeekChatClientProvider(settings, RetryPolicy);
 
         provider.IsConfigured.Should().BeTrue();
         provider.Client.Should().NotBeNull();

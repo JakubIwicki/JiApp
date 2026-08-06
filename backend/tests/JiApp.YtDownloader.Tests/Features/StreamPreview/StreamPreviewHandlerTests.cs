@@ -92,7 +92,7 @@ public sealed class StreamPreviewHandlerTests
     }
 
     [Fact]
-    public void Handle_WhenProcessesBuilt_ReturnsSuccess_WithStreamReadyPayload()
+    public void Handle_WhenProcessesBuilt_ReturnsSuccess_WithPreviewStream()
     {
         var fixture = new Fixture().WithBuildPreviewProcess(new Process());
 
@@ -100,7 +100,5 @@ public sealed class StreamPreviewHandlerTests
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
-        result.Value!.YtDlpProcess.Should().NotBeNull();
-        result.Value!.FfmpegProcess.Should().NotBeNull();
     }
 }

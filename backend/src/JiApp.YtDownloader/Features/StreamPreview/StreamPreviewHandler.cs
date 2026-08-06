@@ -12,7 +12,7 @@ public sealed class StreamPreviewHandler(
     ILogger<StreamPreviewHandler> logger,
     Settings settings)
 {
-    public Result<StreamReady> Handle(string videoId)
+    public Result<IAudioPreviewStream> Handle(string videoId)
     {
         Process ytDlp;
         try
@@ -22,17 +22,19 @@ public sealed class StreamPreviewHandler(
         catch (ArgumentException ex)
         {
             logger.PreviewResolveFailed(ex, videoId);
-            return Result<StreamReady>.Failure(
+            return Result<IAudioPreviewStream>.Failure(
                 "Could not resolve audio for this video. It may be unavailable or age-restricted.",
                 ResultCategories.NotFound);
         }
+
+        var previewDurationSeconds = settings.App!.PreviewDurationSeconds;
 
         var ffmpeg = new Process
         {
             StartInfo = new ProcessStartInfo
             {
                 FileName = "ffmpeg",
-                Arguments = BuildFfmpegArguments(settings.App!.PreviewDurationSeconds),
+                Arguments = BuildFfmpegArguments(previewDurationSeconds),
                 RedirectStandardInput = true,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -42,11 +44,12 @@ public sealed class StreamPreviewHandler(
             EnableRaisingEvents = true,
         };
 
-        return Result<StreamReady>.Success(new StreamReady(ytDlp, ffmpeg));
+        // The stream's hang timeout mirrors the preview length: give the pipeline a small
+        // grace period beyond the trimmed audio before killing the processes.
+        return Result<IAudioPreviewStream>.Success(new AudioPreviewStream(
+            ytDlp, ffmpeg, TimeSpan.FromSeconds(previewDurationSeconds + 2)));
     }
 
     internal static string BuildFfmpegArguments(int previewDurationSeconds) =>
         $"-i pipe:0 -t {previewDurationSeconds} -loglevel quiet -f mp3 -";
 }
-
-public sealed record StreamReady(Process YtDlpProcess, Process FfmpegProcess);

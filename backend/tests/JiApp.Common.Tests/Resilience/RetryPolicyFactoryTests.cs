@@ -206,4 +206,81 @@ public sealed class RetryPolicyFactoryTests
         ex.Should().BeOfType<TaskCanceledException>();
         attempts.Should().Be(2); // genuine timeout still retries — the decision keys on the caller's token, not the exception's
     }
+
+    [Fact]
+    public async Task RetryOnTransientHttp_WithCustomPredicate_RetriesMatchingException()
+    {
+        var policy = _factory.RetryOnTransientHttp_WithExponentialBackoff(
+            retries: 1, shouldRetry: ex => ex is InvalidOperationException);
+        var attempts = 0;
+
+        async ValueTask<int> Action(CancellationToken ct)
+        {
+            attempts++;
+            throw new InvalidOperationException("custom transient");
+        }
+
+        var ex = await Record.ExceptionAsync(() => policy.ExecuteAsync(Action, CancellationToken.None).AsTask());
+
+        ex.Should().BeOfType<InvalidOperationException>();
+        attempts.Should().Be(2); // initial + 1 retry
+    }
+
+    [Fact]
+    public async Task RetryOnTransientHttp_WithCustomPredicate_DoesNotRetryUnmatchedException()
+    {
+        var policy = _factory.RetryOnTransientHttp_WithExponentialBackoff(
+            retries: 3, shouldRetry: ex => ex is InvalidOperationException);
+        var attempts = 0;
+
+        async ValueTask<int> Action(CancellationToken ct)
+        {
+            attempts++;
+            throw new ArgumentException("not matched by the predicate");
+        }
+
+        var ex = await Record.ExceptionAsync(() => policy.ExecuteAsync(Action, CancellationToken.None).AsTask());
+
+        ex.Should().BeOfType<ArgumentException>();
+        attempts.Should().Be(1); // no retry on unmatched exception
+    }
+
+    [Fact]
+    public async Task RetryOnTransientHttp_WithCustomPredicate_StillRetriesDefaultTransientTypes()
+    {
+        // The custom predicate is OR'd onto the default transient set, so a transport
+        // failure still retries even when the custom predicate would not match it.
+        var policy = _factory.RetryOnTransientHttp_WithExponentialBackoff(
+            retries: 1, shouldRetry: ex => ex is InvalidOperationException);
+        var attempts = 0;
+
+        async ValueTask<int> Action(CancellationToken ct)
+        {
+            attempts++;
+            throw new HttpRequestException("connection refused");
+        }
+
+        var ex = await Record.ExceptionAsync(() => policy.ExecuteAsync(Action, CancellationToken.None).AsTask());
+
+        ex.Should().BeOfType<HttpRequestException>();
+        attempts.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task RetryOnTransientHttp_WithNullPredicate_RetainsDefaultBehavior()
+    {
+        var policy = _factory.RetryOnTransientHttp_WithExponentialBackoff(retries: 1, shouldRetry: null);
+        var attempts = 0;
+
+        async ValueTask<int> Action(CancellationToken ct)
+        {
+            attempts++;
+            throw new TaskCanceledException();
+        }
+
+        var ex = await Record.ExceptionAsync(() => policy.ExecuteAsync(Action, CancellationToken.None).AsTask());
+
+        ex.Should().BeOfType<TaskCanceledException>();
+        attempts.Should().Be(2); // null predicate leaves the default transient set untouched
+    }
 }
