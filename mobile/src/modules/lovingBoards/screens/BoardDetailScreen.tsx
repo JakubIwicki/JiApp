@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useMemo,
-  useState,
-  useRef,
-  useEffect,
-} from 'react';
+import React from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -13,16 +7,13 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import useBoard from '../hooks/useBoard';
-import useAuth from '../../../hooks/useAuth';
+import useBoardDetail from '../hooks/useBoardDetail';
 import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
 import type { Theme } from '../../../styles/theme';
 import { spacing, borderRadius, zIndexScale } from '../../../styles/theme';
 import type { LovingBoardsStackParamList } from '../../../navigation/types';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { Item, BoardItemStatus } from '../types/api';
 import type { CategoryTint } from '../components/CategoryCard';
 import ProgressStrip from '../components/ProgressStrip';
 import CategoryCard from '../components/CategoryCard';
@@ -31,7 +22,6 @@ import Snackbar from '../components/Snackbar';
 import EmptyState from '../components/EmptyState';
 
 type Props = NativeStackScreenProps<LovingBoardsStackParamList, 'BoardDetail'>;
-type NavigationProp = Props['navigation'];
 
 const MIN_TOUCH = 44;
 
@@ -77,198 +67,40 @@ const BoardDetailScreen: React.FC<Props> = ({ route }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const navigation = useNavigation<NavigationProp>();
-  const { userId } = useAuth();
   const {
     board,
-    items,
     isLoading,
     error,
     refetch,
-    setItemStatus,
-    clearCompleted,
-    resetWeekly,
-  } = useBoard(boardId);
-
-  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(
-    new Set(),
-  );
-  const [doneExpanded, setDoneExpanded] = useState(false);
-  const [clearing, setClearing] = useState(false);
-
-  // ── Undo snackbar state ────────────────────────────────────────────────────
-  interface UndoState {
-    itemId: number;
-    previousStatus: BoardItemStatus;
-  }
-  const [undoState, setUndoState] = useState<UndoState | null>(null);
-  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // ── Cleared snackbar ───────────────────────────────────────────────────────
-  const [clearedMessage, setClearedMessage] = useState<string | null>(null);
-  const clearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    const timer = undoTimerRef.current;
-    const clearTimer = clearTimerRef.current;
-    return () => {
-      if (timer) clearTimeout(timer);
-      if (clearTimer) clearTimeout(clearTimer);
-    };
-  }, [undoTimerRef, clearTimerRef]);
-
-  // ── Group items by category ────────────────────────────────────────────────
-  const { activeByCategory, completedItems, uncategorizedActive } =
-    useMemo(() => {
-      const active: Item[] = [];
-      const completed: Item[] = [];
-      for (const item of items) {
-        if (item.status === 'Completed') completed.push(item);
-        else if (item.status === 'Needed') active.push(item);
-      }
-
-      const grouped = new Map<string, Item[]>();
-      const uncategorized: Item[] = [];
-
-      for (const item of active) {
-        const cat = item.category?.trim() || null;
-        if (cat) {
-          const list = grouped.get(cat) ?? [];
-          list.push(item);
-          grouped.set(cat, list);
-        } else {
-          uncategorized.push(item);
-        }
-      }
-
-      return {
-        activeByCategory: grouped,
-        completedItems: completed,
-        uncategorizedActive: uncategorized,
-      };
-    }, [items]);
-
-  const categoryNames = useMemo(() => {
-    const names = Array.from(activeByCategory.keys()).sort();
-    if (uncategorizedActive.length > 0) names.push('__uncategorized__');
-    return names;
-  }, [activeByCategory, uncategorizedActive]);
-
-  const allNeeded = useMemo(
-    () => items.filter(i => i.status === 'Needed'),
-    [items],
-  );
-  const completedCount = completedItems.length;
-  const progressDone = completedCount;
-  const progressTotal = allNeeded.length + completedCount;
-
-  // ── Callbacks ──────────────────────────────────────────────────────────────
-
-  const toggleCategory = useCallback((cat: string) => {
-    setCollapsedCategories(prev => {
-      const next = new Set(prev);
-      if (next.has(cat)) next.delete(cat);
-      else next.add(cat);
-      return next;
-    });
-  }, []);
-
-  const handleToggleItem = useCallback(
-    async (item: Item) => {
-      const newStatus: BoardItemStatus =
-        item.status === 'Completed' ? 'Needed' : 'Completed';
-      try {
-        await setItemStatus(item.id, newStatus);
-      } catch {
-        // error handled by hook
-      }
-    },
-    [setItemStatus],
-  );
-
-  const handleEditItem = useCallback(
-    (item: Item) => {
-      navigation.navigate('ItemSheet', { boardId, itemId: item.id });
-    },
-    [navigation, boardId],
-  );
-
-  const handleRemoveItem = useCallback(
-    async (item: Item) => {
-      const previousStatus = item.status;
-      try {
-        setUndoState({ itemId: item.id, previousStatus });
-        await setItemStatus(item.id, 'Removed');
-
-        if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
-        undoTimerRef.current = setTimeout(() => {
-          setUndoState(null);
-        }, 5000);
-      } catch {
-        setUndoState(null);
-      }
-    },
-    [setItemStatus],
-  );
-
-  const handleUndo = useCallback(async () => {
-    if (!undoState) return;
-    try {
-      await setItemStatus(undoState.itemId, undoState.previousStatus);
-    } catch {
-      // error handled by hook
-    } finally {
-      setUndoState(null);
-      if (undoTimerRef.current) {
-        clearTimeout(undoTimerRef.current);
-        undoTimerRef.current = null;
-      }
-    }
-  }, [undoState, setItemStatus]);
-
-  const handleDismissSnackbar = useCallback(() => {
-    setUndoState(null);
-    if (undoTimerRef.current) {
-      clearTimeout(undoTimerRef.current);
-      undoTimerRef.current = null;
-    }
-  }, []);
-
-  const handleClearCompleted = useCallback(async () => {
-    const count = completedCount;
-    setClearing(true);
-    try {
-      await clearCompleted();
-      setDoneExpanded(false);
-      setClearedMessage(
-        t('lovingBoards.boardDetail.clearedWithCount', { count }),
-      );
-      if (clearTimerRef.current) clearTimeout(clearTimerRef.current);
-      clearTimerRef.current = setTimeout(() => {
-        setClearedMessage(null);
-      }, 4000);
-    } catch {
-      // error handled by hook
-    } finally {
-      setClearing(false);
-    }
-  }, [clearCompleted, completedCount, t]);
-
-  const handleResetWeekly = useCallback(async () => {
-    try {
-      await resetWeekly();
-    } catch {
-      // error handled by hook
-    }
-  }, [resetWeekly]);
-
-  const handleAddItem = useCallback(() => {
-    navigation.navigate('ItemSheet', { boardId });
-  }, [navigation, boardId]);
-
-  const handleMembersPress = useCallback(() => {
-    navigation.navigate('BoardMembers', { boardId });
-  }, [navigation, boardId]);
+    userId,
+    collapsedCategories,
+    doneExpanded,
+    clearing,
+    undoState,
+    clearedMessage,
+    activeByCategory,
+    completedItems,
+    uncategorizedActive,
+    categoryNames,
+    allNeeded,
+    completedCount,
+    progressDone,
+    progressTotal,
+    hasItems,
+    hasCompleted,
+    toggleCategory,
+    toggleDoneExpanded,
+    handleToggleItem,
+    handleEditItem,
+    handleRemoveItem,
+    handleUndo,
+    handleDismissSnackbar,
+    dismissCleared,
+    handleClearCompleted,
+    handleResetWeekly,
+    handleAddItem,
+    handleMembersPress,
+  } = useBoardDetail(boardId);
 
   // ── Render guards ─────────────────────────────────────────────────────────
 
@@ -310,9 +142,6 @@ const BoardDetailScreen: React.FC<Props> = ({ route }) => {
       </View>
     );
   }
-
-  const hasItems = allNeeded.length > 0 || completedCount > 0;
-  const hasCompleted = completedCount > 0;
 
   return (
     <View style={styles.container}>
@@ -379,13 +208,7 @@ const BoardDetailScreen: React.FC<Props> = ({ route }) => {
         <View style={styles.snackbarContainer}>
           <Snackbar
             message={clearedMessage}
-            onDismiss={() => {
-              setClearedMessage(null);
-              if (clearTimerRef.current) {
-                clearTimeout(clearTimerRef.current);
-                clearTimerRef.current = null;
-              }
-            }}
+            onDismiss={dismissCleared}
             durationMs={4000}
           />
         </View>
@@ -415,7 +238,7 @@ const BoardDetailScreen: React.FC<Props> = ({ route }) => {
                 : cat;
               const catItems = isUncategorized
                 ? uncategorizedActive
-                : activeByCategory.get(cat) ?? [];
+                : (activeByCategory.get(cat) ?? []);
               const isCollapsed = collapsedCategories.has(cat);
 
               if (catItems.length === 0) return null;
@@ -455,7 +278,7 @@ const BoardDetailScreen: React.FC<Props> = ({ route }) => {
                 itemCount={completedCount}
                 tint="success"
                 isCollapsed={!doneExpanded}
-                onToggle={() => setDoneExpanded(prev => !prev)}
+                onToggle={toggleDoneExpanded}
                 accessibilityLabel={`${t(
                   'lovingBoards.boardDetail.done',
                 )} (${completedCount})`}
