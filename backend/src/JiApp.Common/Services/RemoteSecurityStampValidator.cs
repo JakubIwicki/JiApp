@@ -31,22 +31,31 @@ public sealed class RemoteSecurityStampValidator(
 
         try
         {
-            using var response = await policy.ExecuteAsync(async ctInner =>
+            return await policy.ExecuteAsync(async ctInner =>
             {
-                var request = new HttpRequestMessage(HttpMethod.Get, "api/v1/auth/validate");
+                // Create and dispose a fresh request per attempt — a retried attempt
+                // must never reuse (or leak) the previous attempt's request.
+                using var request = new HttpRequestMessage(HttpMethod.Get, "api/v1/auth/validate");
                 request.Headers.TryAddWithoutValidation("Authorization", authToken);
-                return await httpClient.SendAsync(request, ctInner);
+
+                using var response = await httpClient.SendAsync(request, ctInner);
+
+                if (response.IsSuccessStatusCode)
+                    return StampValidationResult.Valid;
+
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                    return StampValidationResult.Revoked;
+
+                logger.LogWarning(
+                    "Security-stamp recheck: Identity returned unexpected status {StatusCode}",
+                    (int)response.StatusCode);
+                return StampValidationResult.Unavailable;
             }, ct);
-
-            if (response.IsSuccessStatusCode)
-                return StampValidationResult.Valid;
-
-            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-                return StampValidationResult.Revoked;
-
-            logger.LogWarning(
-                "Security-stamp recheck: Identity returned unexpected status {StatusCode}",
-                (int)response.StatusCode);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            // The caller (request aborted / shutdown) cancelled — surface as 503, never a 500.
+            logger.LogInformation("Security-stamp recheck: caller cancelled the validation");
             return StampValidationResult.Unavailable;
         }
         catch (HttpRequestException ex)

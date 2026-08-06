@@ -1,5 +1,6 @@
 using JiApp.Common.Abstractions;
 using JiApp.Common.Services;
+using api.JiApp.LovingBoards.Common;
 using api.JiApp.LovingBoards.Configuration;
 using api.JiApp.LovingBoards.Domain;
 using api.JiApp.LovingBoards.Persistence;
@@ -11,10 +12,13 @@ public sealed class CreateBoardHandler(
     ILovingBoardsDbContext db,
     LovingBoardsSettings settings,
     ICurrentUserService currentUser,
-    TimeProvider timeProvider)
+    TimeProvider timeProvider,
+    UserWriteLock userLock)
 {
     public async Task<Result<long>> HandleAsync(CreateBoardRequest request, CancellationToken ct)
     {
+        using var _ = await userLock.AcquireAsync(currentUser.UserId, ct);
+
         var userBoardCount = await db.Boards
             .CountAsync(b => b.OwnerUserId == currentUser.UserId, ct);
 

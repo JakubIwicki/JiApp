@@ -70,6 +70,17 @@ public sealed class ResultExtensionsTests
     }
 
     [Fact]
+    public async Task Returns503_WhenUnavailable()
+    {
+        // Fail-closed probe verdict — caller must not proceed, surfaced as 503.
+        var result = Result<int>.Failure("Identity unavailable", ResultCategories.Unavailable);
+
+        var response = await Act(result);
+
+        response.StatusCode.Should().Be(StatusCodes.Status503ServiceUnavailable);
+    }
+
+    [Fact]
     public async Task Returns404WithUnknownErrorMessage_WhenErrorIsNull()
     {
         var result = Result<int>.Failure(null!, ResultCategories.NotFound);

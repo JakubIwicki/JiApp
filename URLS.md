@@ -156,6 +156,7 @@ All origins accepted. Same policy on all services.
 | GET | `/api/v1/auth/me` | `MeEndpoint.cs` | 🟢 Live |
 | PATCH | `/api/v1/auth/profile` | `UpdateProfileEndpoint.cs` | 🟢 Live |
 | POST | `/api/v1/auth/change-password` | `ChangePasswordEndpoint.cs` | 🟢 Live |
+| GET | `/api/v1/auth/users/{userId}/exists` | `UserExistsEndpoint.cs` | 🟢 Live |
 | GET | `/api/v1/auth/health` | `Startup.cs` | 🟢 Live |
 | GET | `/api/v1/auth/throw` | `Startup.cs` (dev only) | 🟢 Live |
 

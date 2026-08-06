@@ -36,9 +36,13 @@ public sealed class RetryPolicyFactory(TimeProvider timeProvider) : IRetryPolicy
             {
                 MaxRetryAttempts = retries,
                 Delay = TimeSpan.FromSeconds(1),
-                ShouldHandle = new PredicateBuilder()
-                    .Handle<HttpRequestException>()
-                    .Handle<TaskCanceledException>(),
+                // A caller-initiated cancellation must never be retried, for either
+                // exception family — the decision keys on the caller's token, never the
+                // exception's (a genuine HttpClient timeout still retries). Deliberate:
+                // plain OperationCanceledException is retried too when the caller is not cancelled.
+                ShouldHandle = args => new ValueTask<bool>(
+                    (args.Outcome.Exception is HttpRequestException or OperationCanceledException)
+                    && !args.Context.CancellationToken.IsCancellationRequested),
                 BackoffType = DelayBackoffType.Exponential,
                 UseJitter = true,
             })

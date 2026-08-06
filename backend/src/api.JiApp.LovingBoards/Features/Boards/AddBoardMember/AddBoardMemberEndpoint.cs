@@ -1,5 +1,6 @@
 using FluentValidation;
 using JiApp.Common.Abstractions;
+using JiApp.Common.Middleware;
 using api.JiApp.LovingBoards.Configuration;
 
 namespace api.JiApp.LovingBoards.Features.Boards.AddBoardMember;
@@ -28,11 +29,14 @@ public static class AddBoardMemberEndpoint
                     : result.ToHttp();
             })
             .RequireAuthorization()
+            .AddEndpointFilter<SecurityStampRecheckFilter>()
             .WithTags(SwaggerConstants.Tags.Boards)
             .WithSummary("Add a member to a board")
             .Produces(StatusCodes.Status201Created)
-            .Produces(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status403Forbidden)
-            .Produces(StatusCodes.Status409Conflict);
+            .Produces(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status409Conflict)
+            .Produces(StatusCodes.Status503ServiceUnavailable);
     }
 }

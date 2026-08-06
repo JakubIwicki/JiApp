@@ -23,6 +23,7 @@ public static class ResultExtensions
             ResultCategories.Validation => Results.BadRequest(error),
             ResultCategories.Conflict => Results.Conflict(error),
             ResultCategories.BadGateway => Results.Json(error, statusCode: 502),
+            ResultCategories.Unavailable => Results.Json(error, statusCode: 503),
             _ => Results.Json(error, statusCode: 500)
         };
     }
