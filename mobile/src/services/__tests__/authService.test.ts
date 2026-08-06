@@ -3,15 +3,17 @@ jest.mock('../apiClient', () => ({
   default: {
     post: jest.fn(),
     get: jest.fn(),
+    patch: jest.fn(),
   },
 }));
 
 import apiClient from '../apiClient';
-import { login, register, checkToken } from '../authService';
+import { login, register, checkToken, updateProfile } from '../authService';
 import type { LoginResponse } from '../../types/api';
 
 const mockPost = apiClient.post as jest.Mock;
 const mockGet = apiClient.get as jest.Mock;
+const mockPatch = apiClient.patch as jest.Mock;
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -169,5 +171,38 @@ describe('checkToken', () => {
     expect(mockGet).toHaveBeenCalledWith('/auth/me', {
       headers: { Authorization: `Bearer ${token}` },
     });
+  });
+});
+
+// --- updateProfile ---
+
+describe('updateProfile', () => {
+  it('calls /auth/profile and returns only id, displayName, and email', async () => {
+    mockPatch.mockResolvedValueOnce({
+      data: { id: 1, displayName: 'New Name', email: 'new@example.com' },
+    });
+
+    const result = await updateProfile('New Name', 'new@example.com');
+
+    expect(mockPatch).toHaveBeenCalledWith('/auth/profile', {
+      displayName: 'New Name',
+      email: 'new@example.com',
+    });
+    expect(result).toEqual({
+      id: 1,
+      displayName: 'New Name',
+      email: 'new@example.com',
+    });
+    // /auth/profile does not return roles/permissions — never fabricate them
+    expect(result).not.toHaveProperty('roles');
+    expect(result).not.toHaveProperty('permissions');
+  });
+
+  it('defaults displayName to empty string when absent from the response', async () => {
+    mockPatch.mockResolvedValueOnce({ data: { id: 2, email: 'a@b.com' } });
+
+    const result = await updateProfile('', 'a@b.com');
+
+    expect(result).toEqual({ id: 2, displayName: '', email: 'a@b.com' });
   });
 });
