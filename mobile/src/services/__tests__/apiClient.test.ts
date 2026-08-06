@@ -31,11 +31,14 @@ import * as storageService from '../storageService';
 // Importing apiClient triggers module loading which registers interceptors on the mock
 import '../apiClient';
 
-// Capture the error handler at module load time (before any clearAllMocks)
+// Capture the handlers at module load time (before any clearAllMocks)
 const mockInstance = (axios.create as jest.Mock).mock.results[0].value;
+const requestHandler = (mockInstance.interceptors.request.use as jest.Mock).mock
+  .calls[0][0];
 const errorHandler = (mockInstance.interceptors.response.use as jest.Mock).mock
   .calls[0][1];
 
+const mockGetToken = storageService.getToken as jest.Mock;
 const mockGetRefreshToken = storageService.getRefreshToken as jest.Mock;
 const mockSaveToken = storageService.saveToken as jest.Mock;
 const mockSaveRefreshToken = storageService.saveRefreshToken as jest.Mock;
@@ -270,5 +273,32 @@ describe('apiClient 401 response interceptor', () => {
     await expect(errorHandler(error401)).rejects.toMatchObject({
       _serverError: 'Invalid credentials',
     });
+  });
+});
+
+describe('apiClient request interceptor', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGetToken.mockResolvedValue(null);
+  });
+
+  it('does not overwrite an explicit Authorization header', async () => {
+    const config = { headers: { Authorization: 'Bearer explicit-token' } };
+
+    const result = await requestHandler(config);
+
+    expect(result).toBe(config);
+    expect(config.headers.Authorization).toBe('Bearer explicit-token');
+    expect(mockGetToken).not.toHaveBeenCalled();
+  });
+
+  it('attaches the stored token when no explicit Authorization header is set', async () => {
+    mockGetToken.mockResolvedValueOnce('stored-token');
+    const config = { headers: {} as Record<string, string> };
+
+    const result = await requestHandler(config);
+
+    expect(mockGetToken).toHaveBeenCalledTimes(1);
+    expect(result.headers.Authorization).toBe('Bearer stored-token');
   });
 });

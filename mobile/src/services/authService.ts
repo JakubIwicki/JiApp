@@ -23,6 +23,12 @@ export interface ProfileResponse {
   permissions: string[];
 }
 
+export interface UpdateProfileResult {
+  id: number;
+  displayName: string;
+  email?: string;
+}
+
 export const login = async (
   username: string,
   password: string,
@@ -85,19 +91,19 @@ export const getProfile = async (): Promise<ProfileResponse> => {
 export const updateProfile = async (
   displayName: string,
   email: string,
-): Promise<ProfileResponse> => {
+): Promise<UpdateProfileResult> => {
   const body: UpdateProfileRequest = { displayName, email };
   const response = await apiClient.patch<UpdateProfileApiRaw>(
     '/auth/profile',
     body,
   );
   const data = UpdateProfileApiRawSchema.parse(response.data);
+  // /auth/profile returns only id/displayName/email — never fabricate
+  // roles/permissions; auth state merges this with the existing session.
   return {
     id: data.id,
     displayName: data.displayName ?? '',
     email: data.email,
-    roles: [],
-    permissions: [],
   };
 };
 
