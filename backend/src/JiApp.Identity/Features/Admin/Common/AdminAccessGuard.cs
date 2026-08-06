@@ -10,23 +10,23 @@ public sealed class AdminAccessGuard(
 	UserManager<User> userManager,
 	ICurrentUserService currentUser)
 {
-	public Result<bool> EnsureNotSelf(long targetUserId)
+	public Result EnsureNotSelf(long targetUserId)
 	{
 		if (targetUserId == currentUser.UserId)
-			return Result<bool>.Failure("Cannot perform this action on your own account", ResultCategories.AccessDenied);
+			return Result.Failure("Cannot perform this action on your own account", ResultCategories.AccessDenied);
 
-		return Result<bool>.Success(true);
+		return Result.Success();
 	}
 
-	public async Task<Result<bool>> EnsureNotLastAdminAsync(long targetUserId)
+	public async Task<Result> EnsureNotLastAdminAsync(long targetUserId)
 	{
 		var user = await userManager.FindByIdAsync(targetUserId.ToString(CultureInfo.InvariantCulture));
 		if (user is null || !await userManager.IsInRoleAsync(user, RoleNames.Admin))
-			return Result<bool>.Success(true);
+			return Result.Success();
 
 		// If the target is already locked out, this action can't reduce the count of effective admins.
 		if (await userManager.IsLockedOutAsync(user))
-			return Result<bool>.Success(true);
+			return Result.Success();
 
 		var admins = await userManager.GetUsersInRoleAsync(RoleNames.Admin);
 		var otherEffectiveAdmins = new List<User>(admins.Count);
@@ -39,30 +39,30 @@ public sealed class AdminAccessGuard(
 		}
 
 		if (otherEffectiveAdmins.Count == 0)
-			return Result<bool>.Failure(
+			return Result.Failure(
 				"Cannot remove or disable the last admin user. Assign another admin first.",
 				ResultCategories.AccessDenied);
 
-		return Result<bool>.Success(true);
+		return Result.Success();
 	}
 
-	public Result<bool> EnsureRoleIsEditable(string roleName)
+	public Result EnsureRoleIsEditable(string roleName)
 	{
 		if (roleName == RoleNames.Admin)
-			return Result<bool>.Failure(
+			return Result.Failure(
 				"The Admin role's permissions are immutable and cannot be edited.",
 				ResultCategories.AccessDenied);
 
-		return Result<bool>.Success(true);
+		return Result.Success();
 	}
 
-	public Result<bool> EnsureRoleIsDeletable(string roleName)
+	public Result EnsureRoleIsDeletable(string roleName)
 	{
 		if (roleName is RoleNames.Admin or RoleNames.User or RoleNames.Guest)
-			return Result<bool>.Failure(
+			return Result.Failure(
 				$"The '{roleName}' role is reserved and cannot be deleted.",
 				ResultCategories.AccessDenied);
 
-		return Result<bool>.Success(true);
+		return Result.Success();
 	}
 }

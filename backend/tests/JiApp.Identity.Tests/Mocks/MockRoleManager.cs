@@ -97,6 +97,11 @@ public sealed class MockRoleManager
 		_mock.Verify(x => x.CreateAsync(It.IsAny<IdentityRole<long>>()), Times.Exactly(count));
 	}
 
+	public void VerifyFindByNameAsync_NotCalled()
+	{
+		_mock.Verify(x => x.FindByNameAsync(It.IsAny<string>()), Times.Never);
+	}
+
 	public void VerifyRemovedClaimFromRole(string roleName)
 	{
 		_mock.Verify(

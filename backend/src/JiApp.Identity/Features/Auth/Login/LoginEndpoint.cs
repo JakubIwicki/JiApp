@@ -28,8 +28,12 @@ public static class LoginEndpoint
                 if (result.IsSuccess)
                     return Results.Ok(result.Value);
 
+                var message = result.ErrorCategory == ResultCategories.AccountLocked
+                    ? "Too many attempts. Try again later."
+                    : "Invalid credentials";
+
                 return Results.Json(
-                    new ApiErrorResponse(Error: "Invalid credentials"),
+                    new ApiErrorResponse(Error: message),
                     statusCode: StatusCodes.Status401Unauthorized);
             })
             .WithTags(SwaggerConstants.Tags.Auth)

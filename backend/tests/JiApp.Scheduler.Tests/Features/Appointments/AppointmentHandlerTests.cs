@@ -313,7 +313,7 @@ public sealed class AppointmentHandlerTests : HandlerTestBase<SchedulerDbContext
     public async Task UpdateAppointmentStatus_FromDone_ReturnsFailure()
     {
         var fixture = Fixture.Init(DbContext, Db).WithSeededEntities();
-        fixture.WithAppointment(out var appointmentId, a => a.TryTransitionTo(AppointmentStatus.Done, out _));
+        fixture.WithAppointment(out var appointmentId, a => a.TryTransitionTo(AppointmentStatus.Done));
         var sut = fixture.UpdateAppointmentStatus;
 
         var result = await sut.HandleAsync(appointmentId, new UpdateAppointmentStatusRequest("cancel"),
@@ -328,7 +328,7 @@ public sealed class AppointmentHandlerTests : HandlerTestBase<SchedulerDbContext
     public async Task UpdateAppointmentStatus_FromCancelled_ReturnsFailure()
     {
         var fixture = Fixture.Init(DbContext, Db).WithSeededEntities();
-        fixture.WithAppointment(out var appointmentId, a => a.TryTransitionTo(AppointmentStatus.Cancelled, out _));
+        fixture.WithAppointment(out var appointmentId, a => a.TryTransitionTo(AppointmentStatus.Cancelled));
         var sut = fixture.UpdateAppointmentStatus;
 
         var result = await sut.HandleAsync(appointmentId, new UpdateAppointmentStatusRequest("done"),
@@ -407,7 +407,7 @@ public sealed class AppointmentHandlerTests : HandlerTestBase<SchedulerDbContext
     public async Task DeleteAppointment_WhenDone_ReturnsFailure()
     {
         var fixture = Fixture.Init(DbContext, Db).WithSeededEntities();
-        fixture.WithAppointment(out var appointmentId, a => a.TryTransitionTo(AppointmentStatus.Done, out _));
+        fixture.WithAppointment(out var appointmentId, a => a.TryTransitionTo(AppointmentStatus.Done));
         var sut = fixture.DeleteAppointment;
 
         var result = await sut.HandleAsync(appointmentId, CancellationToken.None);
@@ -470,7 +470,7 @@ public sealed class AppointmentHandlerTests : HandlerTestBase<SchedulerDbContext
     public async Task DeleteAppointment_WhenDone_ReturnsConflictErrorCategory()
     {
         var fixture = Fixture.Init(DbContext, Db).WithSeededEntities();
-        fixture.WithAppointment(out var appointmentId, a => a.TryTransitionTo(AppointmentStatus.Done, out _));
+        fixture.WithAppointment(out var appointmentId, a => a.TryTransitionTo(AppointmentStatus.Done));
         var sut = fixture.DeleteAppointment;
 
         var result = await sut.HandleAsync(appointmentId, CancellationToken.None);
@@ -498,7 +498,7 @@ public sealed class AppointmentHandlerTests : HandlerTestBase<SchedulerDbContext
     public async Task UpdateAppointmentStatus_FromDone_ReturnsValidationErrorCategory()
     {
         var fixture = Fixture.Init(DbContext, Db).WithSeededEntities();
-        fixture.WithAppointment(out var appointmentId, a => a.TryTransitionTo(AppointmentStatus.Done, out _));
+        fixture.WithAppointment(out var appointmentId, a => a.TryTransitionTo(AppointmentStatus.Done));
         var sut = fixture.UpdateAppointmentStatus;
 
         var result = await sut.HandleAsync(appointmentId, new UpdateAppointmentStatusRequest("cancel"),

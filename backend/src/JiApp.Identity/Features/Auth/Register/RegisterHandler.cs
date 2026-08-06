@@ -24,7 +24,10 @@ public sealed class RegisterHandler(
         // They create a TOCTOU race condition and leak user enumeration info.
         // Unique constraints are enforced at the DB level via indexes.
         // DbUpdateException is caught below for race conditions.
-        // Password quality failures are returned as IdentityResult errors.
+        // All IdentityResult failures (duplicate username/email, weak password) are
+        // returned as a single generic message so an attacker cannot distinguish a
+        // taken username from any other registration failure; the real error text
+        // goes to the log only.
 
         var user = new User
         {
@@ -48,12 +51,12 @@ public sealed class RegisterHandler(
         {
             var errors = string.Join(", ", createResult.Errors.Select(e => e.Description));
             logger.RegistrationFailed(request.Username, errors);
-            return Result<RegisterResponse>.Failure(errors);
+            return Result<RegisterResponse>.Failure("Registration failed");
         }
 
         try
         {
-            await accessService.AssignDefaultRoleAsync(user.Id);
+            await accessService.AssignDefaultRoleAsync(user.Id, ct);
         }
         catch (Exception ex)
         {

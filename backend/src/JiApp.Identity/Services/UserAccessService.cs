@@ -6,22 +6,22 @@ namespace JiApp.Identity.Services;
 
 public interface IUserAccessService
 {
-	Task AssignDefaultRoleAsync(long userId);
-	Task<string[]> GetEffectivePermissionsAsync(long userId);
+	Task AssignDefaultRoleAsync(long userId, CancellationToken ct = default);
+	Task<string[]> GetEffectivePermissionsAsync(long userId, CancellationToken ct = default);
 }
 
 public sealed class UserAccessService(
 	UserManager<User> userManager,
 	RoleManager<IdentityRole<long>> roleManager) : IUserAccessService
 {
-	public async Task AssignDefaultRoleAsync(long userId)
+	public async Task AssignDefaultRoleAsync(long userId, CancellationToken ct = default)
 	{
 		var user = await userManager.FindByIdAsync(userId.ToString());
 		if (user is not null)
 			await userManager.AddToRoleAsync(user, RoleNames.Guest);
 	}
 
-	public async Task<string[]> GetEffectivePermissionsAsync(long userId)
+	public async Task<string[]> GetEffectivePermissionsAsync(long userId, CancellationToken ct = default)
 	{
 		var user = await userManager.FindByIdAsync(userId.ToString());
 		if (user is null)

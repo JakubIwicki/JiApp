@@ -14,6 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="JiApp.YtDownloader.Tests"/>
   </ItemGroup>
 
 </Project>

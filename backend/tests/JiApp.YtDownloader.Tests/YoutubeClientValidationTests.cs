@@ -37,6 +37,83 @@ public sealed class YoutubeClientValidationTests
             .And.Message.Should().Contain("videoId");
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData("abc")] // too short
+    [InlineData("abcdefghijklm")] // too long (13)
+    [InlineData("abc def ghijk")] // contains space
+    [InlineData("--exec=rm -rf /")] // argument injection
+    public async Task DownloadVideoAsync_ReturnsTypedFailure_ForInvalidVideoId(string invalidVideoId)
+    {
+        var fixture = Fixture.Create();
+
+        var result = await fixture.Sut.DownloadVideoAsync(invalidVideoId, "/tmp/out", "job-temp-id");
+
+        result.Success.Should().BeFalse();
+        result.FilePath.Should().BeNull();
+        result.Errors.Should().NotBeEmpty();
+    }
+
+    [Fact]
+    public void ResolveOutputFilePath_ReturnsReportedPath_WhenItExists()
+    {
+        var outputPath = Directory.CreateTempSubdirectory("ytdl-resolve-").FullName;
+        try
+        {
+            var reported = Path.Combine(outputPath, "reported.mp3");
+            File.WriteAllBytes(reported, [1]);
+
+            var resolved = YoutubeClient.ResolveOutputFilePath(outputPath, "job-abc", reported);
+
+            resolved.Should().Be(reported);
+        }
+        finally
+        {
+            Directory.Delete(outputPath, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void ResolveOutputFilePath_PrefersJobKeyedFile_OverNewestMp3()
+    {
+        // The fallback must be deterministic per job: a newer decoy *.mp3 in the same
+        // folder must NOT win — that glob is how two concurrent downloads cross-resolve.
+        var outputPath = Directory.CreateTempSubdirectory("ytdl-resolve-").FullName;
+        try
+        {
+            var decoy = Path.Combine(outputPath, "newest.mp3");
+            var jobFile = Path.Combine(outputPath, "job-abc.mp3");
+            File.WriteAllBytes(decoy, [1]);
+            File.WriteAllBytes(jobFile, [2]);
+            File.SetLastWriteTimeUtc(decoy, DateTime.UtcNow);
+            File.SetLastWriteTimeUtc(jobFile, DateTime.UtcNow.AddHours(-1));
+
+            var resolved = YoutubeClient.ResolveOutputFilePath(outputPath, "job-abc", ytDlpReportedPath: null);
+
+            resolved.Should().Be(jobFile);
+        }
+        finally
+        {
+            Directory.Delete(outputPath, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void ResolveOutputFilePath_ReturnsNull_WhenNoFileMatches()
+    {
+        var outputPath = Directory.CreateTempSubdirectory("ytdl-resolve-").FullName;
+        try
+        {
+            var resolved = YoutubeClient.ResolveOutputFilePath(outputPath, "job-abc", ytDlpReportedPath: null);
+
+            resolved.Should().BeNull();
+        }
+        finally
+        {
+            Directory.Delete(outputPath, recursive: true);
+        }
+    }
+
     [Fact]
     public void BuildPreviewAudioProcess_ReturnsProcess_WithCorrectArgs()
     {

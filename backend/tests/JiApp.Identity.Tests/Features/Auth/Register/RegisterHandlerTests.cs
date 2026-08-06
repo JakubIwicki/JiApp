@@ -14,12 +14,13 @@ public sealed class RegisterHandlerTests
     {
         public MockUserManager UserManagerDouble { get; } = MockUserManager.GetSuccessful();
         public MockUserAccessService AccessServiceDouble { get; } = MockUserAccessService.GetSuccessful();
+        public RecordingLogger<RegisterHandler> Logger { get; } = new();
 
         public RegisterHandler Sut { get; }
 
         public Fixture()
         {
-            Sut = new RegisterHandler(UserManagerDouble, AccessServiceDouble.Object, Mock.Of<ILogger<RegisterHandler>>());
+            Sut = new RegisterHandler(UserManagerDouble, AccessServiceDouble.Object, Logger);
         }
 
         public Fixture WithSuccessfulCreate(long userId = 7)
@@ -106,7 +107,7 @@ public sealed class RegisterHandlerTests
     }
 
     [Fact]
-    public async Task HandleAsync_ReturnsFailure_WhenCreateFails()
+    public async Task HandleAsync_ReturnsGenericMessage_WhenCreateFails()
     {
         var fixture = new Fixture().WithFailingCreate("Passwords must have at least one uppercase ('A'-'Z').");
 
@@ -114,11 +115,11 @@ public sealed class RegisterHandlerTests
             new RegisterRequest("newuser", "new@test.com", "weak", "New User"), CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
-        result.Error.Should().Contain("uppercase");
+        result.Error.Should().Be("Registration failed");
     }
 
     [Fact]
-    public async Task HandleAsync_ReturnsFailureWithAllErrors_WhenCreateFailsMultiple()
+    public async Task HandleAsync_ReturnsGenericMessage_AndLogsAllErrors_WhenCreateFailsMultiple()
     {
         var fixture = new Fixture().WithCreateFailingMultiple();
 
@@ -126,8 +127,27 @@ public sealed class RegisterHandlerTests
             new RegisterRequest("newuser", "new@test.com", "weak", "New User"), CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
-        result.Error.Should().Contain("uppercase");
-        result.Error.Should().Contain("digit");
+        result.Error.Should().Be("Registration failed");
+        result.Error.Should().NotContain("uppercase");
+        result.Error.Should().NotContain("digit");
+        fixture.Logger.Messages.Should().Contain(m => m.Contains("uppercase") && m.Contains("digit"));
+    }
+
+    [Fact]
+    public async Task HandleAsync_ReturnsGenericMessage_AndLogsRealError_WhenUsernameAlreadyTaken()
+    {
+        // The UserValidator leak (DuplicateUserName -> "Username 'alice' is already taken.")
+        // must not reach the response: both paths — IdentityResult errors and the DB
+        // unique-constraint violation — agree on the generic message.
+        var fixture = new Fixture().WithFailingCreate("Username 'alice' is already taken.");
+
+        var result = await fixture.Sut.HandleAsync(
+            new RegisterRequest("alice", "new@test.com", "weak", "Alice"), CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be("Registration failed");
+        result.Error.Should().NotContain("alice");
+        fixture.Logger.Messages.Should().Contain(m => m.Contains("already taken"));
     }
 
     [Fact]
@@ -144,5 +164,20 @@ public sealed class RegisterHandlerTests
         fixture.UserManagerDouble.VerifyDeletedUser(createdUserId);
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("Registration failed");
+    }
+
+    private sealed class RecordingLogger<T> : ILogger<T>
+    {
+        private readonly List<string> _messages = [];
+
+        public IReadOnlyList<string> Messages => _messages;
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception,
+            Func<TState, Exception?, string> formatter)
+            => _messages.Add(formatter(state, exception));
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
     }
 }

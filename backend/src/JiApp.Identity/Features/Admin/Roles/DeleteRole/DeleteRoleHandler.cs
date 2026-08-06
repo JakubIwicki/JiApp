@@ -14,7 +14,7 @@ public sealed class DeleteRoleHandler(
 	{
 		var deletableCheck = guard.EnsureRoleIsDeletable(roleName);
 		if (!deletableCheck.IsSuccess)
-			return deletableCheck;
+			return deletableCheck.WithValue(true);
 
 		var role = await roleManager.FindByNameAsync(roleName);
 		if (role is null)

@@ -28,8 +28,9 @@ public sealed class UpdateAppointmentStatusHandler(ISchedulerDbContext db, ICurr
         if (newStatus is null)
             return Result<long>.Failure("Invalid status. Use 'done', 'cancel', or 'cancelled'", ResultCategories.Validation);
 
-        if (!appointment.TryTransitionTo(newStatus.Value, out var error))
-            return Result<long>.Failure(error!, ResultCategories.Validation);
+        var transition = appointment.TryTransitionTo(newStatus.Value);
+        if (!transition.IsSuccess)
+            return Result<long>.Failure(transition.Error!, ResultCategories.Validation);
 
         await db.SaveChangesAsync(ct);
         return Result<long>.Success(appointment.Id);

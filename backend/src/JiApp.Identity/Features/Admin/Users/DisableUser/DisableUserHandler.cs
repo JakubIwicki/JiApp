@@ -18,11 +18,11 @@ public sealed class DisableUserHandler(
 	{
 		var notSelf = guard.EnsureNotSelf(userId);
 		if (!notSelf.IsSuccess)
-			return notSelf;
+			return notSelf.WithValue(true);
 
 		var notLastAdmin = await guard.EnsureNotLastAdminAsync(userId);
 		if (!notLastAdmin.IsSuccess)
-			return notLastAdmin;
+			return notLastAdmin.WithValue(true);
 
 		var user = await userManager.FindByIdAsync(userId.ToString(CultureInfo.InvariantCulture));
 		if (user is null)

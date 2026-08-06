@@ -76,7 +76,7 @@ public sealed class RegisterHandlerDbTests : HandlerTestBase<IdentityDbContext>
         var result = await fixture.SutWithEmailUniqueness.HandleAsync(duplicate, CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
-        result.Error.Should().Contain("already taken");
+        result.Error.Should().Be("Registration failed");
         (await DbContext.Users.CountAsync()).Should().Be(1);
     }
 
@@ -95,7 +95,7 @@ public sealed class RegisterHandlerDbTests : HandlerTestBase<IdentityDbContext>
     }
 
     [Fact]
-    public async Task Register_WeakPassword_ReturnsIdentityErrors_NoUserPersisted()
+    public async Task Register_WeakPassword_ReturnsGenericMessage_NoUserPersisted()
     {
         var fixture = Fixture.Init(DbContext, Db);
         var request = new RegisterRequest(ValidUsername, ValidEmail, WeakPassword, ValidDisplayName);
@@ -103,7 +103,7 @@ public sealed class RegisterHandlerDbTests : HandlerTestBase<IdentityDbContext>
         var result = await fixture.Sut.HandleAsync(request, CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
-        result.Error.Should().Contain("uppercase");
+        result.Error.Should().Be("Registration failed");
         (await DbContext.Users.CountAsync()).Should().Be(0);
     }
 
@@ -157,7 +157,7 @@ public sealed class RegisterHandlerDbTests : HandlerTestBase<IdentityDbContext>
     private static IUserAccessService CreateFailingAccessService()
     {
         var mock = new Mock<IUserAccessService>();
-        mock.Setup(x => x.AssignDefaultRoleAsync(It.IsAny<long>()))
+        mock.Setup(x => x.AssignDefaultRoleAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("DB unavailable"));
         return mock.Object;
     }

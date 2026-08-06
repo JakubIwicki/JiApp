@@ -20,7 +20,7 @@ public sealed class AssignRoleHandler(
 		{
 			var notSelf = guard.EnsureNotSelf(userId);
 			if (!notSelf.IsSuccess)
-				return notSelf;
+				return notSelf.WithValue(true);
 		}
 
 		if (!await roleManager.RoleExistsAsync(request.RoleName))
