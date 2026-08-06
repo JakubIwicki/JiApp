@@ -133,9 +133,28 @@ public class Startup(LovingBoardsSettings settings, IWebHostEnvironment env)
 
         services.AddSecurityStampRecheck(settings.IdentityBaseUrl, env);
 
+        if (!string.IsNullOrEmpty(settings.IdentityBaseUrl))
+        {
+            services.AddHttpClient<Clients.IUserExistenceClient, Clients.UserExistenceClient>(client =>
+            {
+                client.BaseAddress = new Uri(settings.IdentityBaseUrl);
+                client.Timeout = TimeSpan.FromSeconds(5);
+            });
+        }
+        else if (env.IsDevelopment())
+        {
+            services.AddSingleton<Clients.IUserExistenceClient, Clients.NoOpUserExistenceClient>();
+        }
+        else
+        {
+            throw new InvalidOperationException(
+                "IdentityBaseUrl must be configured in non-Development environments for the user-existence probe.");
+        }
+
         // Realtime
         services.AddSingleton<IBoardBroadcaster, BoardBroadcaster>();
         services.AddSingleton<Common.BoardWriteLock>();
+        services.AddSingleton<Common.UserWriteLock>();
     }
 
     private static void ConfigureFeatureHandlers(IServiceCollection services)

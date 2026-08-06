@@ -47,7 +47,7 @@ public sealed class ItemHandlerTests : HandlerTestBase<LovingBoardsDbContext>
             _broadcaster = new NoOpBoardBroadcaster();
         }
 
-        public CreateItemHandler CreateItem => new(_dbContext, _settings, _currentUser, _broadcaster, _timeProvider);
+        public CreateItemHandler CreateItem => new(_dbContext, _settings, _currentUser, _broadcaster, _timeProvider, new BoardWriteLock());
         public UpdateItemHandler UpdateItem => new(_dbContext, _currentUser, _broadcaster, _timeProvider);
         public SetItemStatusHandler SetItemStatus => new(_dbContext, _currentUser, _broadcaster, _timeProvider);
         public DeleteItemHandler DeleteItem => new(_dbContext, _currentUser, _broadcaster);
@@ -591,7 +591,7 @@ public sealed class ItemHandlerTests : HandlerTestBase<LovingBoardsDbContext>
     public async Task CreateItem_PublishesItemAdded()
     {
         var capturing = new CapturingBoardBroadcaster();
-        var handler = new CreateItemHandler(DbContext, DefaultSettings, MockCurrentUserService.GetSuccessful().Mock.Object, capturing, TimeProvider.System);
+        var handler = new CreateItemHandler(DbContext, DefaultSettings, MockCurrentUserService.GetSuccessful().Mock.Object, capturing, TimeProvider.System, new BoardWriteLock());
         StoreInDb(new Board { Name = "Test", OwnerUserId = 1L, MemberUserIds = [1L] });
         var boardId = Db.Query<Board>().First().Id;
 

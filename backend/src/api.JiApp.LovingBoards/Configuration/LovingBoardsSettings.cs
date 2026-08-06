@@ -13,6 +13,7 @@ public sealed class LovingBoardsSettings
     public int DefaultPageSize { get; set; } = 50;
     public int MaxBoardNameLength { get; set; } = 200;
     public int MaxItemsPerBoard { get; set; } = 200;
+    public int MaxMembersPerBoard { get; set; } = 100;
     public int MaxItemTitleLength { get; set; } = 200;
     public int MaxQuantityLength { get; set; } = 50;
     public int MaxCategoryLength { get; set; } = 100;
@@ -29,6 +30,9 @@ public sealed class LovingBoardsSettings
             errors.Add("Jwt section is required");
         else
             errors.AddRange(Jwt.Validate());
+
+        if (MaxMembersPerBoard <= 0)
+            errors.Add("MaxMembersPerBoard must be greater than 0");
 
         if (errors.Count > 0)
             throw new InvalidOperationException(

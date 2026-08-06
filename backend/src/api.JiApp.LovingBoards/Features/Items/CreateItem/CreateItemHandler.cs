@@ -1,5 +1,6 @@
 using JiApp.Common.Abstractions;
 using JiApp.Common.Services;
+using api.JiApp.LovingBoards.Common;
 using api.JiApp.LovingBoards.Configuration;
 using api.JiApp.LovingBoards.Domain;
 using api.JiApp.LovingBoards.Features.Common;
@@ -14,10 +15,13 @@ public sealed class CreateItemHandler(
     LovingBoardsSettings settings,
     ICurrentUserService currentUser,
     IBoardBroadcaster broadcaster,
-    TimeProvider timeProvider)
+    TimeProvider timeProvider,
+    BoardWriteLock boardLock)
 {
     public async Task<Result<long>> HandleAsync(long boardId, CreateItemRequest request, CancellationToken ct)
     {
+        using var _ = await boardLock.AcquireAsync(boardId, ct);
+
         var boardResult = await BoardAccessGuard.VerifyBoardAccessAsync(db, boardId, currentUser, ct);
         if (!boardResult.IsSuccess)
             return Result<long>.Failure(boardResult.Error!, boardResult.ErrorCategory);
