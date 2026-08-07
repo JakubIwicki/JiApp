@@ -11,6 +11,7 @@ import type {
   DownloadResponseSchema,
   DownloadStatusSchema,
   RefreshResponseSchema,
+  AppVersionInfoSchema,
 } from './schemas';
 
 // ── Request interfaces (outbound — no schema needed) ────────────────────────
@@ -96,3 +97,4 @@ export type SearchResponse = z.infer<typeof SearchResponseSchema>;
 export type HistoryResponse = z.infer<typeof HistoryResponseSchema>;
 export type DownloadResponse = z.infer<typeof DownloadResponseSchema>;
 export type DownloadStatus = z.infer<typeof DownloadStatusSchema>;
+export type AppVersionInfo = z.infer<typeof AppVersionInfoSchema>;

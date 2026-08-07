@@ -92,3 +92,8 @@ export const DownloadStatusSchema = z.object({
 export const DownloadHistoryResponseSchema = z.object({
   items: z.array(DownloadHistoryItemSchema),
 });
+
+export const AppVersionInfoSchema = z.object({
+  minVersionCode: z.number(),
+  downloadUrl: z.string(),
+});

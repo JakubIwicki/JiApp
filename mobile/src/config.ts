@@ -1,7 +1,9 @@
 import {
   API_BASE_URL as GENERATED_URL,
   WAKE_API_URL as GENERATED_WAKE_URL,
+  APP_VERSION_CODE as GENERATED_VERSION_CODE,
 } from './config.generated';
 
 export const API_BASE_URL: string = GENERATED_URL;
 export const WAKE_API_URL: string = GENERATED_WAKE_URL;
+export const APP_VERSION_CODE: number = GENERATED_VERSION_CODE;

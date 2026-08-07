@@ -139,6 +139,12 @@
     "retry": "Spróbuj ponownie",
     "closeApp": "Zamknij aplikację"
   },
+  "update": {
+    "title": "Dostępna aktualizacja",
+    "message": "Wymagana jest nowa wersja aplikacji JiApp. Pobierz i zainstaluj aktualizację, aby kontynuować.",
+    "download": "Pobierz aktualizację",
+    "exit": "Zamknij aplikację"
+  },
   "connectionError": {
     "title": "Nie można połączyć się z serwerem",
     "message": "Skontaktuj się z administratorem.",

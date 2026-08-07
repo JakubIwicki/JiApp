@@ -312,6 +312,25 @@ bump_version() {
     echo ""
 }
 
+# ── Emit APP_VERSION_CODE (after version is final) ───────────────────────
+# Appends to config.generated.ts (already written with API/WAKE URLs above).
+# Read fresh from build.gradle so release builds emit the POST-bump value —
+# the versionCode of the APK that gets built.
+emit_version_config() {
+    local version_code
+    version_code=$(grep -oP 'versionCode \K\d+' "$GRADLE_FILE")
+
+    if [ -z "$version_code" ]; then
+        error "Could not read versionCode from $GRADLE_FILE"
+        exit 1
+    fi
+
+    {
+        echo "export const APP_VERSION_CODE: number = $version_code;"
+    } >> "$GENERATED_CONFIG"
+    success "config.generated.ts APP_VERSION_CODE=$version_code"
+}
+
 # ── Build ────────────────────────────────────────────────────────────────
 build_apk() {
     local variant="$1"  # Debug or Release
@@ -408,12 +427,14 @@ echo ""
 if $RELEASE; then
     setup_keystore
     bump_version
+    emit_version_config
     build_apk "Release"
     copy_to_dist "release"
     if $INSTALL; then
         install_to_device "release"
     fi
 else
+    emit_version_config
     build_apk "Debug"
     copy_to_dist "debug"
     if $INSTALL; then
