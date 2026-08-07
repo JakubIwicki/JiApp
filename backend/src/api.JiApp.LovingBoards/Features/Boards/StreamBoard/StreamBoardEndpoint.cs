@@ -40,7 +40,7 @@ public static class StreamBoardEndpoint
         return endpoints;
     }
 
-    private static async Task StreamSseAsync(
+    public static async Task StreamSseAsync(
         HttpContext httpContext,
         IBoardBroadcaster broadcaster,
         long boardId,
@@ -64,37 +64,11 @@ public static class StreamBoardEndpoint
         {
             using var heartbeat = new PeriodicTimer(TimeSpan.FromSeconds(20));
 
-            var heartbeatTask = heartbeat.WaitForNextTickAsync(ct).AsTask();
-            var readTask = ReadNextEventAsync(subscription, ct);
-
-            while (!ct.IsCancellationRequested)
-            {
-                var completed = await Task.WhenAny(readTask, heartbeatTask);
-
-                if (completed == heartbeatTask)
-                {
-                    if (!await heartbeatTask)
-                        break;
-
-                    await response.WriteAsync(": ping\n\n", ct);
-                    await response.Body.FlushAsync(ct);
-
-                    heartbeatTask = heartbeat.WaitForNextTickAsync(ct).AsTask();
-                }
-                else
-                {
-                    var ev = await readTask;
-                    if (ev is null)
-                        break;
-
-                    var json = JsonSerializer.Serialize(ev.Data, SseJsonOptions);
-                    await response.WriteAsync($"event: {ev.Event}\n", ct);
-                    await response.WriteAsync($"data: {json}\n\n", ct);
-                    await response.Body.FlushAsync(ct);
-
-                    readTask = ReadNextEventAsync(subscription, ct);
-                }
-            }
+            await StreamLoopAsync(
+                response,
+                subscription,
+                heartbeatCt => heartbeat.WaitForNextTickAsync(heartbeatCt).AsTask(),
+                ct);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
@@ -104,6 +78,61 @@ public static class StreamBoardEndpoint
         {
             subscription.Dispose();
         }
+    }
+
+    internal static async Task StreamLoopAsync(
+        HttpResponse response,
+        IBoardSubscription subscription,
+        Func<CancellationToken, Task<bool>> heartbeat,
+        CancellationToken ct)
+    {
+        var readTask = ReadNextEventAsync(subscription, ct);
+        var heartbeatTask = heartbeat(ct);
+
+        while (!ct.IsCancellationRequested)
+        {
+            var completed = await Task.WhenAny(readTask, heartbeatTask);
+
+            if (completed == readTask)
+            {
+                var ev = await readTask;
+                if (ev is null)
+                    break;
+
+                await WriteEventAsync(response, ev, ct);
+
+                readTask = ReadNextEventAsync(subscription, ct);
+            }
+            else
+            {
+                var keepRunning = await heartbeatTask;
+
+                if (!keepRunning)
+                {
+                    // the heartbeat is ending the stream — flush an event that completed on readTask in the same tick
+                    if (readTask.IsCompleted)
+                    {
+                        var ev = await readTask;
+                        if (ev is not null)
+                            await WriteEventAsync(response, ev, ct);
+                    }
+                    break;
+                }
+
+                await response.WriteAsync(": ping\n\n", ct);
+                await response.Body.FlushAsync(ct);
+
+                heartbeatTask = heartbeat(ct);
+            }
+        }
+    }
+
+    private static async Task WriteEventAsync(HttpResponse response, BoardEvent ev, CancellationToken ct)
+    {
+        var json = JsonSerializer.Serialize(ev.Data, SseJsonOptions);
+        await response.WriteAsync($"event: {ev.Event}\n", ct);
+        await response.WriteAsync($"data: {json}\n\n", ct);
+        await response.Body.FlushAsync(ct);
     }
 
     private static async Task<BoardEvent?> ReadNextEventAsync(IBoardSubscription subscription, CancellationToken ct)

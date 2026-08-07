@@ -282,6 +282,13 @@ describe('getSelectedModule', () => {
     const result = await getSelectedModule();
     expect(result).toBeNull();
   });
+
+  it('returns null when invalid module id stored', async () => {
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce('NotAModule');
+
+    const result = await getSelectedModule();
+    expect(result).toBeNull();
+  });
 });
 
 describe('clearSelectedModule', () => {

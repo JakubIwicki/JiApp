@@ -196,6 +196,25 @@ describe('ThemeContext', () => {
     });
   });
 
+  it('ignores a stored palette that only exists on the prototype chain', async () => {
+    // 'constructor' is inherited from Object.prototype — the `in` check would
+    // accept it; Object.hasOwn must reject it and fall back to the default.
+    jest.spyOn(storageService, 'getPalette').mockResolvedValue('constructor');
+    jest
+      .spyOn(require('react-native'), 'useColorScheme')
+      .mockReturnValue('light');
+
+    render(
+      <ThemeProvider>
+        <TestConsumer />
+      </ThemeProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(claudeLight.background)).toBeDefined();
+    });
+  });
+
   it('setThemeMode persists the choice', async () => {
     const saveSpy = jest
       .spyOn(storageService, 'saveThemeMode')
