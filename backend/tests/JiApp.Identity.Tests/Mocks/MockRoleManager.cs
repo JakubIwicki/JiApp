@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using JiApp.Common.Constants;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -127,6 +128,24 @@ public sealed class MockRoleManager
                 It.Is<IdentityRole<long>>(r => r.Name == roleName),
                 It.IsAny<Claim>()),
             Times.AtLeastOnce);
+    }
+
+    public void VerifyAddedPermissionToRole(string roleName, string permission)
+    {
+        _mock.Verify(
+            x => x.AddClaimAsync(
+                It.Is<IdentityRole<long>>(r => r.Name == roleName),
+                It.Is<Claim>(c => c.Type == Permissions.PermissionClaimType && c.Value == permission)),
+            Times.Once);
+    }
+
+    public void VerifyAddedClaimsToRole(string roleName, int count)
+    {
+        _mock.Verify(
+            x => x.AddClaimAsync(
+                It.Is<IdentityRole<long>>(r => r.Name == roleName),
+                It.IsAny<Claim>()),
+            Times.Exactly(count));
     }
 
     public void VerifyAddedClaimToRole_NotCalled(string roleName)
