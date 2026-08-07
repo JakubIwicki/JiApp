@@ -23,6 +23,7 @@ export const Routes = {
   },
   downloads: {
     downloadsMain: 'DownloadsMain',
+    download: 'Download',
   },
   chat: {
     chat: 'Chat',

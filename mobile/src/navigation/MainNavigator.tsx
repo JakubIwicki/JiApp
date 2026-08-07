@@ -125,6 +125,10 @@ const DownloadsStackScreen: React.FC = () => {
         name={Routes.downloads.downloadsMain}
         component={DownloadsScreen}
       />
+      <DownloadsStack.Screen
+        name={Routes.downloads.download}
+        component={DownloadScreen}
+      />
     </DownloadsStack.Navigator>
   );
 };

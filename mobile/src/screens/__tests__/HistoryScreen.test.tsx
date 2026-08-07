@@ -42,6 +42,7 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 
+import { Routes } from '../../navigation/routes';
 import HistoryScreen from '../HistoryScreen';
 
 describe('HistoryScreen', () => {
@@ -102,7 +103,7 @@ describe('HistoryScreen', () => {
     fireEvent.press(getByTestId('history-item-download'));
 
     expect(mockNavigate).toHaveBeenCalledWith(
-      'Download',
+      Routes.history.download,
       expect.objectContaining({ videoId: 'abc123' }),
     );
   });

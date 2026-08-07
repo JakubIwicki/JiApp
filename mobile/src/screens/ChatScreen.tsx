@@ -5,6 +5,7 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
+import { Routes } from '../navigation/routes';
 import type { ChatStackParamList } from '../navigation/types';
 import type { VideoItem } from '../types/api';
 import ChatMessageList from '../components/chat/ChatMessageList';
@@ -54,7 +55,7 @@ const ChatScreen: React.FC = () => {
 
   const handleSelectVideo = useCallback(
     (video: VideoItem) => {
-      navigation.navigate('Download', video);
+      navigation.navigate(Routes.chat.download, video);
     },
     [navigation],
   );

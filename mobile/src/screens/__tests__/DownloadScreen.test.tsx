@@ -68,12 +68,15 @@ jest.mock('react-i18next', () => ({
 
 // Mock @react-navigation/native
 const mockNavigate = jest.fn();
+const mockGoBack = jest.fn();
 jest.mock('@react-navigation/native', () => {
   const actual = jest.requireActual('@react-navigation/native');
   return {
     ...actual,
     useNavigation: () => ({
       navigate: mockNavigate,
+      goBack: mockGoBack,
+      canGoBack: jest.fn(() => true),
       setOptions: jest.fn(),
     }),
     useRoute: () => ({
@@ -88,6 +91,7 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 
+import { Routes } from '../../navigation/routes';
 import DownloadScreen from '../DownloadScreen';
 
 describe('DownloadScreen', () => {
@@ -152,13 +156,14 @@ describe('DownloadScreen', () => {
     expect(getByText('download.viewHistory')).toBeTruthy();
   });
 
-  it('navigates to Search on "go back" press', () => {
+  it('goes back on "go back" press', () => {
     mockLocalFilePath = '/storage/emulated/0/Download/TestVideo.mp3';
 
     const { getByText } = render(<DownloadScreen />);
     fireEvent.press(getByText('download.goBack'));
 
-    expect(mockNavigate).toHaveBeenCalledWith('Search');
+    expect(mockGoBack).toHaveBeenCalledTimes(1);
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   it('navigates to DownloadsTab on "view history" press', () => {
@@ -167,7 +172,7 @@ describe('DownloadScreen', () => {
     const { getByText } = render(<DownloadScreen />);
     fireEvent.press(getByText('download.viewHistory'));
 
-    expect(mockNavigate).toHaveBeenCalledWith('DownloadsTab');
+    expect(mockNavigate).toHaveBeenCalledWith(Routes.tabs.downloads);
   });
 
   it('shows error message on download failure', () => {
