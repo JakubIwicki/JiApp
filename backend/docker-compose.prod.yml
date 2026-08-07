@@ -40,6 +40,7 @@ services:
       Youtube__Proxy: ${YOUTUBE_PROXY:-}
       DeepSeek__ApiKey: ${DEEPSEEK_API_KEY:-}
       DeepSeek__Model: ${DEEPSEEK_MODEL:-}
+      App__PublicBaseUrl: ${YT_PUBLIC_BASE_URL:?required}
       # GC heap limit tuned during Phase F load-test (empty = no cap)
       DOTNET_GCHeapHardLimit: ${YT_GC_HEAP_LIMIT:-}
     volumes:
