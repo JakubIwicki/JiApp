@@ -80,4 +80,16 @@ describe('HistoryItem', () => {
     expect(onPress).toHaveBeenCalledTimes(1);
     expect(onPress).toHaveBeenCalledWith(item);
   });
+
+  it('fires onPress with item data when search type is pressed', () => {
+    const onPress = jest.fn();
+    const item = createSearchItem();
+    const { getByTestId } = render(
+      <HistoryItem type="search" item={item} onPress={onPress} />,
+    );
+
+    fireEvent.press(getByTestId('history-item-search'));
+    expect(onPress).toHaveBeenCalledTimes(1);
+    expect(onPress).toHaveBeenCalledWith(item);
+  });
 });

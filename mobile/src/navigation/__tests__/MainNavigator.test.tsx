@@ -6,6 +6,7 @@ import {
 } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import MainNavigator from '../MainNavigator';
+import { Routes } from '../routes';
 
 // Initialize i18next so translations resolve for tab labels
 import '../../i18n';
@@ -206,6 +207,40 @@ describe('MainNavigator', () => {
         imageUrl: 'https://example.com/thumb.jpg',
         videoUrl: 'https://example.com/video.mp4',
         channelTitle: 'Test Channel',
+      });
+    });
+
+    expect(await findByText('DownloadScreen')).toBeTruthy();
+  });
+
+  it('navigates from History to Download with video params', async () => {
+    let navRef: NavigationContainerRef<any> | null = null;
+    const { findByText } = render(
+      <NavigatorWithRef
+        onReady={ref => {
+          navRef = ref;
+        }}
+      />,
+    );
+
+    await waitFor(() => expect(navRef).not.toBeNull());
+
+    act(() => {
+      navRef!.navigate(Routes.tabs.history);
+    });
+    expect(await findByText('HistoryScreen')).toBeTruthy();
+
+    act(() => {
+      navRef!.navigate(Routes.tabs.history, {
+        screen: Routes.history.download,
+        params: {
+          videoId: 'test-123',
+          title: 'Test Video',
+          description: 'Test description',
+          imageUrl: 'https://example.com/thumb.jpg',
+          videoUrl: 'https://example.com/video.mp4',
+          channelTitle: 'Test Channel',
+        },
       });
     });
 

@@ -4,6 +4,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
+import { Routes } from '../navigation/routes';
 import type { MainStackParamList, MainTabParamList } from '../navigation/types';
 import Button from '../components/Button';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -142,11 +143,15 @@ const DownloadScreen: React.FC = () => {
   }, [videoId, title, description, imageUrl, videoUrl, download]);
 
   const handleGoBack = useCallback(() => {
-    navigation.navigate('Search');
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate(Routes.tabs.search);
+    }
   }, [navigation]);
 
   const handleViewHistory = useCallback(() => {
-    navigation.navigate('DownloadsTab');
+    navigation.navigate(Routes.tabs.downloads);
   }, [navigation]);
 
   const handlePlay = useCallback(() => {

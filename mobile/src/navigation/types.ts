@@ -27,7 +27,7 @@ export type AuthStackParamList = {
 };
 
 export type MainStackParamList = {
-  Search: undefined;
+  Search: { query?: string } | undefined;
   Download: VideoItem;
   History: undefined;
   DownloadsMain: undefined;
@@ -36,6 +36,7 @@ export type MainStackParamList = {
 
 export type HistoryStackParamList = {
   History: undefined;
+  Download: VideoItem;
 };
 
 export type SettingsStackParamList = {

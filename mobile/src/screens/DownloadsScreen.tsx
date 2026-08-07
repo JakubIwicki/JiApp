@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Routes } from '../navigation/routes';
 import type { MainStackParamList } from '../navigation/types';
 import type { DownloadHistoryItem } from '../types/api';
 import RefreshableScrollView from '../components/RefreshableScrollView';
@@ -47,7 +48,7 @@ const DownloadsScreen: React.FC = () => {
 
   const handleDownloadPress = useCallback(
     (item: DownloadHistoryItem) => {
-      navigation.navigate('Download', {
+      navigation.navigate(Routes.downloads.download, {
         videoId: item.videoId,
         title: item.videoTitle,
         description: item.videoDescription,

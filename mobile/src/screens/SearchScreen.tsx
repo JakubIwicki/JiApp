@@ -7,10 +7,16 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import {
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+  type RouteProp,
+} from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MainStackParamList } from '../navigation/types';
+import { Routes } from '../navigation/routes';
 import type { SearchHistoryItem, VideoItem } from '../types/api';
 import SearchBar from '../components/SearchBar';
 import VideoCard from '../components/VideoCard';
@@ -31,6 +37,7 @@ type SearchNavigationProp = NativeStackNavigationProp<
   MainStackParamList,
   'Search'
 >;
+type SearchRouteProp = RouteProp<MainStackParamList, 'Search'>;
 
 const SearchResultsView: React.FC<{
   results: VideoItem[];
@@ -114,6 +121,7 @@ const SearchInitialEmptyView: React.FC<{ emptyText: string }> = ({
 const SearchScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<SearchNavigationProp>();
+  const route = useRoute<SearchRouteProp>();
   const {
     results,
     isLoading,
@@ -153,9 +161,23 @@ const SearchScreen: React.FC = () => {
     [search, clearResults],
   );
 
+  // A query passed via navigation params (e.g. from History recent-search tap)
+  // is run once on focus, then cleared so it does not re-run on later focuses.
+  const { query: focusQuery } = route.params ?? {};
+
+  useFocusEffect(
+    useCallback(() => {
+      if (focusQuery) {
+        setSearchBarText(focusQuery);
+        handleSearch(focusQuery);
+        navigation.setParams({ query: undefined });
+      }
+    }, [focusQuery, handleSearch, navigation, setSearchBarText]),
+  );
+
   const handleVideoPress = useCallback(
     (video: VideoItem) => {
-      navigation.navigate('Download', video);
+      navigation.navigate(Routes.search.download, video);
     },
     [navigation],
   );
