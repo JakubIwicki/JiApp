@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, micros]
+    branches: [main]
   pull_request:
     branches: [main]
 
@@ -21,9 +21,11 @@ jobs:
           chmod +x ~/.local/bin/yt-dlp
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Build
-        run: dotnet build backend/JiApp.sln
+        run: dotnet build backend/JiApp.sln --configuration Release -warnaserror
       - name: Test
-        run: dotnet test backend/JiApp.sln --no-build --collect:"XPlat Code Coverage" --results-directory backend/TestResults
+        run: dotnet test backend/JiApp.sln --configuration Release --no-build --collect:"XPlat Code Coverage" --results-directory backend/TestResults
+      - name: Format
+        run: dotnet format backend/JiApp.sln --verify-no-changes --no-restore
       - name: Coverage gate
         run: python3 scripts/ci/coverage-gate.py
 

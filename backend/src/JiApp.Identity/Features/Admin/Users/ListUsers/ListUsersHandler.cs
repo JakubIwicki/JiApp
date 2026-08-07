@@ -1,11 +1,12 @@
 using JiApp.Common.Abstractions;
 using JiApp.Common.Models;
+using JiApp.Identity.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace JiApp.Identity.Features.Admin.Users.ListUsers;
 
-public sealed class ListUsersHandler(UserManager<User> userManager)
+public sealed class ListUsersHandler(UserManager<User> userManager, IdentityDbContext db)
 {
     public async Task<Result<ListUsersResponse>> HandleAsync(string? search, int? page, int? pageSize, CancellationToken ct)
     {
@@ -28,13 +29,22 @@ public sealed class ListUsersHandler(UserManager<User> userManager)
             .Take(ps)
             .ToListAsync(ct);
 
-        var summaries = new List<UserSummary>(pagedUsers.Count);
-        foreach (var user in pagedUsers)
+        var userIds = pagedUsers.Select(u => u.Id).ToArray();
+        var roleAssignments = await db.UserRoles
+            .Where(ur => userIds.Contains(ur.UserId))
+            .Join(db.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => new { ur.UserId, r.Name })
+            .ToListAsync(ct);
+
+        var rolesByUser = roleAssignments
+            .GroupBy(x => x.UserId)
+            .ToDictionary(g => g.Key, g => g.Select(x => x.Name!).ToArray());
+
+        var summaries = pagedUsers.Select(user =>
         {
-            var roles = await userManager.GetRolesAsync(user);
             var isLockedOut = user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTimeOffset.UtcNow;
-            summaries.Add(new UserSummary(user.Id, user.UserName, user.Email, user.DisplayName, [.. roles], isLockedOut));
-        }
+            return new UserSummary(user.Id, user.UserName, user.Email, user.DisplayName,
+                rolesByUser.TryGetValue(user.Id, out var roles) ? roles : [], isLockedOut);
+        }).ToList();
 
         return Result<ListUsersResponse>.Success(new ListUsersResponse([.. summaries], totalCount));
     }

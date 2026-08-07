@@ -140,16 +140,16 @@ public sealed class LoginHandlerTests
     }
 
     [Fact]
-    public async Task HandleAsync_CallsPasswordHasher_ForNonexistentUser_ToPreventTimingAttack()
+    public async Task HandleAsync_VerifiesPasswordExactlyOnce_ForNonexistentUser()
     {
         var fixture = new Fixture().WithNonexistentUser();
 
         await fixture.Sut.HandleAsync(new LoginRequest("unknown", "any-password"), CancellationToken.None);
 
         fixture.PasswordHasherMock.Verify(
-            x => x.HashPassword(It.IsAny<User>(), It.IsAny<string>()), Times.Once);
-        fixture.PasswordHasherMock.Verify(
             x => x.VerifyHashedPassword(It.IsAny<User>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        fixture.PasswordHasherMock.Verify(
+            x => x.HashPassword(It.IsAny<User>(), It.IsAny<string>()), Times.Never);
     }
 
     [Fact]
