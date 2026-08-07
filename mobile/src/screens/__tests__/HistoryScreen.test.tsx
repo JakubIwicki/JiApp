@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, act } from '@testing-library/react-native';
+import { render, act, fireEvent } from '@testing-library/react-native';
 
 // Mock useHistory
 const mockLoadHistory = jest.fn();
@@ -83,6 +83,42 @@ describe('HistoryScreen', () => {
     ];
     const { getByTestId } = render(<HistoryScreen />);
     expect(getByTestId('history-item-download')).toBeTruthy();
+  });
+
+  it('navigates to Download when a download row is pressed', () => {
+    mockDownloads = [
+      {
+        id: 1,
+        videoTitle: 'Test Video',
+        videoDescription: 'Desc',
+        videoId: 'abc123',
+        videoUrl: 'https://youtube.com/watch?v=abc123',
+        imageUrl: 'https://i.ytimg.com/vi/abc123/default.jpg',
+        downloadedAt: '2026-05-20T10:00:00Z',
+      },
+    ];
+    const { getByTestId } = render(<HistoryScreen />);
+
+    fireEvent.press(getByTestId('history-item-download'));
+
+    expect(mockNavigate).toHaveBeenCalledWith(
+      'Download',
+      expect.objectContaining({ videoId: 'abc123' }),
+    );
+  });
+
+  it('navigates to SearchTab with prefilled query when a search row is pressed', () => {
+    mockSearches = [
+      { id: 1, searchText: 'test query', searchedAt: '2026-05-20T10:00:00Z' },
+    ];
+    const { getByTestId } = render(<HistoryScreen />);
+
+    fireEvent.press(getByTestId('history-item-search'));
+
+    expect(mockNavigate).toHaveBeenCalledWith('SearchTab', {
+      screen: 'Search',
+      params: { query: 'test query' },
+    });
   });
 
   it('shows loading spinner when loading with no data', () => {

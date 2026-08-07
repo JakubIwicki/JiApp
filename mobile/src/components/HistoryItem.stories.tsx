@@ -2,12 +2,13 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import type { Meta, StoryObj } from '@storybook/react';
 import HistoryItem from './HistoryItem';
+import type { DownloadHistoryItem } from '../types/api';
 
 const meta: Meta<typeof HistoryItem> = {
   title: 'HistoryItem',
   component: HistoryItem,
   decorators: [
-    (Story) => (
+    Story => (
       <View style={styles.decorator}>
         <Story />
       </View>
@@ -47,7 +48,8 @@ export const DownloadType: Story = {
   args: {
     type: 'download',
     item: downloadItem,
-    onPress: (item) => console.log('Pressed:', item.videoTitle),
+    onPress: item =>
+      console.log('Pressed:', (item as DownloadHistoryItem).videoTitle),
   },
 };
 
@@ -55,7 +57,8 @@ export const DownloadTypeMissingThumbnail: Story = {
   args: {
     type: 'download',
     item: { ...downloadItem, imageUrl: '' },
-    onPress: (item) => console.log('Pressed:', item.videoTitle),
+    onPress: item =>
+      console.log('Pressed:', (item as DownloadHistoryItem).videoTitle),
   },
 };
 

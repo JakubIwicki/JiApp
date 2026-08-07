@@ -17,6 +17,9 @@ const RefreshableScrollView: React.FC<Props> = ({
 }) => {
   const { colors } = useTheme();
 
+  const keyboardShouldPersistTaps =
+    scrollViewProps.keyboardShouldPersistTaps ?? 'handled';
+
   const refreshControl = useMemo(
     () => (
       <RefreshControl
@@ -30,7 +33,11 @@ const RefreshableScrollView: React.FC<Props> = ({
   );
 
   return (
-    <ScrollView {...scrollViewProps} refreshControl={refreshControl}>
+    <ScrollView
+      {...scrollViewProps}
+      keyboardShouldPersistTaps={keyboardShouldPersistTaps}
+      refreshControl={refreshControl}
+    >
       {children}
     </ScrollView>
   );

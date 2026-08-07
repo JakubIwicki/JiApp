@@ -16,6 +16,7 @@ import HistoryScreen from '../screens/HistoryScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
 import { useTheme } from '../context/ThemeContext';
+import { Routes } from './routes';
 import type {
   MainTabParamList,
   MainStackParamList,
@@ -75,8 +76,14 @@ const SearchStackScreen: React.FC = () => {
   const screenOptions = useStackScreenOptions();
   return (
     <SearchStack.Navigator screenOptions={screenOptions}>
-      <SearchStack.Screen name="Search" component={SearchScreen} />
-      <SearchStack.Screen name="Download" component={DownloadScreen} />
+      <SearchStack.Screen
+        name={Routes.search.search}
+        component={SearchScreen}
+      />
+      <SearchStack.Screen
+        name={Routes.search.download}
+        component={DownloadScreen}
+      />
     </SearchStack.Navigator>
   );
 };
@@ -85,7 +92,14 @@ const HistoryStackScreen: React.FC = () => {
   const screenOptions = useStackScreenOptions();
   return (
     <HistoryStack.Navigator screenOptions={screenOptions}>
-      <HistoryStack.Screen name="History" component={HistoryScreen} />
+      <HistoryStack.Screen
+        name={Routes.history.history}
+        component={HistoryScreen}
+      />
+      <HistoryStack.Screen
+        name={Routes.history.download}
+        component={DownloadScreen}
+      />
     </HistoryStack.Navigator>
   );
 };
@@ -94,8 +108,11 @@ const ChatStackScreen: React.FC = () => {
   const screenOptions = useStackScreenOptions();
   return (
     <ChatStack.Navigator screenOptions={screenOptions}>
-      <ChatStack.Screen name="Chat" component={ChatScreen} />
-      <ChatStack.Screen name="Download" component={DownloadScreen} />
+      <ChatStack.Screen name={Routes.chat.chat} component={ChatScreen} />
+      <ChatStack.Screen
+        name={Routes.chat.download}
+        component={DownloadScreen}
+      />
     </ChatStack.Navigator>
   );
 };
@@ -104,7 +121,10 @@ const DownloadsStackScreen: React.FC = () => {
   const screenOptions = useStackScreenOptions();
   return (
     <DownloadsStack.Navigator screenOptions={screenOptions}>
-      <DownloadsStack.Screen name="DownloadsMain" component={DownloadsScreen} />
+      <DownloadsStack.Screen
+        name={Routes.downloads.downloadsMain}
+        component={DownloadsScreen}
+      />
     </DownloadsStack.Navigator>
   );
 };
@@ -113,8 +133,14 @@ const SettingsStackScreen: React.FC = () => {
   const screenOptions = useStackScreenOptions();
   return (
     <SettingsStack.Navigator screenOptions={screenOptions}>
-      <SettingsStack.Screen name="Settings" component={SettingsScreen} />
-      <SettingsStack.Screen name="EditProfile" component={EditProfileScreen} />
+      <SettingsStack.Screen
+        name={Routes.settings.settings}
+        component={SettingsScreen}
+      />
+      <SettingsStack.Screen
+        name={Routes.settings.editProfile}
+        component={EditProfileScreen}
+      />
     </SettingsStack.Navigator>
   );
 };
@@ -145,7 +171,7 @@ const MainNavigator: React.FC = () => {
       }}
     >
       <Tab.Screen
-        name="SearchTab"
+        name={Routes.tabs.search}
         component={SearchStackScreen}
         options={{
           tabBarLabel: t('nav.search'),
@@ -153,7 +179,7 @@ const MainNavigator: React.FC = () => {
         }}
       />
       <Tab.Screen
-        name="AssistantTab"
+        name={Routes.tabs.assistant}
         component={ChatStackScreen}
         options={{
           tabBarLabel: t('nav.assistant'),
@@ -161,7 +187,7 @@ const MainNavigator: React.FC = () => {
         }}
       />
       <Tab.Screen
-        name="DownloadsTab"
+        name={Routes.tabs.downloads}
         component={DownloadsStackScreen}
         options={{
           tabBarLabel: t('nav.downloads'),
@@ -169,7 +195,7 @@ const MainNavigator: React.FC = () => {
         }}
       />
       <Tab.Screen
-        name="HistoryTab"
+        name={Routes.tabs.history}
         component={HistoryStackScreen}
         options={{
           tabBarLabel: t('nav.history'),
@@ -177,7 +203,7 @@ const MainNavigator: React.FC = () => {
         }}
       />
       <Tab.Screen
-        name="SettingsTab"
+        name={Routes.tabs.settings}
         component={SettingsStackScreen}
         options={{
           tabBarLabel: t('nav.settings'),

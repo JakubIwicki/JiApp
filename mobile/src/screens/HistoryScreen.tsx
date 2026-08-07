@@ -1,9 +1,18 @@
 import React, { useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import {
+  useFocusEffect,
+  useNavigation,
+  type CompositeNavigationProp,
+} from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { MainStackParamList } from '../navigation/types';
+import type { BottomTabNavigationProp } from '../navigation/bottomTabs';
+import type {
+  HistoryStackParamList,
+  MainTabParamList,
+} from '../navigation/types';
+import { Routes } from '../navigation/routes';
 import type { SearchHistoryItem, DownloadHistoryItem } from '../types/api';
 import RefreshableScrollView from '../components/RefreshableScrollView';
 import SearchBar from '../components/SearchBar';
@@ -18,9 +27,9 @@ import { spacing } from '../styles/theme';
 import type { Theme } from '../styles/theme';
 import { useThemedStyles, useTheme } from '../context/ThemeContext';
 
-type HistoryNavigationProp = NativeStackNavigationProp<
-  MainStackParamList,
-  'History'
+type HistoryNavigationProp = CompositeNavigationProp<
+  NativeStackNavigationProp<HistoryStackParamList, 'History'>,
+  BottomTabNavigationProp<MainTabParamList>
 >;
 
 const HistoryScreen: React.FC = () => {
@@ -50,13 +59,23 @@ const HistoryScreen: React.FC = () => {
 
   const handleDownloadPress = useCallback(
     (item: DownloadHistoryItem) => {
-      navigation.navigate('Download', {
+      navigation.navigate(Routes.history.download, {
         videoId: item.videoId,
         title: item.videoTitle,
         description: item.videoDescription,
         imageUrl: item.imageUrl,
         videoUrl: item.videoUrl,
         channelTitle: '',
+      });
+    },
+    [navigation],
+  );
+
+  const handleSearchPress = useCallback(
+    (item: SearchHistoryItem) => {
+      navigation.navigate(Routes.tabs.search, {
+        screen: Routes.search.search,
+        params: { query: item.searchText },
       });
     },
     [navigation],
@@ -71,10 +90,11 @@ const HistoryScreen: React.FC = () => {
       <HistoryItem
         type="search"
         item={item}
+        onPress={handleSearchPress}
         onArchive={() => archiveSearch(item.id)}
       />
     ),
-    [archiveSearch],
+    [handleSearchPress, archiveSearch],
   );
 
   const searchKeyExtractor = useCallback(

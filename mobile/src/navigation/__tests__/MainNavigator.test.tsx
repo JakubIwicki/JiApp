@@ -211,4 +211,35 @@ describe('MainNavigator', () => {
 
     expect(await findByText('DownloadScreen')).toBeTruthy();
   });
+
+  it('navigates from History to Download with video params', async () => {
+    let navRef: NavigationContainerRef<any> | null = null;
+    const { findByText } = render(
+      <NavigatorWithRef
+        onReady={ref => {
+          navRef = ref;
+        }}
+      />,
+    );
+
+    await waitFor(() => expect(navRef).not.toBeNull());
+
+    act(() => {
+      navRef!.navigate('HistoryTab');
+    });
+    expect(await findByText('HistoryScreen')).toBeTruthy();
+
+    act(() => {
+      navRef!.navigate('Download', {
+        videoId: 'test-123',
+        title: 'Test Video',
+        description: 'Test description',
+        imageUrl: 'https://example.com/thumb.jpg',
+        videoUrl: 'https://example.com/video.mp4',
+        channelTitle: 'Test Channel',
+      });
+    });
+
+    expect(await findByText('DownloadScreen')).toBeTruthy();
+  });
 });

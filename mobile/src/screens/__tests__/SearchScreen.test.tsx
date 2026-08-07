@@ -38,16 +38,29 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
-// Mock @react-navigation/native useNavigation
+// Mock @react-navigation/native useNavigation / useRoute / useFocusEffect
 const mockNavigate = jest.fn();
+const mockSetParams = jest.fn((params: { query?: string }) => {
+  mockRouteParams = params;
+});
+let mockRouteParams: { query?: string } | undefined;
 jest.mock('@react-navigation/native', () => {
+  const ReactMock = require('react');
   const actual = jest.requireActual('@react-navigation/native');
   return {
     ...actual,
     useNavigation: () => ({
       navigate: mockNavigate,
       setOptions: jest.fn(),
+      setParams: mockSetParams,
     }),
+    useRoute: () => ({ params: mockRouteParams }),
+    useFocusEffect: (callback: () => void) => {
+      // Schedule in useEffect to avoid synchronous state updates during render
+      ReactMock.useEffect(() => {
+        callback();
+      }, [callback]);
+    },
   };
 });
 
@@ -67,6 +80,7 @@ describe('SearchScreen', () => {
     mockIsLoadingMore = false;
     mockError = null;
     mockHasMore = false;
+    mockRouteParams = undefined;
   });
 
   it('renders search bar', () => {
@@ -108,6 +122,16 @@ describe('SearchScreen', () => {
     fireEvent.press(getByTestId('video-card'));
 
     expect(mockNavigate).toHaveBeenCalledWith('Download', videoItem);
+  });
+
+  it('runs a search for a route query param on focus, then clears it', async () => {
+    mockRouteParams = { query: 'route query' };
+
+    render(<SearchScreen />);
+    await act(async () => {});
+
+    expect(mockSearch).toHaveBeenCalledWith('route query');
+    expect(mockSetParams).toHaveBeenCalledWith({ query: undefined });
   });
 
   it('shows load-more spinner in footer when isLoadingMore', () => {

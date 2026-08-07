@@ -11,23 +11,23 @@ import { spacing, borderRadius } from '../styles/theme';
 type AnimatedInterpolation<T extends string | number> =
   import('react-native').Animated.AnimatedInterpolation<T>;
 
-interface BaseProps {
+interface BaseProps<TItem extends SearchHistoryItem | DownloadHistoryItem> {
   /** Discriminator to determine which data type to render. */
   type: 'search' | 'download';
   /** The history item data — either a search or download record. */
-  item: SearchHistoryItem | DownloadHistoryItem;
-  /** Callback fired on press for download type items. */
-  onPress?: (item: DownloadHistoryItem) => void;
+  item: TItem;
+  /** Callback fired on press for both search and download type items. */
+  onPress?: (item: TItem) => void;
   /** Callback fired when the item is archived via swipe action. */
   onArchive?: () => void;
 }
 
-const HistoryItem: React.FC<BaseProps> = ({
+function HistoryItem<TItem extends SearchHistoryItem | DownloadHistoryItem>({
   type,
   item,
   onPress,
   onArchive,
-}) => {
+}: BaseProps<TItem>) {
   const { t } = useTranslation();
   const [imageFailed, setImageFailed] = useState(false);
   const styles = useThemedStyles(makeStyles);
@@ -60,7 +60,12 @@ const HistoryItem: React.FC<BaseProps> = ({
 
   const content =
     type === 'search' ? (
-      <View style={styles.container} testID="history-item-search">
+      <Pressable
+        style={({ pressed }) => [styles.container, pressed && { opacity: 0.7 }]}
+        onPress={() => onPress?.(item)}
+        testID="history-item-search"
+        accessibilityRole="button"
+      >
         <View style={styles.iconContainer}>
           <Text style={styles.searchIcon}>🔍</Text>
         </View>
@@ -72,7 +77,7 @@ const HistoryItem: React.FC<BaseProps> = ({
             {formatDate((item as SearchHistoryItem).searchedAt)}
           </Text>
         </View>
-      </View>
+      </Pressable>
     ) : (
       (() => {
         const downloadItem = item as DownloadHistoryItem;
@@ -82,7 +87,7 @@ const HistoryItem: React.FC<BaseProps> = ({
               styles.container,
               pressed && { opacity: 0.7 },
             ]}
-            onPress={() => onPress?.(downloadItem)}
+            onPress={() => onPress?.(item)}
             testID="history-item-download"
             accessibilityRole="button"
           >
@@ -120,7 +125,7 @@ const HistoryItem: React.FC<BaseProps> = ({
   }
 
   return content;
-};
+}
 
 const makeStyles = (t: Theme) =>
   StyleSheet.create({
