@@ -1,6 +1,6 @@
 # JiApp — Code Review & Remediation Backlog
 
-**Branch:** `main` · **Date:** 2026-08-05 · **Status:** Wave 1 landed — G1.1, G1.2, G2.2, G2.4, G2.6, G5.1 fixed (see per-finding notes); Wave 2 landed — PR-A G4.1–G4.5, PR-B G3.1, G3.2, G3.3, G4.6, G10.3, PR-C G2.1, G2.3 fixed (see per-finding notes); Wave 3 COMPLETE — PR-D G6.1, G6.2, PR-E G7.1, G7.3, PR-F G12.1 fixed (see per-finding notes); Wave 4 COMPLETE — PR-A G8.2, G8.3 (also G1.3, G1.6, G11.14), PR-B G8.1, PR-C G8.4, PR-D G8.5, G8.6, PR-E G8.7, PR-F G8.8 fixed (see per-finding notes); Wave 5 COMPLETE — PR-A G9.3, PR-B G9.4, PR-C G9.5, PR-E G9.2, PR-D G9.1, G9.7, G9.8, PR-F G9.6 fixed (see per-finding notes); **Wave 6 COMPLETE — PR-A #121 G10.1, PR-B #123 G10.2, PR-C #124 G10.6, PR-D #122 G9.6 IntegrationTestBase fill, PR-F #125 G7.2, PR-E1 #126 G11.1, G11.4, G11.7–G11.13, G11.16–G11.18, PR-H #127 G11.5, G11.6, PR-G #128 G7.4 + G9.1 UserDetail tests, PR-E2 #129 G11.2, G11.3, G11.15, G11.19, G11.20 fixed (see per-finding notes); Wave 7 COMPLETE — W7-B G2.5, G2.7, W7-C G3.4, G3.5, W7-A G1.4, G1.5, W7-D G5.2, W7-E G5.3, G5.4, W7-F G10.5 fixed (see per-finding notes); 8 of 84 open (G2.8, G5.5, G7.3 partial, G10.4, G12.2-G12.5)**
+**Branch:** `main` · **Date:** 2026-08-05 · **Status:** Wave 1 landed — G1.1, G1.2, G2.2, G2.4, G2.6, G5.1 fixed (see per-finding notes); Wave 2 landed — PR-A G4.1–G4.5, PR-B G3.1, G3.2, G3.3, G4.6, G10.3, PR-C G2.1, G2.3 fixed (see per-finding notes); Wave 3 COMPLETE — PR-D G6.1, G6.2, PR-E G7.1, G7.3, PR-F G12.1 fixed (see per-finding notes); Wave 4 COMPLETE — PR-A G8.2, G8.3 (also G1.3, G1.6, G11.14), PR-B G8.1, PR-C G8.4, PR-D G8.5, G8.6, PR-E G8.7, PR-F G8.8 fixed (see per-finding notes); Wave 5 COMPLETE — PR-A G9.3, PR-B G9.4, PR-C G9.5, PR-E G9.2, PR-D G9.1, G9.7, G9.8, PR-F G9.6 fixed (see per-finding notes); **Wave 6 COMPLETE — PR-A #121 G10.1, PR-B #123 G10.2, PR-C #124 G10.6, PR-D #122 G9.6 IntegrationTestBase fill, PR-F #125 G7.2, PR-E1 #126 G11.1, G11.4, G11.7–G11.13, G11.16–G11.18, PR-H #127 G11.5, G11.6, PR-G #128 G7.4 + G9.1 UserDetail tests, PR-E2 #129 G11.2, G11.3, G11.15, G11.19, G11.20 fixed (see per-finding notes); Wave 7 COMPLETE — W7-B G2.5, G2.7, W7-C G3.4, G3.5, W7-A G1.4, G1.5, W7-D G5.2, W7-E G5.3, G5.4, W7-F G10.5 fixed (see per-finding notes); Wave 8 COMPLETE — G2.8 #140, G5.5 #141, G7.3 #139, G10.4 #142, G12.2 #143, G12.3 #143, G12.4 #144, G12.5 #138 fixed (see per-finding notes); 0 of 84 open**
 
 This file is the single working document for the review. It is organised into **12 work groups**,
 each sized to be picked up as one PR/session by someone with no prior context. Every finding keeps
@@ -389,6 +389,8 @@ catches — so a client disconnect during recheck escapes as an unhandled except
 
 ### G2.8 (LOW) — Login timing mitigation is inverted · `L3`
 
+**FIXED (Wave 8).** Login timing equalized — both the known-user and unknown-user paths now perform exactly one KDF verify, so the enumeration oracle on the unknown-user branch (its timing) is gone. PR #140.
+
 `Login/LoginHandler.cs:30-32` — the unknown-user path *hashes then verifies* (2 KDF passes); the
 known-user path does one verify. The unknown-user branch is measurably **slower**, so the
 enumeration oracle survives with its sign flipped.
@@ -705,6 +707,8 @@ validator.
 
 ### G5.5 (LOW) — `StreamBoardEndpoint` drops an event on loop exit · `L16`
 
+**FIXED (Wave 8).** The SSE `WhenAny` loop now drains the buffered event from the losing `readTask` before the heartbeat exit, so no already-read board event is silently dropped. PR #141.
+
 `StreamBoard/StreamBoardEndpoint.cs:75-102` — the `Task.WhenAny` loop abandons the losing task on
 `break`; an event already read by the dangling `readTask` is silently dropped.
 
@@ -848,7 +852,7 @@ Also importing services directly into screens/components rather than going throu
 
 ### G7.3 (LOW) — Type assertions launder unvalidated persisted data · `N15`
 
-**FIXED (Wave 3).** PR #100 replaced the `expenseService` `category as Expense['category']` cast with `ExpenseApiRawSchema` enum validation. (The three storage-read casts in `storageService.ts` and `ThemeContext.tsx` remain open — not addressed by Wave 3.)
+**FIXED (Wave 3).** PR #100 replaced the `expenseService` `category as Expense['category']` cast with `ExpenseApiRawSchema` enum validation. (The three storage-read casts in `storageService.ts` and `ThemeContext.tsx` remain open — not addressed by Wave 3.) **FIXED (Wave 8).** The remaining storage-read casts are closed: `storageService.ts` validates the stored module id against the module union before returning, and `ThemeContext` hardens the palette/theme lookup so a stale stored string can no longer produce an invalid state. PR #139.
 
 ```
 services/storageService.ts:130                   return value as ModuleId | null;
@@ -1263,6 +1267,8 @@ sorts before `"2026 10 Jan"`. Every multi-month revenue report is in the wrong o
 
 ### G10.4 (MEDIUM) — N+1 queries on list endpoints
 
+**FIXED (Wave 8).** Roles are now fetched in one batched query per user page, and `GetEffectivePermissionsAsync` resolves permissions via a single join — no per-role `GetClaimsAsync` on every login and refresh. PR #142.
+
 `ListUsersHandler.cs:29-34` calls `GetRolesAsync` per user in the page (bounded by the page cap, so
 acceptable but noted). `UserAccessService.GetEffectivePermissionsAsync` does `FindByNameAsync` +
 `GetClaimsAsync` per role on every login and refresh.
@@ -1344,10 +1350,10 @@ highest by leverage on everything above.
 | # | Gap | Detail |
 |---|---|---|
 | G12.1 | **FIXED (Wave 3)** — lint gate added | `npx eslint . --max-warnings=0` now runs in the mobile CI job (PR #101); 94 findings fixed to zero. `react-hooks/rules-of-hooks` + `react-hooks/exhaustive-deps` — the mechanical guard for non-negotiable #3 (G6.3) — now run on every push. `react-doctor.yml` stays advisory. |
-| G12.2 | **Warnings not errors** | `dotnet build backend/JiApp.sln` — no `-warnaserror`, no `--configuration Release`. Warnings and NuGet advisories pass silently. |
-| G12.3 | **No format gate** | No `dotnet format --verify-no-changes`, which is why G11.2/G11.3 survive. |
-| G12.4 | **No coverage** | Neither stack collects or gates coverage, so G9.1's blind spots are invisible to CI. |
-| G12.5 | **Stale trigger** | `on: push: branches: [main, micros]` — `micros` looks like a dead branch. |
+| G12.2 | **FIXED (Wave 8).** — warnings are now errors | CI builds `dotnet build backend/JiApp.sln -c Release -warnaserror`; warnings and NuGet advisories now fail the build. PR #143. |
+| G12.3 | **FIXED (Wave 8).** — format gate added | `dotnet format --verify-no-changes` runs in CI, so G11.2/G11.3-style drift can no longer regress silently. PR #143. |
+| G12.4 | **FIXED (Wave 8).** — coverage gate added | Backend `coverage-gate.py` enforces a 60% line-coverage floor; mobile jest enforces a 63% line threshold — G9.1's blind spots are now visible to CI. PR #144. |
+| G12.5 | **FIXED (Wave 8).** — stale trigger removed | `micros` dropped from the `on: push` branches — CI no longer triggers on the dead branch. PR #138. |
 
 **Missing architecture fitness tests.** `Testing.Common/Conventions/` has `DependencyInjectionConvention`
 and `EndpointAuthorizationConvention` with collect-all-violations reporting — the right shape.
@@ -1491,12 +1497,14 @@ header **33 → 9 of 84 open (Wave 6) → 8 of 84 open (Wave 7)**.
 - `G11.4` — **accepted deviation (user decision).** The distinct *"Too many attempts. Try again later."* lockout message is kept deliberately for UX; the handler returns `ResultCategories.AccountLocked` so the endpoint can distinguish it, and the account-enumeration oracle it creates is a documented, user-accepted trade-off.
 - `G10.2` — **horizontal scaling is NOT intended.** `SingleInstanceGuard` pins replicas to 1 (file-based exclusive lease on the shared `jiapp_data` volume; a second replica logs **Critical** + `exit(1)` before serving traffic) and the endpoint cache is capped — the four in-memory states need no redesign.
 
-**Wave 7 — closeout — COMPLETE.** Execution order: 1. `W7-B` (G2.5, G2.7) → 2. `W7-C` (G3.4, G3.5 — before A, settings coupling) → 3. `W7-A` (G1.4, G1.5) → 4. `W7-D` (G5.2 — independent) → 5. `W7-E` (G5.3, G5.4) → 6. `W7-F` (G10.5 — deploy-atomic, last) → 7. closeout. PRs #131–#136; header **9 → 8 of 84 open**.
+**Wave 7 — closeout — COMPLETE.** Execution order: 1. `W7-B` (G2.5, G2.7) → 2. `W7-C` (G3.4, G3.5 — before A, settings coupling) → 3. `W7-A` (G1.4, G1.5) → 4. `W7-D` (G5.2 — independent) → 5. `W7-E` (G5.3, G5.4) → 6. `W7-F` (G10.5 — deploy-atomic, last) → 7. closeout. PRs #131–#136; header **9 → 8 of 84 open (Wave 7) → 0 of 84 open (Wave 8)**.
+
+**Wave 8 — closeout — COMPLETE.** Execution order: 1. `#140` (G2.8 — one KDF verify on both login paths) → 2. `#141` (G5.5 — SSE drain on heartbeat exit) → 3. `#139` (G7.3 — remaining storage-read casts) → 4. `#142` (G10.4 — batch roles + single-join permissions) → 5. `#138` (G12.5 — drop stale `micros` CI trigger) → 6. `#143` (G12.2 + G12.3 — Release `-warnaserror` + format gate) → 7. `#144` (G12.4 — coverage gate) → 8. closeout. PRs #138–#144; header **8 → 0 of 84 open**.
 
 **Decide, don't default:**
 - `G2.5` — write down the revocation policy, then make the wiring match it. **Resolved (Wave 7): the recheck filter is extended to `AddBoardMember` in both services — revocation is now enforced on every mutating endpoint (W7-B #131).**
 - `G10.5` — keep `ImageTools` with a stated purpose, or delete it. **Resolved (Wave 7): deleted — the dead service and all its references were removed in a single deploy-atomic PR (W7-F #136).**
-- `G9.8` — mobile test-naming grammar: adopt `Behavior_Scenario_Expected` or record the exemption.
+- `G9.8` — mobile test-naming grammar: adopt `Behavior_Scenario_Expected` or record the exemption. **Resolved (Wave 8): exemption already recorded (PR-D #118); sentence-case mobile naming stays.**
 - `G10.2` — is horizontal scaling ever intended? If yes, four things need redesign. If no, pin
   replicas to 1 and fail fast on a second instance. **Resolved (Wave 6): horizontal scaling is NOT
   intended — `SingleInstanceGuard` pins replicas to 1 and fails fast on a second instance; the
