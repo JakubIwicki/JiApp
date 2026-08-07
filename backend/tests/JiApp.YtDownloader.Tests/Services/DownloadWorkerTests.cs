@@ -35,6 +35,7 @@ public sealed class DownloadWorkerTests
         var tempId = fixture.CreateJob();
 
         var status = await RunToTerminalStatusAsync(fixture, tempId);
+        await WaitForSaveChangesAsync(fixture, 1);
 
         status.Status.Should().Be(DownloadJobStatus.Ready);
         fixture.JobStore.GetFilePath(tempId, UserId).Should().Be(filePath);
@@ -155,6 +156,7 @@ public sealed class DownloadWorkerTests
         var tempId = fixture.CreateJob();
 
         var status = await RunToTerminalStatusAsync(fixture, tempId);
+        await WaitForSaveChangesAsync(fixture, 3);
 
         status.Status.Should().Be(DownloadJobStatus.Ready);
         fixture.HistoryRepoMock.Verify(r => r.AddAsync(It.IsAny<YoutubeDownloadHistory>(), It.IsAny<CancellationToken>()), Times.Exactly(3));
@@ -172,6 +174,7 @@ public sealed class DownloadWorkerTests
         var tempId = fixture.CreateJob();
 
         await RunToTerminalStatusAsync(fixture, tempId);
+        await WaitForSaveChangesAsync(fixture, 1);
 
         fixture.HistoryRepoMock.Verify(
             r => r.AddAsync(It.Is<YoutubeDownloadHistory>(h =>
@@ -202,6 +205,7 @@ public sealed class DownloadWorkerTests
         try
         {
             await WaitForTerminalStatusAsync(fixture.JobStore, tempId);
+            await WaitForSaveChangesAsync(fixture, 1);
         }
         finally
         {
@@ -243,19 +247,29 @@ public sealed class DownloadWorkerTests
         await fixture.Sut.StartAsync(CancellationToken.None);
         fixture.Queue.Writer.TryWrite(firstTempId);
         fixture.Queue.Writer.TryWrite(secondTempId);
+        try
+        {
+            // The second download must begin while the first is still blocked in-flight.
+            await firstStarted.Task.WaitAsync(PollTimeout);
+            await secondStarted.Task.WaitAsync(PollTimeout);
 
-        // The second download must begin while the first is still blocked in-flight.
-        await firstStarted.Task.WaitAsync(PollTimeout);
-        await secondStarted.Task.WaitAsync(PollTimeout);
+            releaseFirst.TrySetResult();
 
-        releaseFirst.TrySetResult();
+            var firstStatus = await WaitForTerminalStatusAsync(fixture.JobStore, firstTempId);
+            var secondStatus = await WaitForTerminalStatusAsync(fixture.JobStore, secondTempId);
 
-        var firstStatus = await WaitForTerminalStatusAsync(fixture.JobStore, firstTempId);
-        var secondStatus = await WaitForTerminalStatusAsync(fixture.JobStore, secondTempId);
-        await fixture.Sut.StopAsync(CancellationToken.None);
-
-        firstStatus.Status.Should().Be(DownloadJobStatus.Ready);
-        secondStatus.Status.Should().Be(DownloadJobStatus.Ready);
+            firstStatus.Status.Should().Be(DownloadJobStatus.Ready);
+            secondStatus.Status.Should().Be(DownloadJobStatus.Ready);
+        }
+        finally
+        {
+            // The first download ignores the worker token and blocks on releaseFirst, so a
+            // failed wait above would otherwise leak the worker forever. TrySetResult is
+            // idempotent — release it here (as well as on the happy path) so StopAsync can
+            // always drain and the background worker is torn down with the test.
+            releaseFirst.TrySetResult();
+            await fixture.Sut.StopAsync(CancellationToken.None);
+        }
     }
 
     [Fact]
@@ -299,6 +313,7 @@ public sealed class DownloadWorkerTests
         fixture.JobStore.Claim(tempId, UserId);
 
         var status = await RunToTerminalStatusAsync(fixture, tempId);
+        await WaitForSaveChangesAsync(fixture, 1);
 
         status.Status.Should().Be(DownloadJobStatus.Ready);
         fixture.HistoryRepoMock.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -332,6 +347,7 @@ public sealed class DownloadWorkerTests
             fixture.Clock.Advance(TimeSpan.FromSeconds(31));
 
             var status = await WaitForStatusAsync(fixture, tempId, DownloadJobStatus.Ready);
+            await WaitForSaveChangesAsync(fixture, 1);
 
             status.Status.Should().Be(DownloadJobStatus.Ready);
             attempts.Should().Be(2);
@@ -441,6 +457,25 @@ public sealed class DownloadWorkerTests
         }
 
         throw new TimeoutException($"Job {tempId} did not reach {expected} attempts remaining within {PollTimeout}.");
+    }
+
+    // The worker marks a job Ready in the store before it records download history, so
+    // observing a Ready status does not mean the history write has happened yet. Wait for
+    // the repository's SaveChangesAsync to be invoked before verifying it.
+    private static async Task WaitForSaveChangesAsync(Fixture fixture, int expectedCalls)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        while (stopwatch.Elapsed < PollTimeout)
+        {
+            var saveCalls = fixture.HistoryRepoMock.Invocations.Count(i =>
+                i.Method.Name == nameof(IDownloadHistoryRepository.SaveChangesAsync));
+            if (saveCalls >= expectedCalls)
+                return;
+
+            await Task.Delay(20);
+        }
+
+        throw new TimeoutException($"SaveChangesAsync was not invoked {expectedCalls} time(s) within {PollTimeout}.");
     }
 
     private sealed class Fixture : IDisposable
