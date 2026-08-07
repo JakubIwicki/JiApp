@@ -56,6 +56,9 @@ public sealed class RateLimitPolicySelector(
         ["/api/v1/scheduler/health"] = RateLimitPolicyNames.HealthPolicy,
         ["/api/v1/lovingboards/health"] = RateLimitPolicyNames.HealthPolicy,
 
+        // App version gate (Gateway-served, anonymous — once per app launch, Health bucket)
+        ["/api/v1/app/version"] = RateLimitPolicyNames.HealthPolicy,
+
         // Admin routes: proxied to Identity, already Admin-role + auth gated. Pass through (no rate limit).
         ["/api/v1/auth/admin"] = null,
         ["/api/v1/scheduler"] = RateLimitPolicyNames.SchedulerPolicy,

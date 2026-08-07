@@ -9,12 +9,20 @@ namespace JiApp.Gateway.Tests.Integration;
 
 public sealed class GatewayIntegrationTests : IClassFixture<GatewayWebApplicationFactory>
 {
+    private const int MinVersionCode = 66;
+    private const string DownloadUrl = "https://example.com/JiApp-latest.apk";
+
     static GatewayIntegrationTests()
     {
         // The ad-hoc Development factory below (dashboard is dev-only) needs a Jwt:Key;
         // appsettings.Test.json only loads under env=Test. Supply it via the env var the
         // app reads in production (compose maps JWT_KEY -> Jwt__Key).
         Environment.SetEnvironmentVariable("Jwt__Key", "test-key-at-least-32-characters!!");
+
+        // App version gate — set a non-dormant gate so the round-trip asserts real config.
+        // Process env vars feed the factory's configuration (same pattern as Jwt__Key).
+        Environment.SetEnvironmentVariable("AppUpdate__MinVersionCode", MinVersionCode.ToString());
+        Environment.SetEnvironmentVariable("AppUpdate__DownloadUrl", DownloadUrl);
     }
 
     private readonly GatewayWebApplicationFactory _factory;
@@ -71,6 +79,20 @@ public sealed class GatewayIntegrationTests : IClassFixture<GatewayWebApplicatio
 
         using var json = JsonDocument.Parse(body);
         json.RootElement.GetProperty("status").GetString().Should().Be("ready");
+    }
+
+    [Fact]
+    public async Task AppVersionEndpoint_ReturnsMinVersionAndDownloadUrl()
+    {
+        var client = _factory.CreateClient();
+        var response = await client.GetAsync("/api/v1/app/version");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/json");
+
+        using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        json.RootElement.GetProperty("minVersionCode").GetInt32().Should().Be(MinVersionCode);
+        json.RootElement.GetProperty("downloadUrl").GetString().Should().Be(DownloadUrl);
     }
 
     [Fact]

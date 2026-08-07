@@ -122,6 +122,8 @@ services:
       Jwt__Issuer: ${JWT_ISSUER:-JiApp}
       Jwt__Audience: ${JWT_AUDIENCE:-JiAppMobile}
       CorsAllowedOrigins__0: https://jakubiwicki.github.io
+      AppUpdate__MinVersionCode: ${APP_UPDATE_MIN_VERSION_CODE:-0}
+      AppUpdate__DownloadUrl: ${APP_UPDATE_DOWNLOAD_URL:-}
       Kestrel__Endpoints__Https__Certificate__Path: /app/certs/server.pfx
       Kestrel__Endpoints__Https__Certificate__Password: ${CERT_PASSWORD:?required}
       ReverseProxy__Clusters__identity-cluster__Destinations__identity__Address: "http://identity:6701"

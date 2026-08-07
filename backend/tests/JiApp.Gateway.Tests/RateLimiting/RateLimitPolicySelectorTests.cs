@@ -304,6 +304,19 @@ public sealed class RateLimitPolicySelectorTests
     }
 
     [Fact]
+    public async Task Matches_app_version_path_to_HealthPolicy()
+    {
+        var context = Fixture.CreateContext("/api/v1/app/version");
+        var fixture = Fixture.Init();
+
+        await fixture.Sut.InvokeAsync(context);
+
+        var endpoint = context.GetEndpoint();
+        endpoint.Should().NotBeNull();
+        endpoint!.DisplayName.Should().Be("HealthPolicy");
+    }
+
+    [Fact]
     public async Task Matches_scheduler_path_to_SchedulerPolicy()
     {
         var context = Fixture.CreateContext("/api/v1/scheduler/appointments");

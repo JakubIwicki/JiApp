@@ -194,6 +194,65 @@ public sealed class GatewaySettingsTests
     }
 
     [Fact]
+    public void Validate_Throws_WhenMinVersionCodePositiveWithoutDownloadUrl()
+    {
+        var sut = new GatewaySettings
+        {
+            Jwt = ValidJwt,
+            RateLimiting = ValidPolicies,
+            AppUpdate = new GatewaySettings.AppUpdateSettings
+            {
+                MinVersionCode = 66,
+                DownloadUrl = string.Empty
+            }
+        };
+
+        var act = () => sut.Validate(CreateEnvironment("Development"));
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*AppUpdate:DownloadUrl is not configured.*");
+    }
+
+    [Fact]
+    public void Validate_Throws_WhenMinVersionCodeNegative()
+    {
+        var sut = new GatewaySettings
+        {
+            Jwt = ValidJwt,
+            RateLimiting = ValidPolicies,
+            AppUpdate = new GatewaySettings.AppUpdateSettings
+            {
+                MinVersionCode = -1,
+                DownloadUrl = "https://example.com/JiApp-latest.apk"
+            }
+        };
+
+        var act = () => sut.Validate(CreateEnvironment("Development"));
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*AppUpdate:MinVersionCode must be greater than or equal to 0.*");
+    }
+
+    [Fact]
+    public void Validate_Passes_WhenAppUpdateDormant()
+    {
+        var sut = new GatewaySettings
+        {
+            Jwt = ValidJwt,
+            RateLimiting = ValidPolicies,
+            AppUpdate = new GatewaySettings.AppUpdateSettings
+            {
+                MinVersionCode = 0,
+                DownloadUrl = string.Empty
+            }
+        };
+
+        var act = () => sut.Validate(CreateEnvironment("Development"));
+
+        act.Should().NotThrow();
+    }
+
+    [Fact]
     public void Validate_CollectsAllJwtErrors_Simultaneously()
     {
         var sut = new GatewaySettings

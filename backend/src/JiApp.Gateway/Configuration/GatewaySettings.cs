@@ -9,6 +9,7 @@ public sealed class GatewaySettings
     public JwtSettings? Jwt { get; set; }
     public string[]? CorsAllowedOrigins { get; set; }
     public Dictionary<string, RateLimitPolicyConfig>? RateLimiting { get; set; }
+    public AppUpdateSettings? AppUpdate { get; set; }
 
     /// <summary>
     /// Upper bound for the rate-limit endpoint cache
@@ -24,6 +25,7 @@ public sealed class GatewaySettings
 
         ValidateJwt(errors);
         ValidateRateLimiting(errors);
+        ValidateAppUpdate(errors);
 
         // Development uses the any-origin fallback; anything else (including an unspecified
         // environment) must configure the allow-list explicitly — fail closed by default
@@ -69,6 +71,17 @@ public sealed class GatewaySettings
         }
     }
 
+    private void ValidateAppUpdate(List<string> errors)
+    {
+        if (AppUpdate is null)
+            return;
+
+        if (AppUpdate.MinVersionCode < 0)
+            errors.Add("AppUpdate:MinVersionCode must be greater than or equal to 0.");
+        if (AppUpdate.MinVersionCode > 0 && string.IsNullOrEmpty(AppUpdate.DownloadUrl))
+            errors.Add("AppUpdate:DownloadUrl is not configured. A forced update requires a download URL.");
+    }
+
     private void ValidateCorsAllowedOrigins(List<string> errors)
     {
         if (CorsAllowedOrigins is not { Length: > 0 })
@@ -100,5 +113,12 @@ public sealed class GatewaySettings
         public int WindowInSeconds { get; set; }
         public int QueueLimit { get; set; }
         public int SegmentsPerWindow { get; set; }
+    }
+
+    [Serializable]
+    public sealed class AppUpdateSettings
+    {
+        public int MinVersionCode { get; set; }
+        public string DownloadUrl { get; set; } = string.Empty;
     }
 }
