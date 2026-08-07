@@ -29,6 +29,11 @@ public sealed class Settings
                 errors.Add("App:DownloadTtlMinutes must be greater than 0.");
             if (App.DownloadJobTimeoutMinutes <= 0)
                 errors.Add("App:DownloadJobTimeoutMinutes must be greater than 0.");
+            if (env?.IsProduction() == true && string.IsNullOrWhiteSpace(App.PublicBaseUrl))
+                errors.Add("App:PublicBaseUrl is required in Production so download links use the public Gateway base URL, not the container hostname.");
+            if (!string.IsNullOrWhiteSpace(App.PublicBaseUrl)
+                && !Uri.TryCreate(App.PublicBaseUrl, UriKind.Absolute, out _))
+                errors.Add("App:PublicBaseUrl must be a valid absolute URI.");
         }
 
         if (Jwt is null)
