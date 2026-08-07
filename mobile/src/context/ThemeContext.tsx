@@ -62,7 +62,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const load = async () => {
       const stored = await storageService.getPalette();
-      if (stored && stored in palettes) {
+      if (stored && Object.hasOwn(palettes, stored)) {
         setPaletteState(stored as PaletteName);
       }
       const storedMode = await storageService.getThemeMode();

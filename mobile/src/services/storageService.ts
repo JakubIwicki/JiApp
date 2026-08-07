@@ -121,13 +121,20 @@ export const clearSelectedBoardId = async (): Promise<void> => {
 
 // --- Selected Module ---
 
+const MODULE_IDS: readonly ModuleId[] = [
+  'YtDownloader',
+  'Scheduler',
+  'LovingBoards',
+];
+
 export const saveSelectedModule = async (moduleId: ModuleId): Promise<void> => {
   await AsyncStorage.setItem(SELECTED_MODULE_KEY, moduleId);
 };
 
 export const getSelectedModule = async (): Promise<ModuleId | null> => {
   const value = await AsyncStorage.getItem(SELECTED_MODULE_KEY);
-  return value as ModuleId | null;
+  if (value === null) return null;
+  return MODULE_IDS.includes(value as ModuleId) ? (value as ModuleId) : null;
 };
 
 export const clearSelectedModule = async (): Promise<void> => {
