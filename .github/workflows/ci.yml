@@ -23,9 +23,11 @@ jobs:
       - name: Build
         run: dotnet build backend/JiApp.sln --configuration Release -warnaserror
       - name: Test
-        run: dotnet test backend/JiApp.sln --configuration Release --no-build
+        run: dotnet test backend/JiApp.sln --configuration Release --no-build --collect:"XPlat Code Coverage" --results-directory backend/TestResults
       - name: Format
         run: dotnet format backend/JiApp.sln --verify-no-changes --no-restore
+      - name: Coverage gate
+        run: python3 scripts/ci/coverage-gate.py
 
   mobile:
     runs-on: ubuntu-latest
@@ -46,7 +48,7 @@ jobs:
         run: npx tsc --noEmit
         working-directory: mobile
       - name: Test
-        run: npx jest --passWithNoTests
+        run: npx jest --coverage --passWithNoTests
         working-directory: mobile
 
   web:
