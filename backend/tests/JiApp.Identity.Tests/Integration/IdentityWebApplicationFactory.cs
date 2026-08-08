@@ -1,4 +1,5 @@
 using JiApp.Identity.Persistence;
+using JiApp.Testing.Common.RateLimiting;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace JiApp.Identity.Tests.Integration;

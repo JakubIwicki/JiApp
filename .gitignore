@@ -118,6 +118,7 @@ backend/inspect-file.sh
 
 # Test artifacts
 mobile/test-results/
+**/TestResults/
 
 # Generated config
 mobile/src/config.generated.ts

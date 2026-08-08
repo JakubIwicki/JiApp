@@ -21,7 +21,20 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\JiApp.Gateway\JiApp.Gateway.csproj"/>
+        <ProjectReference Include="..\..\src\JiApp.Identity\JiApp.Identity.csproj"/>
+        <ProjectReference Include="..\..\src\JiApp.Scheduler\JiApp.Scheduler.csproj"/>
+        <ProjectReference Include="..\..\src\api.JiApp.LovingBoards\api.JiApp.LovingBoards.csproj"/>
         <ProjectReference Include="..\JiApp.Testing.Common\JiApp.Testing.Common.csproj"/>
+    </ItemGroup>
+
+    <!-- Each referenced host project ships its own appsettings.json / appsettings.Test.json.
+         Without this, the four appsettings.json files all flow into Gateway.Tests output and
+         collide (MSBuild NETSDK1022 duplicate-Content error). The module factories booting in
+         this process therefore set their load-bearing config explicitly via UseSetting, and the
+         WebApplicationFactory content-root inference (MvcTestingAppManifest.json) still resolves
+         each host's appsettings from its source directory. -->
+    <ItemGroup>
+        <Content Update="appsettings*.json" CopyToOutputDirectory="Never" />
     </ItemGroup>
 
 </Project>
