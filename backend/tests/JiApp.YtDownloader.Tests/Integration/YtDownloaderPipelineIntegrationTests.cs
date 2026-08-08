@@ -40,11 +40,13 @@ public sealed class YtDownloaderPipelineIntegrationTests : IClassFixture<YtDownl
     [Fact]
     public async Task RejectsSearch_WhenTokenLacksYtDownloaderAccess()
     {
-        var client = _factory.CreateAuthenticatedClient(NextUserId(), Permissions.UsersManage);
+        var userId = NextUserId();
+        var client = _factory.CreateAuthenticatedClient(userId, Permissions.UsersManage);
 
         var response = await client.PostAsJsonAsync($"{BaseUrl}/search", new SearchVideosRequest("test query", null));
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        _factory.InFreshScope(db => db.YoutubeSearchHistory.Count(h => h.UserId == userId)).Should().Be(0);
     }
 
     [Fact]

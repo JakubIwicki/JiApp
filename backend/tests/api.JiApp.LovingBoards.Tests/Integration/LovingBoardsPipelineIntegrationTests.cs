@@ -36,11 +36,13 @@ public sealed class LovingBoardsPipelineIntegrationTests : IClassFixture<LovingB
     [Fact]
     public async Task RejectsBoardCreate_WhenTokenLacksLovingBoardsAccess()
     {
-        var client = _factory.CreateAuthenticatedClient(NextUserId(), Permissions.UsersManage);
+        var userId = NextUserId();
+        var client = _factory.CreateAuthenticatedClient(userId, Permissions.UsersManage);
 
         var response = await client.PostAsJsonAsync($"{BaseUrl}/boards", new CreateBoardRequest("Board"));
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        _factory.InFreshScope(db => db.Boards.Count(b => b.OwnerUserId == userId)).Should().Be(0);
     }
 
     [Fact]
