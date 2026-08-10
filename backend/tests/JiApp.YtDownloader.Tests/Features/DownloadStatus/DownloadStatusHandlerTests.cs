@@ -98,11 +98,13 @@ public sealed class DownloadStatusHandlerTests
     }
 
     [Fact]
-    public void ReturnsFailed_WithErrorAndCategory_AfterJobMarkedFailed()
+    public void ReturnsFailed_WithErrorAndCategory_AfterRetriesExhausted()
     {
         var fixture = new Fixture();
         var tempId = fixture.CreateJob();
         fixture.JobStore.Claim(tempId, UserId);
+        fixture.JobStore.MarkFailed(tempId, UserId, "Failed to download video.", ResultCategories.YoutubeDl);
+        fixture.JobStore.MarkFailed(tempId, UserId, "Failed to download video.", ResultCategories.YoutubeDl);
         fixture.JobStore.MarkFailed(tempId, UserId, "Failed to download video.", ResultCategories.YoutubeDl);
 
         var result = fixture.Sut.Handle(tempId);

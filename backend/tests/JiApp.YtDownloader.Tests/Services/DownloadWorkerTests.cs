@@ -56,11 +56,17 @@ public sealed class DownloadWorkerTests
             .ReturnsAsync(new YoutubeClientResponse(null, false, ["Sign in to confirm you're not a bot"]));
         var tempId = fixture.CreateJob();
 
-        var status = await RunToTerminalStatusAsync(fixture, tempId);
+        await RunUntilFailedAsync(fixture, tempId);
 
-        status.Status.Should().Be(DownloadJobStatus.Failed);
+        var row = fixture.LoadCommand(tempId);
+        row!.Status.Should().Be(DownloadCommandStatus.Failed);
+        row.ErrorCategory.Should().Be(ResultCategories.YoutubeDl);
+        row.LastError.Should().NotBeNullOrWhiteSpace();
+
+        // The failure scheduled a retry, so the job is still in-flight, not terminal.
+        var status = fixture.JobStore.GetStatus(tempId, UserId);
+        status!.Status.Should().Be(DownloadJobStatus.Pending);
         status.ErrorCategory.Should().Be(ResultCategories.YoutubeDl);
-        status.Error.Should().NotBeNullOrWhiteSpace();
         fixture.HistoryRepoMock.Verify(r => r.AddAsync(It.IsAny<YoutubeDownloadHistory>(), It.IsAny<CancellationToken>()), Times.Never);
         fixture.HistoryRepoMock.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -74,11 +80,12 @@ public sealed class DownloadWorkerTests
             .ThrowsAsync(new InvalidOperationException("sensitive yt-dlp error details"));
         var tempId = fixture.CreateJob();
 
-        var status = await RunToTerminalStatusAsync(fixture, tempId);
+        await RunUntilFailedAsync(fixture, tempId);
 
-        status.Status.Should().Be(DownloadJobStatus.Failed);
-        status.Error.Should().NotContain("sensitive yt-dlp error details");
-        status.Error.Should().Contain("Failed to process download");
+        var row = fixture.LoadCommand(tempId);
+        row!.Status.Should().Be(DownloadCommandStatus.Failed);
+        row.LastError.Should().NotContain("sensitive yt-dlp error details");
+        row.LastError.Should().Contain("Failed to process download");
         fixture.HistoryRepoMock.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -91,11 +98,12 @@ public sealed class DownloadWorkerTests
             .ReturnsAsync(new YoutubeClientResponse(null, true, []));
         var tempId = fixture.CreateJob();
 
-        var status = await RunToTerminalStatusAsync(fixture, tempId);
+        await RunUntilFailedAsync(fixture, tempId);
 
-        status.Status.Should().Be(DownloadJobStatus.Failed);
-        status.ErrorCategory.Should().Be(ResultCategories.YoutubeDl);
-        status.Error.Should().Contain("file is missing");
+        var row = fixture.LoadCommand(tempId);
+        row!.Status.Should().Be(DownloadCommandStatus.Failed);
+        row.ErrorCategory.Should().Be(ResultCategories.YoutubeDl);
+        row.LastError.Should().Contain("file is missing");
     }
 
     [Fact]
@@ -109,11 +117,12 @@ public sealed class DownloadWorkerTests
             .ReturnsAsync(new YoutubeClientResponse(emptyFile, true, []));
         var tempId = fixture.CreateJob();
 
-        var status = await RunToTerminalStatusAsync(fixture, tempId);
+        await RunUntilFailedAsync(fixture, tempId);
 
-        status.Status.Should().Be(DownloadJobStatus.Failed);
-        status.ErrorCategory.Should().Be(ResultCategories.YoutubeDl);
-        status.Error.Should().Contain("file is empty");
+        var row = fixture.LoadCommand(tempId);
+        row!.Status.Should().Be(DownloadCommandStatus.Failed);
+        row.ErrorCategory.Should().Be(ResultCategories.YoutubeDl);
+        row.LastError.Should().Contain("file is empty");
     }
 
     [Fact]
@@ -129,10 +138,11 @@ public sealed class DownloadWorkerTests
             });
         var tempId = fixture.CreateJob();
 
-        var status = await RunToTerminalStatusAsync(fixture, tempId);
+        await RunUntilFailedAsync(fixture, tempId);
 
-        status.Status.Should().Be(DownloadJobStatus.Failed);
-        status.Error.Should().Be("Download timed out.");
+        var row = fixture.LoadCommand(tempId);
+        row!.Status.Should().Be(DownloadCommandStatus.Failed);
+        row.LastError.Should().Be("Download timed out.");
     }
 
     [Fact]
@@ -342,7 +352,7 @@ public sealed class DownloadWorkerTests
         fixture.Queue.Writer.TryWrite(tempId);
         try
         {
-            await WaitForStatusAsync(fixture, tempId, DownloadJobStatus.Failed);
+            await WaitForFailedRowAsync(fixture, tempId);
 
             fixture.Clock.Advance(TimeSpan.FromSeconds(31));
 
@@ -374,7 +384,7 @@ public sealed class DownloadWorkerTests
         fixture.Queue.Writer.TryWrite(tempId);
         try
         {
-            await WaitForStatusAsync(fixture, tempId, DownloadJobStatus.Failed);
+            await WaitForFailedRowAsync(fixture, tempId);
             fixture.Clock.Advance(TimeSpan.FromSeconds(31));
             await WaitForAttemptsRemainingAsync(fixture, tempId, 1);
 
@@ -394,6 +404,56 @@ public sealed class DownloadWorkerTests
             var calls = fixture.YoutubeClientMock.Invocations.Count(i => i.Method.Name == nameof(IYoutubeClient.DownloadVideoAsync));
             calls.Should().Be(3);
             fixture.JobStore.GetStatus(tempId, UserId)!.Status.Should().Be(DownloadJobStatus.Failed);
+        }
+        finally
+        {
+            await fixture.Sut.StopAsync(CancellationToken.None);
+        }
+    }
+
+    [Fact]
+    public async Task Retap_WhileRetryScheduled_DownloadsExactlyOnce_AfterBackoff()
+    {
+        using var fixture = new Fixture(
+            timeProvider: new FakeTimeProvider(new DateTimeOffset(2030, 1, 1, 0, 0, 0, TimeSpan.Zero)),
+            pollInterval: TimeSpan.FromMilliseconds(50));
+        var filePath = fixture.CreateReadyFile();
+        var attempts = 0;
+        fixture.YoutubeClientMock
+            .Setup(c => c.DownloadVideoAsync(VideoId, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(async (string _, string _, string _, CancellationToken _) =>
+            {
+                attempts++;
+                return attempts == 1
+                    ? new YoutubeClientResponse(null, false, ["transient yt-dlp error"])
+                    : new YoutubeClientResponse(filePath, true, []);
+            });
+        var tempId = fixture.CreateJob();
+
+        await fixture.Sut.StartAsync(CancellationToken.None);
+        fixture.Queue.Writer.TryWrite(tempId);
+        try
+        {
+            await WaitForFailedRowAsync(fixture, tempId);
+
+            var retapId = fixture.JobStore.CreateJob(UserId, VideoId, "Title", "Description",
+                "https://example.com/i.jpg", VideoUrl);
+
+            retapId.Should().Be(tempId);
+            fixture.RowCount(UserId, VideoId).Should().Be(1);
+
+            fixture.Clock.Advance(TimeSpan.FromSeconds(31));
+
+            var status = await WaitForStatusAsync(fixture, tempId, DownloadJobStatus.Ready);
+            await WaitForSaveChangesAsync(fixture, 1);
+
+            status.Status.Should().Be(DownloadJobStatus.Ready);
+            fixture.RowCount(UserId, VideoId).Should().Be(1);
+            fixture.LoadCommand(tempId)!.Status.Should().Be(DownloadCommandStatus.Completed);
+            fixture.HistoryRepoMock.Verify(
+                r => r.AddAsync(It.Is<YoutubeDownloadHistory>(h => h.VideoId == VideoId), It.IsAny<CancellationToken>()),
+                Times.Once);
+            attempts.Should().Be(2);
         }
         finally
         {
@@ -478,6 +538,36 @@ public sealed class DownloadWorkerTests
         throw new TimeoutException($"SaveChangesAsync was not invoked {expectedCalls} time(s) within {PollTimeout}.");
     }
 
+    // A failed attempt schedules a retry, so the mapped status stays Pending — the row
+    // itself (Status == Failed) is the only signal that the failure has been recorded.
+    private static async Task RunUntilFailedAsync(Fixture fixture, string tempId)
+    {
+        await fixture.Sut.StartAsync(CancellationToken.None);
+        fixture.Queue.Writer.TryWrite(tempId);
+        try
+        {
+            await WaitForFailedRowAsync(fixture, tempId);
+        }
+        finally
+        {
+            await fixture.Sut.StopAsync(CancellationToken.None);
+        }
+    }
+
+    private static async Task WaitForFailedRowAsync(Fixture fixture, string tempId)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        while (stopwatch.Elapsed < PollTimeout)
+        {
+            if (fixture.LoadCommand(tempId)?.Status == DownloadCommandStatus.Failed)
+                return;
+
+            await Task.Delay(20);
+        }
+
+        throw new TimeoutException($"Job {tempId} did not reach Failed within {PollTimeout}.");
+    }
+
     private sealed class Fixture : IDisposable
     {
         private readonly ServiceProvider _provider;
@@ -549,6 +639,12 @@ public sealed class DownloadWorkerTests
         {
             using var db = new YtDbContext(_options);
             return db.DownloadCommands.AsNoTracking().FirstOrDefault(c => c.Id == tempId);
+        }
+
+        public int RowCount(long userId, string videoId)
+        {
+            using var db = new YtDbContext(_options);
+            return db.DownloadCommands.Count(c => c.UserId == userId && c.VideoId == videoId);
         }
 
         public void Dispose()

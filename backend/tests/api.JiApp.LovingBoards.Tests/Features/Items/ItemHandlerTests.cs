@@ -57,18 +57,24 @@ public sealed class ItemHandlerTests : HandlerTestBase<LovingBoardsDbContext>
 
         public Fixture WithBoard(string name = "Test", long ownerUserId = 1L, List<long>? memberUserIds = null)
         {
-            var board = new Board { Name = name, OwnerUserId = ownerUserId, MemberUserIds = memberUserIds ?? [1L] };
+            var board = new Board { Name = name, OwnerUserId = ownerUserId, MemberUserIds = WithOwnerFirst(ownerUserId, memberUserIds) };
             _testDb.Store(board);
             return this;
         }
 
         public Fixture WithBoard(out long boardId, string name = "Test", long ownerUserId = 1L, List<long>? memberUserIds = null)
         {
-            var board = new Board { Name = name, OwnerUserId = ownerUserId, MemberUserIds = memberUserIds ?? [1L] };
+            var board = new Board { Name = name, OwnerUserId = ownerUserId, MemberUserIds = WithOwnerFirst(ownerUserId, memberUserIds) };
             _testDb.Store(board);
             boardId = board.Id;
             return this;
         }
+
+        private static List<long> WithOwnerFirst(long ownerUserId, List<long>? memberUserIds) =>
+            new List<long> { ownerUserId }
+                .Concat((memberUserIds ?? []).Where(id => id != ownerUserId))
+                .Distinct()
+                .ToList();
 
         public Fixture WithItem(long boardId, string title = "Test Item", BoardItemStatus status = BoardItemStatus.Needed, long addedByUserId = 1L)
         {
@@ -175,7 +181,7 @@ public sealed class ItemHandlerTests : HandlerTestBase<LovingBoardsDbContext>
     [Fact]
     public async Task CreateItem_NonMember_ReturnsAccessDenied()
     {
-        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L]);
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, ownerUserId: 2L, memberUserIds: [2L]);
         var sut = fixture.CreateItem;
 
         var result = await sut.HandleAsync(boardId, new CreateItemRequest("Milk"), CancellationToken.None);
@@ -265,7 +271,7 @@ public sealed class ItemHandlerTests : HandlerTestBase<LovingBoardsDbContext>
     [Fact]
     public async Task UpdateItem_NonMember_ReturnsAccessDenied()
     {
-        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L]);
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, ownerUserId: 2L, memberUserIds: [2L]);
         var sut = fixture.UpdateItem;
 
         var result = await sut.HandleAsync(boardId, 1L, new UpdateItemRequest(Title: new Optional<string>("Updated")), CancellationToken.None);
@@ -489,7 +495,7 @@ public sealed class ItemHandlerTests : HandlerTestBase<LovingBoardsDbContext>
     [Fact]
     public async Task SetItemStatus_NonMember_ReturnsAccessDenied()
     {
-        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L]);
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, ownerUserId: 2L, memberUserIds: [2L]);
         var sut = fixture.SetItemStatus;
 
         var result = await sut.HandleAsync(boardId, 1L, new SetItemStatusRequest("Completed"), CancellationToken.None);
@@ -529,7 +535,7 @@ public sealed class ItemHandlerTests : HandlerTestBase<LovingBoardsDbContext>
     [Fact]
     public async Task DeleteItem_NonMember_ReturnsAccessDenied()
     {
-        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L]);
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, ownerUserId: 2L, memberUserIds: [2L]);
         var sut = fixture.DeleteItem;
 
         var result = await sut.HandleAsync(boardId, 1L, CancellationToken.None);
@@ -576,7 +582,7 @@ public sealed class ItemHandlerTests : HandlerTestBase<LovingBoardsDbContext>
     [Fact]
     public async Task ClearCompleted_NonMember_ReturnsAccessDenied()
     {
-        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L]);
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, ownerUserId: 2L, memberUserIds: [2L]);
         var sut = fixture.ClearCompleted;
 
         var result = await sut.HandleAsync(boardId, CancellationToken.None);

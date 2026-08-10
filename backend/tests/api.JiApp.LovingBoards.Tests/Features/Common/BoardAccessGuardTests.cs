@@ -23,14 +23,20 @@ public sealed class BoardAccessGuardTests : HandlerTestBase<LovingBoardsDbContex
 
         public static Fixture Init(ILovingBoardsDbContext dbContext, TestDb testDb) => new(dbContext, testDb);
 
-        public Fixture WithBoard(out Board board, List<long>? memberUserIds = null)
+        public Fixture WithBoard(out Board board, long ownerUserId = 1L, List<long>? memberUserIds = null)
         {
-            board = new Board { Name = "Test", OwnerUserId = 1L, MemberUserIds = memberUserIds ?? [1L] };
+            board = new Board { Name = "Test", OwnerUserId = ownerUserId, MemberUserIds = WithOwnerFirst(ownerUserId, memberUserIds) };
             _db.Boards.Add(board);
             _db.SaveChanges();
             _db.ChangeTracker.Clear();
             return this;
         }
+
+        private static List<long> WithOwnerFirst(long ownerUserId, List<long>? memberUserIds) =>
+            new List<long> { ownerUserId }
+                .Concat((memberUserIds ?? []).Where(id => id != ownerUserId))
+                .Distinct()
+                .ToList();
     }
 
     [Fact]
@@ -64,7 +70,7 @@ public sealed class BoardAccessGuardTests : HandlerTestBase<LovingBoardsDbContex
     public async Task VerifyBoardAccess_WhenUserIsNotMember_ReturnsAccessDenied()
     {
         var fixture = Fixture.Init(DbContext, Db);
-        fixture.WithBoard(out var board, [2L]);
+        fixture.WithBoard(out var board, ownerUserId: 2L, memberUserIds: [2L]);
 
         var result =
             await BoardAccessGuard.VerifyBoardAccessAsync(fixture.DbContext, board.Id, fixture.CurrentUser, CancellationToken.None);
@@ -104,7 +110,7 @@ public sealed class BoardAccessGuardTests : HandlerTestBase<LovingBoardsDbContex
     public async Task VerifyBoardOwner_WhenUserIsNotOwner_ReturnsAccessDenied()
     {
         var fixture = Fixture.Init(DbContext, Db);
-        fixture.WithBoard(out var board, [1L, 2L]);
+        fixture.WithBoard(out var board, memberUserIds: [1L, 2L]);
         var db = (LovingBoardsDbContext)fixture.DbContext;
         var tracked = await db.Boards.FindAsync(board.Id);
         tracked!.OwnerUserId = 2L;

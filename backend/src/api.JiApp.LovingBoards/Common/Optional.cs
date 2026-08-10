@@ -40,9 +40,13 @@ public sealed class OptionalJsonConverter<T> : JsonConverter<Optional<T>>
 
     public override void Write(Utf8JsonWriter writer, Optional<T> value, JsonSerializerOptions options)
     {
-        if (value.IsSet && value.Value is not null)
-            JsonSerializer.Serialize(writer, value.Value, options);
-        else
-            writer.WriteNullValue();
+        if (!value.IsSet)
+            throw new NotSupportedException(
+                $"{nameof(Optional<T>)} is an inbound-only PATCH contract — an unset value cannot be serialized as JSON " +
+                $"because the property name is already written by the serializer and a converter cannot skip it. " +
+                $"Serializing an unset value as null would make the receiving side clear a field the client never mentioned. " +
+                $"Only serialize an explicitly-set value (including an explicit null).");
+
+        JsonSerializer.Serialize(writer, value.Value, options);
     }
 }

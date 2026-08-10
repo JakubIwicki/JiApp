@@ -40,7 +40,10 @@ public sealed class AddBoardMemberHandlerTests : HandlerTestBase<LovingBoardsDbC
 
         public Fixture WithBoard(out long boardId, List<long>? memberUserIds = null)
         {
-            var board = new Board { Name = "Test", OwnerUserId = 1L, MemberUserIds = memberUserIds ?? [1L] };
+            var members = new List<long> { 1L };
+            if (memberUserIds is not null)
+                members.AddRange(memberUserIds.Where(id => id != 1L));
+            var board = new Board { Name = "Test", OwnerUserId = 1L, MemberUserIds = members.Distinct().ToList() };
             _testDb.Store(board);
             boardId = board.Id;
             return this;
