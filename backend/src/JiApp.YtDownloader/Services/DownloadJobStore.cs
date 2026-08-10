@@ -62,9 +62,13 @@ public sealed class DownloadJobStore : IDownloadJobStore, IDownloadQueue
 
         // Idempotency: a double-tap for the same video while the previous request is
         // still active/in-flight returns the same job instead of enqueueing a duplicate.
+        // A Failed row awaiting its retry backoff (NextAttemptAt set) is still an active
+        // job — it will be claimed again once the backoff elapses, so the re-tap dedupes
+        // onto it instead of inserting a second row that would collide in the index.
         var activeId = db.DownloadCommands
             .Where(c => c.UserId == userId && c.VideoId == videoId
-                && (c.Status == DownloadCommandStatus.Queued || c.Status == DownloadCommandStatus.Processing))
+                && (c.Status == DownloadCommandStatus.Queued || c.Status == DownloadCommandStatus.Processing
+                    || (c.Status == DownloadCommandStatus.Failed && c.NextAttemptAt != null)))
             .Select(c => c.Id)
             .FirstOrDefault();
         if (activeId is not null)
@@ -90,10 +94,12 @@ public sealed class DownloadJobStore : IDownloadJobStore, IDownloadQueue
         {
             // A concurrent request for the same active (UserId, VideoId) won the unique
             // filtered-index race — return its job instead of enqueueing a duplicate.
+            // A Failed row awaiting its retry backoff counts as active here too.
             db.Entry(command).State = EntityState.Detached;
             var existingId = db.DownloadCommands
                 .Where(c => c.UserId == userId && c.VideoId == videoId
-                    && (c.Status == DownloadCommandStatus.Queued || c.Status == DownloadCommandStatus.Processing))
+                    && (c.Status == DownloadCommandStatus.Queued || c.Status == DownloadCommandStatus.Processing
+                        || (c.Status == DownloadCommandStatus.Failed && c.NextAttemptAt != null)))
                 .Select(c => c.Id)
                 .FirstOrDefault();
             if (existingId is not null)
@@ -164,7 +170,7 @@ public sealed class DownloadJobStore : IDownloadJobStore, IDownloadQueue
         var command = db.DownloadCommands
             .AsNoTracking()
             .Where(c => c.Id == tempId && c.UserId == userId)
-            .Select(c => new { c.Status, c.LastError, c.ErrorCategory })
+            .Select(c => new { c.Status, c.NextAttemptAt, c.LastError, c.ErrorCategory })
             .FirstOrDefault();
         if (command is null)
             return null;
@@ -174,6 +180,10 @@ public sealed class DownloadJobStore : IDownloadJobStore, IDownloadQueue
             DownloadCommandStatus.Queued => DownloadJobStatus.Pending,
             DownloadCommandStatus.Processing => DownloadJobStatus.Running,
             DownloadCommandStatus.Completed => DownloadJobStatus.Ready,
+            // A Failed row still awaiting its retry backoff is an in-flight job. Reporting
+            // it as Failed would make the mobile poller treat a scheduled retry as terminal
+            // and throw while the worker is seconds away from retrying it.
+            DownloadCommandStatus.Failed when command.NextAttemptAt is not null => DownloadJobStatus.Pending,
             DownloadCommandStatus.Failed => DownloadJobStatus.Failed,
             _ => DownloadJobStatus.Failed
         };

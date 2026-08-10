@@ -58,6 +58,40 @@ public sealed class DownloadJobStoreTests
     }
 
     [Fact]
+    public void CreateJob_WhileRetryScheduled_ReturnsSameTempId_AndKeepsOneRow()
+    {
+        using var fixture = new Fixture(Ttl, FixedNow);
+        var tempId = fixture.CreateJob();
+        fixture.Store.Claim(tempId, UserId);
+        fixture.Store.MarkFailed(tempId, UserId, "transient error", ResultCategories.YoutubeDl);
+        fixture.LoadCommand(tempId)!.NextAttemptAt.Should().NotBeNull();
+
+        var retapId = fixture.CreateJob();
+
+        retapId.Should().Be(tempId);
+        fixture.RowCount(UserId, VideoId).Should().Be(1);
+    }
+
+    [Fact]
+    public void CreateJob_WhenRetriesExhausted_ReturnsNewTempId_AndKeepsDeadLetterRow()
+    {
+        using var fixture = new Fixture(Ttl, FixedNow);
+        var tempId = fixture.CreateJob();
+        fixture.Store.Claim(tempId, UserId);
+        fixture.Store.MarkFailed(tempId, UserId, "error one", ResultCategories.YoutubeDl);
+        fixture.Clock.Advance(TimeSpan.FromSeconds(31));
+        fixture.Store.MarkFailed(tempId, UserId, "error two", ResultCategories.YoutubeDl);
+        fixture.Clock.Advance(TimeSpan.FromMinutes(2) + TimeSpan.FromSeconds(1));
+        fixture.Store.MarkFailed(tempId, UserId, "error three", ResultCategories.YoutubeDl);
+        fixture.LoadCommand(tempId)!.NextAttemptAt.Should().BeNull();
+
+        var retapId = fixture.CreateJob();
+
+        retapId.Should().NotBe(tempId);
+        fixture.RowCount(UserId, VideoId).Should().Be(2);
+    }
+
+    [Fact]
     public void CreateJob_ForDifferentUser_SameVideo_ReturnsDifferentTempId()
     {
         using var fixture = new Fixture(Ttl, DateTimeOffset.UtcNow);
@@ -146,7 +180,7 @@ public sealed class DownloadJobStoreTests
     }
 
     [Fact]
-    public void MarkFailed_TransitionsToFailed_WithErrorAndCategory()
+    public void MarkFailed_TransitionsToFailed_WithErrorAndCategory_AndReportsPending_WhileRetryScheduled()
     {
         using var fixture = new Fixture(Ttl, DateTimeOffset.UtcNow);
         var tempId = fixture.CreateJob();
@@ -154,8 +188,15 @@ public sealed class DownloadJobStoreTests
 
         fixture.Store.MarkFailed(tempId, UserId, "Failed to download video.", ResultCategories.YoutubeDl);
 
+        var row = fixture.LoadCommand(tempId);
+        row!.Status.Should().Be(DownloadCommandStatus.Failed);
+        row.LastError.Should().Be("Failed to download video.");
+        row.ErrorCategory.Should().Be(ResultCategories.YoutubeDl);
+
+        // A retry is scheduled, so the job is still in-flight — it must not report failed
+        // to the poller while the worker is seconds away from retrying it.
         var status = fixture.Store.GetStatus(tempId, UserId);
-        status!.Status.Should().Be(DownloadJobStatus.Failed);
+        status!.Status.Should().Be(DownloadJobStatus.Pending);
         status.Error.Should().Be("Failed to download video.");
         status.ErrorCategory.Should().Be(ResultCategories.YoutubeDl);
     }
@@ -248,6 +289,20 @@ public sealed class DownloadJobStoreTests
     }
 
     [Fact]
+    public void UniqueFilteredIndex_RejectsSecondActiveRow_WhileRetryScheduled()
+    {
+        using var fixture = new Fixture(Ttl, FixedNow);
+        var tempId = fixture.CreateJob();
+        fixture.Store.Claim(tempId, UserId);
+        fixture.Store.MarkFailed(tempId, UserId, "transient error", ResultCategories.YoutubeDl);
+        fixture.LoadCommand(tempId)!.NextAttemptAt.Should().NotBeNull();
+
+        var act = () => fixture.SeedActiveRow(UserId, VideoId);
+
+        act.Should().Throw<DbUpdateException>();
+    }
+
+    [Fact]
     public async Task CreateJob_ConcurrentRequests_ForSameVideo_ReturnSameTempId_AndInsertOneRow()
     {
         using var fixture = new ConcurrencyFixture();
@@ -293,6 +348,39 @@ public sealed class DownloadJobStoreTests
         var tempId = fixture.CreateJob();
 
         fixture.Store.GetStatus(tempId, OtherUserId).Should().BeNull();
+    }
+
+    [Fact]
+    public void GetStatus_ReportsPending_WhileRetryScheduled()
+    {
+        using var fixture = new Fixture(Ttl, FixedNow);
+        var tempId = fixture.CreateJob();
+        fixture.Store.Claim(tempId, UserId);
+        fixture.Store.MarkFailed(tempId, UserId, "transient error", ResultCategories.YoutubeDl);
+
+        var status = fixture.Store.GetStatus(tempId, UserId);
+
+        status!.Status.Should().Be(DownloadJobStatus.Pending);
+        status.Error.Should().Be("transient error");
+        status.ErrorCategory.Should().Be(ResultCategories.YoutubeDl);
+    }
+
+    [Fact]
+    public void GetStatus_ReportsFailed_WhenRetriesExhausted()
+    {
+        using var fixture = new Fixture(Ttl, FixedNow);
+        var tempId = fixture.CreateJob();
+        fixture.Store.Claim(tempId, UserId);
+        fixture.Store.MarkFailed(tempId, UserId, "error one");
+        fixture.Clock.Advance(TimeSpan.FromSeconds(31));
+        fixture.Store.MarkFailed(tempId, UserId, "error two");
+        fixture.Clock.Advance(TimeSpan.FromMinutes(2) + TimeSpan.FromSeconds(1));
+        fixture.Store.MarkFailed(tempId, UserId, "error three");
+
+        var status = fixture.Store.GetStatus(tempId, UserId);
+
+        status!.Status.Should().Be(DownloadJobStatus.Failed);
+        status.Error.Should().Be("error three");
     }
 
     // ── GetFilePath guards ─────────────────────────────────────────────────
@@ -460,6 +548,12 @@ public sealed class DownloadJobStoreTests
         }
 
         public bool IsEligible(string tempId) => Store.GetEligibleTempIds(100).Contains(tempId);
+
+        public int RowCount(long userId, string videoId)
+        {
+            using var db = new YtDbContext(_options);
+            return db.DownloadCommands.Count(c => c.UserId == userId && c.VideoId == videoId);
+        }
 
         // Bypasses the store's dedupe to exercise the unique filtered index directly.
         public void SeedActiveRow(long userId, string videoId)

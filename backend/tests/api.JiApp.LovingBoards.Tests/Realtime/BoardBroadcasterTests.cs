@@ -270,11 +270,57 @@ public sealed class BoardBroadcasterTests
         ev3!.Event.Should().Be(BoardEventNames.Presence);
     }
 
+    [Fact]
+    public async Task Subscribe_WhileLastSubscriberUnsubscribes_NewSubscriberStillReceivesEvents()
+    {
+        var broadcaster = new BoardBroadcaster();
+
+        for (var iteration = 0; iteration < 2000; iteration++)
+        {
+            var resident = broadcaster.Subscribe(1L, 100L);
+
+            var joinerTasks = Enumerable.Range(0, 4)
+                .Select(_ => Task.Run(() => broadcaster.Subscribe(1L, 200L)))
+                .ToArray();
+
+            resident.Dispose();
+            var joiners = await Task.WhenAll(joinerTasks);
+
+            broadcaster.Publish(1L, new BoardEvent("test.event", new { iteration }));
+
+            foreach (var joiner in joiners)
+            {
+                var ev = await ReadUntilAsync(joiner, "test.event", TimeSpan.FromSeconds(1));
+                joiner.Dispose();
+                ev.Should().NotBeNull(
+                    $"iteration {iteration}: a subscriber that joined while the last old subscriber left was orphaned and never received the published event");
+            }
+        }
+    }
+
     private static async Task<BoardEvent?> ReadNextAsync(IBoardSubscription sub, CancellationToken ct = default)
     {
         await foreach (var ev in sub.ReadAllAsync(ct))
             return ev;
 
         return null;
+    }
+
+    private static async Task<BoardEvent?> ReadUntilAsync(IBoardSubscription sub, string eventName, TimeSpan timeout)
+    {
+        using var cts = new CancellationTokenSource(timeout);
+        try
+        {
+            await foreach (var ev in sub.ReadAllAsync(cts.Token))
+            {
+                if (ev.Event == eventName)
+                    return ev;
+            }
+            return null;
+        }
+        catch (OperationCanceledException)
+        {
+            return null;
+        }
     }
 }

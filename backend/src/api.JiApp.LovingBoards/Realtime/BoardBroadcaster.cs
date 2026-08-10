@@ -15,6 +15,10 @@ public sealed class BoardBroadcaster : IBoardBroadcaster
 
     private readonly ConcurrentDictionary<long, ConcurrentDictionary<Guid, Subscriber>> _boards = new();
 
+    // Serializes add vs. remove-when-empty on _boards so a Subscribe racing the last
+    // Unsubscribe/Disconnect cannot write into an inner map that was already detached.
+    private readonly object _sync = new();
+
     public IBoardSubscription Subscribe(long boardId, long userId)
     {
         var subscriberId = Guid.NewGuid();
@@ -24,8 +28,11 @@ public sealed class BoardBroadcaster : IBoardBroadcaster
         });
 
         var subscriber = new Subscriber(userId, channel);
-        var boardSubscribers = _boards.GetOrAdd(boardId, _ => new ConcurrentDictionary<Guid, Subscriber>());
-        boardSubscribers[subscriberId] = subscriber;
+        lock (_sync)
+        {
+            var boardSubscribers = _boards.GetOrAdd(boardId, _ => new ConcurrentDictionary<Guid, Subscriber>());
+            boardSubscribers[subscriberId] = subscriber;
+        }
 
         BroadcastPresence(boardId);
 
@@ -43,31 +50,37 @@ public sealed class BoardBroadcaster : IBoardBroadcaster
 
     public void Disconnect(long boardId, long userId)
     {
-        if (!_boards.TryGetValue(boardId, out var boardSubscribers))
-            return;
-
-        foreach (var (subscriberId, subscriber) in boardSubscribers)
+        lock (_sync)
         {
-            if (subscriber.UserId == userId)
-            {
-                subscriber.Channel.Writer.TryComplete();
-                boardSubscribers.TryRemove(subscriberId, out _);
-            }
-        }
+            if (!_boards.TryGetValue(boardId, out var boardSubscribers))
+                return;
 
-        if (boardSubscribers.IsEmpty)
-            _boards.TryRemove(boardId, out _);
+            foreach (var (subscriberId, subscriber) in boardSubscribers)
+            {
+                if (subscriber.UserId == userId)
+                {
+                    subscriber.Channel.Writer.TryComplete();
+                    boardSubscribers.TryRemove(subscriberId, out _);
+                }
+            }
+
+            if (boardSubscribers.IsEmpty)
+                _boards.TryRemove(boardId, out _);
+        }
 
         BroadcastPresence(boardId);
     }
 
     public void DisconnectAll(long boardId)
     {
-        if (!_boards.TryRemove(boardId, out var boardSubscribers))
-            return;
+        lock (_sync)
+        {
+            if (!_boards.TryRemove(boardId, out var boardSubscribers))
+                return;
 
-        foreach (var (_, subscriber) in boardSubscribers)
-            subscriber.Channel.Writer.TryComplete();
+            foreach (var (_, subscriber) in boardSubscribers)
+                subscriber.Channel.Writer.TryComplete();
+        }
     }
 
     private void BroadcastPresence(long boardId)
@@ -88,14 +101,17 @@ public sealed class BoardBroadcaster : IBoardBroadcaster
 
     private void Unsubscribe(Guid subscriberId, long boardId)
     {
-        if (!_boards.TryGetValue(boardId, out var boardSubscribers))
-            return;
+        lock (_sync)
+        {
+            if (!_boards.TryGetValue(boardId, out var boardSubscribers))
+                return;
 
-        if (boardSubscribers.TryRemove(subscriberId, out var removed))
-            removed.Channel.Writer.TryComplete();
+            if (boardSubscribers.TryRemove(subscriberId, out var removed))
+                removed.Channel.Writer.TryComplete();
 
-        if (boardSubscribers.IsEmpty)
-            _boards.TryRemove(boardId, out _);
+            if (boardSubscribers.IsEmpty)
+                _boards.TryRemove(boardId, out _);
+        }
 
         BroadcastPresence(boardId);
     }

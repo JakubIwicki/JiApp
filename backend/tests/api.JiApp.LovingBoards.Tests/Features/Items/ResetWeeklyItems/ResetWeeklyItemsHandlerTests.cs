@@ -29,9 +29,12 @@ public sealed class ResetWeeklyItemsHandlerTests : HandlerTestBase<LovingBoardsD
 
         public static Fixture Init(ILovingBoardsDbContext dbContext, TestDb testDb) => new(dbContext, testDb);
 
-        public Fixture WithBoard(out long boardId, List<long>? memberUserIds = null)
+        public Fixture WithBoard(out long boardId, long ownerUserId = 1L, List<long>? memberUserIds = null)
         {
-            var board = new Board { Name = "Test", OwnerUserId = 1L, MemberUserIds = memberUserIds ?? [1L] };
+            var members = new List<long> { ownerUserId };
+            if (memberUserIds is not null)
+                members.AddRange(memberUserIds.Where(id => id != ownerUserId));
+            var board = new Board { Name = "Test", OwnerUserId = ownerUserId, MemberUserIds = members.Distinct().ToList() };
             _testDb.Store(board);
             boardId = board.Id;
             return this;
@@ -120,7 +123,7 @@ public sealed class ResetWeeklyItemsHandlerTests : HandlerTestBase<LovingBoardsD
     [Fact]
     public async Task ForceReset_AccessDeniedForNonMember()
     {
-        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L]);
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, ownerUserId: 2L);
         var sut = fixture.Sut;
 
         var result = await sut.HandleAsync(boardId, CancellationToken.None);

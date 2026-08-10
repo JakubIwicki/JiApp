@@ -34,7 +34,7 @@ public sealed class BoardHandlerTests : HandlerTestBase<LovingBoardsDbContext>
         private readonly TestDb _testDb;
         private readonly ICurrentUserService _currentUser;
         private readonly LovingBoardsSettings _settings;
-        private readonly IBoardBroadcaster _broadcaster;
+        private readonly CapturingBoardBroadcaster _broadcaster;
         private readonly IUserExistenceClient _userExistenceClient = UserExistenceClientDouble.Found().Object;
         private readonly TimeProvider _timeProvider = TimeProvider.System;
 
@@ -44,8 +44,10 @@ public sealed class BoardHandlerTests : HandlerTestBase<LovingBoardsDbContext>
             _testDb = testDb;
             _currentUser = MockCurrentUserService.GetSuccessful().Mock.Object;
             _settings = DefaultSettings;
-            _broadcaster = new NoOpBoardBroadcaster();
+            _broadcaster = new CapturingBoardBroadcaster();
         }
+
+        public CapturingBoardBroadcaster Broadcaster => _broadcaster;
 
         public CreateBoardHandler Sut => new(_dbContext, _settings, _currentUser, _timeProvider, new UserWriteLock());
         public GetBoardHandler GetBoard => new(_dbContext, _currentUser, _broadcaster, _timeProvider);
@@ -59,18 +61,24 @@ public sealed class BoardHandlerTests : HandlerTestBase<LovingBoardsDbContext>
 
         public Fixture WithBoard(string name = "Test", long ownerUserId = 1L, List<long>? memberUserIds = null)
         {
-            var board = new Board { Name = name, OwnerUserId = ownerUserId, MemberUserIds = memberUserIds ?? [1L] };
+            var board = new Board { Name = name, OwnerUserId = ownerUserId, MemberUserIds = WithOwnerFirst(ownerUserId, memberUserIds) };
             _testDb.Store(board);
             return this;
         }
 
         public Fixture WithBoard(out long boardId, string name = "Test", long ownerUserId = 1L, List<long>? memberUserIds = null)
         {
-            var board = new Board { Name = name, OwnerUserId = ownerUserId, MemberUserIds = memberUserIds ?? [1L] };
+            var board = new Board { Name = name, OwnerUserId = ownerUserId, MemberUserIds = WithOwnerFirst(ownerUserId, memberUserIds) };
             _testDb.Store(board);
             boardId = board.Id;
             return this;
         }
+
+        private static List<long> WithOwnerFirst(long ownerUserId, List<long>? memberUserIds) =>
+            new List<long> { ownerUserId }
+                .Concat((memberUserIds ?? []).Where(id => id != ownerUserId))
+                .Distinct()
+                .ToList();
     }
 
     [Fact]
@@ -154,7 +162,7 @@ public sealed class BoardHandlerTests : HandlerTestBase<LovingBoardsDbContext>
     [Fact]
     public async Task GetBoard_ByNonMember_ReturnsAccessDeniedErrorCategory()
     {
-        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L]);
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, ownerUserId: 2L, memberUserIds: [2L]);
         var sut = fixture.GetBoard;
 
         var result = await sut.HandleAsync(boardId, CancellationToken.None);
@@ -200,7 +208,7 @@ public sealed class BoardHandlerTests : HandlerTestBase<LovingBoardsDbContext>
     [Fact]
     public async Task UpdateBoard_ByNonMember_ReturnsAccessDeniedErrorCategory()
     {
-        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [2L]);
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, ownerUserId: 2L, memberUserIds: [2L]);
         var sut = fixture.UpdateBoard;
 
         var result = await sut.HandleAsync(boardId, new UpdateBoardRequest("Hacked by non-member"), CancellationToken.None);
@@ -461,33 +469,6 @@ public sealed class BoardHandlerTests : HandlerTestBase<LovingBoardsDbContext>
         AssertNotFound(result);
         var reloaded = Db.FindFresh<Board>(boardId);
         reloaded!.MemberUserIds.Should().Contain([1L, 2L]);
-    }
-
-    [Fact]
-    public async Task RemoveBoardMember_WhenLastMember_ReturnsFailure()
-    {
-        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, ownerUserId: 1L, memberUserIds: [2L]);
-        var sut = fixture.RemoveBoardMember;
-
-        var result = await sut.HandleAsync(boardId, 2L, CancellationToken.None);
-
-        result.IsSuccess.Should().BeFalse();
-        result.Error.Should().Be("Cannot remove the last member");
-        var reloaded = Db.FindFresh<Board>(boardId);
-        reloaded!.MemberUserIds.Should().ContainSingle().Which.Should().Be(2L);
-    }
-
-    [Fact]
-    public async Task RemoveBoardMember_WhenLastMember_ReturnsConflictErrorCategory()
-    {
-        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, ownerUserId: 1L, memberUserIds: [2L]);
-        var sut = fixture.RemoveBoardMember;
-
-        var result = await sut.HandleAsync(boardId, 2L, CancellationToken.None);
-
-        AssertConflict(result);
-        var reloaded = Db.FindFresh<Board>(boardId);
-        reloaded!.MemberUserIds.Should().ContainSingle().Which.Should().Be(2L);
     }
 
     // GetBoard with items
@@ -850,5 +831,46 @@ public sealed class BoardHandlerTests : HandlerTestBase<LovingBoardsDbContext>
         AssertConflict(result);
         var reloaded = Db.FindFresh<Board>(boardId);
         reloaded!.MemberUserIds.Should().Contain([1L, 2L]);
+    }
+
+    // Fix 3 — a removed member's live SSE stream must be torn down
+
+    [Fact]
+    public async Task RemoveBoardMember_DisconnectsRemovedMembersStreams()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [1L, 2L]);
+        var sut = fixture.RemoveBoardMember;
+
+        var result = await sut.HandleAsync(boardId, 2L, CancellationToken.None);
+
+        AssertSuccess(result);
+        fixture.Broadcaster.AssertDisconnected(boardId, 2L);
+        fixture.Broadcaster.AssertNotDisconnected(boardId, 1L);
+        fixture.Broadcaster.AssertNotDisconnectedAll(boardId);
+    }
+
+    [Fact]
+    public async Task RemoveBoardMember_WhenRemovalRejected_DoesNotDisconnectAnyone()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId, memberUserIds: [1L, 2L]);
+        var sut = fixture.RemoveBoardMember;
+
+        var result = await sut.HandleAsync(boardId, 999L, CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        fixture.Broadcaster.AssertNotDisconnected(boardId, 2L);
+        fixture.Broadcaster.AssertNotDisconnectedAll(boardId);
+    }
+
+    [Fact]
+    public async Task DeleteBoard_DisconnectsAllStreams()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
+        var sut = fixture.DeleteBoard;
+
+        var result = await sut.HandleAsync(boardId, CancellationToken.None);
+
+        AssertSuccess(result);
+        fixture.Broadcaster.AssertDisconnectedAll(boardId);
     }
 }

@@ -28,9 +28,6 @@ public sealed class RemoveBoardMemberHandler(
         if (userId == board.OwnerUserId)
             return Result<long>.Failure("The board owner cannot be removed", ResultCategories.Conflict);
 
-        if (board.MemberUserIds.Count == 1)
-            return Result<long>.Failure("Cannot remove the last member", ResultCategories.Conflict);
-
         board.MemberUserIds.Remove(userId);
         await db.SaveChangesAsync(ct);
 
