@@ -328,6 +328,31 @@ public sealed class BoardHandlerTests : HandlerTestBase<LovingBoardsDbContext>
     }
 
     [Fact]
+    public async Task ListBoards_ReturnsHasMore_WhenCountExceedsPageSize()
+    {
+        var smallPageSettings = new LovingBoardsSettings
+        {
+            ConnectionString = "Data Source=:memory:",
+            Jwt = new JwtSettings { Key = "key", Issuer = "iss", Audience = "aud" },
+            MaxBoardsPerUser = 10,
+            DefaultPageSize = 2,
+            MaxBoardNameLength = 200
+        };
+        var fixture = Fixture.Init(DbContext, Db)
+            .WithBoard(name: "A")
+            .WithBoard(name: "B")
+            .WithBoard(name: "C");
+        var handler = new ListBoardsHandler(
+            DbContext, smallPageSettings, MockCurrentUserService.GetSuccessful().Mock.Object, TimeProvider.System);
+
+        var result = await handler.HandleAsync(CancellationToken.None);
+
+        AssertSuccess(result);
+        result.Value!.Boards.Should().HaveCount(3);
+        result.Value.HasMore.Should().BeTrue();
+    }
+
+    [Fact]
     public async Task AddBoardMember_WithValidData_AddsMember()
     {
         var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId);
