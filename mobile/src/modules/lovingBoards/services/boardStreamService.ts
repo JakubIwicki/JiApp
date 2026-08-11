@@ -1,6 +1,10 @@
 import EventSource from 'react-native-sse';
 import { API_BASE_URL } from '../../../config';
-import { PresenceEventSchema } from '../types/events';
+import {
+  BoardStreamEventSchema,
+  PresenceEventSchema,
+  type BoardStreamEvent,
+} from '../types/events';
 import { getToken } from '../../../services/storageService';
 import { refreshAuth } from '../../../services/apiClient';
 
@@ -8,7 +12,7 @@ import { refreshAuth } from '../../../services/apiClient';
 
 export interface BoardStreamParams {
   readonly boardId: number;
-  readonly onChange: () => void;
+  readonly onEvent: (event: BoardStreamEvent) => void;
   readonly onPresence: (userIds: number[]) => void;
   readonly onOpen?: () => void;
   readonly onError?: (e: Error) => void;
@@ -32,7 +36,9 @@ type BoardEventName =
   | 'recurring.reset'
   | 'board.deleted';
 
-const CHANGE_EVENT_NAMES: ReadonlySet<BoardEventName> = new Set([
+type ChangeEventName = Exclude<BoardEventName, 'presence'>;
+
+const CHANGE_EVENT_NAMES: readonly ChangeEventName[] = [
   'item.added',
   'item.updated',
   'item.status',
@@ -42,7 +48,7 @@ const CHANGE_EVENT_NAMES: ReadonlySet<BoardEventName> = new Set([
   'member.changed',
   'recurring.reset',
   'board.deleted',
-]);
+];
 
 // ── Public API ─────────────────────────────────────────────────────────────
 
@@ -114,11 +120,39 @@ export function openBoardStream(params: BoardStreamParams): BoardStreamHandle {
       params.onPresence(parsed.data.userIds);
     });
 
-    // All board/item change events → single onChange callback
+    // Board/item change events → Zod-validated, delivered as typed events
     for (const name of CHANGE_EVENT_NAMES) {
-      es.addEventListener(name, _event => {
+      es.addEventListener(name, event => {
         if (userClosed) return;
-        params.onChange();
+        if (event.data === null) return;
+
+        let raw: unknown;
+        try {
+          raw = JSON.parse(event.data);
+        } catch {
+          console.warn(
+            `[boardStreamService] Invalid JSON in ${name} event dropped`,
+          );
+          return;
+        }
+
+        if (typeof raw !== 'object' || raw === null) {
+          console.warn(
+            `[boardStreamService] Non-object payload in ${name} event dropped`,
+          );
+          return;
+        }
+
+        const parsed = BoardStreamEventSchema.safeParse({ ...raw, type: name });
+        if (!parsed.success) {
+          console.warn(
+            `[boardStreamService] Zod validation failed for ${name} event:`,
+            parsed.error,
+          );
+          return;
+        }
+
+        params.onEvent(parsed.data);
       });
     }
 

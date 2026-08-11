@@ -67,7 +67,7 @@ function createParams(
 ): BoardStreamParams {
   return {
     boardId: 5,
-    onChange: jest.fn(),
+    onEvent: jest.fn(),
     onPresence: jest.fn(),
     onOpen: jest.fn(),
     onError: jest.fn(),
@@ -192,6 +192,91 @@ describe('openBoardStream', () => {
 
     // Consumer asked to close, so no reconnect EventSource is created
     expect(ES).toHaveBeenCalledTimes(1);
+    expect(onError).not.toHaveBeenCalled();
+  });
+
+  it('delivers each change event to onEvent with its validated payload', async () => {
+    const onEvent = jest.fn();
+    openBoardStream(createParams({ onEvent }));
+    await flush();
+
+    emit('item.added', { itemId: 1 });
+    emit('item.updated', { itemId: 2 });
+    emit('item.status', { itemId: 3, status: 'Completed' });
+    emit('item.removed', { itemId: 4 });
+    emit('items.cleared', { itemIds: [5, 6] });
+    emit('board.updated', { boardId: 7 });
+    emit('member.changed', { boardId: 8 });
+    emit('recurring.reset', { reset: 9 });
+    emit('board.deleted', { boardId: 10 });
+
+    expect(onEvent).toHaveBeenCalledTimes(9);
+    expect(onEvent).toHaveBeenCalledWith({ type: 'item.added', itemId: 1 });
+    expect(onEvent).toHaveBeenCalledWith({ type: 'item.updated', itemId: 2 });
+    expect(onEvent).toHaveBeenCalledWith({
+      type: 'item.status',
+      itemId: 3,
+      status: 'Completed',
+    });
+    expect(onEvent).toHaveBeenCalledWith({ type: 'item.removed', itemId: 4 });
+    expect(onEvent).toHaveBeenCalledWith({
+      type: 'items.cleared',
+      itemIds: [5, 6],
+    });
+    expect(onEvent).toHaveBeenCalledWith({ type: 'board.updated', boardId: 7 });
+    expect(onEvent).toHaveBeenCalledWith({
+      type: 'member.changed',
+      boardId: 8,
+    });
+    expect(onEvent).toHaveBeenCalledWith({ type: 'recurring.reset', reset: 9 });
+    expect(onEvent).toHaveBeenCalledWith({
+      type: 'board.deleted',
+      boardId: 10,
+    });
+  });
+
+  it.each([
+    ['item.added', { itemId: 'not-a-number' }],
+    ['item.updated', {}],
+    ['item.status', { itemId: 3 }],
+    ['item.status', { itemId: 3, status: 'Unknown' }],
+    ['item.removed', { itemId: null }],
+    ['items.cleared', { itemIds: 'not-an-array' }],
+    ['board.updated', { boardId: 'not-a-number' }],
+    ['member.changed', {}],
+    ['recurring.reset', { reset: 'not-a-number' }],
+    ['board.deleted', { wrong: true }],
+  ])(
+    'drops a malformed %s payload without throwing or tearing down the stream',
+    async (name, payload) => {
+      const onEvent = jest.fn();
+      const onError = jest.fn();
+      openBoardStream(createParams({ onEvent, onError }));
+      await flush();
+
+      expect(() => emit(name, payload)).not.toThrow();
+      expect(onError).not.toHaveBeenCalled();
+
+      // A valid event right after still reaches the consumer — stream intact
+      emit('item.added', { itemId: 42 });
+      expect(onEvent).toHaveBeenCalledTimes(1);
+      expect(onEvent).toHaveBeenCalledWith({ type: 'item.added', itemId: 42 });
+    },
+  );
+
+  it('drops an invalid-JSON change payload without throwing', async () => {
+    const onEvent = jest.fn();
+    const onError = jest.fn();
+    openBoardStream(createParams({ onEvent, onError }));
+    await flush();
+
+    const listeners = capturedListeners?.get('item.added') ?? [];
+    expect(() => {
+      for (const l of listeners) {
+        l({ type: 'item.added', data: '{not json' });
+      }
+    }).not.toThrow();
+    expect(onEvent).not.toHaveBeenCalled();
     expect(onError).not.toHaveBeenCalled();
   });
 });
