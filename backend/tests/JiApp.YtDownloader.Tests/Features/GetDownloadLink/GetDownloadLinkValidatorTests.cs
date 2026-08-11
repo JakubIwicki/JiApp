@@ -112,15 +112,14 @@ public sealed class GetDownloadLinkValidatorTests : ValidatorTestBase
     }
 
     [Fact]
-    public void Validator_AcceptsWatchUrl_WhenVideoQueryParameterEmpty()
+    public void Validator_RejectsWatchUrl_WhenVideoQueryParameterEmpty()
     {
-        // Documents current behaviour: an empty `v` value ("?v=") parses to an empty string,
-        // and `query["v"] is not null` treats it as present. Flagged as a likely defect.
         var fixture = Fixture.Init();
 
         var result = fixture.ValidateVideoUrl("https://www.youtube.com/watch?v=");
 
-        result.IsValid.Should().BeTrue();
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(DownloadRequest.VideoUrl));
     }
 
     [Theory]
@@ -146,16 +145,13 @@ public sealed class GetDownloadLinkValidatorTests : ValidatorTestBase
     }
 
     [Fact]
-    public void Validator_RejectsEmbedUrl_WithoutVideoQueryParameter()
+    public void Validator_AcceptsEmbedUrl_WithoutVideoQueryParameter()
     {
-        // Documents current behaviour: the /embed/ branch requires a `v` query parameter,
-        // so a real embed URL like /embed/<id> is rejected. Flagged as a likely defect.
         var fixture = Fixture.Init();
 
         var result = fixture.ValidateVideoUrl("https://www.youtube.com/embed/dQw4w9WgXcQ");
 
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == nameof(DownloadRequest.VideoUrl));
+        result.IsValid.Should().BeTrue();
     }
 
     [Fact]
@@ -195,15 +191,14 @@ public sealed class GetDownloadLinkValidatorTests : ValidatorTestBase
 
     [Theory]
     [MemberData(nameof(NonHttpSchemeUrls))]
-    public void Validator_AcceptsVideoUrl_WithNonHttpScheme(string url)
+    public void Validator_RejectsVideoUrl_WithNonHttpScheme(string url)
     {
-        // Documents current behaviour: the scheme is never checked, so any absolute URI
-        // with an allowed host and a valid path passes. Flagged as a likely defect.
         var fixture = Fixture.Init();
 
         var result = fixture.ValidateVideoUrl(url);
 
-        result.IsValid.Should().BeTrue();
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(DownloadRequest.VideoUrl));
     }
 
     [Theory]

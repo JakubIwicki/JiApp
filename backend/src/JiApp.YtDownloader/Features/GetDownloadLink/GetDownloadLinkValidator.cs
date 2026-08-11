@@ -42,6 +42,9 @@ public sealed class GetDownloadLinkValidator : AbstractValidator<DownloadRequest
         if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
             return false;
 
+        if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
+            return false;
+
         if (!Array.Exists(ValidHosts, h => uri.Host == h))
             return false;
 
@@ -49,11 +52,14 @@ public sealed class GetDownloadLinkValidator : AbstractValidator<DownloadRequest
             return true;
 
         var path = uri.AbsolutePath;
-        if (path == "/watch" || path.StartsWith("/embed/", StringComparison.Ordinal))
+        if (path == "/watch")
         {
             var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
-            return query["v"] is not null;
+            return !string.IsNullOrEmpty(query["v"]);
         }
+
+        if (path.StartsWith("/embed/", StringComparison.Ordinal) && path.Length > "/embed/".Length)
+            return true;
 
         return false;
     }
