@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using api.JiApp.LovingBoards.Realtime;
 
 namespace api.JiApp.LovingBoards.Tests.Realtime;
@@ -271,6 +272,52 @@ public sealed class BoardBroadcasterTests
     }
 
     [Fact]
+    public async Task LastSubscriberLeaves_NextSubscriberGetsOnlyOwnPresence()
+    {
+        var broadcaster = new BoardBroadcaster();
+        using var sub1 = broadcaster.Subscribe(1L, 100L);
+        using var sub2 = broadcaster.Subscribe(1L, 200L);
+
+        // Consume initial presence events
+        await ReadNextAsync(sub1);
+        await ReadNextAsync(sub1);
+        await ReadNextAsync(sub2);
+
+        broadcaster.Disconnect(1L, 100L);
+        await ReadNextAsync(sub2);
+
+        // Last member leaves — the empty-presence path broadcasts to a torn-down board
+        // and the board entry is removed, so the next subscriber starts from a clean slate.
+        broadcaster.Disconnect(1L, 200L);
+
+        using var sub3 = broadcaster.Subscribe(1L, 300L);
+        var ev = await ReadNextAsync(sub3);
+
+        ev!.Event.Should().Be(BoardEventNames.Presence);
+        SerializeUserIds(ev.Data).Should().Be("[300]");
+    }
+
+    [Fact]
+    public async Task Dispose_Twice_IsIdempotent()
+    {
+        var broadcaster = new BoardBroadcaster();
+        var sub = broadcaster.Subscribe(1L, 100L);
+
+        // Consume initial presence
+        await ReadNextAsync(sub);
+
+        sub.Dispose();
+        sub.Dispose();
+
+        // The board is torn down exactly once; a fresh subscriber sees clean presence.
+        using var sub2 = broadcaster.Subscribe(1L, 200L);
+        var ev = await ReadNextAsync(sub2);
+
+        ev!.Event.Should().Be(BoardEventNames.Presence);
+        SerializeUserIds(ev.Data).Should().Be("[200]");
+    }
+
+    [Fact]
     public async Task Subscribe_WhileLastSubscriberUnsubscribes_NewSubscriberStillReceivesEvents()
     {
         var broadcaster = new BoardBroadcaster();
@@ -296,6 +343,12 @@ public sealed class BoardBroadcasterTests
                     $"iteration {iteration}: a subscriber that joined while the last old subscriber left was orphaned and never received the published event");
             }
         }
+    }
+
+    private static string SerializeUserIds(object data)
+    {
+        using var doc = JsonDocument.Parse(JsonSerializer.Serialize(data, data.GetType()));
+        return doc.RootElement.GetProperty("userIds").GetRawText();
     }
 
     private static async Task<BoardEvent?> ReadNextAsync(IBoardSubscription sub, CancellationToken ct = default)

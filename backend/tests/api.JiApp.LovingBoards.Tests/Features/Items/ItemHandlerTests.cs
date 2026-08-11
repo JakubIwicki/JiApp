@@ -504,6 +504,20 @@ public sealed class ItemHandlerTests : HandlerTestBase<LovingBoardsDbContext>
         AssertNoEntityInDb<BoardItem>((LovingBoardsDbContext)DbContext);
     }
 
+    [Fact]
+    public async Task SetItemStatus_InvalidStatus_ReturnsValidationFailure()
+    {
+        var fixture = Fixture.Init(DbContext, Db).WithBoard(out var boardId).WithItem(out var itemId, boardId);
+        var sut = fixture.SetItemStatus;
+
+        var result = await sut.HandleAsync(boardId, itemId, new SetItemStatusRequest("Bogus"), CancellationToken.None);
+
+        AssertValidationFailure(result);
+        result.Error.Should().Contain("Status must be");
+        var item = Db.Find<BoardItem>(itemId);
+        item!.Status.Should().Be(BoardItemStatus.Needed);
+    }
+
     // DeleteItem
 
     [Fact]
@@ -588,6 +602,18 @@ public sealed class ItemHandlerTests : HandlerTestBase<LovingBoardsDbContext>
         var result = await sut.HandleAsync(boardId, CancellationToken.None);
 
         AssertAccessDenied(result);
+        AssertNoEntityInDb<BoardItem>((LovingBoardsDbContext)DbContext);
+    }
+
+    [Fact]
+    public async Task ClearCompleted_BoardNotFound_ReturnsNotFound()
+    {
+        var fixture = Fixture.Init(DbContext, Db);
+        var sut = fixture.ClearCompleted;
+
+        var result = await sut.HandleAsync(999L, CancellationToken.None);
+
+        AssertNotFound(result);
         AssertNoEntityInDb<BoardItem>((LovingBoardsDbContext)DbContext);
     }
 

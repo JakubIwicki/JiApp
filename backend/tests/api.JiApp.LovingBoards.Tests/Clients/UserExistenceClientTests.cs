@@ -97,6 +97,17 @@ public sealed class UserExistenceClientTests
         handler.Requests.Should().BeEmpty();
     }
 
+    [Fact]
+    public async Task ReturnsUnavailable_WhenAuthorizationHeaderIsNotBearer_AndSendsNoRequest()
+    {
+        var (client, handler) = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.OK), authorizationHeader: "Basic abc123");
+
+        var status = await client.CheckExistsAsync(42, CancellationToken.None);
+
+        status.Should().Be(UserExistenceStatus.Unavailable);
+        handler.Requests.Should().BeEmpty();
+    }
+
     private static (UserExistenceClient Client, StubHttpMessageHandler Handler) CreateClient(
         Func<HttpRequestMessage, HttpResponseMessage> respond,
         string? authorizationHeader = "Bearer test-token")
