@@ -14,6 +14,7 @@ public sealed class GatewayCrossModuleFixture : IDisposable
     public CrossModuleIdentityWebApplicationFactory Identity { get; }
     public CrossModuleSchedulerWebApplicationFactory Scheduler { get; }
     public CrossModuleLovingBoardsWebApplicationFactory LovingBoards { get; }
+    public CrossModuleYtDownloaderWebApplicationFactory YtDownloader { get; }
     public CrossModuleGatewayWebApplicationFactory Gateway { get; }
     public HttpClient GatewayClient { get; }
 
@@ -29,14 +30,19 @@ public sealed class GatewayCrossModuleFixture : IDisposable
         LovingBoards = new CrossModuleLovingBoardsWebApplicationFactory(identityUrl);
         Get(LovingBoards.BaseAddress.ToString() + "api/v1/lovingboards/health").Should().Be(HttpStatusCode.OK);
 
+        YtDownloader = new CrossModuleYtDownloaderWebApplicationFactory();
+        Get(YtDownloader.BaseAddress.ToString() + "api/v1/yt/health").Should().Be(HttpStatusCode.OK);
+
         Gateway = new CrossModuleGatewayWebApplicationFactory(
-            identityUrl, Scheduler.BaseAddress.ToString(), LovingBoards.BaseAddress.ToString());
+            identityUrl, Scheduler.BaseAddress.ToString(), LovingBoards.BaseAddress.ToString(),
+            YtDownloader.BaseAddress.ToString());
         GatewayClient = Gateway.CreateClient();
     }
 
     public void Dispose()
     {
         Gateway?.Dispose();
+        YtDownloader?.Dispose();
         LovingBoards?.Dispose();
         Scheduler?.Dispose();
         Identity?.Dispose();

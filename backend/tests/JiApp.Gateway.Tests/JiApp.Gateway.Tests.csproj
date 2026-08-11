@@ -24,6 +24,7 @@
         <ProjectReference Include="..\..\src\JiApp.Identity\JiApp.Identity.csproj"/>
         <ProjectReference Include="..\..\src\JiApp.Scheduler\JiApp.Scheduler.csproj"/>
         <ProjectReference Include="..\..\src\api.JiApp.LovingBoards\api.JiApp.LovingBoards.csproj"/>
+        <ProjectReference Include="..\..\src\JiApp.YtDownloader\JiApp.YtDownloader.csproj"/>
         <ProjectReference Include="..\JiApp.Testing.Common\JiApp.Testing.Common.csproj"/>
     </ItemGroup>
 
