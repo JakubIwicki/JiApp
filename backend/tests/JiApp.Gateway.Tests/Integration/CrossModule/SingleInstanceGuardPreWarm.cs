@@ -25,5 +25,6 @@ internal static class SingleInstanceGuardPreWarm
         SingleInstanceGuard.Acquire("identity");
         SingleInstanceGuard.Acquire("scheduler");
         SingleInstanceGuard.Acquire("lovingboards");
+        SingleInstanceGuard.Acquire("ytdownloader");
     }
 }

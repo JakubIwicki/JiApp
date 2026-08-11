@@ -1,6 +1,9 @@
 using api.JiApp.LovingBoards.Persistence;
 using JiApp.Identity.Persistence;
 using JiApp.Scheduler.Persistence;
+using JiApp.YtApi.Clients;
+using JiApp.YtApi.Contracts;
+using JiApp.YtDownloader.Persistence;
 using System.Net;
 using JiApp.Testing.Common.Auth;
 using JiApp.Testing.Common.RateLimiting;
@@ -13,6 +16,7 @@ using Microsoft.Extensions.Configuration.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Moq;
 using Serilog;
 
 namespace JiApp.Gateway.Tests.Integration.CrossModule;
@@ -221,8 +225,89 @@ public sealed class CrossModuleLovingBoardsWebApplicationFactory(string identity
     }
 }
 
+public sealed class CrossModuleYtDownloaderWebApplicationFactory : RealModuleHost<YtDbContext>
+{
+    /// <summary>
+    /// The public base URL the module must use for download links. The Tier B journey
+    /// asserts the proxied download response is built from this value — a regression to
+    /// the request host (PR #151/#152: the internal docker hostname leaking into links)
+    /// fails the test.
+    /// </summary>
+    public const string TestPublicBaseUrl = "https://downloads.example.com";
+
+    private static readonly IYoutubeClient YoutubeClient = CreateYoutubeClientStub();
+
+    protected override WebApplication Build(SqliteConnection connection)
+    {
+        var builder = CreateBuilder();
+        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["ConnectionString"] = "Data Source=:memory:",
+            ["CorsAllowedOrigins:0"] = "*",
+            ["Jwt:Key"] = TestTokens.JwtKey,
+            ["Jwt:Issuer"] = TestTokens.JwtIssuer,
+            ["Jwt:Audience"] = TestTokens.JwtAudience,
+            ["App:BaseDirectory"] = Path.GetTempPath(),
+            ["App:PreviewDurationSeconds"] = "10",
+            ["App:DownloadTtlMinutes"] = "15",
+            ["App:DownloadJobTimeoutMinutes"] = "30",
+            ["App:PublicBaseUrl"] = TestPublicBaseUrl,
+            ["Youtube:ApiKey"] = "test-api-key",
+            ["Youtube:YtDlpPath"] = "/usr/bin/true",
+            ["Youtube:FfmpegPath"] = "/usr/bin/true",
+            ["Youtube:MaxResults"] = "30",
+            ["Youtube:PageSize"] = "10",
+        });
+
+        var settings = new JiApp.YtDownloader.Configuration.Settings();
+        builder.Configuration.Bind(settings);
+        settings.Validate(builder.Environment);
+        var startup = new JiApp.YtDownloader.Startup(settings, builder.Environment);
+        startup.ConfigureServices(builder.Services);
+        SwapStore<YtDbContext>(builder.Services, connection);
+
+        // The real host would start DownloadWorker and TempFileCleanupService (which shell
+        // out to yt-dlp) plus the real YoutubeClient (Google API). Remove all hosted
+        // services and stub IYoutubeClient so no external process or API call leaves the
+        // process — the same doubling the YtDownloaderPipelineWebApplicationFactory uses.
+        builder.Services.RemoveAll<IHostedService>();
+        builder.Services.RemoveAll<IYoutubeClient>();
+        builder.Services.AddSingleton(YoutubeClient);
+
+        var app = builder.Build();
+        JiApp.YtDownloader.Startup.Configure(app);
+        return app;
+    }
+
+    protected override void PostBuild(WebApplication app)
+    {
+        using var scope = app.Services.CreateScope();
+        scope.ServiceProvider.GetRequiredService<YtDbContext>().Database.Migrate();
+    }
+
+    private static IYoutubeClient CreateYoutubeClientStub()
+    {
+        var mock = new Mock<IYoutubeClient>();
+
+        mock.Setup(c => c.SearchVideosAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<YoutubeVideo>
+            {
+                new("dQw4w9WgXcQ", "Test Video", "Test Description",
+                    "https://img.youtube.com/vi/dQw4w9WgXcQ/default.jpg", "Test Channel")
+            });
+        mock.Setup(c => c.GetVideoByIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("not expected in these tests"));
+        mock.Setup(c => c.DownloadVideoAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("not expected in these tests"));
+        mock.Setup(c => c.BuildPreviewAudioProcess(It.IsAny<string>()))
+            .Throws(new InvalidOperationException("not expected in these tests"));
+
+        return mock.Object;
+    }
+}
+
 public sealed class CrossModuleGatewayWebApplicationFactory(
-    string identityBaseUrl, string schedulerUrl, string lovingBoardsUrl)
+    string identityBaseUrl, string schedulerUrl, string lovingBoardsUrl, string ytDownloaderUrl)
     : IntegrationTestBase<JiApp.Gateway.Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -231,7 +316,7 @@ public sealed class CrossModuleGatewayWebApplicationFactory(
         ApplyJwtSettings(builder);
         builder.UseSetting("CorsAllowedOrigins:0", "*");
         ApplyGatewayRateLimiting(builder);
-        ApplyReverseProxy(builder, identityBaseUrl, schedulerUrl, lovingBoardsUrl);
+        ApplyReverseProxy(builder, identityBaseUrl, schedulerUrl, lovingBoardsUrl, ytDownloaderUrl);
 
         // High budgets so the register/login/me/scheduler/lovingboards calls in the
         // suite can never trip the Gateway's own rate limiter.
@@ -287,7 +372,7 @@ public sealed class CrossModuleGatewayWebApplicationFactory(
         }
     }
 
-    private static void ApplyReverseProxy(IWebHostBuilder builder, string identityUrl, string schedulerUrl, string lovingBoardsUrl)
+    private static void ApplyReverseProxy(IWebHostBuilder builder, string identityUrl, string schedulerUrl, string lovingBoardsUrl, string ytDownloaderUrl)
     {
         // Routes — mirror the Gateway's base appsettings.json so proxying works even
         // when the appsettings content is suppressed in this process.
@@ -297,10 +382,13 @@ public sealed class CrossModuleGatewayWebApplicationFactory(
         builder.UseSetting("ReverseProxy:Routes:scheduler-route:Match:Path", "/api/v1/scheduler/{**catch-all}");
         builder.UseSetting("ReverseProxy:Routes:lovingboards-route:ClusterId", "lovingboards-cluster");
         builder.UseSetting("ReverseProxy:Routes:lovingboards-route:Match:Path", "/api/v1/lovingboards/{**catch-all}");
+        builder.UseSetting("ReverseProxy:Routes:yt-route:ClusterId", "yt-cluster");
+        builder.UseSetting("ReverseProxy:Routes:yt-route:Match:Path", "/api/v1/yt/{**catch-all}");
 
         // Cluster destinations — point YARP at the real ephemeral Kestrel sockets.
         builder.UseSetting("ReverseProxy:Clusters:identity-cluster:Destinations:identity:Address", identityUrl);
         builder.UseSetting("ReverseProxy:Clusters:scheduler-cluster:Destinations:scheduler:Address", schedulerUrl);
         builder.UseSetting("ReverseProxy:Clusters:lovingboards-cluster:Destinations:lovingboards:Address", lovingBoardsUrl);
+        builder.UseSetting("ReverseProxy:Clusters:yt-cluster:Destinations:yt:Address", ytDownloaderUrl);
     }
 }

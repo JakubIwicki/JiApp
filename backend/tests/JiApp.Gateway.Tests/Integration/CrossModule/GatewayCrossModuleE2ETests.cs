@@ -7,6 +7,8 @@ using JiApp.Identity.Features.Auth.Register;
 using JiApp.Scheduler.Features.Boards.AddBoardMember;
 using JiApp.Scheduler.Features.Boards.CreateBoard;
 using JiApp.Testing.Common.Auth;
+using JiApp.YtDownloader.Features.DownloadStatus;
+using JiApp.YtDownloader.Features.GetDownloadLink;
 
 namespace JiApp.Gateway.Tests.Integration.CrossModule;
 
@@ -24,6 +26,9 @@ public sealed class GatewayCrossModuleE2ETests : IClassFixture<GatewayCrossModul
     private const string MeUrl = "/api/v1/auth/me";
     private const string SchedulerBoardsUrl = "/api/v1/scheduler/boards";
     private const string LovingBoardsBoardsUrl = "/api/v1/lovingboards/boards";
+    private const string YtMp3DownloadUrl = "/api/v1/yt/downloads/mp3";
+    private const string YtMp3StatusUrl = "/api/v1/yt/downloads/mp3/status";
+    private const string VideoId = "dQw4w9WgXcQ";
 
     private readonly GatewayCrossModuleFixture _fixture;
 
@@ -146,6 +151,47 @@ public sealed class GatewayCrossModuleE2ETests : IClassFixture<GatewayCrossModul
         var board = _fixture.LovingBoards.InFreshScope(db => db.Boards.Find(boardId));
         board.Should().NotBeNull();
         board!.MemberUserIds.Should().Contain(xId);
+    }
+
+    [Fact]
+    public async Task ReturnsPublicBaseUrlDownloadLink_AndPendingStatus_WhenDownloadRequested_ThroughGateway()
+    {
+        var credentials = NewCredentials();
+        var userId = await RegisterUser(credentials);
+
+        var loginResponse = await _fixture.GatewayClient.PostAsJsonAsync(
+            LoginUrl, new LoginRequest(credentials.Username, credentials.Password));
+        loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var ytClient = CreateAuthenticatedClient(
+            TestTokens.Mint(userId, permissions: [Permissions.YtDownloaderAccess]));
+
+        var downloadResponse = await ytClient.PostAsJsonAsync(YtMp3DownloadUrl, new DownloadRequest(
+            VideoId, $"https://youtube.com/watch?v={VideoId}", null, null, null));
+
+        downloadResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var download = await downloadResponse.Content.ReadFromJsonAsync<DownloadResponse>();
+        download.Should().NotBeNull();
+        download!.TempId.Should().NotBeNullOrWhiteSpace();
+        // The URL must be built from the configured public base URL (App:PublicBaseUrl),
+        // never the request host — the PR #151/#152 regression leaked the internal docker
+        // hostname into download links. Assert the base AND that no request/test-server
+        // host sneaks in.
+        download.DownloadUrl.Should().StartWith(
+            $"{CrossModuleYtDownloaderWebApplicationFactory.TestPublicBaseUrl}/api/v1/yt/downloads/mp3/file/");
+        download.DownloadUrl.Should().NotContain(downloadResponse.RequestMessage!.RequestUri!.Authority);
+        download.DownloadUrl.Should().NotContain(_fixture.Gateway.Server.BaseAddress.Authority);
+
+        var command = _fixture.YtDownloader.InFreshScope(db => db.DownloadCommands.Find(download.TempId));
+        command.Should().NotBeNull();
+        command!.UserId.Should().Be(userId);
+
+        var statusResponse = await ytClient.GetAsync($"{YtMp3StatusUrl}/{download.TempId}");
+
+        statusResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var status = await statusResponse.Content.ReadFromJsonAsync<DownloadStatusResponse>();
+        status.Should().NotBeNull();
+        status!.Status.Should().Be("pending");
     }
 
     private string ReadSecurityStamp(long userId) =>
