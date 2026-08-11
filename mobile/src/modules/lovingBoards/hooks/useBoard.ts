@@ -7,6 +7,7 @@ import {
   type BoardStreamHandle,
 } from '../services/boardStreamService';
 import type { Board, Item, BoardItemStatus } from '../types/api';
+import type { BoardStreamEvent } from '../types/events';
 import type {
   CreateItemPayload,
   UpdateItemPayload,
@@ -32,7 +33,7 @@ interface UseBoardResult {
   removeMember: (userId: number) => Promise<void>;
 }
 
-const DEBOUNCE_MS = 300;
+export const DEBOUNCE_MS = 300;
 
 const useBoard = (boardId: number): UseBoardResult => {
   const [board, setBoard] = useState<Board | null>(null);
@@ -42,16 +43,18 @@ const useBoard = (boardId: number): UseBoardResult => {
   const [isLive, setIsLive] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inFlightRef = useRef<Promise<void> | null>(null);
+  const inFlightStartedAtRef = useRef(0);
+  const lastLandStartedAtRef = useRef(0);
+  const lastLandRef = useRef(0);
+  const pendingEchoRefetchRef = useRef<{
+    readonly promise: Promise<void>;
+    readonly resolve: () => void;
+    readonly requestedAt: number;
+  } | null>(null);
   const streamRef = useRef<BoardStreamHandle | null>(null);
   const boardRef = useRef(board);
   boardRef.current = board;
-
-  useEffect(() => {
-    return () => {
-      abortRef.current?.abort();
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, []);
 
   const loadBoard = useCallback(async () => {
     abortRef.current?.abort();
@@ -77,23 +80,165 @@ const useBoard = (boardId: number): UseBoardResult => {
     }
   }, [boardId]);
 
+  // Run a GET and track it: its start time, joinability while in flight, and a
+  // landing that opens a post-fetch grace window for redundant echo refetches.
+  const runFetch = useCallback((): Promise<void> => {
+    const startedAt = Date.now();
+    const promise = loadBoard();
+    inFlightRef.current = promise;
+    inFlightStartedAtRef.current = startedAt;
+    promise.then(
+      () => {
+        if (inFlightRef.current === promise) inFlightRef.current = null;
+        lastLandStartedAtRef.current = startedAt;
+        lastLandRef.current = Date.now();
+      },
+      () => {
+        if (inFlightRef.current === promise) inFlightRef.current = null;
+        lastLandStartedAtRef.current = startedAt;
+        lastLandRef.current = Date.now();
+      },
+    );
+    return promise;
+  }, [loadBoard]);
+
+  // Cancel a scheduled-but-not-yet-fetched echo refetch, resolving any
+  // awaiters so nothing hangs when the screen loses focus before it fires
+  const cancelPendingRefetch = useCallback((): void => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+    const pending = pendingEchoRefetchRef.current;
+    pendingEchoRefetchRef.current = null;
+    pending?.resolve();
+  }, []);
+
+  // Core decision for a refetch request made at `requestedAt`: join an
+  // in-flight GET only when it started after the request (so it is guaranteed
+  // to observe the change); if it started earlier, chain a fresh fetch after
+  // it lands instead of resolving with pre-change data; otherwise honor the
+  // post-fetch grace window — but only when the landed GET started after the
+  // request too. Returns null when a fresh fetch is still required.
+  const resolveRefetchNow = useCallback(
+    (skipGrace: boolean, requestedAt: number): Promise<void> | null => {
+      if (inFlightRef.current) {
+        if (inFlightStartedAtRef.current >= requestedAt) {
+          return inFlightRef.current;
+        }
+        return inFlightRef.current.then(() => runFetch());
+      }
+      if (
+        !skipGrace &&
+        Date.now() - lastLandRef.current < DEBOUNCE_MS &&
+        lastLandStartedAtRef.current >= requestedAt
+      ) {
+        return Promise.resolve();
+      }
+      return null;
+    },
+    [runFetch],
+  );
+
+  // Echo path: leading-edge debounce — the first request arms the window and
+  // later echoes do NOT extend it, so a trickle of echoes can't starve it.
+  const flushEchoDebounce = useCallback((): void => {
+    debounceRef.current = null;
+    const pending = pendingEchoRefetchRef.current;
+    pendingEchoRefetchRef.current = null;
+    if (!pending) return;
+    const promise = resolveRefetchNow(false, pending.requestedAt) ?? runFetch();
+    promise.then(
+      () => pending.resolve(),
+      () => pending.resolve(),
+    );
+  }, [resolveRefetchNow, runFetch]);
+
+  const scheduleEchoRefetch = useCallback((): Promise<void> => {
+    const requestedAt = Date.now();
+    const immediate = resolveRefetchNow(false, requestedAt);
+    if (immediate) return immediate;
+    if (pendingEchoRefetchRef.current) {
+      return pendingEchoRefetchRef.current.promise;
+    }
+
+    let resolve!: () => void;
+    const promise = new Promise<void>(r => {
+      resolve = r;
+    });
+    pendingEchoRefetchRef.current = { promise, resolve, requestedAt };
+    debounceRef.current = setTimeout(flushEchoDebounce, DEBOUNCE_MS);
+    return promise;
+  }, [resolveRefetchNow, flushEchoDebounce]);
+
+  // Action path: fire the GET immediately (no debounce), coalescing with any
+  // in-flight GET that already covers the write, so the write keeps its
+  // pre-change latency while its echo still collapses into one request.
+  const scheduleRefetch = useCallback((): Promise<void> => {
+    return resolveRefetchNow(true, Date.now()) ?? runFetch();
+  }, [resolveRefetchNow, runFetch]);
+
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+      cancelPendingRefetch();
+    };
+  }, [cancelPendingRefetch]);
+
+  const handleStreamEvent = useCallback(
+    (event: BoardStreamEvent): void => {
+      switch (event.type) {
+        case 'item.status':
+          setBoard(prev => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              items: prev.items.map(i =>
+                i.id === event.itemId ? { ...i, status: event.status } : i,
+              ),
+            };
+          });
+          return;
+        case 'item.removed':
+          setBoard(prev => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              items: prev.items.filter(i => i.id !== event.itemId),
+            };
+          });
+          return;
+        case 'items.cleared':
+          setBoard(prev => {
+            if (!prev) return prev;
+            const removedIds = new Set(event.itemIds);
+            return {
+              ...prev,
+              items: prev.items.filter(i => !removedIds.has(i.id)),
+            };
+          });
+          return;
+        default:
+          // item.added / item.updated / board.updated / member.changed /
+          // recurring.reset / board.deleted need fresh server data
+          scheduleEchoRefetch();
+      }
+    },
+    [scheduleEchoRefetch],
+  );
+
   useFocusEffect(
     useCallback(() => {
-      loadBoard();
+      runFetch();
 
       const handle = openBoardStream({
         boardId,
-        onChange: () => {
-          if (debounceRef.current) clearTimeout(debounceRef.current);
-          debounceRef.current = setTimeout(() => {
-            loadBoard();
-          }, DEBOUNCE_MS);
-        },
+        onEvent: handleStreamEvent,
         onPresence: (userIds: number[]) => {
           setPresence(userIds);
         },
         onOpen: () => {
-          loadBoard();
+          runFetch();
           setIsLive(true);
         },
         onError: () => {
@@ -109,11 +254,9 @@ const useBoard = (boardId: number): UseBoardResult => {
         handle.close();
         setPresence([]);
         setIsLive(false);
-        if (debounceRef.current) {
-          clearTimeout(debounceRef.current);
-        }
+        cancelPendingRefetch();
       };
-    }, [boardId, loadBoard]),
+    }, [boardId, runFetch, handleStreamEvent, cancelPendingRefetch]),
   );
 
   const addItem = useCallback(
@@ -121,14 +264,14 @@ const useBoard = (boardId: number): UseBoardResult => {
       setError(null);
       try {
         const result = await itemService.createItem(boardId, payload);
-        await loadBoard();
+        await scheduleRefetch();
         return result.id;
       } catch (err) {
         setError('lovingBoards.errors.createItem');
         throw err;
       }
     },
-    [boardId, loadBoard],
+    [boardId, scheduleRefetch],
   );
 
   const updateItem = useCallback(
@@ -136,13 +279,13 @@ const useBoard = (boardId: number): UseBoardResult => {
       setError(null);
       try {
         await itemService.updateItem(boardId, itemId, payload);
-        await loadBoard();
+        await scheduleRefetch();
       } catch (err) {
         setError('lovingBoards.errors.updateItem');
         throw err;
       }
     },
-    [boardId, loadBoard],
+    [boardId, scheduleRefetch],
   );
 
   const setItemStatus = useCallback(
@@ -215,24 +358,24 @@ const useBoard = (boardId: number): UseBoardResult => {
     });
     try {
       await itemService.clearCompleted(boardId);
-      await loadBoard();
+      await scheduleRefetch();
     } catch (err) {
-      await loadBoard();
+      await scheduleRefetch();
       setError('lovingBoards.errors.clearCompleted');
       throw err;
     }
-  }, [boardId, loadBoard]);
+  }, [boardId, scheduleRefetch]);
 
   const resetWeekly = useCallback(async () => {
     setError(null);
     try {
       await itemService.resetWeekly(boardId);
-      await loadBoard();
+      await scheduleRefetch();
     } catch (err) {
       setError('lovingBoards.errors.resetWeekly');
       throw err;
     }
-  }, [boardId, loadBoard]);
+  }, [boardId, scheduleRefetch]);
 
   const updateBoard = useCallback(
     async (name: string) => {
@@ -260,13 +403,13 @@ const useBoard = (boardId: number): UseBoardResult => {
       setError(null);
       try {
         await boardService.addMember(boardId, userId);
-        await loadBoard();
+        await scheduleRefetch();
       } catch (err) {
         setError('lovingBoards.errors.addMember');
         throw err;
       }
     },
-    [boardId, loadBoard],
+    [boardId, scheduleRefetch],
   );
 
   const removeMember = useCallback(
@@ -274,13 +417,13 @@ const useBoard = (boardId: number): UseBoardResult => {
       setError(null);
       try {
         await boardService.removeMember(boardId, userId);
-        await loadBoard();
+        await scheduleRefetch();
       } catch (err) {
         setError('lovingBoards.errors.removeMember');
         throw err;
       }
     },
-    [boardId, loadBoard],
+    [boardId, scheduleRefetch],
   );
 
   const items = useMemo(() => board?.items ?? [], [board]);
@@ -298,7 +441,7 @@ const useBoard = (boardId: number): UseBoardResult => {
     error,
     presence,
     isLive,
-    refetch: loadBoard,
+    refetch: runFetch,
     addItem,
     updateItem,
     setItemStatus,
