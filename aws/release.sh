@@ -201,3 +201,14 @@ echo "==> Deploying to EC2 (pull + start + health)..."
 
 echo ""
 "${SCRIPT_DIR}/status.sh" "$INSTANCE_ID"
+
+# ── 6b. Post-deploy live download smoke (non-fatal) ─────────
+
+echo ""
+# Post-deploy live download smoke (non-fatal: transient YouTube issues must not fail the deploy).
+if [ -f "${SCRIPT_DIR}/smoke-download-url.sh" ]; then
+    bash "${SCRIPT_DIR}/smoke-download-url.sh" \
+        || echo "WARNING: post-deploy download smoke FAILED — see output above; deploy itself succeeded."
+else
+    echo "WARNING: ${SCRIPT_DIR}/smoke-download-url.sh not found — skipping live download smoke."
+fi

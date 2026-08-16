@@ -152,23 +152,7 @@ public sealed class YoutubeClient(
         // which two concurrent downloads could cross-resolve.
         var outputTemplate = Path.Combine(outputPath, $"{tempId}.%(ext)s");
 
-        var options = new OptionSet
-        {
-            NoPlaylist = true,
-            ExtractAudio = true,
-            AudioFormat = AudioConversionFormat.Mp3,
-            EmbedThumbnail = true,
-            EmbedMetadata = true,
-            // android_vr media URLs 403 on YouTube (same issue documented in BuildPreviewAudioProcess);
-            // tv is the current stable client. Re-check when downloads regress.
-            ExtractorArgs = "youtube:player_client=tv",
-            Output = outputTemplate,
-            // Precedence: cookiesFromBrowser wins over cookiesFile.
-            // When both are set, only pass --cookies-from-browser to avoid conflicting flags.
-            CookiesFromBrowser = !string.IsNullOrEmpty(cookiesFromBrowser) ? cookiesFromBrowser : null,
-            Cookies = string.IsNullOrEmpty(cookiesFromBrowser) && !string.IsNullOrEmpty(cookiesFile) ? cookiesFile : null,
-            Proxy = string.IsNullOrEmpty(proxy) ? null : proxy,
-        };
+        var options = BuildDownloadOptions(outputTemplate);
 
         // A fresh YoutubeDL per call so concurrent downloads each get their own
         // yt-dlp process — a shared instance would serialize them.
@@ -195,6 +179,27 @@ public sealed class YoutubeClient(
         var resolvedPath = ResolveOutputFilePath(outputPath, tempId, result.Data);
 
         return new YoutubeClientResponse(resolvedPath, !string.IsNullOrEmpty(resolvedPath), []);
+    }
+
+    internal OptionSet BuildDownloadOptions(string outputTemplate)
+    {
+        return new OptionSet
+        {
+            NoPlaylist = true,
+            ExtractAudio = true,
+            AudioFormat = AudioConversionFormat.Mp3,
+            EmbedThumbnail = true,
+            EmbedMetadata = true,
+            // android_vr media URLs 403 on YouTube (same issue documented in BuildPreviewAudioProcess);
+            // tv is the current stable client. Re-check when downloads regress.
+            ExtractorArgs = "youtube:player_client=tv",
+            Output = outputTemplate,
+            // Precedence: cookiesFromBrowser wins over cookiesFile.
+            // When both are set, only pass --cookies-from-browser to avoid conflicting flags.
+            CookiesFromBrowser = !string.IsNullOrEmpty(cookiesFromBrowser) ? cookiesFromBrowser : null,
+            Cookies = string.IsNullOrEmpty(cookiesFromBrowser) && !string.IsNullOrEmpty(cookiesFile) ? cookiesFile : null,
+            Proxy = string.IsNullOrEmpty(proxy) ? null : proxy,
+        };
     }
 
     private static void ValidateVideoId(string videoId)
