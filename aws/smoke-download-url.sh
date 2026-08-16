@@ -1,13 +1,18 @@
 #!/bin/bash
-# JiApp post-deploy smoke test — asserts the live MP3 download-link endpoint
-# returns a PUBLIC downloadUrl (not the docker container hostname).
+# JiApp post-deploy smoke test — verifies the live MP3 download pipeline end to
+# end: the download-link endpoint returns a PUBLIC downloadUrl (not the docker
+# container hostname), the job reaches "ready", and the actual MP3 file
+# downloads with a non-trivial size (>100 KB).
 #
 # Catches the G4.4 regression (2026-08-07) where App__PublicBaseUrl was missing
 # and downloadUrl leaked "http://ytdownloader:6702/..." — phones then failed
-# with "Unable to resolve host ytdownloader".
+# with "Unable to resolve host ytdownloader". The real download also catches
+# media-URL 403s (2026-08-16, PR #163 forced the tv player client) that a
+# URL-format check alone cannot see.
 #
 # Usage: bash aws/smoke-download-url.sh
-# Exit 0 = PASS (public URL), Exit 1 = FAIL (leaked host, auth error, or other).
+# Exit 0 = PASS (public URL + live download), Exit 1 = FAIL (leaked host, auth
+# error, 403, timeout, or other).
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -47,7 +52,7 @@ now = int(time.time())
 payload = {
     "iss": "JiApp",
     "aud": "JiAppMobile",
-    "exp": now + 300,
+    "exp": now + 600,
     "jti": str(uuid.uuid4()),
     "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier": "1",
     "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name": "SmokeTest",
@@ -118,19 +123,24 @@ def netloc(url: str) -> str:
         return ""
 
 url = ""
+temp_id = ""
 try:
-    url = (json.loads(body) or {}).get("downloadUrl") or ""
+    parsed = json.loads(body) or {}
+    url = parsed.get("downloadUrl") or ""
+    temp_id = parsed.get("tempId") or ""
 except Exception:
     pass
 
 print(url)
 print(netloc(url))
 print(netloc(api_base))
+print(temp_id)
 PY
 )"
-DOWNLOAD_URL="${URL_PARTS[0]}"
-DOWNLOAD_HOST="${URL_PARTS[1]}"
-EXPECTED_HOST="${URL_PARTS[2]}"
+DOWNLOAD_URL="${URL_PARTS[0]:-}"
+DOWNLOAD_HOST="${URL_PARTS[1]:-}"
+EXPECTED_HOST="${URL_PARTS[2]:-}"
+TEMP_ID="${URL_PARTS[3]:-}"
 
 if [ -z "${DOWNLOAD_URL}" ]; then
     echo "FAIL: HTTP 200 but response contained no downloadUrl: ${BODY}" >&2
@@ -151,4 +161,93 @@ fi
 
 echo "PASS: downloadUrl is public (host ${DOWNLOAD_HOST})"
 echo "PASS: ${DOWNLOAD_URL}"
+
+# ── Live download verification ──────────────────────────────────────────────
+# The link-format checks above cannot catch a YouTube media-URL 403 (2026-08-16,
+# PR #163): the returned URL is public, but yt-dlp's player client was being
+# rejected. So actually run the job and download the MP3.
+
+if [ -z "${TEMP_ID}" ]; then
+    echo "FAIL: HTTP 200 but response contained no tempId: ${BODY}" >&2
+    exit 1
+fi
+
+STATUS_URL="${API_BASE}/api/v1/yt/downloads/mp3/status/${TEMP_ID}"
+MAX_POLLS=30
+POLL=0
+STATUS=""
+ERROR_MSG=""
+while [ "${POLL}" -lt "${MAX_POLLS}" ]; do
+    POLL=$((POLL + 1))
+    RESP="$(curl -sk --max-time 30 -w $'\n%{http_code}' \
+        -H "Authorization: Bearer ${TOKEN}" \
+        "${STATUS_URL}" 2>/dev/null || true)"
+    HTTP_CODE=""
+    BODY=""
+    if [ -n "${RESP}" ]; then
+        HTTP_CODE="$(printf '%s' "${RESP}" | tail -n1)"
+        BODY="$(printf '%s' "${RESP}" | sed '$d')"
+    fi
+
+    # Parse status + error from the poll response. Body passed via env var
+    # (matches the heredoc style used above).
+    mapfile -t STATUS_PARTS <<< "$(BODY="${BODY}" python3 - <<'PY'
+import json, os
+
+body = os.environ["BODY"]
+status = ""
+error = ""
+try:
+    parsed = json.loads(body) or {}
+    status = parsed.get("status") or ""
+    error = parsed.get("error") or parsed.get("errorMessage") or parsed.get("message") or ""
+except Exception:
+    pass
+print(status)
+print(error)
+PY
+)"
+    STATUS="${STATUS_PARTS[0]:-}"
+    ERROR_MSG="${STATUS_PARTS[1]:-}"
+
+    case "${STATUS}" in
+        ready)
+            echo "PASS: job ${TEMP_ID} reached status 'ready' after ${POLL} poll(s)"
+            break
+            ;;
+        failed)
+            echo "FAIL: download job ${TEMP_ID} failed: ${ERROR_MSG:-${BODY}}" >&2
+            exit 1
+            ;;
+        *)
+            echo "    [${POLL}/${MAX_POLLS}] status: ${STATUS:-<empty/http ${HTTP_CODE}>} — waiting..."
+            sleep 5
+            ;;
+    esac
+done
+
+if [ "${STATUS}" != "ready" ]; then
+    echo "FAIL: timed out waiting for job ${TEMP_ID} to become 'ready' (last status: ${STATUS:-<none>}, last HTTP: ${HTTP_CODE:-<none>})" >&2
+    exit 1
+fi
+
+# Fetch the actual MP3; require HTTP 200 AND a payload >100 KB. A 403/error
+# page can still return HTTP 200 with a tiny body, so size is the real signal.
+FILE_RESP="$(curl -sk --max-time 120 -o /dev/null -w '%{http_code} %{size_download}' \
+    -H "Authorization: Bearer ${TOKEN}" \
+    "${API_BASE}/api/v1/yt/downloads/mp3/file/${TEMP_ID}" 2>/dev/null || true)"
+FILE_HTTP_CODE="$(printf '%s' "${FILE_RESP}" | awk '{print $1}')"
+FILE_SIZE="$(printf '%s' "${FILE_RESP}" | awk '{print $2}')"
+
+if [ "${FILE_HTTP_CODE}" != "200" ]; then
+    echo "FAIL: download file endpoint returned HTTP ${FILE_HTTP_CODE:-<none>}" >&2
+    exit 1
+fi
+
+if [ -z "${FILE_SIZE}" ] || [ "${FILE_SIZE}" -le 100000 ]; then
+    echo "FAIL: downloaded payload too small (${FILE_SIZE:-0} bytes) — likely a 403/error body, not an MP3" >&2
+    exit 1
+fi
+
+echo "PASS: live download verified (${FILE_SIZE} bytes)"
 exit 0
