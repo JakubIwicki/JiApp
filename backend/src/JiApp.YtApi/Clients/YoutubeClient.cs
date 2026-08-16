@@ -159,7 +159,9 @@ public sealed class YoutubeClient(
             AudioFormat = AudioConversionFormat.Mp3,
             EmbedThumbnail = true,
             EmbedMetadata = true,
-            ExtractorArgs = "youtube:player_client=android_vr",
+            // android_vr media URLs 403 on YouTube (same issue documented in BuildPreviewAudioProcess);
+            // tv is the current stable client. Re-check when downloads regress.
+            ExtractorArgs = "youtube:player_client=tv",
             Output = outputTemplate,
             // Precedence: cookiesFromBrowser wins over cookiesFile.
             // When both are set, only pass --cookies-from-browser to avoid conflicting flags.
