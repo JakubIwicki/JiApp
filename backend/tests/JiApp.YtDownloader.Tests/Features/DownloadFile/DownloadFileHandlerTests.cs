@@ -76,11 +76,13 @@ public sealed class DownloadFileHandlerTests : HandlerTestBase<YtDbContext>
             // disposes scoped services at scope end, which would dispose the shared base context.
             services.AddSingleton(dbContext);
             _provider = services.BuildServiceProvider();
+            TempDir = Directory.CreateTempSubdirectory("ytdl-downloadfile-tests-").FullName;
             JobStore = new DownloadJobStore(
                 _provider.GetRequiredService<IServiceScopeFactory>(),
                 Ttl,
-                TimeProvider.System);
-            TempDir = Directory.CreateTempSubdirectory("ytdl-downloadfile-tests-").FullName;
+                TimeProvider.System,
+                TimeSpan.FromMinutes(35),
+                TempDir);
         }
 
         public DownloadFileHandler Sut => new(JobStore, _currentUser.Object, Mock.Of<ILogger<DownloadFileHandler>>());

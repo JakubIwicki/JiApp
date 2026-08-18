@@ -46,13 +46,22 @@ public sealed class DownloadJobStore : IDownloadJobStore, IDownloadQueue
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly TimeSpan _ttl;
+    private readonly TimeSpan _runningMaxAge;
+    private readonly string? _baseDirectory;
     private readonly TimeProvider _timeProvider;
 
-    public DownloadJobStore(IServiceScopeFactory scopeFactory, TimeSpan ttl, TimeProvider timeProvider)
+    public DownloadJobStore(
+        IServiceScopeFactory scopeFactory,
+        TimeSpan ttl,
+        TimeProvider timeProvider,
+        TimeSpan runningMaxAge,
+        string? baseDirectory)
     {
         _scopeFactory = scopeFactory;
         _ttl = ttl;
         _timeProvider = timeProvider;
+        _runningMaxAge = runningMaxAge;
+        _baseDirectory = baseDirectory;
     }
 
     public string CreateJob(long userId, string videoId, string videoTitle, string? videoDescription, string? videoImageUrl, string videoUrl)
@@ -123,15 +132,17 @@ public sealed class DownloadJobStore : IDownloadJobStore, IDownloadQueue
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<YtDbContext>();
 
+        var now = NowUtc();
         var affected = db.Database.ExecuteSqlRaw(
             """
-            UPDATE "DownloadCommands" SET "Status" = {0}, "NextAttemptAt" = NULL
+            UPDATE "DownloadCommands" SET "Status" = {0}, "NextAttemptAt" = NULL, "ProcessingStartedAtUtc" = {4}
             WHERE "Id" = {1} AND "UserId" = {2} AND "Status" = {3}
             """,
             DownloadCommandStatus.Processing.ToString(),
             tempId,
             userId,
-            DownloadCommandStatus.Queued.ToString());
+            DownloadCommandStatus.Queued.ToString(),
+            now);
 
         return affected == 1;
     }
@@ -232,6 +243,24 @@ public sealed class DownloadJobStore : IDownloadJobStore, IDownloadQueue
         var db = scope.ServiceProvider.GetRequiredService<YtDbContext>();
 
         var now = NowUtc();
+
+        // The worker's per-job deadline normally fails a hung download. A job stuck in
+        // Processing past runningMaxAge (deadline + grace) means the deadline path never
+        // completed — force-expire it via the retry semantics so the existing backoff
+        // machinery bounds the recovery, and delete its partial files so a retry starts clean.
+        var runningCutoff = now.Add(-_runningMaxAge);
+        var stuckProcessing = db.DownloadCommands
+            .Where(c => c.Status == DownloadCommandStatus.Processing
+                && c.ProcessingStartedAtUtc != null
+                && c.ProcessingStartedAtUtc < runningCutoff)
+            .ToList();
+
+        foreach (var command in stuckProcessing)
+        {
+            command.Fail("Download timed out.", errorCategory: null, now);
+            DeletePartialFilesForJob(command);
+        }
+
         var expired = db.DownloadCommands
             .Where(c => c.ExpiresAt < now && c.Status != DownloadCommandStatus.Processing)
             .ToList();
@@ -258,7 +287,7 @@ public sealed class DownloadJobStore : IDownloadJobStore, IDownloadQueue
         var db = scope.ServiceProvider.GetRequiredService<YtDbContext>();
 
         return db.Database.ExecuteSqlRaw(
-            "UPDATE \"DownloadCommands\" SET \"Status\" = {0} WHERE \"Status\" = {1}",
+            "UPDATE \"DownloadCommands\" SET \"Status\" = {0}, \"ProcessingStartedAtUtc\" = NULL WHERE \"Status\" = {1}",
             DownloadCommandStatus.Queued.ToString(),
             DownloadCommandStatus.Processing.ToString());
     }
@@ -294,9 +323,10 @@ public sealed class DownloadJobStore : IDownloadJobStore, IDownloadQueue
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<YtDbContext>();
 
+        var now = NowUtc();
         var affected = db.Database.ExecuteSqlRaw(
             """
-            UPDATE "DownloadCommands" SET "Status" = {0}, "NextAttemptAt" = NULL
+            UPDATE "DownloadCommands" SET "Status" = {0}, "NextAttemptAt" = NULL, "ProcessingStartedAtUtc" = {6}
             WHERE "Id" = {1} AND "UserId" = {2}
               AND ("Status" = {3} OR ("Status" = {4} AND "NextAttemptAt" IS NOT NULL AND "NextAttemptAt" <= {5}))
             """,
@@ -305,12 +335,26 @@ public sealed class DownloadJobStore : IDownloadJobStore, IDownloadQueue
             userId,
             DownloadCommandStatus.Queued.ToString(),
             DownloadCommandStatus.Failed.ToString(),
-            NowUtc());
+            now,
+            now);
 
         return affected == 1;
     }
 
     private DateTime NowUtc() => _timeProvider.GetUtcNow().UtcDateTime;
+
+    private void DeletePartialFilesForJob(DownloadCommand command)
+    {
+        var folder = YtDownloadFolders.ForUser(_baseDirectory, command.UserId);
+        if (!Directory.Exists(folder))
+            return;
+
+        // Every file keyed to the temp id — the completed .mp3, an interrupted .part,
+        // or a stream-separated .mp4/.webm/.m4a — is a partial left behind by the
+        // hung run. The retry starts clean.
+        foreach (var file in Directory.EnumerateFiles(folder, $"{command.Id}.*"))
+            TryDeleteFile(file);
+    }
 
     private static void TryDeleteFile(string filePath)
     {

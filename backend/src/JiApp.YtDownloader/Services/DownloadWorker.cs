@@ -90,7 +90,9 @@ internal sealed class DownloadWorker(
         if (!downloadQueue.ClaimEligible(tempId, job.UserId))
             return;
 
-        var outputFolder = Path.Combine(settings.App?.BaseDirectory ?? "/tmp", $"YtMp3_{job.UserId}");
+        logger.DownloadClaimed(tempId, job.UserId, job.VideoId);
+
+        var outputFolder = YtDownloadFolders.ForUser(settings.App?.BaseDirectory, job.UserId);
 
         // A per-job deadline so a hung yt-dlp/ffmpeg child frees its worker slot
         // instead of pinning it forever. The timeout token is linked to the host
@@ -109,6 +111,10 @@ internal sealed class DownloadWorker(
         }
         catch (OperationCanceledException)
         {
+            // The client kills the yt-dlp process tree on cancellation; surface both so a
+            // stuck job is traceable in docker logs from claim to reap.
+            logger.DownloadProcessKilled(tempId, job.VideoId);
+            logger.DownloadTimedOut(tempId, job.UserId, job.VideoId);
             jobStore.MarkFailed(tempId, job.UserId, "Download timed out.");
             return;
         }
@@ -142,6 +148,7 @@ internal sealed class DownloadWorker(
         }
 
         jobStore.MarkReady(tempId, job.UserId, filePath);
+        logger.DownloadCompleted(tempId, job.VideoId);
 
         await RecordHistoryAsync(job, tempId, stoppingToken);
     }

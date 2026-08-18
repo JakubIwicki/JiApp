@@ -32,6 +32,7 @@ public sealed class DownloadCommand : BaseEntity<string>
     public string? LastError { get; private set; }
     public string? ErrorCategory { get; private set; }
     public DateTime? NextAttemptAt { get; private set; }
+    public DateTime? ProcessingStartedAtUtc { get; private set; }
     public string? FilePath { get; private set; }
     public DateTime ExpiresAt { get; private set; }
     public DateTime CreatedAtUtc { get; private set; }
@@ -79,6 +80,7 @@ public sealed class DownloadCommand : BaseEntity<string>
         LastError = null;
         ErrorCategory = null;
         NextAttemptAt = null;
+        ProcessingStartedAtUtc = null;
     }
 
     /// <summary>
@@ -92,6 +94,7 @@ public sealed class DownloadCommand : BaseEntity<string>
         Status = DownloadCommandStatus.Failed;
         LastError = error;
         ErrorCategory = errorCategory;
+        ProcessingStartedAtUtc = null;
 
         if (AttemptsRemaining <= 0)
         {

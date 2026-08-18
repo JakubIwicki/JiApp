@@ -143,7 +143,12 @@ public class Startup(Settings settings, IWebHostEnvironment env)
         services.AddSingleton(sp => new DownloadJobStore(
             sp.GetRequiredService<IServiceScopeFactory>(),
             TimeSpan.FromMinutes(settings.App?.DownloadTtlMinutes ?? 15),
-            sp.GetRequiredService<TimeProvider>()));
+            sp.GetRequiredService<TimeProvider>(),
+            // Reaper threshold: worker download deadline + grace, so a legitimate long
+            // download (which the 30-min deadline lets run to completion) always survives
+            // the sweep; only a job stuck past its deadline is force-expired.
+            TimeSpan.FromMinutes((settings.App?.DownloadJobTimeoutMinutes ?? 30) + 5),
+            settings.App?.BaseDirectory));
         services.AddSingleton<IDownloadJobStore>(sp => sp.GetRequiredService<DownloadJobStore>());
         services.AddSingleton<IDownloadQueue>(sp => sp.GetRequiredService<DownloadJobStore>());
         services.AddSingleton(_ => Channel.CreateUnbounded<string>());

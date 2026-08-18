@@ -16,6 +16,8 @@ public sealed class TempFileCleanupServiceTests
     private const long UserId = 1L;
     private const string VideoId = "dQw4w9WgXcQ";
     private static readonly TimeSpan Ttl = TimeSpan.FromMinutes(15);
+    // Mirrors prod: worker download deadline (30 min) + grace (5 min).
+    private static readonly TimeSpan RunningMaxAge = TimeSpan.FromMinutes(35);
     private static readonly TimeSpan PollTimeout = TimeSpan.FromSeconds(10);
     private static readonly DateTimeOffset FixedNow = new(2030, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
@@ -170,7 +172,7 @@ public sealed class TempFileCleanupServiceTests
             _provider = services.BuildServiceProvider();
 
             JobStore = new DownloadJobStore(
-                _provider.GetRequiredService<IServiceScopeFactory>(), Ttl, Clock);
+                _provider.GetRequiredService<IServiceScopeFactory>(), Ttl, Clock, RunningMaxAge, TempDir);
             Sut = new TempFileCleanupService(JobStore, Mock.Of<ILogger<TempFileCleanupService>>());
         }
 

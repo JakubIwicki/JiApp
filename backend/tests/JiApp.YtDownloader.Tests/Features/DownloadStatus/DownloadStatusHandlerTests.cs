@@ -40,7 +40,9 @@ public sealed class DownloadStatusHandlerTests
             JobStore = new DownloadJobStore(
                 _provider.GetRequiredService<IServiceScopeFactory>(),
                 TimeSpan.FromMinutes(15),
-                TimeProvider.System);
+                TimeProvider.System,
+                TimeSpan.FromMinutes(35),
+                baseDirectory: null);
 
             var user = Mock.Of<ICurrentUserService>(x => x.UserId == UserId);
             Sut = new DownloadStatusHandler(JobStore, user);

@@ -23,6 +23,8 @@ public sealed class DownloadWorkerTests
     private const string VideoId = "dQw4w9WgXcQ";
     private const string VideoUrl = "https://youtube.com/watch?v=dQw4w9WgXcQ";
     private static readonly TimeSpan PollTimeout = TimeSpan.FromSeconds(10);
+    // Mirrors prod: worker download deadline (30 min) + grace (5 min).
+    private static readonly TimeSpan RunningMaxAge = TimeSpan.FromMinutes(35);
 
     [Fact]
     public async Task MarksJobReady_AndWritesHistory_WhenDownloadSucceeds()
@@ -608,7 +610,12 @@ public sealed class DownloadWorkerTests
             services.AddScoped(_ => HistoryRepoMock.Object);
             _provider = services.BuildServiceProvider();
 
-            JobStore = new DownloadJobStore(_provider.GetRequiredService<IServiceScopeFactory>(), TimeSpan.FromMinutes(15), Clock);
+            JobStore = new DownloadJobStore(
+                _provider.GetRequiredService<IServiceScopeFactory>(),
+                TimeSpan.FromMinutes(15),
+                Clock,
+                RunningMaxAge,
+                TempDir);
             var settings = new Settings { App = new Settings.AppSettings { BaseDirectory = TempDir } };
 
             Sut = new DownloadWorker(
