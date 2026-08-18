@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -11,8 +12,6 @@ using Google.Apis.YouTube.v3;
 using JiApp.Common.Resilience;
 using JiApp.YtApi.Contracts;
 using Polly;
-using YoutubeDLSharp;
-using YoutubeDLSharp.Options;
 
 namespace JiApp.YtApi.Clients;
 
@@ -152,55 +151,165 @@ public sealed class YoutubeClient(
         // which two concurrent downloads could cross-resolve.
         var outputTemplate = Path.Combine(outputPath, $"{tempId}.%(ext)s");
 
-        var options = BuildDownloadOptions(outputTemplate);
-
-        // A fresh YoutubeDL per call so concurrent downloads each get their own
-        // yt-dlp process — a shared instance would serialize them.
-        var youtubeDl = new YoutubeDL
-        {
-            YoutubeDLPath = ytDlpPath,
-            FFmpegPath = ffmpegPath,
-        };
-
-        var result = await youtubeDl.RunWithOptions(videoUrl, options, ct: cancellationToken);
+        // Attempt 1 carries the tv-client override; a non-zero exit (bot-check, client
+        // rejected) falls back without the override so the config-file POT args from
+        // /etc/yt-dlp.conf stay active — never android_vr, which 403s media URLs.
+        var result = await RunYtDlpAsync(
+            videoUrl, BuildDownloadArgs(outputTemplate, includeTvClientExtractorArgs: true), cancellationToken);
 
         if (!result.Success)
         {
-            options.ExtractorArgs = null;
-            options.Output = outputTemplate;
-            var fallbackResult = await youtubeDl.RunWithOptions(videoUrl, options, ct: cancellationToken);
-            if (fallbackResult.Success)
-                result = fallbackResult;
+            var fallback = await RunYtDlpAsync(
+                videoUrl, BuildDownloadArgs(outputTemplate, includeTvClientExtractorArgs: false), cancellationToken);
+            if (fallback.Success)
+                result = fallback;
         }
 
         if (!result.Success)
-            return new YoutubeClientResponse(null, false, result.ErrorOutput ?? []);
+            return new YoutubeClientResponse(null, false, result.Errors);
 
-        var resolvedPath = ResolveOutputFilePath(outputPath, tempId, result.Data);
+        var resolvedPath = ResolveOutputFilePath(outputPath, tempId, ytDlpReportedPath: null);
 
         return new YoutubeClientResponse(resolvedPath, !string.IsNullOrEmpty(resolvedPath), []);
     }
 
-    internal OptionSet BuildDownloadOptions(string outputTemplate)
+    internal List<string> BuildDownloadArgs(string outputTemplate, bool includeTvClientExtractorArgs)
     {
-        return new OptionSet
+        var args = new List<string>
         {
-            NoPlaylist = true,
-            ExtractAudio = true,
-            AudioFormat = AudioConversionFormat.Mp3,
-            EmbedThumbnail = true,
-            EmbedMetadata = true,
+            "--no-playlist",
+            "-x",
+            "--audio-format",
+            "mp3",
+            "--embed-thumbnail",
+            "--embed-metadata",
+            // yt-dlp-side bounds: a hung network read or endless retry loop reaps itself
+            // instead of pinning the worker slot until the .NET-side deadline.
+            "--retries",
+            "2",
+            "--fragment-retries",
+            "2",
+            "--socket-timeout",
+            "15",
+            "--max-filesize",
+            "500M",
+        };
+        if (includeTvClientExtractorArgs)
+        {
             // android_vr media URLs 403 on YouTube (same issue documented in BuildPreviewAudioProcess);
             // tv is the current stable client. Re-check when downloads regress.
-            ExtractorArgs = "youtube:player_client=tv",
-            Output = outputTemplate,
-            // Precedence: cookiesFromBrowser wins over cookiesFile.
-            // When both are set, only pass --cookies-from-browser to avoid conflicting flags.
-            CookiesFromBrowser = !string.IsNullOrEmpty(cookiesFromBrowser) ? cookiesFromBrowser : null,
-            Cookies = string.IsNullOrEmpty(cookiesFromBrowser) && !string.IsNullOrEmpty(cookiesFile) ? cookiesFile : null,
-            Proxy = string.IsNullOrEmpty(proxy) ? null : proxy,
-        };
+            args.Add("--extractor-args");
+            args.Add("youtube:player_client=tv");
+        }
+        // Precedence: cookiesFromBrowser wins over cookiesFile.
+        // When both are set, only pass --cookies-from-browser to avoid conflicting flags.
+        if (!string.IsNullOrEmpty(cookiesFromBrowser))
+        {
+            args.Add("--cookies-from-browser");
+            args.Add(cookiesFromBrowser);
+        }
+        else if (!string.IsNullOrEmpty(cookiesFile))
+        {
+            args.Add("--cookies");
+            args.Add(cookiesFile);
+        }
+        if (!string.IsNullOrEmpty(proxy))
+        {
+            args.Add("--proxy");
+            args.Add(proxy);
+        }
+        // A bare name (e.g. the default "ffmpeg") resolves from PATH like the streaming
+        // preview relies on; only an explicit path needs --ffmpeg-location.
+        if (!string.IsNullOrEmpty(ffmpegPath)
+            && (Path.IsPathRooted(ffmpegPath) || ffmpegPath.Contains(Path.DirectorySeparatorChar)))
+        {
+            args.Add("--ffmpeg-location");
+            args.Add(ffmpegPath);
+        }
+        args.Add("-o");
+        args.Add(outputTemplate);
+        return args;
     }
+
+    /// <summary>
+    /// Spawns yt-dlp directly rather than through YoutubeDLSharp: owning the <see cref="Process"/>
+    /// means a deadline can hard-kill the whole tree (yt-dlp plus any ffmpeg child), which the
+    /// library's cancellation could not — a stuck child left its job Processing forever. Stdout
+    /// and stderr are drained concurrently so a chatty child cannot fill a pipe buffer and
+    /// deadlock the wait.
+    /// </summary>
+    private async Task<YtDlpRunResult> RunYtDlpAsync(string videoUrl, IReadOnlyList<string> args, CancellationToken ct)
+    {
+        var startInfo = new ProcessStartInfo(ytDlpPath)
+        {
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+        };
+        foreach (var arg in args)
+            startInfo.ArgumentList.Add(arg);
+        startInfo.ArgumentList.Add(videoUrl);
+
+        using var process = new Process { StartInfo = startInfo };
+        process.Start();
+
+        var stdoutTask = process.StandardOutput.ReadToEndAsync();
+        var stderrTask = process.StandardError.ReadToEndAsync();
+
+        try
+        {
+            await process.WaitForExitAsync(ct);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            KillProcessTree(process);
+            try
+            {
+                // After the kill the pipes close; bound the drain in case the child survived
+                // the kill. Either way the cancellation propagates so the worker's deadline
+                // path runs.
+                await Task.WhenAll(stdoutTask, stderrTask).WaitAsync(TimeSpan.FromSeconds(5));
+            }
+            catch (TimeoutException)
+            {
+            }
+            throw;
+        }
+
+        var stdout = await stdoutTask;
+        var stderr = await stderrTask;
+
+        return process.ExitCode == 0
+            ? new YtDlpRunResult(true, [])
+            : new YtDlpRunResult(false, ParseYtDlpErrors(stderr));
+    }
+
+    private static void KillProcessTree(Process process)
+    {
+        try
+        {
+            if (!process.HasExited)
+                process.Kill(entireProcessTree: true);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or Win32Exception or NotSupportedException)
+        {
+            // The process exited (or cannot be reaped on this platform) between the cancel
+            // and the kill — nothing left to kill.
+        }
+    }
+
+    private static string[] ParseYtDlpErrors(string stderr)
+    {
+        var lines = stderr
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .TakeLast(20)
+            .ToArray();
+
+        return lines.Length == 0 ? ["yt-dlp exited with a non-zero exit code."] : lines;
+    }
+
+    private sealed record YtDlpRunResult(bool Success, string[] Errors);
 
     private static void ValidateVideoId(string videoId)
     {

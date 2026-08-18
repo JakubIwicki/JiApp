@@ -41,7 +41,9 @@ public sealed class GetDownloadLinkHandlerTests
             JobStore = new DownloadJobStore(
                 _provider.GetRequiredService<IServiceScopeFactory>(),
                 TimeSpan.FromMinutes(15),
-                TimeProvider.System);
+                TimeProvider.System,
+                TimeSpan.FromMinutes(35),
+                baseDirectory: null);
 
             var user = Mock.Of<ICurrentUserService>(x => x.UserId == UserId && x.Username == "test-user");
             Sut = new GetDownloadLinkHandler(JobStore, Queue, user);

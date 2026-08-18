@@ -1,5 +1,4 @@
 using JiApp.YtApi.Clients;
-using YoutubeDLSharp.Options;
 
 namespace JiApp.YtDownloader.Tests;
 
@@ -19,26 +18,90 @@ public sealed class YoutubeClientDownloadOptionsTests
     }
 
     [Fact]
-    public void BuildDownloadOptions_LocksPlayerClientToKnownGoodTvClient()
+    public void BuildDownloadArgs_LocksPlayerClientToKnownGoodTvClient()
     {
         var fixture = Fixture.Create();
 
-        var options = fixture.Sut.BuildDownloadOptions("/tmp/t.%(ext)s");
+        var args = fixture.Sut.BuildDownloadArgs("/tmp/t.%(ext)s", includeTvClientExtractorArgs: true);
 
         // Regression guard for the PR #163 fix: an android_vr player client 403s media URLs,
         // so reverting the extractor-args allow-list value must fail this test.
-        options.ExtractorArgs.Values.Should().ContainSingle().Which.Should().Be("youtube:player_client=tv");
+        args.Should().Contain("--extractor-args");
+        args.Should().Contain("youtube:player_client=tv");
+        args.Should().NotContain("youtube:player_client=android_vr");
     }
 
     [Fact]
-    public void BuildDownloadOptions_ReturnsMp3AudioDownloadWithPlaylistDisabled()
+    public void BuildDownloadArgs_Fallback_DropsExtractorArgs()
     {
         var fixture = Fixture.Create();
 
-        var options = fixture.Sut.BuildDownloadOptions("/tmp/t.%(ext)s");
+        var args = fixture.Sut.BuildDownloadArgs("/tmp/t.%(ext)s", includeTvClientExtractorArgs: false);
 
-        options.NoPlaylist.Should().BeTrue();
-        options.ExtractAudio.Should().BeTrue();
-        options.AudioFormat.Should().Be(AudioConversionFormat.Mp3);
+        // The fallback must not override the extractor client at all, so the config-file
+        // POT args from /etc/yt-dlp.conf stay active.
+        args.Should().NotContain("--extractor-args");
+        args.Should().NotContain(x => x.StartsWith("youtube:player_client=", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void BuildDownloadArgs_ReturnsMp3AudioDownload_WithPlaylistDisabledAndChildBounds()
+    {
+        var fixture = Fixture.Create();
+
+        var args = fixture.Sut.BuildDownloadArgs("/tmp/t.%(ext)s", includeTvClientExtractorArgs: true);
+
+        args.Should().Contain("--no-playlist");
+        args.Should().Contain("-x");
+        args.Should().Contain("--audio-format");
+        args.Should().Contain("mp3");
+        args.Should().Contain("--embed-thumbnail");
+        args.Should().Contain("--embed-metadata");
+        args.Should().Contain("-o");
+        args.Should().Contain("/tmp/t.%(ext)s");
+        args.Should().Contain("--retries");
+        args.Should().Contain("2");
+        args.Should().Contain("--fragment-retries");
+        args.Should().Contain("2");
+        args.Should().Contain("--socket-timeout");
+        args.Should().Contain("15");
+        args.Should().Contain("--max-filesize");
+        args.Should().Contain("500M");
+    }
+
+    [Fact]
+    public void BuildDownloadArgs_CookiesFromBrowser_WinsOverCookiesFile()
+    {
+        var fixture = Fixture.Create(cookiesFile: "/tmp/cookies.txt", cookiesFromBrowser: "madeupbrowser");
+
+        var args = fixture.Sut.BuildDownloadArgs("/tmp/t.%(ext)s", includeTvClientExtractorArgs: true);
+
+        args.Should().Contain("--cookies-from-browser");
+        args.Should().Contain("madeupbrowser");
+        args.Should().NotContain("--cookies");
+        args.Should().NotContain("/tmp/cookies.txt");
+    }
+
+    [Fact]
+    public void BuildDownloadArgs_IncludesCookiesFile_WhenConfiguredWithoutBrowser()
+    {
+        var fixture = Fixture.Create(cookiesFile: "/tmp/cookies.txt");
+
+        var args = fixture.Sut.BuildDownloadArgs("/tmp/t.%(ext)s", includeTvClientExtractorArgs: true);
+
+        args.Should().Contain("--cookies");
+        args.Should().Contain("/tmp/cookies.txt");
+        args.Should().NotContain("--cookies-from-browser");
+    }
+
+    [Fact]
+    public void BuildDownloadArgs_IncludesProxy_WhenConfigured()
+    {
+        var fixture = Fixture.Create(proxy: "socks5://127.0.0.1:1080");
+
+        var args = fixture.Sut.BuildDownloadArgs("/tmp/t.%(ext)s", includeTvClientExtractorArgs: true);
+
+        args.Should().Contain("--proxy");
+        args.Should().Contain("socks5://127.0.0.1:1080");
     }
 }

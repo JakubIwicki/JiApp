@@ -14,6 +14,8 @@ public sealed class DownloadJobStoreTests
     private const long OtherUserId = 2L;
     private const string VideoId = "dQw4w9WgXcQ";
     private static readonly TimeSpan Ttl = TimeSpan.FromMinutes(15);
+    // Mirrors prod: worker download deadline (30 min) + grace (5 min).
+    private static readonly TimeSpan RunningMaxAge = TimeSpan.FromMinutes(35);
     private static readonly DateTimeOffset FixedNow = new(2030, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
     // ── CreateJob ──────────────────────────────────────────────────────────
@@ -148,6 +150,28 @@ public sealed class DownloadJobStoreTests
         fixture.Store.Claim("does-not-exist", UserId).Should().BeFalse();
     }
 
+    [Fact]
+    public void Claim_StampsProcessingStartedAt()
+    {
+        using var fixture = new Fixture(Ttl, FixedNow);
+        var tempId = fixture.CreateJob();
+
+        fixture.Store.Claim(tempId, UserId);
+
+        fixture.LoadCommand(tempId)!.ProcessingStartedAtUtc.Should().Be(FixedNow.UtcDateTime);
+    }
+
+    [Fact]
+    public void ClaimEligible_StampsProcessingStartedAt()
+    {
+        using var fixture = new Fixture(Ttl, FixedNow);
+        var tempId = fixture.CreateJob();
+
+        ((IDownloadQueue)fixture.Store).ClaimEligible(tempId, UserId).Should().BeTrue();
+
+        fixture.LoadCommand(tempId)!.ProcessingStartedAtUtc.Should().Be(FixedNow.UtcDateTime);
+    }
+
     // ── MarkReady / MarkFailed ─────────────────────────────────────────────
 
     [Fact]
@@ -177,6 +201,18 @@ public sealed class DownloadJobStoreTests
         fixture.Clock.Advance(TimeSpan.FromMinutes(14));
 
         fixture.Store.GetFilePath(tempId, UserId).Should().Be(filePath);
+    }
+
+    [Fact]
+    public void MarkReady_ClearsProcessingStartedAt()
+    {
+        using var fixture = new Fixture(Ttl, FixedNow);
+        var tempId = fixture.CreateJob();
+        fixture.Store.Claim(tempId, UserId);
+
+        fixture.Store.MarkReady(tempId, UserId, fixture.CreateFile());
+
+        fixture.LoadCommand(tempId)!.ProcessingStartedAtUtc.Should().BeNull();
     }
 
     [Fact]
@@ -488,6 +524,60 @@ public sealed class DownloadJobStoreTests
     }
 
     [Fact]
+    public void CleanupExpired_ReapsStuckProcessingJob_WhenPastRunningMaxAge()
+    {
+        using var fixture = new Fixture(Ttl, FixedNow);
+        var tempId = fixture.CreateJob();
+        fixture.Store.Claim(tempId, UserId);
+        var folder = YtDownloadFolders.ForUser(fixture.TempDir, UserId);
+        Directory.CreateDirectory(folder);
+        var partialPath = Path.Combine(folder, $"{tempId}.mp3.part");
+        File.WriteAllText(partialPath, "partial download");
+        fixture.Clock.Advance(RunningMaxAge.Add(TimeSpan.FromMinutes(1)));
+
+        fixture.Store.CleanupExpired();
+
+        var row = fixture.LoadCommand(tempId);
+        row!.Status.Should().Be(DownloadCommandStatus.Failed);
+        row.LastError.Should().Be("Download timed out.");
+        row.ProcessingStartedAtUtc.Should().BeNull();
+        File.Exists(partialPath).Should().BeFalse();
+    }
+
+    [Fact]
+    public void CleanupExpired_ReapsStuckProcessingJob_AndDeletesMp4AndWebmPartials()
+    {
+        using var fixture = new Fixture(Ttl, FixedNow);
+        var tempId = fixture.CreateJob();
+        fixture.Store.Claim(tempId, UserId);
+        var folder = YtDownloadFolders.ForUser(fixture.TempDir, UserId);
+        Directory.CreateDirectory(folder);
+        var mp4Partial = Path.Combine(folder, $"{tempId}.f137.mp4");
+        var webmPartial = Path.Combine(folder, $"{tempId}.f251.webm");
+        File.WriteAllText(mp4Partial, "x");
+        File.WriteAllText(webmPartial, "x");
+        fixture.Clock.Advance(RunningMaxAge.Add(TimeSpan.FromMinutes(1)));
+
+        fixture.Store.CleanupExpired();
+
+        File.Exists(mp4Partial).Should().BeFalse();
+        File.Exists(webmPartial).Should().BeFalse();
+    }
+
+    [Fact]
+    public void CleanupExpired_KeepsProcessingJob_WithinRunningMaxAge()
+    {
+        using var fixture = new Fixture(Ttl, FixedNow);
+        var tempId = fixture.CreateJob();
+        fixture.Store.Claim(tempId, UserId);
+        fixture.Clock.Advance(RunningMaxAge.Subtract(TimeSpan.FromMinutes(1)));
+
+        fixture.Store.CleanupExpired();
+
+        fixture.LoadCommand(tempId)!.Status.Should().Be(DownloadCommandStatus.Processing);
+    }
+
+    [Fact]
     public void CleanupExpired_KeepsLiveReadyJob()
     {
         using var fixture = new Fixture(Ttl, FixedNow);
@@ -514,6 +604,7 @@ public sealed class DownloadJobStoreTests
         public Fixture(TimeSpan ttl, DateTimeOffset now)
         {
             Clock = new FakeTimeProvider(now);
+            TempDir = Directory.CreateTempSubdirectory("ytdl-store-tests-").FullName;
             _connection = new SqliteConnection("DataSource=:memory:");
             _connection.Open();
             _options = new DbContextOptionsBuilder<YtDbContext>()
@@ -526,8 +617,8 @@ public sealed class DownloadJobStoreTests
             services.AddScoped(_ => new YtDbContext(_options));
             _provider = services.BuildServiceProvider();
 
-            Store = new DownloadJobStore(_provider.GetRequiredService<IServiceScopeFactory>(), ttl, Clock);
-            TempDir = Directory.CreateTempSubdirectory("ytdl-store-tests-").FullName;
+            Store = new DownloadJobStore(
+                _provider.GetRequiredService<IServiceScopeFactory>(), ttl, Clock, RunningMaxAge, TempDir);
         }
 
         public string CreateJob(long userId = UserId, string videoId = VideoId) =>
@@ -628,7 +719,9 @@ public sealed class DownloadJobStoreTests
             Store = new DownloadJobStore(
                 _provider.GetRequiredService<IServiceScopeFactory>(),
                 Ttl,
-                new FakeTimeProvider(DateTimeOffset.UtcNow));
+                new FakeTimeProvider(DateTimeOffset.UtcNow),
+                RunningMaxAge,
+                _tempDir);
         }
 
         public int ActiveRowCount(long userId, string videoId)

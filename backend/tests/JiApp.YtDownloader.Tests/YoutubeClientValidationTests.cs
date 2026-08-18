@@ -1,5 +1,4 @@
 using JiApp.YtApi.Clients;
-using YoutubeDLSharp.Options;
 
 namespace JiApp.YtDownloader.Tests;
 
@@ -179,16 +178,5 @@ public sealed class YoutubeClientValidationTests
 
         process.StartInfo.ArgumentList.Should().Contain("--proxy");
         process.StartInfo.ArgumentList.Should().Contain("socks5://127.0.0.1:1080");
-    }
-
-    [Fact]
-    public void OptionSet_includes_embed_thumbnail_and_metadata_for_yt_dlp()
-    {
-        var options = new OptionSet { ExtractAudio = true, EmbedThumbnail = true, EmbedMetadata = true };
-
-        var args = options.ToString();
-
-        args.Should().Contain("--embed-thumbnail");
-        args.Should().Contain("--embed-metadata");
     }
 }

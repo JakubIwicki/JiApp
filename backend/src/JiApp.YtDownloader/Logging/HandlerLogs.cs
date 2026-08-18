@@ -51,4 +51,20 @@ internal static partial class HandlerLogs
         Message = "Assistant chat turn timed out for user {UserId} after {TimeoutSeconds}s")]
     public static partial void AssistantChatTurnTimedOut(
         this ILogger logger, long userId, int timeoutSeconds);
+
+    [LoggerMessage(EventId = 33, Level = LogLevel.Warning,
+        Message = "Download for video {VideoId} timed out after the per-job deadline (job {TempId}, user {UserId})")]
+    public static partial void DownloadTimedOut(this ILogger logger, string tempId, long userId, string videoId);
+
+    [LoggerMessage(EventId = 34, Level = LogLevel.Information,
+        Message = "Killed the yt-dlp process tree for timed-out download job {TempId} (video {VideoId})")]
+    public static partial void DownloadProcessKilled(this ILogger logger, string tempId, string videoId);
+
+    [LoggerMessage(EventId = 35, Level = LogLevel.Information,
+        Message = "Claimed download job {TempId} (video {VideoId}, user {UserId})")]
+    public static partial void DownloadClaimed(this ILogger logger, string tempId, long userId, string videoId);
+
+    [LoggerMessage(EventId = 36, Level = LogLevel.Information,
+        Message = "Completed download job {TempId} (video {VideoId})")]
+    public static partial void DownloadCompleted(this ILogger logger, string tempId, string videoId);
 }

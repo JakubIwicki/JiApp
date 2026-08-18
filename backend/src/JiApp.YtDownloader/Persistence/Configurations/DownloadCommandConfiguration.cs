@@ -20,6 +20,7 @@ public sealed class DownloadCommandConfiguration : IEntityTypeConfiguration<Down
         builder.Property(e => e.LastError).HasMaxLength(4000);
         builder.Property(e => e.ErrorCategory).HasMaxLength(50);
         builder.Property(e => e.FilePath).HasMaxLength(1024);
+        builder.Property(e => e.ProcessingStartedAtUtc);
 
         // At most one in-flight job per (UserId, VideoId): a double-tap on the same video
         // cannot enqueue a duplicate. Active rows are Queued, Processing, or Failed while
