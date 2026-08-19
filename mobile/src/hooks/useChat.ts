@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import i18next from '../i18n';
 import { openChatStream } from '../services/chatService';
 import { requestDownloadLink, downloadFile } from '../services/downloadService';
@@ -70,6 +70,18 @@ const useChat = (): UseChatResult => {
   const [error, setError] = useState<string | null>(null);
   const streamRef = useRef<ChatStreamHandle | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const downloadControllersRef = useRef<Set<AbortController>>(new Set());
+
+  // mount only — abort in-flight downloads and close the SSE stream on unmount
+  useEffect(() => {
+    // The Set reference is stable (never reassigned, only mutated), so
+    // capturing it here still sees every controller added by later runs.
+    const controllers = downloadControllersRef.current;
+    return () => {
+      streamRef.current?.close();
+      controllers.forEach(controller => controller.abort());
+    };
+  }, []);
 
   const clear = useCallback(() => {
     streamRef.current?.close();
@@ -83,6 +95,18 @@ const useChat = (): UseChatResult => {
 
   const confirmDownload = useCallback(
     (messageId: string) => {
+      // Capture the offer data before mutating state — a missing offer must
+      // not flip the chip to 'downloading' with no request in flight.
+      const message = messages.find(m => m.id === messageId);
+      const offer = message?.offer;
+      if (!offer) {
+        console.warn(
+          '[useChat] confirmDownload: no offer for message',
+          messageId,
+        );
+        return;
+      }
+
       // Mark the offer as downloading
       setMessages(prev =>
         prev.map(m =>
@@ -92,26 +116,27 @@ const useChat = (): UseChatResult => {
         ),
       );
 
-      // Capture the offer data before the async work
-      const message = messages.find(m => m.id === messageId);
-      const offer = message?.offer;
-      if (!offer) return;
-
       const title = offer.title ?? offer.videoId;
+
+      const controller = new AbortController();
+      downloadControllersRef.current.add(controller);
 
       // Run the existing download flow outside the SSE stream
       (async () => {
         try {
-          const { tempId, downloadUrl } = await requestDownloadLink({
-            videoId: offer.videoId,
-            videoUrl: offer.videoUrl,
-            title: offer.title ?? undefined,
-            imageUrl: offer.imageUrl ?? undefined,
-          });
+          const { tempId, downloadUrl } = await requestDownloadLink(
+            {
+              videoId: offer.videoId,
+              videoUrl: offer.videoUrl,
+              title: offer.title ?? undefined,
+              imageUrl: offer.imageUrl ?? undefined,
+            },
+            controller.signal,
+          );
 
-          await waitForDownload(tempId);
+          await waitForDownload(tempId, controller.signal);
 
-          await downloadFile(downloadUrl, title);
+          await downloadFile(downloadUrl, title, controller.signal);
 
           // Success
           setMessages(prev =>
@@ -130,6 +155,9 @@ const useChat = (): UseChatResult => {
           };
           setMessages(prev => [...prev, note]);
         } catch (err) {
+          // A cancelled download must not surface the abort message to the chip
+          if (err instanceof Error && err.name === 'AbortError') return;
+          console.warn('[useChat] confirmDownload failed', err);
           // Failure
           setMessages(prev =>
             prev.map(m =>
@@ -146,8 +174,10 @@ const useChat = (): UseChatResult => {
             text: i18next.t('chat.downloadNote.failed', { reason }),
           };
           setMessages(prev => [...prev, note]);
+        } finally {
+          downloadControllersRef.current.delete(controller);
         }
-      })().catch(() => {});
+      })();
     },
     [messages],
   );

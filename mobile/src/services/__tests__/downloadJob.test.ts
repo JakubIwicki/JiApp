@@ -41,7 +41,7 @@ describe('waitForDownload', () => {
     });
 
     expect(mockGetDownloadStatus).toHaveBeenCalledTimes(1);
-    expect(mockGetDownloadStatus).toHaveBeenCalledWith('job-1');
+    expect(mockGetDownloadStatus).toHaveBeenCalledWith('job-1', undefined);
   });
 
   it('polls until the job is ready', async () => {

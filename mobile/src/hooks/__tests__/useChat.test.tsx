@@ -383,16 +383,23 @@ describe('useChat', () => {
     expect(lastMsg.text).toContain('Cool Song');
 
     // Should have called the download service with correct params
-    expect(mockRequestDownloadLink).toHaveBeenCalledWith({
-      videoId: 'vid123',
-      videoUrl: 'https://youtu.be/vid123',
-      title: 'Cool Song',
-      imageUrl: undefined,
-    });
-    expect(mockWaitForDownload).toHaveBeenCalledWith('job-123');
+    expect(mockRequestDownloadLink).toHaveBeenCalledWith(
+      {
+        videoId: 'vid123',
+        videoUrl: 'https://youtu.be/vid123',
+        title: 'Cool Song',
+        imageUrl: undefined,
+      },
+      expect.any(AbortSignal),
+    );
+    expect(mockWaitForDownload).toHaveBeenCalledWith(
+      'job-123',
+      expect.any(AbortSignal),
+    );
     expect(mockDownloadFile).toHaveBeenCalledWith(
       'https://example.com/file.mp3',
       'Cool Song',
+      expect.any(AbortSignal),
     );
   });
 
@@ -434,6 +441,158 @@ describe('useChat', () => {
     const lastMsg = msgs[msgs.length - 1];
     expect(lastMsg.role).toBe('user');
     expect(lastMsg.text).toContain('Network down');
+  });
+
+  it('confirmDownload with an unknown messageId leaves statuses unchanged', async () => {
+    const { result } = renderHook(() => useChat());
+
+    act(() => {
+      result.current.send('Download that');
+    });
+    act(() => {
+      emitDownloadOffer({
+        videoId: 'vidUnknown',
+        videoUrl: 'https://youtu.be/vidUnknown',
+        title: 'Mystery Song',
+        imageUrl: null,
+      });
+    });
+    act(() => {
+      emitDone();
+    });
+
+    const statusBefore = result.current.messages[1].offerStatus;
+
+    act(() => {
+      result.current.confirmDownload('no-such-message');
+    });
+
+    await flushMicrotasks();
+
+    expect(result.current.messages[1].offerStatus).toBe(statusBefore);
+    expect(mockRequestDownloadLink).not.toHaveBeenCalled();
+    expect(mockDownloadFile).not.toHaveBeenCalled();
+  });
+
+  it('confirmDownload with a stale callback (no offer in closure) does not flip the chip', async () => {
+    const { result } = renderHook(() => useChat());
+
+    // Capture the callback BEFORE the offer arrives so its closure has no offer
+    act(() => {
+      result.current.send('Download that');
+    });
+    const staleConfirm = result.current.confirmDownload;
+    const offerMsgId = result.current.messages[1].id;
+
+    act(() => {
+      emitDownloadOffer({
+        videoId: 'vidStale',
+        videoUrl: 'https://youtu.be/vidStale',
+        title: 'Stale Song',
+        imageUrl: null,
+      });
+    });
+    act(() => {
+      emitDone();
+    });
+
+    expect(result.current.messages[1].offerStatus).toBe('idle');
+
+    act(() => {
+      staleConfirm(offerMsgId);
+    });
+
+    await flushMicrotasks();
+
+    // The offer exists in state but not in the stale closure's messages —
+    // the status must not flip to 'downloading' with no request in flight.
+    expect(result.current.messages[1].offerStatus).toBe('idle');
+    expect(mockRequestDownloadLink).not.toHaveBeenCalled();
+    expect(mockDownloadFile).not.toHaveBeenCalled();
+  });
+
+  it('unmount aborts an in-flight confirmDownload', async () => {
+    const captured: { signal: AbortSignal | null } = { signal: null };
+    mockRequestDownloadLink.mockImplementationOnce((_req, signal) => {
+      captured.signal = signal as AbortSignal;
+      return new Promise<{ tempId: string; downloadUrl: string }>(() => {});
+    });
+
+    const { result, unmount } = renderHook(() => useChat());
+
+    act(() => {
+      result.current.send('Download that');
+    });
+    act(() => {
+      emitDownloadOffer({
+        videoId: 'vidAbort',
+        videoUrl: 'https://youtu.be/vidAbort',
+        title: 'Abort Song',
+        imageUrl: null,
+      });
+    });
+    act(() => {
+      emitDone();
+    });
+
+    const offerMsgId = result.current.messages[1].id;
+
+    act(() => {
+      result.current.confirmDownload(offerMsgId);
+    });
+
+    expect(captured.signal).not.toBeNull();
+    expect(captured.signal?.aborted).toBe(false);
+
+    act(() => {
+      unmount();
+    });
+
+    expect(captured.signal?.aborted).toBe(true);
+  });
+
+  it('prunes the tracked download controller once the download settles', async () => {
+    const captured: { signal: AbortSignal | null } = { signal: null };
+    mockRequestDownloadLink.mockImplementationOnce((_req, signal) => {
+      captured.signal = signal as AbortSignal;
+      return Promise.resolve({
+        tempId: 'job-123',
+        downloadUrl: 'https://example.com/file.mp3',
+      });
+    });
+
+    const { result, unmount } = renderHook(() => useChat());
+
+    act(() => {
+      result.current.send('Download that');
+    });
+    act(() => {
+      emitDownloadOffer({
+        videoId: 'vidPrune',
+        videoUrl: 'https://youtu.be/vidPrune',
+        title: 'Prune Song',
+        imageUrl: null,
+      });
+    });
+    act(() => {
+      emitDone();
+    });
+
+    const offerMsgId = result.current.messages[1].id;
+
+    act(() => {
+      result.current.confirmDownload(offerMsgId);
+    });
+    await flushMicrotasks();
+
+    expect(captured.signal).not.toBeNull();
+
+    // The settled download has its controller pruned, so unmount must not abort it
+    act(() => {
+      unmount();
+    });
+
+    expect(captured.signal?.aborted).toBe(false);
   });
 
   // ── History mapping ────────────────────────────────────────────────────

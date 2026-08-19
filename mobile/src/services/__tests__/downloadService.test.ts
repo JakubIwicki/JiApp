@@ -100,6 +100,10 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
+/** Drain the microtask queue (setTimeout fires after all microtasks settle). */
+const flushMacrotasks = () =>
+  new Promise<void>(resolve => setTimeout(resolve, 0));
+
 // --- requestDownloadLink ---
 
 describe('requestDownloadLink', () => {
@@ -160,7 +164,9 @@ describe('getDownloadStatus', () => {
 
     const result = await getDownloadStatus('job-123');
 
-    expect(mockGet).toHaveBeenCalledWith('/yt/downloads/mp3/status/job-123');
+    expect(mockGet).toHaveBeenCalledWith('/yt/downloads/mp3/status/job-123', {
+      signal: undefined,
+    });
     expect(result).toEqual(mockStatus);
   });
 
@@ -267,7 +273,7 @@ describe('downloadFile', () => {
     // Should check token
     expect(mockGetToken).toHaveBeenCalledTimes(1);
 
-    // Should configure download with auth header
+    // Should configure download with auth header (timeout left at library default)
     expect(mockConfig).toHaveBeenCalledWith({
       path: '/cache/Never Gonna Give You Up.mp3',
     });
@@ -315,6 +321,71 @@ describe('downloadFile', () => {
 
     await expect(downloadFile(downloadUrl, fileName)).rejects.toThrow(
       'Network error',
+    );
+  });
+
+  it('cancels the blob task and rejects with AbortError when the signal aborts', async () => {
+    mockGetToken.mockResolvedValueOnce('jwt-token-123');
+    const abortController = new AbortController();
+
+    // Mirror the library: task.cancel() rejects with a 'canceled' error
+    let rejectTask: (error: Error) => void = () => {};
+    const task = new Promise<unknown>((_resolve, reject) => {
+      rejectTask = reject;
+    });
+    const taskCancel = jest.fn(() => {
+      rejectTask(new Error('canceled'));
+    });
+    (task as unknown as { cancel: () => void }).cancel = taskCancel;
+    const mockFetch = jest.fn(() => task);
+    (ReactNativeBlobUtil.config as jest.Mock).mockReturnValueOnce({
+      fetch: mockFetch,
+    });
+
+    const promise = downloadFile(downloadUrl, fileName, abortController.signal);
+
+    // Drain getToken() and fs.exists() so the blob task exists and is listening
+    await flushMacrotasks();
+
+    expect(mockConfig).toHaveBeenCalledWith({
+      path: '/cache/Never Gonna Give You Up.mp3',
+    });
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+
+    abortController.abort();
+
+    await expect(promise).rejects.toMatchObject({ name: 'AbortError' });
+    expect(taskCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not copy to MediaStore when the signal aborts after the fetch resolves', async () => {
+    mockGetToken.mockResolvedValueOnce('jwt-token-123');
+    const abortController = new AbortController();
+
+    // Task resolves normally, but the abort lands before copyToMediaStore
+    let resolveTask: (value: unknown) => void = () => {};
+    const task = new Promise<unknown>(resolve => {
+      resolveTask = resolve;
+    });
+    (task as unknown as { cancel: () => void }).cancel = jest.fn();
+    const mockFetch = jest.fn(() => task);
+    (ReactNativeBlobUtil.config as jest.Mock).mockReturnValueOnce({
+      fetch: mockFetch,
+    });
+
+    const promise = downloadFile(downloadUrl, fileName, abortController.signal);
+
+    await flushMacrotasks();
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+
+    abortController.abort();
+    resolveTask({ path: () => '/cache/temp-download.mp3' });
+
+    await expect(promise).rejects.toMatchObject({ name: 'AbortError' });
+    expect(mockCopyToMediaStore).not.toHaveBeenCalled();
+    expect(ReactNativeBlobUtil.fs.unlink).toHaveBeenCalledWith(
+      '/cache/Never Gonna Give You Up.mp3',
     );
   });
 });

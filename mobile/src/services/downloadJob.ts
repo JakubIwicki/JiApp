@@ -1,5 +1,6 @@
 import { isAxiosError } from 'axios';
 import i18next from '../i18n';
+import { createAbortError } from '../utils/errorUtils';
 import { getDownloadStatus } from './downloadService';
 import type { DownloadStatus } from '../types/api';
 
@@ -19,12 +20,6 @@ const isTransientStatusError = (err: unknown): boolean => {
   }
   const status = err.response?.status;
   return status === 429 || (status !== undefined && status >= 500);
-};
-
-const createAbortError = (): Error => {
-  const error = new Error('The operation was aborted');
-  error.name = 'AbortError';
-  return error;
 };
 
 const delay = (ms: number, signal?: AbortSignal): Promise<void> =>
@@ -63,7 +58,7 @@ export const waitForDownload = async (
 
     let status: DownloadStatus | undefined;
     try {
-      status = await getDownloadStatus(tempId);
+      status = await getDownloadStatus(tempId, signal);
     } catch (err) {
       if (signal?.aborted) {
         throw createAbortError();

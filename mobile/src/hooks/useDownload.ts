@@ -25,12 +25,13 @@ const useDownload = (): UseDownloadResult => {
   const filePathRef = useRef<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
+  // mount only — read the ref at cleanup time so the in-flight controller
+  // (created after mount) is aborted when the screen unmounts
   useEffect(() => {
-    const controller = abortRef.current;
     return () => {
-      controller?.abort();
+      abortRef.current?.abort();
     };
-  }, [abortRef]);
+  }, []);
 
   const download = useCallback(async (video: VideoItem) => {
     // Cancel any previous in-flight request
@@ -57,7 +58,11 @@ const useDownload = (): UseDownloadResult => {
 
       await waitForDownload(tempId, controller.signal);
 
-      const file = await downloadFile(downloadUrl, video.title);
+      const file = await downloadFile(
+        downloadUrl,
+        video.title,
+        controller.signal,
+      );
       setLocalFilePath(file.displayPath);
       contentUriRef.current = file.contentUri;
       filePathRef.current = file.filePath;
