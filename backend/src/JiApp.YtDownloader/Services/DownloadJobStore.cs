@@ -249,10 +249,12 @@ public sealed class DownloadJobStore : IDownloadJobStore, IDownloadQueue
         // completed — force-expire it via the retry semantics so the existing backoff
         // machinery bounds the recovery, and delete its partial files so a retry starts clean.
         var runningCutoff = now.Add(-_runningMaxAge);
+        // A Processing row with a NULL ProcessingStartedAtUtc (pre-migration or an anomalous
+        // claim) ages by CreatedAtUtc, so a missing timestamp cannot make the reaper immune.
         var stuckProcessing = db.DownloadCommands
             .Where(c => c.Status == DownloadCommandStatus.Processing
-                && c.ProcessingStartedAtUtc != null
-                && c.ProcessingStartedAtUtc < runningCutoff)
+                && ((c.ProcessingStartedAtUtc != null && c.ProcessingStartedAtUtc < runningCutoff)
+                    || (c.ProcessingStartedAtUtc == null && c.CreatedAtUtc < runningCutoff)))
             .ToList();
 
         foreach (var command in stuckProcessing)

@@ -16,7 +16,9 @@ public sealed class TempFileCleanupServiceTests
     private const long UserId = 1L;
     private const string VideoId = "dQw4w9WgXcQ";
     private static readonly TimeSpan Ttl = TimeSpan.FromMinutes(15);
-    // Mirrors prod: worker download deadline (30 min) + grace (5 min).
+    // Exceeds the TTL so a Processing row can be past ExpiresAt yet within the reaper
+    // window — the state NeverReapsProcessingRow_EvenWhenExpired exercises. (Prod's reaper
+    // is 10 min: 5-min deadline + 5-min grace, which reaps every Processing row before its TTL.)
     private static readonly TimeSpan RunningMaxAge = TimeSpan.FromMinutes(35);
     private static readonly TimeSpan PollTimeout = TimeSpan.FromSeconds(10);
     private static readonly DateTimeOffset FixedNow = new(2030, 1, 1, 0, 0, 0, TimeSpan.Zero);

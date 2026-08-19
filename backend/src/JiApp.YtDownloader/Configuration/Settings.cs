@@ -101,7 +101,7 @@ public sealed class Settings
         public string? BaseDirectory { get; set; }
         public int PreviewDurationSeconds { get; set; } = 10;
         public int DownloadTtlMinutes { get; set; } = 15;
-        public int DownloadJobTimeoutMinutes { get; set; } = 30;
+        public int DownloadJobTimeoutMinutes { get; set; } = 5;
         public string? PublicBaseUrl { get; set; }
     }
 

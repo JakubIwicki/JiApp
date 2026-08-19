@@ -14,7 +14,9 @@ public sealed class DownloadJobStoreTests
     private const long OtherUserId = 2L;
     private const string VideoId = "dQw4w9WgXcQ";
     private static readonly TimeSpan Ttl = TimeSpan.FromMinutes(15);
-    // Mirrors prod: worker download deadline (30 min) + grace (5 min).
+    // Exceeds the TTL so a Processing row can be past ExpiresAt yet within the reaper
+    // window — the state the CleanupExpired tests exercise. (Prod's reaper is 10 min:
+    // 5-min deadline + 5-min grace, which reaps every Processing row before its TTL.)
     private static readonly TimeSpan RunningMaxAge = TimeSpan.FromMinutes(35);
     private static readonly DateTimeOffset FixedNow = new(2030, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
@@ -591,6 +593,32 @@ public sealed class DownloadJobStoreTests
         fixture.Store.GetStatus(tempId, UserId)!.Status.Should().Be(DownloadJobStatus.Ready);
     }
 
+    [Fact]
+    public void CleanupExpired_ReapsProcessingRow_WithNullStartedAt_WhenCreatedAtIsStale()
+    {
+        using var fixture = new Fixture(Ttl, FixedNow);
+        var tempId = fixture.SeedProcessingRow(FixedNow.UtcDateTime.AddMinutes(-(int)RunningMaxAge.TotalMinutes - 1));
+
+        fixture.Store.CleanupExpired();
+
+        var row = fixture.LoadCommand(tempId);
+        row!.Status.Should().Be(DownloadCommandStatus.Failed);
+        row.LastError.Should().Be("Download timed out.");
+    }
+
+    [Fact]
+    public void CleanupExpired_KeepsProcessingRow_WithNullStartedAt_WhenCreatedAtIsRecent()
+    {
+        using var fixture = new Fixture(Ttl, FixedNow);
+        var tempId = fixture.SeedProcessingRow(FixedNow.UtcDateTime);
+
+        fixture.Store.CleanupExpired();
+
+        var row = fixture.LoadCommand(tempId);
+        row!.Status.Should().Be(DownloadCommandStatus.Processing);
+        row.ProcessingStartedAtUtc.Should().BeNull();
+    }
+
     private sealed class Fixture : IDisposable
     {
         private readonly SqliteConnection _connection;
@@ -661,6 +689,19 @@ public sealed class DownloadJobStoreTests
             command.MarkReady(Path.Combine(TempDir, "completed.mp3"), FixedNow.UtcDateTime, Ttl);
             db.DownloadCommands.Add(command);
             db.SaveChanges();
+        }
+
+        // Bypasses Claim (which always stamps ProcessingStartedAtUtc) to construct the
+        // pre-migration/anomalous shape: a Processing row with no start timestamp.
+        public string SeedProcessingRow(DateTime createdAtUtc)
+        {
+            using var db = new YtDbContext(_options);
+            var command = NewCommand(UserId, VideoId);
+            db.Entry(command).Property(c => c.CreatedAtUtc).CurrentValue = createdAtUtc;
+            db.Entry(command).Property(c => c.Status).CurrentValue = DownloadCommandStatus.Processing;
+            db.DownloadCommands.Add(command);
+            db.SaveChanges();
+            return command.Id;
         }
 
         private static DownloadCommand NewCommand(long userId, string videoId) =>
