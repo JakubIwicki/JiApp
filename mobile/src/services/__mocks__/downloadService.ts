@@ -1,4 +1,5 @@
 import { createMockFn } from '../../test/createMockFn';
+import type { DownloadedFile } from '../downloadService';
 import type {
   DownloadRequest,
   DownloadResponse,
@@ -68,9 +69,22 @@ export const archiveDownload = createMockFn(
 );
 
 export const downloadFile = createMockFn(
-  async (_downloadUrl: string, fileName: string): Promise<string> => {
+  async (
+    _downloadUrl: string,
+    fileName: string,
+    signal?: AbortSignal,
+  ): Promise<DownloadedFile> => {
+    if (signal?.aborted) {
+      const error = new Error('The operation was aborted');
+      error.name = 'AbortError';
+      throw error;
+    }
     if (_fileDownloadError) throw _fileDownloadError;
-    return `/storage/emulated/0/Download/${fileName}.mp3`;
+    return {
+      contentUri: `content://media/external/audio/mock-${fileName}`,
+      displayPath: `Download/${fileName}.mp3`,
+      filePath: `/storage/emulated/0/Download/${fileName}.mp3`,
+    };
   },
 );
 

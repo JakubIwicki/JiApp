@@ -3,6 +3,13 @@ import { isAxiosError } from 'axios';
 export const getErrorMessage = (err: unknown, fallback: string): string =>
   err instanceof Error ? err.message : fallback;
 
+/** AbortError-shaped rejection so callers can distinguish an aborted operation. */
+export const createAbortError = (): Error => {
+  const error = new Error('The operation was aborted');
+  error.name = 'AbortError';
+  return error;
+};
+
 interface AxiosErrorWithServerError {
   response?: {
     status: number;

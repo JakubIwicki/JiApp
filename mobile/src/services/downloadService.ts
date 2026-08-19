@@ -1,6 +1,8 @@
 import apiClient from './apiClient';
 import ReactNativeBlobUtil from 'react-native-blob-util';
+import type { FetchBlobResponse } from 'react-native-blob-util';
 import { getToken } from './storageService';
+import { createAbortError } from '../utils/errorUtils';
 import type {
   DownloadRequest,
   DownloadResponse,
@@ -30,9 +32,11 @@ export const requestDownloadLink = async (
 
 export const getDownloadStatus = async (
   tempId: string,
+  signal?: AbortSignal,
 ): Promise<DownloadStatus> => {
   const response = await apiClient.get<DownloadStatus>(
     `/yt/downloads/mp3/status/${tempId}`,
+    { signal },
   );
   return DownloadStatusSchema.parse(response.data);
 };
@@ -57,9 +61,19 @@ export interface DownloadedFile {
   filePath: string;
 }
 
+/**
+ * RNBlobUtil cancels a fetch by rejecting with CanceledFetchError('canceled')
+ * (see fetch.js promise.cancel) — classify that rejection shape as an abort.
+ */
+const isCanceledFetch = (err: unknown): boolean =>
+  err instanceof Error &&
+  (err.name === 'ReactNativeBlobUtilCanceledFetch' ||
+    err.message.toLowerCase().includes('cancel'));
+
 export const downloadFile = async (
   downloadUrl: string,
   fileName: string,
+  signal?: AbortSignal,
 ): Promise<DownloadedFile> => {
   const token = await getToken();
 
@@ -72,16 +86,36 @@ export const downloadFile = async (
     await ReactNativeBlobUtil.fs.unlink(cachePath);
   }
 
-  let result;
+  let result: FetchBlobResponse;
   try {
-    result = await ReactNativeBlobUtil.config({
+    const task = ReactNativeBlobUtil.config({
       path: cachePath,
     }).fetch(
       'GET',
       downloadUrl,
       token ? { Authorization: `Bearer ${token}` } : {},
     );
+
+    // Cancel the blob task when the caller aborts, so an unmount stops the
+    // stream promptly (the library's 60s default timeout is the backstop).
+    const cancel = () => {
+      task.cancel();
+    };
+    if (signal?.aborted) {
+      cancel();
+    } else {
+      signal?.addEventListener('abort', cancel);
+    }
+
+    try {
+      result = await task;
+    } finally {
+      signal?.removeEventListener('abort', cancel);
+    }
   } catch (err) {
+    if (isCanceledFetch(err)) {
+      throw createAbortError();
+    }
     if (err instanceof Error) {
       const msg = err.message.toLowerCase();
       if (
@@ -95,6 +129,13 @@ export const downloadFile = async (
       }
     }
     throw err;
+  }
+
+  // cancel() is a no-op after the task resolves, so an abort landing here must
+  // not let the file reach the public Downloads folder via copyToMediaStore.
+  if (signal?.aborted) {
+    await ReactNativeBlobUtil.fs.unlink(cachePath);
+    throw createAbortError();
   }
 
   // Check for HTTP errors

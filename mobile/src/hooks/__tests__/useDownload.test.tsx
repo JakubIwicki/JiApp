@@ -122,7 +122,11 @@ describe('useDownload', () => {
       },
       expect.any(AbortSignal),
     );
-    expect(mockDownloadFile).toHaveBeenCalledWith(mockDownloadUrl, video.title);
+    expect(mockDownloadFile).toHaveBeenCalledWith(
+      mockDownloadUrl,
+      video.title,
+      expect.any(AbortSignal),
+    );
     expect(mockWaitForDownload).toHaveBeenCalledWith(
       mockTempId,
       expect.any(AbortSignal),
@@ -226,5 +230,29 @@ describe('useDownload', () => {
     expect(result.current.error).toBe('Video unavailable');
     expect(result.current.localFilePath).toBeNull();
     expect(mockDownloadFile).not.toHaveBeenCalled();
+  });
+
+  it('aborts an in-flight download when the component unmounts', async () => {
+    const captured: { signal: AbortSignal | null } = { signal: null };
+    mockRequestDownloadLink.mockImplementationOnce((_req, signal) => {
+      captured.signal = signal as AbortSignal;
+      return new Promise<{ tempId: string; downloadUrl: string }>(() => {});
+    });
+
+    const video = createVideoItem('1');
+    const { result, unmount } = renderHook(() => useDownload());
+
+    act(() => {
+      result.current.download(video);
+    });
+
+    expect(captured.signal).not.toBeNull();
+    expect(captured.signal?.aborted).toBe(false);
+
+    act(() => {
+      unmount();
+    });
+
+    expect(captured.signal?.aborted).toBe(true);
   });
 });
