@@ -151,16 +151,17 @@ public sealed class YoutubeClient(
         // which two concurrent downloads could cross-resolve.
         var outputTemplate = Path.Combine(outputPath, $"{tempId}.%(ext)s");
 
-        // Attempt 1 carries the tv-client override; a non-zero exit (bot-check, client
-        // rejected) falls back without the override so the config-file POT args from
-        // /etc/yt-dlp.conf stay active — never android_vr, which 403s media URLs.
+        // Attempt 1 uses yt-dlp's default client selection — the only working path since the
+        // tv client died 2026-08-19 ("The page needs to be reloaded"). A non-zero exit falls
+        // back to the tv-client override, kept in case yt-dlp defaults regress — never
+        // android_vr, which 403s media URLs.
         var result = await RunYtDlpAsync(
-            videoUrl, BuildDownloadArgs(outputTemplate, includeTvClientExtractorArgs: true), cancellationToken);
+            videoUrl, BuildDownloadArgs(outputTemplate, includeTvClientExtractorArgs: false), cancellationToken);
 
         if (!result.Success)
         {
             var fallback = await RunYtDlpAsync(
-                videoUrl, BuildDownloadArgs(outputTemplate, includeTvClientExtractorArgs: false), cancellationToken);
+                videoUrl, BuildDownloadArgs(outputTemplate, includeTvClientExtractorArgs: true), cancellationToken);
             if (fallback.Success)
                 result = fallback;
         }
@@ -197,7 +198,9 @@ public sealed class YoutubeClient(
         if (includeTvClientExtractorArgs)
         {
             // android_vr media URLs 403 on YouTube (same issue documented in BuildPreviewAudioProcess);
-            // tv is the current stable client. Re-check when downloads regress.
+            // tv is the fallback now — the tv client died 2026-08-19 ("The page needs to be
+            // reloaded"), so the primary attempt uses yt-dlp's default client selection.
+            // Re-check when downloads regress.
             args.Add("--extractor-args");
             args.Add("youtube:player_client=tv");
         }

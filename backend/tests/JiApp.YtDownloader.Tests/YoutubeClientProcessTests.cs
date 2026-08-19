@@ -49,6 +49,86 @@ public sealed class YoutubeClientProcessTests
         }
     }
 
+    [Fact]
+    public async Task DownloadVideoAsync_WhenDefaultClientFails_FallsBackToTvClient()
+    {
+        var tempDir = Directory.CreateTempSubdirectory("ytdl-order-test-").FullName;
+        try
+        {
+            var logFile = Path.Combine(tempDir, "argv.log");
+            var countFile = Path.Combine(tempDir, "count");
+            var outputFile = Path.Combine(tempDir, "job-temp.mp3");
+            var script = Path.Combine(tempDir, "fake-yt-dlp.sh");
+            File.WriteAllText(script, $"""
+                #!/bin/sh
+                echo "$@" >> "{logFile}"
+                run=0
+                if [ -f "{countFile}" ]; then
+                    run=$(cat "{countFile}")
+                fi
+                echo $((run + 1)) > "{countFile}"
+                if [ "$run" -eq 0 ]; then
+                    echo "The page needs to be reloaded." >&2
+                    exit 1
+                fi
+                touch "{outputFile}"
+                exit 0
+                """);
+            if (!OperatingSystem.IsWindows())
+                File.SetUnixFileMode(script,
+                    UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+
+            using var sut = new YoutubeClient("fake-key", script, "ffmpeg");
+            var result = await sut.DownloadVideoAsync("dQw4w9WgXcQ", tempDir, "job-temp");
+
+            result.Success.Should().BeTrue();
+            var invocations = File.ReadAllLines(logFile);
+            invocations.Should().HaveCount(2);
+            invocations[0].Should().NotContain("player_client",
+                "attempt 1 must use yt-dlp's default client selection");
+            invocations[1].Should().Contain("youtube:player_client=tv",
+                "the fallback keeps the tv client override");
+        }
+        finally
+        {
+            Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task DownloadVideoAsync_WhenDefaultClientSucceeds_RunsOnce_WithoutTvOverride()
+    {
+        var tempDir = Directory.CreateTempSubdirectory("ytdl-order-test-").FullName;
+        try
+        {
+            var logFile = Path.Combine(tempDir, "argv.log");
+            var outputFile = Path.Combine(tempDir, "job-temp.mp3");
+            var script = Path.Combine(tempDir, "fake-yt-dlp.sh");
+            File.WriteAllText(script, $"""
+                #!/bin/sh
+                echo "$@" >> "{logFile}"
+                touch "{outputFile}"
+                exit 0
+                """);
+            if (!OperatingSystem.IsWindows())
+                File.SetUnixFileMode(script,
+                    UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+
+            using var sut = new YoutubeClient("fake-key", script, "ffmpeg");
+            var result = await sut.DownloadVideoAsync("dQw4w9WgXcQ", tempDir, "job-temp");
+
+            result.Success.Should().BeTrue();
+            var invocations = File.ReadAllLines(logFile);
+            invocations.Should().HaveCount(1);
+            invocations[0].Should().NotContain("player_client",
+                "a successful default-client run must not add a tv override");
+        }
+        finally
+        {
+            Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
     private static async Task WaitForFileAsync(string path)
     {
         var stopwatch = Stopwatch.StartNew();

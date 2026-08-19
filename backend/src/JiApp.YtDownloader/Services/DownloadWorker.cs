@@ -31,7 +31,7 @@ internal sealed class DownloadWorker(
 
     private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
     private readonly TimeSpan _downloadTimeout = downloadTimeout
-        ?? TimeSpan.FromMinutes(settings.App?.DownloadJobTimeoutMinutes ?? 30);
+        ?? TimeSpan.FromMinutes(settings.App?.DownloadJobTimeoutMinutes ?? 5);
     private readonly TimeSpan _pollInterval = pollInterval ?? DefaultPollInterval;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)

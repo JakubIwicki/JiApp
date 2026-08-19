@@ -41,6 +41,7 @@ services:
       DeepSeek__ApiKey: ${DEEPSEEK_API_KEY:-}
       DeepSeek__Model: ${DEEPSEEK_MODEL:-}
       App__PublicBaseUrl: ${YT_PUBLIC_BASE_URL:?required}
+      App__DownloadJobTimeoutMinutes: ${YT_DOWNLOAD_TIMEOUT_MIN:-5}
       # GC heap limit tuned during Phase F load-test (empty = no cap)
       DOTNET_GCHeapHardLimit: ${YT_GC_HEAP_LIMIT:-}
     volumes:

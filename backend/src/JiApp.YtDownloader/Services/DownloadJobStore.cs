@@ -249,10 +249,12 @@ public sealed class DownloadJobStore : IDownloadJobStore, IDownloadQueue
         // completed — force-expire it via the retry semantics so the existing backoff
         // machinery bounds the recovery, and delete its partial files so a retry starts clean.
         var runningCutoff = now.Add(-_runningMaxAge);
+        // A Processing row with a NULL ProcessingStartedAtUtc (pre-migration or an anomalous
+        // claim) ages by CreatedAtUtc, so a missing timestamp cannot make the reaper immune.
         var stuckProcessing = db.DownloadCommands
             .Where(c => c.Status == DownloadCommandStatus.Processing
-                && c.ProcessingStartedAtUtc != null
-                && c.ProcessingStartedAtUtc < runningCutoff)
+                && ((c.ProcessingStartedAtUtc != null && c.ProcessingStartedAtUtc < runningCutoff)
+                    || (c.ProcessingStartedAtUtc == null && c.CreatedAtUtc < runningCutoff)))
             .ToList();
 
         foreach (var command in stuckProcessing)
@@ -261,8 +263,12 @@ public sealed class DownloadJobStore : IDownloadJobStore, IDownloadQueue
             DeletePartialFilesForJob(command);
         }
 
+        // Skip rows awaiting a scheduled retry (NextAttemptAt in the future): a Failed row
+        // mid-backoff is still an in-flight job — deleting it kills its remaining attempts and
+        // 404s the client poll. Once the retry window has passed (or never existed), reap it.
         var expired = db.DownloadCommands
-            .Where(c => c.ExpiresAt < now && c.Status != DownloadCommandStatus.Processing)
+            .Where(c => c.ExpiresAt < now && c.Status != DownloadCommandStatus.Processing
+                && (c.NextAttemptAt == null || c.NextAttemptAt <= now))
             .ToList();
 
         foreach (var command in expired)

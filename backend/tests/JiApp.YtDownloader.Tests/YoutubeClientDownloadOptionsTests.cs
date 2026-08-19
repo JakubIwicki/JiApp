@@ -18,28 +18,30 @@ public sealed class YoutubeClientDownloadOptionsTests
     }
 
     [Fact]
-    public void BuildDownloadArgs_LocksPlayerClientToKnownGoodTvClient()
+    public void BuildDownloadArgs_TvFallback_PinsKnownGoodTvClient_WhenRequested()
     {
         var fixture = Fixture.Create();
 
         var args = fixture.Sut.BuildDownloadArgs("/tmp/t.%(ext)s", includeTvClientExtractorArgs: true);
 
         // Regression guard for the PR #163 fix: an android_vr player client 403s media URLs,
-        // so reverting the extractor-args allow-list value must fail this test.
+        // so reverting the extractor-args allow-list value must fail this test. tv is the
+        // fallback attempt now — the primary uses yt-dlp's default client selection because
+        // the tv client died 2026-08-19 ("The page needs to be reloaded").
         args.Should().Contain("--extractor-args");
         args.Should().Contain("youtube:player_client=tv");
         args.Should().NotContain("youtube:player_client=android_vr");
     }
 
     [Fact]
-    public void BuildDownloadArgs_Fallback_DropsExtractorArgs()
+    public void BuildDownloadArgs_DefaultClientSelection_DropsExtractorArgs()
     {
         var fixture = Fixture.Create();
 
         var args = fixture.Sut.BuildDownloadArgs("/tmp/t.%(ext)s", includeTvClientExtractorArgs: false);
 
-        // The fallback must not override the extractor client at all, so the config-file
-        // POT args from /etc/yt-dlp.conf stay active.
+        // The primary attempt must not override the extractor client, so yt-dlp's default
+        // client selection and the config-file POT args from /etc/yt-dlp.conf stay active.
         args.Should().NotContain("--extractor-args");
         args.Should().NotContain(x => x.StartsWith("youtube:player_client=", StringComparison.Ordinal));
     }
@@ -49,7 +51,7 @@ public sealed class YoutubeClientDownloadOptionsTests
     {
         var fixture = Fixture.Create();
 
-        var args = fixture.Sut.BuildDownloadArgs("/tmp/t.%(ext)s", includeTvClientExtractorArgs: true);
+        var args = fixture.Sut.BuildDownloadArgs("/tmp/t.%(ext)s", includeTvClientExtractorArgs: false);
 
         args.Should().Contain("--no-playlist");
         args.Should().Contain("-x");
@@ -74,7 +76,7 @@ public sealed class YoutubeClientDownloadOptionsTests
     {
         var fixture = Fixture.Create(cookiesFile: "/tmp/cookies.txt", cookiesFromBrowser: "madeupbrowser");
 
-        var args = fixture.Sut.BuildDownloadArgs("/tmp/t.%(ext)s", includeTvClientExtractorArgs: true);
+        var args = fixture.Sut.BuildDownloadArgs("/tmp/t.%(ext)s", includeTvClientExtractorArgs: false);
 
         args.Should().Contain("--cookies-from-browser");
         args.Should().Contain("madeupbrowser");
@@ -87,7 +89,7 @@ public sealed class YoutubeClientDownloadOptionsTests
     {
         var fixture = Fixture.Create(cookiesFile: "/tmp/cookies.txt");
 
-        var args = fixture.Sut.BuildDownloadArgs("/tmp/t.%(ext)s", includeTvClientExtractorArgs: true);
+        var args = fixture.Sut.BuildDownloadArgs("/tmp/t.%(ext)s", includeTvClientExtractorArgs: false);
 
         args.Should().Contain("--cookies");
         args.Should().Contain("/tmp/cookies.txt");
@@ -99,7 +101,7 @@ public sealed class YoutubeClientDownloadOptionsTests
     {
         var fixture = Fixture.Create(proxy: "socks5://127.0.0.1:1080");
 
-        var args = fixture.Sut.BuildDownloadArgs("/tmp/t.%(ext)s", includeTvClientExtractorArgs: true);
+        var args = fixture.Sut.BuildDownloadArgs("/tmp/t.%(ext)s", includeTvClientExtractorArgs: false);
 
         args.Should().Contain("--proxy");
         args.Should().Contain("socks5://127.0.0.1:1080");

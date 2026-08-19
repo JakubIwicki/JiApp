@@ -23,8 +23,8 @@ public sealed class DownloadWorkerTests
     private const string VideoId = "dQw4w9WgXcQ";
     private const string VideoUrl = "https://youtube.com/watch?v=dQw4w9WgXcQ";
     private static readonly TimeSpan PollTimeout = TimeSpan.FromSeconds(10);
-    // Mirrors prod: worker download deadline (30 min) + grace (5 min).
-    private static readonly TimeSpan RunningMaxAge = TimeSpan.FromMinutes(35);
+    // Mirrors prod: worker download deadline (5 min) + grace (5 min).
+    private static readonly TimeSpan RunningMaxAge = TimeSpan.FromMinutes(10);
 
     [Fact]
     public async Task MarksJobReady_AndWritesHistory_WhenDownloadSucceeds()
