@@ -13,9 +13,12 @@ RUN dotnet publish "JiApp.YtDownloader.csproj" -c Release -o /app/publish
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 RUN apt-get update && apt-get install -y python3 python3-pip ffmpeg curl ca-certificates unzip && \
     rm -rf /var/lib/apt/lists/*
-# --pre pulls yt-dlp nightly from PyPI: nightly carries the extractor fixes and stable
-# lags YouTube changes (the stable 2026.07.04 release broke every player client 2026-08-19).
-RUN pip3 install --break-system-packages --pre "yt-dlp[default]" bgutil-ytdlp-pot-provider
+# Only yt-dlp itself rides nightly (PyPI pre-releases carry the extractor fixes; stable lags
+# YouTube changes — the stable 2026.07.04 release broke every player client 2026-08-19).
+# Install the stable dependency closure first, then swap just the yt-dlp core to nightly with
+# --no-deps so bgutil-ytdlp-pot-provider and the transitive deps (curl_cffi, mutagen, ...) stay stable.
+RUN pip3 install --break-system-packages "yt-dlp[default]" bgutil-ytdlp-pot-provider
+RUN pip3 install --break-system-packages --pre --no-deps -U yt-dlp
 RUN curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh && deno --version
 RUN printf '%s\n' '--extractor-args "youtubepot-bgutilhttp:base_url=http://bgutil-provider:4416"' > /etc/yt-dlp.conf
 WORKDIR /app

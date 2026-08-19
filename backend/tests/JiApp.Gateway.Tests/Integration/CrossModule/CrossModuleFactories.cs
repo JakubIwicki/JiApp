@@ -250,7 +250,7 @@ public sealed class CrossModuleYtDownloaderWebApplicationFactory : RealModuleHos
             ["App:BaseDirectory"] = Path.GetTempPath(),
             ["App:PreviewDurationSeconds"] = "10",
             ["App:DownloadTtlMinutes"] = "15",
-            ["App:DownloadJobTimeoutMinutes"] = "30",
+            ["App:DownloadJobTimeoutMinutes"] = "5",
             ["App:PublicBaseUrl"] = TestPublicBaseUrl,
             ["Youtube:ApiKey"] = "test-api-key",
             ["Youtube:YtDlpPath"] = "/usr/bin/true",

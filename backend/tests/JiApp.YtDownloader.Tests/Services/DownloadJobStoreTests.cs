@@ -598,12 +598,17 @@ public sealed class DownloadJobStoreTests
     {
         using var fixture = new Fixture(Ttl, FixedNow);
         var tempId = fixture.SeedProcessingRow(FixedNow.UtcDateTime.AddMinutes(-(int)RunningMaxAge.TotalMinutes - 1));
+        var folder = YtDownloadFolders.ForUser(fixture.TempDir, UserId);
+        Directory.CreateDirectory(folder);
+        var partialPath = Path.Combine(folder, $"{tempId}.mp3.part");
+        File.WriteAllText(partialPath, "partial download");
 
         fixture.Store.CleanupExpired();
 
         var row = fixture.LoadCommand(tempId);
         row!.Status.Should().Be(DownloadCommandStatus.Failed);
         row.LastError.Should().Be("Download timed out.");
+        File.Exists(partialPath).Should().BeFalse();
     }
 
     [Fact]
@@ -611,12 +616,55 @@ public sealed class DownloadJobStoreTests
     {
         using var fixture = new Fixture(Ttl, FixedNow);
         var tempId = fixture.SeedProcessingRow(FixedNow.UtcDateTime);
+        var folder = YtDownloadFolders.ForUser(fixture.TempDir, UserId);
+        Directory.CreateDirectory(folder);
+        var partialPath = Path.Combine(folder, $"{tempId}.mp3.part");
+        File.WriteAllText(partialPath, "partial download");
 
         fixture.Store.CleanupExpired();
 
         var row = fixture.LoadCommand(tempId);
         row!.Status.Should().Be(DownloadCommandStatus.Processing);
         row.ProcessingStartedAtUtc.Should().BeNull();
+        File.Exists(partialPath).Should().BeTrue();
+    }
+
+    [Fact]
+    public void CleanupExpired_KeepsFailedRow_WithFutureNextAttemptAt_EvenWhenExpired()
+    {
+        using var fixture = new Fixture(Ttl, FixedNow);
+        var tempId = fixture.CreateJob();
+        fixture.Store.Claim(tempId, UserId);
+        fixture.Clock.Advance(Ttl.Add(TimeSpan.FromMinutes(1)));
+        fixture.Store.MarkFailed(tempId, UserId, "transient error", ResultCategories.YoutubeDl);
+
+        fixture.Store.CleanupExpired();
+
+        // A Failed row mid-backoff is still an in-flight job — the TTL sweep must not
+        // delete it, or the remaining retries die and the client poll 404s.
+        var row = fixture.LoadCommand(tempId);
+        row.Should().NotBeNull();
+        row!.Status.Should().Be(DownloadCommandStatus.Failed);
+        row.NextAttemptAt.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void CleanupExpired_RemovesExhaustedFailedJob_WhenExpired()
+    {
+        using var fixture = new Fixture(Ttl, FixedNow);
+        var tempId = fixture.CreateJob();
+        fixture.Store.Claim(tempId, UserId);
+        fixture.Store.MarkFailed(tempId, UserId, "error one");
+        fixture.Clock.Advance(TimeSpan.FromSeconds(31));
+        fixture.Store.MarkFailed(tempId, UserId, "error two");
+        fixture.Clock.Advance(TimeSpan.FromMinutes(2) + TimeSpan.FromSeconds(1));
+        fixture.Store.MarkFailed(tempId, UserId, "error three");
+        fixture.Clock.Advance(Ttl.Add(TimeSpan.FromMinutes(1)));
+
+        fixture.Store.CleanupExpired();
+
+        // A dead-letter row (NextAttemptAt null) has no retry left to protect — the TTL reaps it.
+        fixture.Store.GetStatus(tempId, UserId).Should().BeNull();
     }
 
     private sealed class Fixture : IDisposable

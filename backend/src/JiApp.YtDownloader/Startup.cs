@@ -144,9 +144,10 @@ public class Startup(Settings settings, IWebHostEnvironment env)
             sp.GetRequiredService<IServiceScopeFactory>(),
             TimeSpan.FromMinutes(settings.App?.DownloadTtlMinutes ?? 15),
             sp.GetRequiredService<TimeProvider>(),
-            // Reaper threshold: worker download deadline + grace, so a legitimate long
-            // download (which the 5-min deadline lets run to completion) always survives
-            // the sweep; only a job stuck past its deadline is force-expired.
+            // Reaper threshold = worker download deadline + grace. The grace is what keeps
+            // the reaper from ever racing the worker's own timeout path: a hung download is
+            // failed by the worker's per-job CTS at the deadline; only a row still Processing
+            // 5 minutes later (the deadline path never completed) is force-expired.
             TimeSpan.FromMinutes((settings.App?.DownloadJobTimeoutMinutes ?? 5) + 5),
             settings.App?.BaseDirectory));
         services.AddSingleton<IDownloadJobStore>(sp => sp.GetRequiredService<DownloadJobStore>());

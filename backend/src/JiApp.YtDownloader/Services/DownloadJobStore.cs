@@ -263,8 +263,12 @@ public sealed class DownloadJobStore : IDownloadJobStore, IDownloadQueue
             DeletePartialFilesForJob(command);
         }
 
+        // Skip rows awaiting a scheduled retry (NextAttemptAt in the future): a Failed row
+        // mid-backoff is still an in-flight job — deleting it kills its remaining attempts and
+        // 404s the client poll. Once the retry window has passed (or never existed), reap it.
         var expired = db.DownloadCommands
-            .Where(c => c.ExpiresAt < now && c.Status != DownloadCommandStatus.Processing)
+            .Where(c => c.ExpiresAt < now && c.Status != DownloadCommandStatus.Processing
+                && (c.NextAttemptAt == null || c.NextAttemptAt <= now))
             .ToList();
 
         foreach (var command in expired)
